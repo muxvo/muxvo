@@ -1,0 +1,1946 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muxvo - Chat History Prototypes</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-deep: #06080c;
+  --bg-primary: #0a0e14;
+  --bg-card: #0d1117;
+  --bg-elevated: #161b22;
+  --bg-hover: #1c2333;
+  --bg-surface: #111820;
+  --border: #1e2530;
+  --border-subtle: #151b24;
+  --border-focus: #e8a74855;
+  --text-primary: #d4d4d8;
+  --text-secondary: #8b8b94;
+  --text-muted: #4a4a54;
+  --text-dim: #3f3f46;
+  --accent: #e8a748;
+  --accent-soft: #e8a74820;
+  --accent-glow: #e8a74830;
+  --green: #4ade80;
+  --green-soft: #4ade8018;
+  --red: #f87171;
+  --blue: #60a5fa;
+  --blue-soft: #60a5fa18;
+  --purple: #a78bfa;
+  --purple-soft: #a78bfa18;
+  --cyan: #22d3ee;
+  --cyan-soft: #22d3ee18;
+  --orange: #fb923c;
+  --orange-soft: #fb923c18;
+  --pink: #f472b6;
+  --pink-soft: #f472b618;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-card: 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-elevated: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+body {
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  height: 100vh;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== SCHEME SWITCHER ===== */
+.scheme-bar {
+  height: 52px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 4px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 100;
+}
+.scheme-bar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-soft), transparent);
+}
+.scheme-logo {
+  font-family: 'Instrument Serif', serif;
+  font-size: 18px;
+  font-style: italic;
+  color: var(--accent);
+  margin-right: 32px;
+  letter-spacing: -0.02em;
+}
+.scheme-tab {
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  letter-spacing: 0.01em;
+}
+.scheme-tab:hover { color: var(--text-secondary); background: var(--bg-hover); }
+.scheme-tab.active {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.scheme-tab .tab-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  display: block;
+  margin-bottom: 1px;
+}
+.scheme-tab.active .tab-label { color: var(--accent); opacity: 0.6; }
+.scheme-spacer { flex: 1; }
+.scheme-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ===== VIEWS ===== */
+.view { display: none; height: calc(100vh - 52px); }
+.view.active { display: flex; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+/* Code blocks */
+.code-block {
+  background: var(--bg-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-x: auto;
+  margin: 8px 0;
+  position: relative;
+}
+.code-block .code-lang {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  background: var(--bg-elevated);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.code-block .kw { color: var(--purple); }
+.code-block .fn { color: var(--blue); }
+.code-block .str { color: var(--green); }
+.code-block .cm { color: var(--text-dim); font-style: italic; }
+.code-block .num { color: var(--orange); }
+.code-block .op { color: var(--text-secondary); }
+
+/* Inline code */
+code.inline {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.88em;
+  color: var(--cyan);
+}
+
+/* Project color dots */
+.project-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.project-dot.muxvo { background: var(--accent); }
+.project-dot.api { background: var(--blue); }
+.project-dot.web { background: var(--green); }
+.project-dot.cli { background: var(--purple); }
+.project-dot.docs { background: var(--pink); }
+
+/* ================================================
+   SCHEME A - MAIL CLIENT STYLE (3-column)
+   ================================================ */
+.view-a {
+  display: none;
+  flex-direction: row;
+}
+.view-a.active { display: flex; }
+
+/* Left sidebar - Projects */
+.a-sidebar {
+  width: 220px;
+  background: var(--bg-primary);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.a-sidebar-header {
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.a-sidebar-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+.a-search {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px 8px 32px;
+  font-size: 12px;
+  color: var(--text-primary);
+  outline: none;
+  font-family: 'DM Sans', sans-serif;
+  transition: border-color 0.2s;
+  position: relative;
+}
+.a-search:focus { border-color: var(--accent); }
+.a-search-wrap {
+  position: relative;
+}
+.a-search-wrap::before {
+  content: '\2315';
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim);
+  font-size: 14px;
+  z-index: 1;
+  pointer-events: none;
+}
+.a-project-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+.a-project-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 1px;
+}
+.a-project-item:hover { background: var(--bg-hover); }
+.a-project-item.active { background: var(--accent-soft); }
+.a-project-item.active .a-project-name { color: var(--accent); }
+.a-project-icon {
+  width: 30px; height: 30px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.a-project-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.a-project-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+}
+.a-sidebar-section {
+  padding: 20px 16px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+}
+.a-sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 11px;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Middle column - Session list */
+.a-sessions {
+  width: 340px;
+  background: var(--bg-card);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.a-sessions-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.a-sessions-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.a-sessions-filter {
+  display: flex;
+  gap: 4px;
+}
+.a-filter-chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+}
+.a-filter-chip:hover { color: var(--text-secondary); background: var(--bg-hover); }
+.a-filter-chip.active { color: var(--accent); background: var(--accent-soft); border-color: var(--accent-soft); }
+.a-session-list {
+  flex: 1;
+  overflow-y: auto;
+}
+.a-session-group-label {
+  padding: 10px 16px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+  z-index: 1;
+}
+.a-session-card {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-left: 3px solid transparent;
+  position: relative;
+}
+.a-session-card:hover { background: var(--bg-hover); }
+.a-session-card.active {
+  background: var(--bg-elevated);
+  border-left-color: var(--accent);
+}
+.a-session-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.a-session-project {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+.a-session-time {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+}
+.a-session-preview {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.a-session-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.a-session-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.a-session-badge.msgs { background: var(--blue-soft); color: var(--blue); }
+.a-session-badge.branch { background: var(--purple-soft); color: var(--purple); }
+
+/* Right column - Chat detail */
+.a-detail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-deep);
+  min-width: 0;
+}
+.a-detail-header {
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.a-detail-back {
+  font-size: 18px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 0.15s;
+  display: none;
+}
+.a-detail-info { flex: 1; }
+.a-detail-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.a-detail-sub {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 2px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.a-detail-actions {
+  display: flex;
+  gap: 8px;
+}
+.a-detail-btn {
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'DM Sans', sans-serif;
+}
+.a-detail-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.a-chat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.a-msg {
+  max-width: 85%;
+  animation: msgIn 0.3s ease;
+}
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.a-msg.user {
+  align-self: flex-end;
+}
+.a-msg.assistant {
+  align-self: flex-start;
+}
+.a-msg-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.a-msg.user .a-msg-label {
+  color: var(--accent);
+  justify-content: flex-end;
+}
+.a-msg.assistant .a-msg-label { color: var(--cyan); }
+.a-msg-bubble {
+  padding: 14px 18px;
+  border-radius: var(--radius-lg);
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+.a-msg.user .a-msg-bubble {
+  background: linear-gradient(135deg, rgba(232,167,72,0.12), rgba(232,167,72,0.06));
+  border: 1px solid rgba(232,167,72,0.15);
+  border-bottom-right-radius: 4px;
+  color: var(--text-primary);
+}
+.a-msg.assistant .a-msg-bubble {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+  color: var(--text-primary);
+}
+.a-msg-time {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.a-msg.user .a-msg-time { text-align: right; }
+
+.a-time-divider {
+  text-align: center;
+  position: relative;
+  margin: 8px 0;
+}
+.a-time-divider span {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: var(--bg-deep);
+  padding: 0 12px;
+  position: relative;
+  z-index: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.a-time-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+/* Tool call block */
+.tool-call {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin: 8px 0;
+  overflow: hidden;
+}
+.tool-call-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.tool-call-header:hover { background: var(--bg-hover); }
+.tool-call-icon {
+  width: 16px; height: 16px;
+  background: var(--purple-soft);
+  color: var(--purple);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+}
+.tool-call-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--purple);
+}
+.tool-call-file {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-left: auto;
+}
+
+/* ================================================
+   SCHEME B - CHAT APP STYLE (2-column)
+   ================================================ */
+.view-b {
+  display: none;
+  flex-direction: row;
+}
+.view-b.active { display: flex; }
+
+/* Left panel */
+.b-panel {
+  width: 360px;
+  background: var(--bg-primary);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.b-panel-header {
+  padding: 16px 20px 14px;
+}
+.b-panel-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.b-panel-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+.b-panel-action {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s;
+}
+.b-panel-action:hover { background: var(--bg-hover); color: var(--accent); }
+
+.b-search {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 9px 14px 9px 36px;
+  font-size: 13px;
+  color: var(--text-primary);
+  outline: none;
+  font-family: 'DM Sans', sans-serif;
+  transition: border-color 0.2s;
+}
+.b-search:focus { border-color: var(--accent); }
+.b-search-wrap {
+  position: relative;
+}
+.b-search-wrap::before {
+  content: '\2315';
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim);
+  font-size: 15px;
+  pointer-events: none;
+}
+
+/* Project filter tags */
+.b-tags {
+  display: flex;
+  gap: 6px;
+  padding: 12px 20px 4px;
+  flex-wrap: wrap;
+}
+.b-tag {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.b-tag:hover { border-color: var(--text-dim); color: var(--text-primary); }
+.b-tag.active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.b-tag .tag-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+
+/* Conversation list */
+.b-conv-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+.b-conv-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+.b-conv-item:hover { background: var(--bg-hover); }
+.b-conv-item.active { background: var(--bg-elevated); }
+.b-conv-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent);
+}
+.b-conv-avatar {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+  font-weight: 700;
+  position: relative;
+}
+.b-conv-avatar .avatar-status {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-primary);
+}
+.b-conv-body { flex: 1; min-width: 0; }
+.b-conv-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 3px;
+}
+.b-conv-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.b-conv-time {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  flex-shrink: 0;
+}
+.b-conv-preview {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.b-conv-bottom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.b-conv-chip {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Right chat area */
+.b-chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-deep);
+  min-width: 0;
+}
+.b-chat-header {
+  padding: 16px 28px;
+  background: rgba(10,14,20,0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.b-chat-avatar {
+  width: 36px; height: 36px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+}
+.b-chat-info { flex: 1; }
+.b-chat-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.b-chat-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 1px;
+}
+.b-chat-actions {
+  display: flex;
+  gap: 6px;
+}
+.b-chat-action-btn {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+.b-chat-action-btn:hover { background: var(--bg-hover); color: var(--accent); }
+
+.b-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.b-msg {
+  max-width: 78%;
+  animation: bMsgIn 0.35s ease;
+}
+@keyframes bMsgIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.b-msg.user { align-self: flex-end; }
+.b-msg.assistant { align-self: flex-start; }
+.b-msg-content {
+  padding: 14px 18px;
+  font-size: 14px;
+  line-height: 1.7;
+  border-radius: 18px;
+}
+.b-msg.user .b-msg-content {
+  background: linear-gradient(135deg, #e8a748, #d4943d);
+  color: #0a0e14;
+  border-bottom-right-radius: 6px;
+  font-weight: 500;
+}
+.b-msg.assistant .b-msg-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 6px;
+  color: var(--text-primary);
+}
+.b-msg-meta {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.b-msg.user .b-msg-meta { justify-content: flex-end; }
+
+.b-date-sep {
+  text-align: center;
+  margin: 4px 0;
+}
+.b-date-sep span {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: var(--bg-deep);
+  padding: 4px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+}
+
+/* ================================================
+   SCHEME C - TIMELINE / FEED STYLE (single column)
+   ================================================ */
+.view-c {
+  display: none;
+  flex-direction: column;
+}
+.view-c.active { display: flex; }
+
+.c-header {
+  padding: 20px 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-primary);
+  flex-shrink: 0;
+}
+.c-search-box {
+  width: 480px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 10px 16px 10px 40px;
+  font-size: 14px;
+  color: var(--text-primary);
+  outline: none;
+  font-family: 'DM Sans', sans-serif;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.c-search-box:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.c-search-wrap {
+  position: relative;
+}
+.c-search-wrap::before {
+  content: '\2315';
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim);
+  font-size: 16px;
+  pointer-events: none;
+}
+.c-filter-group {
+  display: flex;
+  gap: 4px;
+}
+.c-filter-btn {
+  padding: 8px 14px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+}
+.c-filter-btn:hover { color: var(--text-secondary); background: var(--bg-hover); }
+.c-filter-btn.active { color: var(--accent); background: var(--accent-soft); border-color: var(--accent-soft); }
+
+.c-feed {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 0 40px;
+}
+.c-feed-inner {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Date group */
+.c-date-group {
+  margin-top: 32px;
+}
+.c-date-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg-deep);
+  padding: 12px 0 8px;
+}
+.c-date-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.c-date-count {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+}
+.c-date-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+/* Feed card */
+.c-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+.c-card:hover {
+  border-color: rgba(232,167,72,0.2);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.c-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px 10px;
+}
+.c-card-project-icon {
+  width: 28px; height: 28px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+.c-card-project-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.c-card-time {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  margin-left: auto;
+}
+.c-card-branch {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 8px;
+  background: var(--purple-soft);
+  color: var(--purple);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.c-card-body {
+  padding: 0 18px 14px;
+}
+.c-card-question {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.c-card-answer {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.c-card-footer {
+  padding: 10px 18px;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.c-card-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+}
+.c-card-stat-icon {
+  font-size: 12px;
+}
+.c-card-tags {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.c-card-tag {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Expanded card */
+.c-card.expanded .c-card-answer {
+  -webkit-line-clamp: unset;
+  display: block;
+}
+.c-card-expand-msg {
+  padding: 12px 18px 0;
+}
+.c-card-expand-msg + .c-card-expand-msg {
+  padding-top: 10px;
+}
+.c-expand-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+.c-expand-label.user-label { color: var(--accent); }
+.c-expand-label.ai-label { color: var(--cyan); }
+.c-expand-text {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--text-primary);
+}
+.c-expand-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 14px 18px 2px;
+}
+
+/* Empty state for no-selection */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  gap: 8px;
+}
+.empty-state-icon {
+  font-size: 40px;
+  opacity: 0.3;
+  margin-bottom: 8px;
+}
+.empty-state-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+.empty-state-hint {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Markdown rendering helpers */
+.md-p { margin: 6px 0; }
+.md-strong { font-weight: 700; color: var(--text-primary); }
+.md-list {
+  padding-left: 18px;
+  margin: 6px 0;
+}
+.md-list li {
+  margin: 3px 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.md-list li::marker {
+  color: var(--text-dim);
+}
+</style>
+</head>
+<body>
+
+<!-- Scheme Switcher -->
+<div class="scheme-bar">
+  <div class="scheme-logo">Muxvo</div>
+  <div class="scheme-tab active" onclick="switchView('a')">
+    <span class="tab-label">Scheme A</span>
+    Mail Client
+  </div>
+  <div class="scheme-tab" onclick="switchView('b')">
+    <span class="tab-label">Scheme B</span>
+    Chat App
+  </div>
+  <div class="scheme-tab" onclick="switchView('c')">
+    <span class="tab-label">Scheme C</span>
+    Timeline
+  </div>
+  <div class="scheme-spacer"></div>
+  <div class="scheme-hint">Click to switch views</div>
+</div>
+
+<!-- ============================
+     VIEW A - MAIL CLIENT STYLE
+     ============================ -->
+<div class="view view-a active" id="view-a">
+  <!-- Left: Project Sidebar -->
+  <div class="a-sidebar">
+    <div class="a-sidebar-header">
+      <div class="a-sidebar-title">Projects</div>
+      <div class="a-search-wrap">
+        <input class="a-search" placeholder="Search..." />
+      </div>
+    </div>
+    <div class="a-sidebar-section">Starred</div>
+    <div class="a-project-list">
+      <div class="a-project-item active">
+        <div class="a-project-icon" style="background:var(--accent-soft);color:var(--accent);">M</div>
+        <div class="a-project-name">muxvo</div>
+        <div class="a-project-count">23</div>
+      </div>
+      <div class="a-project-item">
+        <div class="a-project-icon" style="background:var(--blue-soft);color:var(--blue);">A</div>
+        <div class="a-project-name">api-server</div>
+        <div class="a-project-count">15</div>
+      </div>
+      <div class="a-project-item">
+        <div class="a-project-icon" style="background:var(--green-soft);color:var(--green);">W</div>
+        <div class="a-project-name">web-portal</div>
+        <div class="a-project-count">8</div>
+      </div>
+      <div class="a-sidebar-section" style="padding-top:16px">Recent</div>
+      <div class="a-project-item">
+        <div class="a-project-icon" style="background:var(--purple-soft);color:var(--purple);">C</div>
+        <div class="a-project-name">cli-tools</div>
+        <div class="a-project-count">6</div>
+      </div>
+      <div class="a-project-item">
+        <div class="a-project-icon" style="background:var(--pink-soft);color:var(--pink);">D</div>
+        <div class="a-project-name">docs-site</div>
+        <div class="a-project-count">3</div>
+      </div>
+      <div class="a-project-item">
+        <div class="a-project-icon" style="background:var(--cyan-soft);color:var(--cyan);">E</div>
+        <div class="a-project-name">excel-tool</div>
+        <div class="a-project-count">12</div>
+      </div>
+    </div>
+    <div class="a-sidebar-footer">
+      <span style="color:var(--green);">&#9679;</span> 67 sessions synced
+    </div>
+  </div>
+
+  <!-- Middle: Session List -->
+  <div class="a-sessions">
+    <div class="a-sessions-header">
+      <div class="a-sessions-title">muxvo</div>
+      <div class="a-sessions-filter">
+        <div class="a-filter-chip active">All</div>
+        <div class="a-filter-chip">7d</div>
+        <div class="a-filter-chip">30d</div>
+      </div>
+    </div>
+    <div class="a-session-list">
+      <div class="a-session-group-label">Today</div>
+
+      <div class="a-session-card active">
+        <div class="a-session-top">
+          <span class="project-dot muxvo"></span>
+          <span class="a-session-project">聊天记录持久化方案讨论</span>
+          <span class="a-session-time">14:32</span>
+        </div>
+        <div class="a-session-preview">讨论 Muxvo 聊天历史的存储策略，是否需要在项目目录内存储，还是 Muxvo 中央数据库...</div>
+        <div class="a-session-meta">
+          <span class="a-session-badge msgs">28 msgs</span>
+          <span class="a-session-badge branch">master</span>
+        </div>
+      </div>
+
+      <div class="a-session-card">
+        <div class="a-session-top">
+          <span class="project-dot muxvo"></span>
+          <span class="a-session-project">PRD V1.6 更新护城河策略</span>
+          <span class="a-session-time">10:15</span>
+        </div>
+        <div class="a-session-preview">更新产品名称并重构护城河策略，三层递进护城河模型...</div>
+        <div class="a-session-meta">
+          <span class="a-session-badge msgs">42 msgs</span>
+          <span class="a-session-badge branch">master</span>
+        </div>
+      </div>
+
+      <div class="a-session-group-label">Yesterday</div>
+
+      <div class="a-session-card">
+        <div class="a-session-top">
+          <span class="project-dot muxvo"></span>
+          <span class="a-session-project">Skill 宣传页功能设计</span>
+          <span class="a-session-time">16:40</span>
+        </div>
+        <div class="a-session-preview">新增 Skill 宣传页功能，自动生成精美 Skill 展示页+一键在线发布...</div>
+        <div class="a-session-meta">
+          <span class="a-session-badge msgs">35 msgs</span>
+        </div>
+      </div>
+
+      <div class="a-session-card">
+        <div class="a-session-top">
+          <span class="project-dot muxvo"></span>
+          <span class="a-session-project">富编辑器覆盖层方案</span>
+          <span class="a-session-time">11:22</span>
+        </div>
+        <div class="a-session-preview">用 Web 富编辑器替代终端原生输入，支持图片粘贴和自然文本编辑...</div>
+        <div class="a-session-meta">
+          <span class="a-session-badge msgs">19 msgs</span>
+        </div>
+      </div>
+
+      <div class="a-session-group-label">Feb 7</div>
+
+      <div class="a-session-card">
+        <div class="a-session-top">
+          <span class="project-dot muxvo"></span>
+          <span class="a-session-project">PRD 首版 + 原型页面</span>
+          <span class="a-session-time">09:30</span>
+        </div>
+        <div class="a-session-preview">新增 Muxvo Electron 桌面应用产品需求文档，优化产品定位、功能清单及核心策略</div>
+        <div class="a-session-meta">
+          <span class="a-session-badge msgs">86 msgs</span>
+          <span class="a-session-badge branch">master</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Chat Detail -->
+  <div class="a-detail">
+    <div class="a-detail-header">
+      <div class="a-detail-info">
+        <div class="a-detail-title">
+          <span class="project-dot muxvo"></span>
+          聊天记录持久化方案讨论
+        </div>
+        <div class="a-detail-sub">muxvo &middot; master &middot; 2026-02-10 14:32</div>
+      </div>
+      <div class="a-detail-actions">
+        <div class="a-detail-btn">Export</div>
+        <div class="a-detail-btn">Jump to Terminal</div>
+      </div>
+    </div>
+    <div class="a-chat">
+      <div class="a-time-divider"><span>Today 14:32</span></div>
+
+      <div class="a-msg user">
+        <div class="a-msg-label">You</div>
+        <div class="a-msg-bubble">现在 Claude 虽然可以自动存储聊天记录，但好像过一段时间会自动删除。如果是这样的话，咱们需要对聊天记录功能重新构建，最好可以和项目绑定在一起。</div>
+        <div class="a-msg-time">14:32</div>
+      </div>
+
+      <div class="a-msg assistant">
+        <div class="a-msg-label">Claude</div>
+        <div class="a-msg-bubble">
+          <div class="md-p">我理解你的需求。让我先了解一下 Claude Code 的聊天记录存储机制。</div>
+          <div class="tool-call">
+            <div class="tool-call-header">
+              <div class="tool-call-icon">T</div>
+              <span class="tool-call-name">Explore</span>
+              <span>Claude Code chat storage analysis</span>
+              <span class="tool-call-file">~/.claude/</span>
+            </div>
+          </div>
+          <div class="md-p">探索结果显示：</div>
+          <ul class="md-list">
+            <li><code class="inline">history.jsonl</code> — 全局索引，5,468 条记录</li>
+            <li><code class="inline">projects/</code> — 按项目存储的 session 文件，2.2GB</li>
+            <li><span class="md-strong">未发现明确的自动删除策略</span></li>
+          </ul>
+        </div>
+        <div class="a-msg-time">14:33</div>
+      </div>
+
+      <div class="a-msg user">
+        <div class="a-msg-label">You</div>
+        <div class="a-msg-bubble">你觉得是否应该项目绑定？</div>
+        <div class="a-msg-time">14:45</div>
+      </div>
+
+      <div class="a-msg assistant">
+        <div class="a-msg-label">Claude</div>
+        <div class="a-msg-bubble">
+          <div class="md-p">说实话，我觉得 <span class="md-strong">不应该项目绑定</span>。理由：</div>
+          <ul class="md-list">
+            <li><code class="inline">.gitignore</code> 让"跟着项目走"成了伪命题</li>
+            <li>聊天历史天然是跨项目的</li>
+            <li>污染项目目录</li>
+          </ul>
+          <div class="md-p">更好的方案是 <span class="md-strong">Muxvo 中央存储，按项目索引</span>：</div>
+          <div class="code-block">
+            <span class="code-lang">path</span>
+<span class="cm">~/Library/Application Support/Muxvo/</span>
+├── chat-history/
+│   ├── sync-state.json
+│   ├── projects/
+│   │   └── {project-hash}/
+│   │       ├── project-info.json
+│   │       └── sessions/
+│   └── history-index.jsonl
+          </div>
+        </div>
+        <div class="a-msg-time">14:46</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================
+     VIEW B - CHAT APP STYLE
+     ============================ -->
+<div class="view view-b" id="view-b">
+  <!-- Left: Conversation Panel -->
+  <div class="b-panel">
+    <div class="b-panel-header">
+      <div class="b-panel-top">
+        <div class="b-panel-title">History</div>
+        <div class="b-panel-action">+</div>
+      </div>
+      <div class="b-search-wrap">
+        <input class="b-search" placeholder="Search conversations..." />
+      </div>
+    </div>
+
+    <div class="b-tags">
+      <div class="b-tag active">
+        <span class="tag-dot" style="background:var(--text-secondary);"></span>
+        All
+      </div>
+      <div class="b-tag">
+        <span class="tag-dot" style="background:var(--accent);"></span>
+        muxvo
+      </div>
+      <div class="b-tag">
+        <span class="tag-dot" style="background:var(--blue);"></span>
+        api-server
+      </div>
+      <div class="b-tag">
+        <span class="tag-dot" style="background:var(--green);"></span>
+        web-portal
+      </div>
+    </div>
+
+    <div class="b-conv-list">
+      <div class="b-conv-item active">
+        <div class="b-conv-avatar" style="background:var(--accent-soft);color:var(--accent);">
+          M
+          <div class="avatar-status" style="background:var(--green);"></div>
+        </div>
+        <div class="b-conv-body">
+          <div class="b-conv-top">
+            <span class="b-conv-name">muxvo</span>
+            <span class="b-conv-time">14:32</span>
+          </div>
+          <div class="b-conv-preview">聊天记录持久化方案讨论 — Muxvo 中央存储...</div>
+          <div class="b-conv-bottom">
+            <span class="b-conv-chip" style="background:var(--accent-soft);color:var(--accent);">28 msgs</span>
+            <span class="b-conv-chip" style="background:var(--purple-soft);color:var(--purple);">master</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="b-conv-item">
+        <div class="b-conv-avatar" style="background:var(--accent-soft);color:var(--accent);">M</div>
+        <div class="b-conv-body">
+          <div class="b-conv-top">
+            <span class="b-conv-name">muxvo</span>
+            <span class="b-conv-time">10:15</span>
+          </div>
+          <div class="b-conv-preview">PRD V1.6 更新护城河策略 — 三层递进模型</div>
+          <div class="b-conv-bottom">
+            <span class="b-conv-chip" style="background:var(--accent-soft);color:var(--accent);">42 msgs</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="b-conv-item">
+        <div class="b-conv-avatar" style="background:var(--blue-soft);color:var(--blue);">A</div>
+        <div class="b-conv-body">
+          <div class="b-conv-top">
+            <span class="b-conv-name">api-server</span>
+            <span class="b-conv-time">Yesterday</span>
+          </div>
+          <div class="b-conv-preview">修复 WebSocket 断线重连 bug — 心跳检测逻辑</div>
+          <div class="b-conv-bottom">
+            <span class="b-conv-chip" style="background:var(--blue-soft);color:var(--blue);">16 msgs</span>
+            <span class="b-conv-chip" style="background:var(--purple-soft);color:var(--purple);">fix/ws</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="b-conv-item">
+        <div class="b-conv-avatar" style="background:var(--green-soft);color:var(--green);">W</div>
+        <div class="b-conv-body">
+          <div class="b-conv-top">
+            <span class="b-conv-name">web-portal</span>
+            <span class="b-conv-time">Yesterday</span>
+          </div>
+          <div class="b-conv-preview">Dashboard 数据可视化 — ECharts 折线图配置</div>
+          <div class="b-conv-bottom">
+            <span class="b-conv-chip" style="background:var(--green-soft);color:var(--green);">31 msgs</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="b-conv-item">
+        <div class="b-conv-avatar" style="background:var(--accent-soft);color:var(--accent);">M</div>
+        <div class="b-conv-body">
+          <div class="b-conv-top">
+            <span class="b-conv-name">muxvo</span>
+            <span class="b-conv-time">Feb 9</span>
+          </div>
+          <div class="b-conv-preview">Skill 宣传页功能设计 — 自动生成精美展示页</div>
+          <div class="b-conv-bottom">
+            <span class="b-conv-chip" style="background:var(--accent-soft);color:var(--accent);">35 msgs</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="b-conv-item">
+        <div class="b-conv-avatar" style="background:var(--purple-soft);color:var(--purple);">C</div>
+        <div class="b-conv-body">
+          <div class="b-conv-top">
+            <span class="b-conv-name">cli-tools</span>
+            <span class="b-conv-time">Feb 8</span>
+          </div>
+          <div class="b-conv-preview">实现 JSON 格式化输出 — 支持 --pretty flag</div>
+          <div class="b-conv-bottom">
+            <span class="b-conv-chip" style="background:var(--purple-soft);color:var(--purple);">12 msgs</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="b-conv-item">
+        <div class="b-conv-avatar" style="background:var(--accent-soft);color:var(--accent);">M</div>
+        <div class="b-conv-body">
+          <div class="b-conv-top">
+            <span class="b-conv-name">muxvo</span>
+            <span class="b-conv-time">Feb 7</span>
+          </div>
+          <div class="b-conv-preview">PRD 首版 + 原型页面 — Electron 桌面应用需求</div>
+          <div class="b-conv-bottom">
+            <span class="b-conv-chip" style="background:var(--accent-soft);color:var(--accent);">86 msgs</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Chat Area -->
+  <div class="b-chat-area">
+    <div class="b-chat-header">
+      <div class="b-chat-avatar" style="background:var(--accent-soft);color:var(--accent);">M</div>
+      <div class="b-chat-info">
+        <div class="b-chat-name">聊天记录持久化方案讨论</div>
+        <div class="b-chat-desc">muxvo &middot; master &middot; 28 messages</div>
+      </div>
+      <div class="b-chat-actions">
+        <div class="b-chat-action-btn" title="Export">&#8599;</div>
+        <div class="b-chat-action-btn" title="Jump">&#9654;</div>
+      </div>
+    </div>
+
+    <div class="b-messages">
+      <div class="b-date-sep"><span>Today</span></div>
+
+      <div class="b-msg user">
+        <div class="b-msg-content">现在 Claude 虽然可以自动存储聊天记录，但好像过一段时间会自动删除。如果是这样的话，咱们需要对聊天记录功能重新构建，最好可以和项目绑定在一起。</div>
+        <div class="b-msg-meta">14:32</div>
+      </div>
+
+      <div class="b-msg assistant">
+        <div class="b-msg-content">
+          <div class="md-p">我理解你的需求 — Claude Code 的聊天记录可能会被自动删除，你希望构建一个持久化的、和项目绑定的聊天记录功能。</div>
+          <div class="md-p">让我先了解一下项目背景和现有的存储机制。</div>
+          <div class="tool-call">
+            <div class="tool-call-header">
+              <div class="tool-call-icon">T</div>
+              <span class="tool-call-name">Explore</span>
+              <span>Chat storage analysis</span>
+            </div>
+          </div>
+          <div class="md-p">探索发现 <code class="inline">~/.claude/</code> 约 10.5GB：</div>
+          <ul class="md-list">
+            <li><code class="inline">history.jsonl</code> 全局索引 — 5,468 条</li>
+            <li><code class="inline">projects/</code> 按项目会话 — 2.2GB</li>
+            <li>未发现自动删除策略</li>
+          </ul>
+        </div>
+        <div class="b-msg-meta">Claude &middot; 14:33</div>
+      </div>
+
+      <div class="b-msg user">
+        <div class="b-msg-content">你觉得哪个好？给我分析下利弊</div>
+        <div class="b-msg-meta">14:40</div>
+      </div>
+
+      <div class="b-msg assistant">
+        <div class="b-msg-content">
+          <div class="md-p"><span class="md-strong">方案 A — 纯镜像到项目 .muxvo/</span></div>
+          <div class="md-p">实现最简单，JSONL 格式不变。但搜索要遍历文件，跨项目搜索做不了。</div>
+          <div class="md-p"><span class="md-strong">方案 B — Muxvo 中央数据库</span></div>
+          <div class="md-p">跨项目搜索方便，但不满足项目绑定需求。</div>
+          <div class="md-p"><span class="md-strong">我的判断：方案 A 最合适</span></div>
+          <div class="md-p">V1 阶段数据量不大，JSONL 遍历够用。方案 C 是过早优化。</div>
+        </div>
+        <div class="b-msg-meta">Claude &middot; 14:41</div>
+      </div>
+
+      <div class="b-msg user">
+        <div class="b-msg-content">你觉得是否应该项目绑定？</div>
+        <div class="b-msg-meta">14:45</div>
+      </div>
+
+      <div class="b-msg assistant">
+        <div class="b-msg-content">
+          <div class="md-p">说实话，我觉得<span class="md-strong">不应该项目绑定</span>。</div>
+          <div class="md-p">核心理由：<code class="inline">.gitignore</code> 让项目绑定成了伪命题 — 聊天内容含敏感信息必须 ignore，那数据实际上不会随 git 走。</div>
+          <div class="md-p">推荐：<span class="md-strong">Muxvo 中央存储 + 按项目索引</span></div>
+          <div class="code-block">
+            <span class="code-lang">directory</span>
+<span class="cm">~/Library/Application Support/Muxvo/</span>
+├── chat-history/
+│   ├── sync-state.json
+│   ├── projects/
+│   │   └── {project-hash}/
+│   │       └── sessions/
+│   └── history-index.jsonl
+          </div>
+        </div>
+        <div class="b-msg-meta">Claude &middot; 14:46</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================
+     VIEW C - TIMELINE / FEED STYLE
+     ============================ -->
+<div class="view view-c" id="view-c">
+  <div class="c-header">
+    <div class="c-search-wrap">
+      <input class="c-search-box" placeholder="Search all conversations..." />
+    </div>
+    <div class="c-filter-group">
+      <div class="c-filter-btn active">All</div>
+      <div class="c-filter-btn">muxvo</div>
+      <div class="c-filter-btn">api-server</div>
+      <div class="c-filter-btn">web-portal</div>
+    </div>
+  </div>
+
+  <div class="c-feed">
+    <div class="c-feed-inner">
+
+      <!-- Today -->
+      <div class="c-date-group">
+        <div class="c-date-header">
+          <div class="c-date-label">Today &middot; Feb 10</div>
+          <div class="c-date-count">2 sessions</div>
+          <div class="c-date-line"></div>
+        </div>
+
+        <div class="c-card expanded">
+          <div class="c-card-header">
+            <div class="c-card-project-icon" style="background:var(--accent-soft);color:var(--accent);">M</div>
+            <div class="c-card-project-name">muxvo</div>
+            <div class="c-card-branch">master</div>
+            <div class="c-card-time">14:32 - 15:10</div>
+          </div>
+          <div class="c-card-body">
+            <div class="c-card-question">聊天记录持久化方案讨论</div>
+            <div class="c-card-answer">讨论 Muxvo 聊天历史的存储策略。分析了三个方案：项目目录镜像、中央数据库、混合方案。最终决定采用 Muxvo 中央存储 + 按项目索引的方案，不污染项目目录。</div>
+          </div>
+          <div class="c-expand-divider"></div>
+          <div class="c-card-expand-msg">
+            <div class="c-expand-label user-label">You</div>
+            <div class="c-expand-text">现在 Claude 虽然可以自动存储聊天记录，但好像过一段时间会自动删除...</div>
+          </div>
+          <div class="c-card-expand-msg">
+            <div class="c-expand-label ai-label">Claude</div>
+            <div class="c-expand-text">我理解你的需求。探索发现 <code class="inline">~/.claude/</code> 约 10.5GB，未发现自动删除策略。推荐 Muxvo 中央存储方案...</div>
+          </div>
+          <div class="c-expand-divider"></div>
+          <div class="c-card-footer">
+            <div class="c-card-stat">
+              <span class="c-card-stat-icon">&#9993;</span> 28
+            </div>
+            <div class="c-card-stat">
+              <span class="c-card-stat-icon">&#9202;</span> 38min
+            </div>
+            <div class="c-card-tags">
+              <span class="c-card-tag" style="background:var(--blue-soft);color:var(--blue);">architecture</span>
+              <span class="c-card-tag" style="background:var(--green-soft);color:var(--green);">PRD</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="c-card">
+          <div class="c-card-header">
+            <div class="c-card-project-icon" style="background:var(--accent-soft);color:var(--accent);">M</div>
+            <div class="c-card-project-name">muxvo</div>
+            <div class="c-card-branch">master</div>
+            <div class="c-card-time">10:15 - 11:40</div>
+          </div>
+          <div class="c-card-body">
+            <div class="c-card-question">PRD V1.6 更新护城河策略</div>
+            <div class="c-card-answer">更新产品名称并重构三层递进护城河策略：匿名集体智慧 → 人际连接网络 → AI 效果验证层。同时新增 Skill 宣传页功能定义。</div>
+          </div>
+          <div class="c-card-footer">
+            <div class="c-card-stat">
+              <span class="c-card-stat-icon">&#9993;</span> 42
+            </div>
+            <div class="c-card-stat">
+              <span class="c-card-stat-icon">&#9202;</span> 85min
+            </div>
+            <div class="c-card-tags">
+              <span class="c-card-tag" style="background:var(--green-soft);color:var(--green);">PRD</span>
+              <span class="c-card-tag" style="background:var(--orange-soft);color:var(--orange);">strategy</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Yesterday -->
+      <div class="c-date-group">
+        <div class="c-date-header">
+          <div class="c-date-label">Yesterday &middot; Feb 9</div>
+          <div class="c-date-count">3 sessions</div>
+          <div class="c-date-line"></div>
+        </div>
+
+        <div class="c-card">
+          <div class="c-card-header">
+            <div class="c-card-project-icon" style="background:var(--accent-soft);color:var(--accent);">M</div>
+            <div class="c-card-project-name">muxvo</div>
+            <div class="c-card-time">16:40 - 17:55</div>
+          </div>
+          <div class="c-card-body">
+            <div class="c-card-question">Skill 宣传页功能设计</div>
+            <div class="c-card-answer">新增 Skill 宣传页功能（P0，V2-Phase 2），自动从 SKILL.md 提取信息生成精美展示页，支持 3-5 套预设模板主题。</div>
+          </div>
+          <div class="c-card-footer">
+            <div class="c-card-stat">
+              <span class="c-card-stat-icon">&#9993;</span> 35
+            </div>
+            <div class="c-card-stat">
+              <span class="c-card-stat-icon">&#9202;</span> 75min
+            </div>
+            <div class="c-card-tags">
+              <span class="c-card-tag" style="background:var(--purple-soft);color:var(--purple);">feature</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="c-card">
+          <div class="c-card-header">
+            <div class="c-card-project-icon" style="background:var(--blue-soft);color:var(--blue);">A</div>
+            <div class="c-card-project-name">api-server</div>
+            <div class="c-card-branch">fix/ws-reconnect</div>
+            <div class="c-card-time">14:00 - 14:45</div>
+          </div>
+          <div class="c-card-body">
+            <div class="c-card-question">修复 WebSocket 断线重连 bug</div>
+            <div class="c-card-answer">心跳检测间隔从 30s 调整为 15s，增加指数退避重连策略。修复了 onclose 事件中 reconnect 被多次触发的问题。</div>
+          </div>
+          <div class="c-card-footer">
+            <div class="c-card-stat">
+              <span class="c-card-stat-icon">&#9993;</span> 16
+            </div>
+            <div class="c-card-stat">
+              <span class="c-card-stat-icon">&#9202;</span> 45min
+            </div>
+            <div class="c-card-tags">
+              <span class="c-card-tag" style="background:var(--red) ;color:#fff;opacity:0.8;">bugfix</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="c-card">
+          <div class="c-card-header">
+            <div class="c-card-project-icon" style="background:var(--green-soft);color:var(--green);">W</div>
+            <div class="c-card-project-name">web-portal</div>
+            <div class="c-card-time">11:00 - 12:30</div>
+          </div>
+          <div class="c-card-body">
+            <div class="c-card-question">Dashboard 数据可视化</div>
+            <div class="c-card-answer">使用 ECharts 实现折线图和柱状图组件，支持动态数据更新和响应式布局。配置了 dark theme 与系统主题一致。</div>
+          </div>
+          <div class="c-card-footer">
+            <div class="c-card-stat">
+              <span class="c-card-stat-icon">&#9993;</span> 31
+            </div>
+            <div class="c-card-stat">
+              <span class="c-card-stat-icon">&#9202;</span> 90min
+            </div>
+            <div class="c-card-tags">
+              <span class="c-card-tag" style="background:var(--purple-soft);color:var(--purple);">feature</span>
+              <span class="c-card-tag" style="background:var(--cyan-soft);color:var(--cyan);">UI</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feb 8 -->
+      <div class="c-date-group">
+        <div class="c-date-header">
+          <div class="c-date-label">Feb 8</div>
+          <div class="c-date-count">2 sessions</div>
+          <div class="c-date-line"></div>
+        </div>
+
+        <div class="c-card">
+          <div class="c-card-header">
+            <div class="c-card-project-icon" style="background:var(--accent-soft);color:var(--accent);">M</div>
+            <div class="c-card-project-name">muxvo</div>
+            <div class="c-card-time">11:22 - 13:00</div>
+          </div>
+          <div class="c-card-body">
+            <div class="c-card-question">富编辑器覆盖层方案</div>
+            <div class="c-card-answer">用 Web 富编辑器替代终端原生输入。支持 Ctrl+V 粘贴图片、鼠标选中定位、多行自然编辑。使用 CodeMirror 6 或 contenteditable DIV。</div>
+          </div>
+          <div class="c-card-footer">
+            <div class="c-card-stat">
+              <span class="c-card-stat-icon">&#9993;</span> 19
+            </div>
+            <div class="c-card-stat">
+              <span class="c-card-stat-icon">&#9202;</span> 98min
+            </div>
+            <div class="c-card-tags">
+              <span class="c-card-tag" style="background:var(--purple-soft);color:var(--purple);">feature</span>
+              <span class="c-card-tag" style="background:var(--cyan-soft);color:var(--cyan);">UX</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="c-card">
+          <div class="c-card-header">
+            <div class="c-card-project-icon" style="background:var(--purple-soft);color:var(--purple);">C</div>
+            <div class="c-card-project-name">cli-tools</div>
+            <div class="c-card-time">09:00 - 10:15</div>
+          </div>
+          <div class="c-card-body">
+            <div class="c-card-question">实现 JSON 格式化输出</div>
+            <div class="c-card-answer">添加 --pretty flag 支持 JSON 缩进输出，使用 4 空格缩进。增加 --color flag 支持终端语法高亮着色输出。</div>
+          </div>
+          <div class="c-card-footer">
+            <div class="c-card-stat">
+              <span class="c-card-stat-icon">&#9993;</span> 12
+            </div>
+            <div class="c-card-stat">
+              <span class="c-card-stat-icon">&#9202;</span> 75min
+            </div>
+            <div class="c-card-tags">
+              <span class="c-card-tag" style="background:var(--purple-soft);color:var(--purple);">feature</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+function switchView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.scheme-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  document.querySelectorAll('.scheme-tab')[{a:0,b:1,c:2}[id]].classList.add('active');
+}
+
+// Click interactions for scheme A
+document.querySelectorAll('.a-session-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.a-session-card').forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+  });
+});
+
+document.querySelectorAll('.a-project-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.a-project-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+  });
+});
+
+// Click interactions for scheme B
+document.querySelectorAll('.b-conv-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.b-conv-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+  });
+});
+
+document.querySelectorAll('.b-tag').forEach(tag => {
+  tag.addEventListener('click', () => {
+    document.querySelectorAll('.b-tag').forEach(t => t.classList.remove('active'));
+    tag.classList.add('active');
+  });
+});
+
+// Click interactions for scheme C
+document.querySelectorAll('.c-filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.c-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+document.querySelectorAll('.c-card').forEach(card => {
+  card.addEventListener('click', () => {
+    card.classList.toggle('expanded');
+  });
+});
+
+// Filter chips for scheme A
+document.querySelectorAll('.a-filter-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.a-filter-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>
