@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CCMux - 全屏平铺 + 聚焦放大</title>
+<title>Muxvo - 全屏平铺 + 聚焦放大</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1320,14 +1320,14 @@ const projects = [
     ]
   },
   {
-    cwd: '~/520-program/ccmux',
-    customName: 'CCMux',
+    cwd: '~/520-program/muxvo',
+    customName: 'Muxvo',
     status: 'running',
     terminal: [
-      { type: 'prompt', text: '~/ccmux $', cmd: 'claude' },
+      { type: 'prompt', text: '~/muxvo $', cmd: 'claude' },
       { type: 'dim', text: 'Starting Claude Code v1.0.23...' },
       { type: 'br' },
-      { type: 'ai', text: '开始设计 CCMux 产品需求...' },
+      { type: 'ai', text: '开始设计 Muxvo 产品需求...' },
       { type: 'br' },
       { type: 'text', text: '已确认产品定位和功能范围。' },
       { type: 'text', text: '正在生成 PRD 文档...' },
@@ -1339,7 +1339,7 @@ const projects = [
       { type: 'ai', text: '请选择布局方案：A/B/C/D' },
     ],
     files: [
-      { type: 'file', name: 'PRD.md', meta: '刚生成', indent: 0, isNew: true, ext: 'md', content: 'prd-ccmux' },
+      { type: 'file', name: 'PRD.md', meta: '刚生成', indent: 0, isNew: true, ext: 'md', content: 'prd-muxvo' },
       { type: 'folder', name: 'prototypes/', indent: 0 },
       { type: 'file', name: 'A-bottom-panel.html', meta: '原型', indent: 1, ext: 'html' },
       { type: 'file', name: 'B-right-sidebar.html', meta: '原型', indent: 1, ext: 'html' },
@@ -1450,11 +1450,11 @@ const fileContents = {
       <div class="code-line"><span class="code-num">13</span><span class="code-text">}</span></div>
     </div>`
   },
-  'prd-ccmux': {
+  'prd-muxvo': {
     header: 'PRD.md',
     tag: 'md',
     content: `<div class="md">
-      <h1>CCMux PRD V1.0</h1>
+      <h1>Muxvo PRD V1.0</h1>
       <h2>产品定位</h2>
       <p>为 Claude Code 重度用户打造的 Electron 桌面工作台，集成多项目终端管理、聊天历史搜索、文件浏览和 CC 配置可视化。</p>
       <h2>核心痛点</h2>
@@ -2245,7 +2245,7 @@ const recentFolders = [
   '~/520-program/vokey/VoKey',
   '~/520-program/flashCardNew',
   '~/520-program/moltbook',
-  '~/520-program/ccmux',
+  '~/520-program/muxvo',
   '~/520-program/SmartLesson',
   '~/520-program/agent_local',
   '~/520-program/dify',
