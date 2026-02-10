@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Muxvo - 全屏平铺 + 聚焦放大</title>
+<title>Muxvo - 方案C 时间线信息流</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1021,6 +1021,327 @@
   .ftv-resize-handle:active {
     background: var(--accent);
   }
+/* === CHAT HISTORY VIEW - SCHEME C: TIMELINE === */
+.chat-history-view {
+  position: fixed;
+  top: 36px; left: 0; right: 0; bottom: 0;
+  display: none;
+  z-index: 180;
+  background: var(--bg-deep);
+  flex-direction: column;
+}
+.chat-history-view.open { display: flex; }
+
+.ch-topbar {
+  padding: 14px 32px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--bg-primary);
+  flex-shrink: 0;
+}
+.ch-topbar-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.ch-topbar-search {
+  flex: 1;
+  max-width: 400px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 12px;
+  color: var(--text-primary);
+  outline: none;
+  font-family: 'DM Sans', sans-serif;
+}
+.ch-topbar-search:focus { border-color: var(--accent); }
+.ch-topbar-search::placeholder { color: var(--text-muted); }
+.ch-topbar-filters {
+  display: flex;
+  gap: 4px;
+}
+.ch-filter-pill {
+  padding: 5px 12px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.ch-filter-pill:hover { color: var(--text-secondary); background: var(--bg-hover); }
+.ch-filter-pill.active { color: var(--accent); background: var(--accent-glow); border-color: rgba(232, 167, 72, 0.2); }
+.ch-close-btn {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--accent);
+  background: rgba(232, 167, 72, 0.15);
+  border: 1px solid rgba(232, 167, 72, 0.3);
+  font-size: 15px;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  margin-left: auto;
+}
+.ch-close-btn:hover { background: rgba(232, 167, 72, 0.3); }
+
+/* Timeline scroll area */
+.ch-timeline {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 0;
+}
+.ch-timeline-inner {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+}
+/* Vertical line */
+.ch-timeline-inner::before {
+  content: '';
+  position: absolute;
+  left: 44px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+
+/* Date group */
+.ch-date-group {
+  margin-bottom: 32px;
+}
+.ch-date-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-left: 32px;
+}
+.ch-date-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg-deep);
+  position: absolute;
+  left: 39px;
+  z-index: 1;
+}
+.ch-date-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--bg-deep);
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-left: 28px;
+}
+
+/* Session card on timeline */
+.ch-timeline-card {
+  margin-left: 60px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.ch-timeline-card:hover {
+  border-color: rgba(232, 167, 72, 0.3);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.ch-timeline-card.expanded {
+  border-color: var(--accent);
+}
+.ch-card-header {
+  padding: 14px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.ch-card-dot-col {
+  position: absolute;
+  left: 39px;
+  width: 12px;
+  display: flex;
+  justify-content: center;
+  padding-top: 18px;
+}
+.ch-card-line-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-deep);
+}
+.ch-card-icon {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+  color: #fff;
+}
+.ch-card-info {
+  flex: 1;
+  min-width: 0;
+}
+.ch-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.ch-card-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ch-card-tags {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.ch-card-tag {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.ch-card-tag.feat { background: rgba(74, 222, 128, 0.12); color: var(--green); }
+.ch-card-tag.fix { background: rgba(248, 113, 113, 0.12); color: var(--red); }
+.ch-card-tag.refactor { background: rgba(96, 165, 250, 0.12); color: var(--blue); }
+.ch-card-tag.plan { background: rgba(167, 139, 250, 0.12); color: var(--purple); }
+
+.ch-card-preview {
+  padding: 0 18px 14px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.ch-card-snippet {
+  margin: 0 18px 14px;
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  overflow: hidden;
+  max-height: 120px;
+}
+.ch-card-expand {
+  display: none;
+  padding: 0 18px 14px;
+  border-top: 1px solid var(--border);
+  margin-top: 0;
+}
+.ch-timeline-card.expanded .ch-card-expand {
+  display: block;
+  padding-top: 14px;
+}
+.ch-card-expand .ch-msg {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  margin-bottom: 10px;
+}
+.ch-card-expand .ch-msg.user {
+  background: var(--accent-glow);
+  border: 1px solid rgba(232, 167, 72, 0.2);
+  margin-left: 40px;
+}
+.ch-card-expand .ch-msg.assistant {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  margin-right: 40px;
+}
+.ch-card-expand .ch-msg .msg-role {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+.ch-card-expand .ch-msg.user .msg-role { color: var(--accent); }
+.ch-card-expand .ch-msg.assistant .msg-role { color: var(--purple); }
+.ch-card-expand .ch-msg code {
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--cyan);
+}
+.ch-card-expand .ch-msg pre {
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  overflow-x: auto;
+  color: var(--text-primary);
+  margin: 6px 0;
+  line-height: 1.5;
+}
+.ch-card-expand .tool-use {
+  margin: 6px 0;
+  padding: 6px 10px;
+  background: rgba(96, 165, 250, 0.08);
+  border-left: 3px solid var(--blue);
+  border-radius: 0 6px 6px 0;
+  font-size: 11px;
+  color: var(--blue);
+  font-family: 'JetBrains Mono', monospace;
+}
+.ch-card-expand .tool-use .tool-name { font-weight: 700; }
+.ch-card-expand .tool-result {
+  margin: 3px 0;
+  padding: 4px 8px;
+  background: rgba(74, 222, 128, 0.08);
+  border-left: 3px solid var(--green);
+  border-radius: 0 4px 4px 0;
+  font-size: 10px;
+  color: var(--green);
+  font-family: 'JetBrains Mono', monospace;
+}
+.ch-card-footer {
+  padding: 10px 18px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.ch-card-footer .stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 </style>
 </head>
 <body>
@@ -1030,6 +1351,7 @@
   <div class="menu-item active" onclick="switchMenu('projects')">终端<span class="menu-badge" id="menu-proj-count">0</span></div>
   <div class="menu-item" onclick="switchMenu('skills')">Skills<span class="menu-badge" id="menu-skill-count">28</span></div>
   <div class="menu-item" onclick="switchMenu('mcp')">MCP<span class="menu-badge" id="menu-mcp-count">3</span></div>
+  <div class="menu-item" onclick="openChatHistory()">历史</div>
 </div>
 
 <!-- Menu Dropdown -->
@@ -1102,6 +1424,277 @@
   <div class="ctrl-btn accent" onclick="addProject()">+ 新建终端</div>
   <div class="ctrl-btn" onclick="removeProject()">- 移除</div>
   <div class="ctrl-count" id="count-label">0 个终端</div>
+</div>
+
+<!-- Chat History View - Scheme C: Timeline -->
+<div class="chat-history-view" id="chat-history-view">
+  <div class="ch-topbar">
+    <span class="ch-topbar-title">开发时间线</span>
+    <input class="ch-topbar-search" type="text" placeholder="搜索聊天记录...">
+    <div class="ch-topbar-filters">
+      <div class="ch-filter-pill active" onclick="this.parentElement.querySelectorAll('.ch-filter-pill').forEach(p=>p.classList.remove('active'));this.classList.add('active')">全部</div>
+      <div class="ch-filter-pill" onclick="this.parentElement.querySelectorAll('.ch-filter-pill').forEach(p=>p.classList.remove('active'));this.classList.add('active')">VoKey</div>
+      <div class="ch-filter-pill" onclick="this.parentElement.querySelectorAll('.ch-filter-pill').forEach(p=>p.classList.remove('active'));this.classList.add('active')">FlashCard</div>
+      <div class="ch-filter-pill" onclick="this.parentElement.querySelectorAll('.ch-filter-pill').forEach(p=>p.classList.remove('active'));this.classList.add('active')">MoltBook</div>
+      <div class="ch-filter-pill" onclick="this.parentElement.querySelectorAll('.ch-filter-pill').forEach(p=>p.classList.remove('active'));this.classList.add('active')">Muxvo</div>
+    </div>
+    <div class="ch-close-btn" onclick="closeChatHistory()">✕</div>
+  </div>
+
+  <div class="ch-timeline">
+    <div class="ch-timeline-inner">
+      <!-- Today -->
+      <div class="ch-date-group">
+        <div class="ch-date-label">
+          <div class="ch-date-dot"></div>
+          <span class="ch-date-text">今天 · 2月10日</span>
+        </div>
+
+        <div class="ch-timeline-card" onclick="toggleTimelineCard(this)">
+          <div class="ch-card-header">
+            <div class="ch-card-icon" style="background:linear-gradient(135deg, var(--green), #2dd4bf)">V</div>
+            <div class="ch-card-info">
+              <div class="ch-card-title">自定义快捷键功能</div>
+              <div class="ch-card-meta">
+                <span>VoKey</span>
+                <span>·</span>
+                <span>14:32</span>
+                <span>·</span>
+                <span>12 tool calls</span>
+              </div>
+            </div>
+            <div class="ch-card-tags">
+              <span class="ch-card-tag feat">feat</span>
+            </div>
+          </div>
+          <div class="ch-card-preview">修改 HotkeyManager 支持动态绑定，创建 PreferencesView 快捷键设置面板，使用 UserDefaults 持久化存储</div>
+          <div class="ch-card-snippet"><span style="color:var(--purple)">func</span> <span style="color:var(--blue)">register</span>(_ combo: <span style="color:var(--cyan)">KeyCombo</span>) {
+    <span style="color:var(--blue)">unregister</span>()
+    currentHotkey = combo
+    <span style="color:var(--text-muted)">// Register with Carbon API</span>
+}</div>
+          <div class="ch-card-footer">
+            <span class="stat">📝 4 messages</span>
+            <span class="stat">🔧 12 tool calls</span>
+            <span class="stat">📄 3 files changed</span>
+          </div>
+          <div class="ch-card-expand">
+            <div class="ch-msg user">
+              <div class="msg-role">You</div>
+              VoKey 的快捷键现在是硬编码的 Option+Space，我想让用户能自定义。帮我实现这个功能。
+            </div>
+            <div class="ch-msg assistant">
+              <div class="msg-role">Claude</div>
+              好的，我来分析当前的快捷键实现。
+              <div class="tool-use"><span class="tool-name">Read</span> Sources/VoKey/HotkeyManager.swift</div>
+              <div class="tool-result">✓ 已读取</div>
+              分析完成。实现方案：添加 <code>register(_ combo: KeyCombo)</code> 方法，创建设置面板，UserDefaults 持久化。
+              <div class="tool-use"><span class="tool-name">Edit</span> Sources/VoKey/HotkeyManager.swift</div>
+              <div class="tool-result">✓ 修改成功</div>
+            </div>
+            <div class="ch-msg user">
+              <div class="msg-role">You</div>
+              好的，接下来做设置面板。
+            </div>
+            <div class="ch-msg assistant">
+              <div class="msg-role">Claude</div>
+              已创建 <code>PreferencesView</code>，包含快捷键录制按钮和重置功能。
+              <div class="tool-use"><span class="tool-name">Write</span> Sources/VoKey/PreferencesView.swift</div>
+              <div class="tool-result">✓ 已创建</div>
+              ✅ 完成！
+            </div>
+          </div>
+        </div>
+
+        <div class="ch-timeline-card" onclick="toggleTimelineCard(this)">
+          <div class="ch-card-header">
+            <div class="ch-card-icon" style="background:linear-gradient(135deg, var(--blue), var(--purple))">F</div>
+            <div class="ch-card-info">
+              <div class="ch-card-title">暗色模式实现</div>
+              <div class="ch-card-meta">
+                <span>FlashCard</span>
+                <span>·</span>
+                <span>10:15</span>
+                <span>·</span>
+                <span>8 tool calls</span>
+              </div>
+            </div>
+            <div class="ch-card-tags">
+              <span class="ch-card-tag feat">feat</span>
+            </div>
+          </div>
+          <div class="ch-card-preview">为 FlashCard 应用添加暗色模式支持，创建 ThemeProvider 组件，修改 App.tsx 集成主题系统</div>
+          <div class="ch-card-footer">
+            <span class="stat">📝 3 messages</span>
+            <span class="stat">🔧 8 tool calls</span>
+            <span class="stat">📄 2 files changed</span>
+          </div>
+          <div class="ch-card-expand">
+            <div class="ch-msg user">
+              <div class="msg-role">You</div>
+              添加暗色模式支持
+            </div>
+            <div class="ch-msg assistant">
+              <div class="msg-role">Claude</div>
+              好的，创建 ThemeProvider 并修改 App.tsx。
+              <div class="tool-use"><span class="tool-name">Write</span> src/theme/ThemeProvider.tsx</div>
+              <div class="tool-result">✓ Created</div>
+              <div class="tool-use"><span class="tool-name">Edit</span> src/App.tsx</div>
+              <div class="tool-result">✓ Modified</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Yesterday -->
+      <div class="ch-date-group">
+        <div class="ch-date-label">
+          <div class="ch-date-dot" style="background:var(--blue)"></div>
+          <span class="ch-date-text" style="color:var(--blue);border-color:rgba(96,165,250,0.3)">昨天 · 2月9日</span>
+        </div>
+
+        <div class="ch-timeline-card" onclick="toggleTimelineCard(this)">
+          <div class="ch-card-header">
+            <div class="ch-card-icon" style="background:linear-gradient(135deg, var(--purple), var(--pink))">M</div>
+            <div class="ch-card-info">
+              <div class="ch-card-title">CoreData → SwiftData 迁移</div>
+              <div class="ch-card-meta">
+                <span>MoltBook</span>
+                <span>·</span>
+                <span>16:45</span>
+                <span>·</span>
+                <span>22 tool calls</span>
+              </div>
+            </div>
+            <div class="ch-card-tags">
+              <span class="ch-card-tag refactor">refactor</span>
+            </div>
+          </div>
+          <div class="ch-card-preview">重构 MoltBook 数据层，从 CoreData 迁移到 SwiftData，创建新 Model、迁移数据、更新 ViewModel</div>
+          <div class="ch-card-footer">
+            <span class="stat">📝 6 messages</span>
+            <span class="stat">🔧 22 tool calls</span>
+            <span class="stat">📄 5 files changed</span>
+          </div>
+          <div class="ch-card-expand">
+            <div class="ch-msg assistant">
+              <div class="msg-role">Claude</div>
+              重构方案：1. 创建 SwiftData Model → 2. 迁移数据 → 3. 更新 ViewModel → 4. 删除旧代码。
+              ✓ 迁移完成，所有测试通过。
+            </div>
+          </div>
+        </div>
+
+        <div class="ch-timeline-card" onclick="toggleTimelineCard(this)">
+          <div class="ch-card-header">
+            <div class="ch-card-icon" style="background:linear-gradient(135deg, var(--accent), var(--orange))">X</div>
+            <div class="ch-card-info">
+              <div class="ch-card-title">PRD 文档生成</div>
+              <div class="ch-card-meta">
+                <span>Muxvo</span>
+                <span>·</span>
+                <span>11:20</span>
+                <span>·</span>
+                <span>5 tool calls</span>
+              </div>
+            </div>
+            <div class="ch-card-tags">
+              <span class="ch-card-tag plan">plan</span>
+            </div>
+          </div>
+          <div class="ch-card-preview">设计 Muxvo 产品需求文档，确认功能范围和技术方案，包含终端管理、聊天历史、文件浏览等核心功能</div>
+          <div class="ch-card-footer">
+            <span class="stat">📝 8 messages</span>
+            <span class="stat">🔧 5 tool calls</span>
+            <span class="stat">📄 1 file created</span>
+          </div>
+          <div class="ch-card-expand">
+            <div class="ch-msg assistant">
+              <div class="msg-role">Claude</div>
+              PRD V1.0 已生成，包含产品定位、核心痛点、功能清单（P0/P1/P2）和技术方案。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2 days ago -->
+      <div class="ch-date-group">
+        <div class="ch-date-label">
+          <div class="ch-date-dot" style="background:var(--purple)"></div>
+          <span class="ch-date-text" style="color:var(--purple);border-color:rgba(167,139,250,0.3)">2月8日 · 周六</span>
+        </div>
+
+        <div class="ch-timeline-card" onclick="toggleTimelineCard(this)">
+          <div class="ch-card-header">
+            <div class="ch-card-icon" style="background:linear-gradient(135deg, var(--green), #059669)">V</div>
+            <div class="ch-card-info">
+              <div class="ch-card-title">修复语音识别崩溃</div>
+              <div class="ch-card-meta">
+                <span>VoKey</span>
+                <span>·</span>
+                <span>15:20</span>
+                <span>·</span>
+                <span>6 tool calls</span>
+              </div>
+            </div>
+            <div class="ch-card-tags">
+              <span class="ch-card-tag fix">fix</span>
+            </div>
+          </div>
+          <div class="ch-card-preview">SherpaOnnx 模型文件检测缺失导致 fatalError，添加 FileManager.default.fileExists 检查</div>
+          <div class="ch-card-footer">
+            <span class="stat">📝 3 messages</span>
+            <span class="stat">🔧 6 tool calls</span>
+            <span class="stat">📄 1 file changed</span>
+          </div>
+          <div class="ch-card-expand">
+            <div class="ch-msg assistant">
+              <div class="msg-role">Claude</div>
+              问题定位：<code>SherpaOnnxOfflineRecognizer</code> 在模型文件不存在时调用 <code>fatalError</code>。
+              修复：在创建 recognizer 前添加 <code>FileManager.default.fileExists</code> 检查。
+            </div>
+          </div>
+        </div>
+
+        <div class="ch-timeline-card" onclick="toggleTimelineCard(this)">
+          <div class="ch-card-header">
+            <div class="ch-card-icon" style="background:linear-gradient(135deg, var(--red), var(--orange))">S</div>
+            <div class="ch-card-info">
+              <div class="ch-card-title">流式生成优化</div>
+              <div class="ch-card-meta">
+                <span>SmartLesson</span>
+                <span>·</span>
+                <span>10:30</span>
+                <span>·</span>
+                <span>9 tool calls</span>
+              </div>
+            </div>
+            <div class="ch-card-tags">
+              <span class="ch-card-tag feat">feat</span>
+            </div>
+          </div>
+          <div class="ch-card-preview">分析课程生成性能瓶颈，使用流式生成替代批量生成，速度提升 3x</div>
+          <div class="ch-card-footer">
+            <span class="stat">📝 4 messages</span>
+            <span class="stat">🔧 9 tool calls</span>
+            <span class="stat">📄 1 file changed</span>
+          </div>
+          <div class="ch-card-expand">
+            <div class="ch-msg user">
+              <div class="msg-role">You</div>
+              优化生成速度
+            </div>
+            <div class="ch-msg assistant">
+              <div class="msg-role">Claude</div>
+              分析性能瓶颈：lesson-generator.py 使用同步批量生成。改为流式生成后速度提升 3x。
+              <div class="tool-use"><span class="tool-name">Edit</span> src/lesson-generator.py</div>
+              <div class="tool-result">✓ 使用流式生成，速度提升 3x</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -2329,6 +2922,42 @@ function closeFolderPicker() {
 activeProjects = [projects[0], projects[1]];
 render();
 
+// === Chat History ===
+let chatHistoryOpen = false;
+
+function openChatHistory() {
+  chatHistoryOpen = true;
+  document.getElementById('chat-history-view').classList.add('open');
+  document.getElementById('container').style.display = 'none';
+  document.querySelector('.controls').style.display = 'none';
+  document.getElementById('grid-btn').classList.remove('show');
+  document.getElementById('hint').classList.remove('show');
+  document.getElementById('menu-dropdown').classList.remove('open');
+  document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  activeMenu = null;
+}
+
+function closeChatHistory() {
+  chatHistoryOpen = false;
+  document.getElementById('chat-history-view').classList.remove('open');
+  document.getElementById('container').style.display = '';
+  document.querySelector('.controls').style.display = '';
+  document.querySelectorAll('.menu-item').forEach(m => {
+    m.classList.toggle('active', m.textContent.includes('终端'));
+  });
+  focusedIndex = -1;
+  render();
+}
+
+function toggleTimelineCard(card) {
+  // Close others
+  document.querySelectorAll('.ch-timeline-card.expanded').forEach(c => {
+    if (c !== card) c.classList.remove('expanded');
+  });
+  card.classList.toggle('expanded');
+}
+
 window.addEventListener('resize', () => {
   if (focusedIndex === -1) render();
 });
@@ -2355,6 +2984,10 @@ document.addEventListener('click', (e) => {
 // Keyboard
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
+    if (chatHistoryOpen) {
+      closeChatHistory();
+      return;
+    }
     // File temp view has highest priority
     const tempView = document.getElementById('file-temp-view');
     if (tempView.classList.contains('open')) {

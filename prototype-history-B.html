@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Muxvo - 方案B 聊天应用风格</title>
+<title>Muxvo - 全屏平铺 + 聊天历史 (Scheme B)</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1021,6 +1021,441 @@
   .ftv-resize-handle:active {
     background: var(--accent);
   }
+
+  /* === CHAT HISTORY VIEW (Scheme B - Chat App Style) === */
+  .history-view {
+    position: fixed;
+    top: 36px; left: 0; right: 0; bottom: 0;
+    display: none;
+    z-index: 180;
+    background: var(--bg-deep);
+    flex-direction: row;
+  }
+  .history-view.open {
+    display: flex;
+  }
+
+  /* Left panel */
+  .h-panel {
+    width: 360px;
+    background: var(--bg-primary);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .h-panel-header {
+    padding: 16px 20px 14px;
+  }
+  .h-panel-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .h-panel-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
+  .h-panel-back {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.15s;
+  }
+  .h-panel-back:hover { background: var(--bg-hover); color: var(--accent); }
+
+  .h-search {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 9px 14px 9px 36px;
+    font-size: 13px;
+    color: var(--text-primary);
+    outline: none;
+    font-family: 'DM Sans', sans-serif;
+    transition: border-color 0.2s;
+  }
+  .h-search:focus { border-color: var(--accent); }
+  .h-search-wrap {
+    position: relative;
+  }
+  .h-search-wrap::before {
+    content: '\2315';
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 15px;
+    pointer-events: none;
+  }
+
+  /* Project filter tags */
+  .h-tags {
+    display: flex;
+    gap: 6px;
+    padding: 12px 20px 4px;
+    flex-wrap: wrap;
+  }
+  .h-tag {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .h-tag:hover { border-color: var(--text-muted); color: var(--text-primary); }
+  .h-tag.active { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+  .h-tag .htag-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+
+  /* Conversation list */
+  .h-conv-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+  }
+  .h-conv-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .h-conv-item:hover { background: var(--bg-hover); }
+  .h-conv-item.active { background: var(--bg-elevated); }
+  .h-conv-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 3px;
+    border-radius: 0 2px 2px 0;
+    background: var(--accent);
+  }
+  .h-conv-avatar {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    font-weight: 700;
+    position: relative;
+  }
+  .h-conv-avatar .h-avatar-status {
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-primary);
+  }
+  .h-conv-body { flex: 1; min-width: 0; }
+  .h-conv-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 3px;
+  }
+  .h-conv-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .h-conv-time {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    flex-shrink: 0;
+  }
+  .h-conv-preview {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .h-conv-bottom {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .h-conv-chip {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Right chat area */
+  .h-chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-deep);
+    min-width: 0;
+  }
+  .h-chat-header {
+    padding: 16px 28px;
+    background: rgba(10,14,20,0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    flex-shrink: 0;
+  }
+  .h-chat-avatar {
+    width: 36px; height: 36px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .h-chat-info { flex: 1; }
+  .h-chat-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .h-chat-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 1px;
+  }
+  .h-chat-actions {
+    display: flex;
+    gap: 6px;
+  }
+  .h-chat-action-btn {
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s;
+  }
+  .h-chat-action-btn:hover { background: var(--bg-hover); color: var(--accent); }
+
+  .h-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .h-msg {
+    max-width: 78%;
+    animation: hMsgIn 0.35s ease;
+  }
+  @keyframes hMsgIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .h-msg.user { align-self: flex-end; }
+  .h-msg.assistant { align-self: flex-start; }
+  .h-msg-content {
+    padding: 14px 18px;
+    font-size: 14px;
+    line-height: 1.7;
+    border-radius: 18px;
+  }
+  .h-msg.user .h-msg-content {
+    background: linear-gradient(135deg, #e8a748, #d4943d);
+    color: #0a0e14;
+    border-bottom-right-radius: 6px;
+    font-weight: 500;
+  }
+  .h-msg.assistant .h-msg-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 6px;
+    color: var(--text-primary);
+  }
+  .h-msg-meta {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .h-msg.user .h-msg-meta { justify-content: flex-end; }
+
+  .h-date-sep {
+    text-align: center;
+    margin: 4px 0;
+  }
+  .h-date-sep span {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-deep);
+    padding: 4px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  /* Code blocks in history */
+  .h-code-block {
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    overflow-x: auto;
+    margin: 8px 0;
+    position: relative;
+  }
+  .h-code-block .h-code-lang {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    background: var(--bg-elevated);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+  .h-code-block .hc-kw { color: var(--purple); }
+  .h-code-block .hc-fn { color: var(--blue); }
+  .h-code-block .hc-str { color: var(--green); }
+  .h-code-block .hc-cm { color: var(--text-muted); font-style: italic; }
+  .h-code-block .hc-num { color: #fb923c; }
+  .h-code-block .hc-op { color: var(--text-secondary); }
+
+  /* Inline code in history */
+  .h-msg-content code.h-inline {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88em;
+    color: var(--cyan);
+  }
+  .h-msg.user .h-msg-content code.h-inline {
+    background: rgba(0,0,0,0.15);
+    border-color: rgba(0,0,0,0.2);
+    color: #0a0e14;
+  }
+
+  /* Tool call blocks in history */
+  .h-tool-call {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 8px 0;
+    overflow: hidden;
+  }
+  .h-tool-call-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .h-tool-call-header:hover { background: var(--bg-hover); }
+  .h-tool-call-icon {
+    width: 16px; height: 16px;
+    background: rgba(167, 139, 250, 0.15);
+    color: var(--purple);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+  }
+  .h-tool-call-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--purple);
+  }
+  .h-tool-call-file {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-left: auto;
+  }
+  .h-tool-call-body {
+    padding: 0 10px 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: none;
+  }
+  .h-tool-call.expanded .h-tool-call-body {
+    display: block;
+  }
+
+  /* Markdown helpers in history */
+  .h-md-p { margin: 6px 0; }
+  .h-md-strong { font-weight: 700; color: var(--text-primary); }
+  .h-md-list {
+    padding-left: 18px;
+    margin: 6px 0;
+  }
+  .h-md-list li {
+    margin: 3px 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+  .h-md-list li::marker {
+    color: var(--text-muted);
+  }
 </style>
 </head>
 <body>
@@ -1030,6 +1465,7 @@
   <div class="menu-item active" onclick="switchMenu('projects')">终端<span class="menu-badge" id="menu-proj-count">0</span></div>
   <div class="menu-item" onclick="switchMenu('skills')">Skills<span class="menu-badge" id="menu-skill-count">28</span></div>
   <div class="menu-item" onclick="switchMenu('mcp')">MCP<span class="menu-badge" id="menu-mcp-count">3</span></div>
+  <div class="menu-item" onclick="toggleHistoryView()" id="menu-history-btn">历史</div>
 </div>
 
 <!-- Menu Dropdown -->
@@ -1095,6 +1531,269 @@
     <input type="text" id="fp-path-input" placeholder="输入路径..." onkeydown="if(event.key==='Enter')selectFolderByPath(this.value)">
   </div>
   <div class="folder-picker-content" id="fp-content"></div>
+</div>
+
+<!-- Chat History View (Scheme B - Chat App Style) -->
+<div class="history-view" id="history-view">
+  <!-- Left: Conversation Panel -->
+  <div class="h-panel">
+    <div class="h-panel-header">
+      <div class="h-panel-top">
+        <div class="h-panel-title">History</div>
+        <div class="h-panel-back" onclick="toggleHistoryView()" title="返回终端">&#10005;</div>
+      </div>
+      <div class="h-search-wrap">
+        <input class="h-search" placeholder="Search conversations..." />
+      </div>
+    </div>
+
+    <div class="h-tags">
+      <div class="h-tag active" onclick="filterHTag(this)">
+        <span class="htag-dot" style="background:var(--text-secondary);"></span>
+        All
+      </div>
+      <div class="h-tag" onclick="filterHTag(this)">
+        <span class="htag-dot" style="background:var(--accent);"></span>
+        muxvo
+      </div>
+      <div class="h-tag" onclick="filterHTag(this)">
+        <span class="htag-dot" style="background:var(--blue);"></span>
+        api-server
+      </div>
+      <div class="h-tag" onclick="filterHTag(this)">
+        <span class="htag-dot" style="background:var(--green);"></span>
+        web-portal
+      </div>
+    </div>
+
+    <div class="h-conv-list">
+      <div class="h-conv-item active" onclick="selectHConv(this)">
+        <div class="h-conv-avatar" style="background:rgba(232,167,72,0.15);color:var(--accent);">
+          M
+          <div class="h-avatar-status" style="background:var(--green);"></div>
+        </div>
+        <div class="h-conv-body">
+          <div class="h-conv-top">
+            <span class="h-conv-name">muxvo</span>
+            <span class="h-conv-time">14:32</span>
+          </div>
+          <div class="h-conv-preview">聊天记录持久化方案讨论 -- Muxvo 中央存储...</div>
+          <div class="h-conv-bottom">
+            <span class="h-conv-chip" style="background:rgba(232,167,72,0.15);color:var(--accent);">28 msgs</span>
+            <span class="h-conv-chip" style="background:rgba(167,139,250,0.15);color:var(--purple);">master</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="h-conv-item" onclick="selectHConv(this)">
+        <div class="h-conv-avatar" style="background:rgba(232,167,72,0.15);color:var(--accent);">M</div>
+        <div class="h-conv-body">
+          <div class="h-conv-top">
+            <span class="h-conv-name">muxvo</span>
+            <span class="h-conv-time">10:15</span>
+          </div>
+          <div class="h-conv-preview">PRD V1.6 更新护城河策略 -- 三层递进模型</div>
+          <div class="h-conv-bottom">
+            <span class="h-conv-chip" style="background:rgba(232,167,72,0.15);color:var(--accent);">42 msgs</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="h-conv-item" onclick="selectHConv(this)">
+        <div class="h-conv-avatar" style="background:rgba(96,165,250,0.15);color:var(--blue);">A</div>
+        <div class="h-conv-body">
+          <div class="h-conv-top">
+            <span class="h-conv-name">api-server</span>
+            <span class="h-conv-time">Yesterday</span>
+          </div>
+          <div class="h-conv-preview">修复 WebSocket 断线重连 bug -- 心跳检测逻辑</div>
+          <div class="h-conv-bottom">
+            <span class="h-conv-chip" style="background:rgba(96,165,250,0.15);color:var(--blue);">16 msgs</span>
+            <span class="h-conv-chip" style="background:rgba(167,139,250,0.15);color:var(--purple);">fix/ws</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="h-conv-item" onclick="selectHConv(this)">
+        <div class="h-conv-avatar" style="background:rgba(74,222,128,0.15);color:var(--green);">W</div>
+        <div class="h-conv-body">
+          <div class="h-conv-top">
+            <span class="h-conv-name">web-portal</span>
+            <span class="h-conv-time">Yesterday</span>
+          </div>
+          <div class="h-conv-preview">Dashboard 数据可视化 -- ECharts 折线图配置</div>
+          <div class="h-conv-bottom">
+            <span class="h-conv-chip" style="background:rgba(74,222,128,0.15);color:var(--green);">31 msgs</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="h-conv-item" onclick="selectHConv(this)">
+        <div class="h-conv-avatar" style="background:rgba(232,167,72,0.15);color:var(--accent);">M</div>
+        <div class="h-conv-body">
+          <div class="h-conv-top">
+            <span class="h-conv-name">muxvo</span>
+            <span class="h-conv-time">Feb 9</span>
+          </div>
+          <div class="h-conv-preview">Skill 宣传页功能设计 -- 自动生成精美展示页</div>
+          <div class="h-conv-bottom">
+            <span class="h-conv-chip" style="background:rgba(232,167,72,0.15);color:var(--accent);">35 msgs</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="h-conv-item" onclick="selectHConv(this)">
+        <div class="h-conv-avatar" style="background:rgba(167,139,250,0.15);color:var(--purple);">C</div>
+        <div class="h-conv-body">
+          <div class="h-conv-top">
+            <span class="h-conv-name">cli-tools</span>
+            <span class="h-conv-time">Feb 8</span>
+          </div>
+          <div class="h-conv-preview">实现 JSON 格式化输出 -- 支持 --pretty flag</div>
+          <div class="h-conv-bottom">
+            <span class="h-conv-chip" style="background:rgba(167,139,250,0.15);color:var(--purple);">12 msgs</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="h-conv-item" onclick="selectHConv(this)">
+        <div class="h-conv-avatar" style="background:rgba(232,167,72,0.15);color:var(--accent);">M</div>
+        <div class="h-conv-body">
+          <div class="h-conv-top">
+            <span class="h-conv-name">muxvo</span>
+            <span class="h-conv-time">Feb 7</span>
+          </div>
+          <div class="h-conv-preview">PRD 首版 + 原型页面 -- Electron 桌面应用需求</div>
+          <div class="h-conv-bottom">
+            <span class="h-conv-chip" style="background:rgba(232,167,72,0.15);color:var(--accent);">86 msgs</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Chat Area -->
+  <div class="h-chat-area">
+    <div class="h-chat-header">
+      <div class="h-chat-avatar" style="background:rgba(232,167,72,0.15);color:var(--accent);">M</div>
+      <div class="h-chat-info">
+        <div class="h-chat-name">聊天记录持久化方案讨论</div>
+        <div class="h-chat-desc">muxvo &middot; master &middot; 28 messages</div>
+      </div>
+      <div class="h-chat-actions">
+        <div class="h-chat-action-btn" title="Export">&#8599;</div>
+        <div class="h-chat-action-btn" title="Jump to Terminal">&#9654;</div>
+      </div>
+    </div>
+
+    <div class="h-messages">
+      <div class="h-date-sep"><span>Today</span></div>
+
+      <div class="h-msg user">
+        <div class="h-msg-content">现在 Claude 虽然可以自动存储聊天记录，但好像过一段时间会自动删除。如果是这样的话，咱们需要对聊天记录功能重新构建，最好可以和项目绑定在一起。</div>
+        <div class="h-msg-meta">14:32</div>
+      </div>
+
+      <div class="h-msg assistant">
+        <div class="h-msg-content">
+          <div class="h-md-p">我理解你的需求 -- Claude Code 的聊天记录可能会被自动删除，你希望构建一个持久化的、和项目绑定的聊天记录功能。</div>
+          <div class="h-md-p">让我先了解一下项目背景和现有的存储机制。</div>
+          <div class="h-tool-call" onclick="this.classList.toggle('expanded')">
+            <div class="h-tool-call-header">
+              <div class="h-tool-call-icon">T</div>
+              <span class="h-tool-call-name">Bash</span>
+              <span>du -sh ~/.claude/ && ls ~/.claude/</span>
+              <span class="h-tool-call-file">~/.claude/</span>
+            </div>
+            <div class="h-tool-call-body">
+              <div class="h-code-block" style="margin:0">10.5G  /Users/rl/.claude/<br>history.jsonl  projects/  settings.json  statsig/  todos/</div>
+            </div>
+          </div>
+          <div class="h-tool-call" onclick="this.classList.toggle('expanded')">
+            <div class="h-tool-call-header">
+              <div class="h-tool-call-icon">T</div>
+              <span class="h-tool-call-name">Bash</span>
+              <span>wc -l ~/.claude/history.jsonl</span>
+              <span class="h-tool-call-file">history.jsonl</span>
+            </div>
+            <div class="h-tool-call-body">
+              <div class="h-code-block" style="margin:0">5468 /Users/rl/.claude/history.jsonl</div>
+            </div>
+          </div>
+          <div class="h-md-p">探索发现 <code class="h-inline">~/.claude/</code> 约 10.5GB：</div>
+          <ul class="h-md-list">
+            <li><code class="h-inline">history.jsonl</code> 全局索引 -- 5,468 条记录</li>
+            <li><code class="h-inline">projects/</code> 按项目会话 -- 2.2GB</li>
+            <li>未发现自动删除策略</li>
+          </ul>
+        </div>
+        <div class="h-msg-meta">Claude &middot; 14:33</div>
+      </div>
+
+      <div class="h-msg user">
+        <div class="h-msg-content">你觉得哪个好？给我分析下利弊</div>
+        <div class="h-msg-meta">14:40</div>
+      </div>
+
+      <div class="h-msg assistant">
+        <div class="h-msg-content">
+          <div class="h-md-p"><span class="h-md-strong">方案 A -- 纯镜像到项目 .muxvo/</span></div>
+          <div class="h-md-p">实现最简单，JSONL 格式不变。但搜索要遍历文件，跨项目搜索做不了。</div>
+          <div class="h-md-p"><span class="h-md-strong">方案 B -- Muxvo 中央数据库</span></div>
+          <div class="h-md-p">跨项目搜索方便，但不满足项目绑定需求。</div>
+          <div class="h-md-p"><span class="h-md-strong">方案 C -- 混合方案（项目 + 中央索引）</span></div>
+          <div class="h-code-block">
+            <span class="h-code-lang">typescript</span>
+<span class="hc-kw">interface</span> <span class="hc-fn">ChatStorage</span> {
+  <span class="hc-fn">projectDir</span>: <span class="hc-str">string</span>;    <span class="hc-cm">// .muxvo/chat/ 项目内</span>
+  <span class="hc-fn">centralIndex</span>: <span class="hc-str">string</span>; <span class="hc-cm">// ~/Library/.../Muxvo/index.db</span>
+  <span class="hc-fn">sync</span>(): <span class="hc-kw">Promise</span>&lt;<span class="hc-str">void</span>&gt;;
+}
+          </div>
+          <div class="h-md-p"><span class="h-md-strong">我的判断：方案 A 最合适</span></div>
+          <div class="h-md-p">V1 阶段数据量不大，JSONL 遍历够用。方案 C 是过早优化。</div>
+        </div>
+        <div class="h-msg-meta">Claude &middot; 14:41</div>
+      </div>
+
+      <div class="h-msg user">
+        <div class="h-msg-content">你觉得是否应该项目绑定？</div>
+        <div class="h-msg-meta">14:45</div>
+      </div>
+
+      <div class="h-msg assistant">
+        <div class="h-msg-content">
+          <div class="h-md-p">说实话，我觉得<span class="h-md-strong">不应该项目绑定</span>。</div>
+          <div class="h-md-p">核心理由：<code class="h-inline">.gitignore</code> 让项目绑定成了伪命题 -- 聊天内容含敏感信息必须 ignore，那数据实际上不会随 git 走。</div>
+          <div class="h-md-p">推荐：<span class="h-md-strong">Muxvo 中央存储 + 按项目索引</span></div>
+          <div class="h-code-block">
+            <span class="h-code-lang">directory</span>
+<span class="hc-cm">~/Library/Application Support/Muxvo/</span>
+├── chat-history/
+│   ├── sync-state.json
+│   ├── projects/
+│   │   └── {project-hash}/
+│   │       ├── project-info.json
+│   │       └── sessions/
+│   └── history-index.jsonl
+          </div>
+          <div class="h-tool-call" onclick="this.classList.toggle('expanded')">
+            <div class="h-tool-call-header">
+              <div class="h-tool-call-icon">T</div>
+              <span class="h-tool-call-name">Edit</span>
+              <span>Updated PRD.md with storage architecture</span>
+              <span class="h-tool-call-file">PRD.md</span>
+            </div>
+            <div class="h-tool-call-body">
+              <div class="h-code-block" style="margin:0"><span class="hc-cm">+ ## 4.2 聊天记录存储策略</span><br><span class="hc-cm">+ - 采用 Muxvo 中央存储方案</span><br><span class="hc-cm">+ - 路径: ~/Library/Application Support/Muxvo/</span><br><span class="hc-cm">+ - 使用 JSONL 格式存储会话</span></div>
+            </div>
+          </div>
+          <div class="h-md-p">这样数据完全由 Muxvo 管理，不污染项目目录，同时支持跨项目搜索和统一管理。</div>
+        </div>
+        <div class="h-msg-meta">Claude &middot; 14:46</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Controls -->
@@ -2325,6 +3024,65 @@ function closeFolderPicker() {
   folderPickerTargetIndex = -1;
 }
 
+// === HISTORY VIEW ===
+let historyViewOpen = false;
+
+function toggleHistoryView() {
+  const historyView = document.getElementById('history-view');
+  const container = document.getElementById('container');
+  const controls = document.querySelector('.controls');
+  const gridBtn = document.getElementById('grid-btn');
+  const hint = document.getElementById('hint');
+  const menuBtn = document.getElementById('menu-history-btn');
+
+  if (historyViewOpen) {
+    // Close history view
+    historyView.classList.remove('open');
+    container.style.display = '';
+    controls.style.display = '';
+    menuBtn.classList.remove('active');
+    historyViewOpen = false;
+    // Restore the 终端 active state
+    document.querySelectorAll('.menu-item').forEach(m => {
+      m.classList.toggle('active', m.textContent.includes('终端'));
+    });
+  } else {
+    // Close any open menus/panels first
+    document.getElementById('menu-dropdown').classList.remove('open');
+    closeFilePanel();
+    closeFolderPicker();
+    if (document.getElementById('file-temp-view').classList.contains('open')) {
+      closeFileView();
+    }
+    if (focusedIndex !== -1) {
+      returnToGrid();
+    }
+
+    // Open history view
+    historyView.classList.add('open');
+    container.style.display = 'none';
+    controls.style.display = 'none';
+    gridBtn.classList.remove('show');
+    hint.classList.remove('show');
+    historyViewOpen = true;
+
+    // Update menu active state
+    document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+    menuBtn.classList.add('active');
+    activeMenu = null;
+  }
+}
+
+function selectHConv(el) {
+  document.querySelectorAll('.h-conv-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function filterHTag(el) {
+  document.querySelectorAll('.h-tag').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
 // Init with 2 projects
 activeProjects = [projects[0], projects[1]];
 render();
@@ -2355,7 +3113,12 @@ document.addEventListener('click', (e) => {
 // Keyboard
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    // File temp view has highest priority
+    // History view has highest priority
+    if (historyViewOpen) {
+      toggleHistoryView();
+      return;
+    }
+    // File temp view has next priority
     const tempView = document.getElementById('file-temp-view');
     if (tempView.classList.contains('open')) {
       closeFileView();
