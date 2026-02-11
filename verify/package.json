@@ -1,0 +1,31 @@
+{
+  "name": "muxvo-verify",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "verify": "tsx cli.ts",
+    "verify:spec": "tsx cli.ts --spec-only",
+    "verify:v1": "tsx cli.ts --phase V1",
+    "verify:v2": "tsx cli.ts --phase V2-P2",
+    "verify:static": "tsx cli.ts --dimensions A",
+    "verify:logic": "tsx cli.ts --dimensions B",
+    "verify:tests": "tsx cli.ts --dimensions C",
+    "verify:html": "tsx cli.ts --format html",
+    "verify:ci": "tsx cli.ts --phase V1 --format json"
+  },
+  "dependencies": {
+    "ts-morph": "^24.0.0",
+    "unified": "^11.0.0",
+    "remark-parse": "^11.0.0",
+    "remark-gfm": "^4.0.0",
+    "unist-util-visit": "^5.0.0",
+    "glob": "^11.0.0",
+    "chalk": "^5.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.0",
+    "@types/node": "^22.0.0"
+  }
+}
