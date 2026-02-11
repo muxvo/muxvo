@@ -1,0 +1,32 @@
+{
+  "generatedAt": "2026-02-11T10:13:00.887Z",
+  "projectPath": "/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo",
+  "totalApis": 1,
+  "scannedFiles": 29,
+  "categories": {
+    "verify": [
+      {
+        "path": "{成员访问}",
+        "method": "GET",
+        "file": "verify/verifiers/static/ipc-handlers.verifier.ts",
+        "line": 14,
+        "functionName": "domainChannels.get",
+        "params": [],
+        "responseFields": [],
+        "category": "verify"
+      }
+    ]
+  },
+  "apis": [
+    {
+      "path": "{成员访问}",
+      "method": "GET",
+      "file": "verify/verifiers/static/ipc-handlers.verifier.ts",
+      "line": 14,
+      "functionName": "domainChannels.get",
+      "params": [],
+      "responseFields": [],
+      "category": "verify"
+    }
+  ]
+}
