@@ -16,19 +16,19 @@ async function verify(registry: SpecRegistry, projectRoot: string, activePhase: 
     if (entry.type === 'file') {
       const exists = fileExists(fullPath);
       status = exists ? 'pass' : 'fail';
-      actual = exists ? 'file exists' : 'file not found';
+      actual = exists ? '文件存在' : '文件不存在';
     } else {
       const exists = dirExists(fullPath);
       status = exists ? 'pass' : 'fail';
-      actual = exists ? 'directory exists' : 'directory not found';
+      actual = exists ? '目录存在' : '目录不存在';
     }
 
     results.push({
       id: `A1.dir.${entry.path}`,
       dimension: 'A',
-      description: `${entry.type === 'file' ? 'File' : 'Directory'} exists: ${entry.path}`,
+      description: `${entry.type === 'file' ? '文件' : '目录'}存在: ${entry.path}`,
       status,
-      expected: `${entry.type} should exist`,
+      expected: `${entry.type === 'file' ? '文件' : '目录'}应存在`,
       actual,
       sourceRef: entry.sourceLocation,
     });

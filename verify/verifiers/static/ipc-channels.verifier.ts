@@ -8,20 +8,18 @@ async function verify(registry: SpecRegistry, projectRoot: string, activePhase: 
 
   const channelsFile = resolveProjectPath(projectRoot, 'src/shared/constants/channels.ts');
   const channelsExist = fileExists(channelsFile);
-
   let definedChannels: Set<string> | null = null;
 
   if (channelsExist) {
     const content = readFileContent(channelsFile);
     if (content) {
       definedChannels = new Set<string>();
-      // Extract all string literals that look like IPC channels (contain a colon)
-      const regex = /'[^']*:[^']*'|"[^"]*:[^"]*"/g;
-      let match: RegExpExecArray | null;
-      while ((match = regex.exec(content)) !== null) {
-        // Strip quotes
-        const channel = match[0].slice(1, -1);
-        definedChannels.add(channel);
+      // Extract all string literals that look like IPC channel names (contain ':')
+      const matches = content.match(/'[^']*:[^']*'|"[^"]*:[^"]*"/g);
+      if (matches) {
+        for (const m of matches) {
+          definedChannels.add(m.slice(1, -1)); // remove quotes
+        }
       }
     }
   }
@@ -34,21 +32,21 @@ async function verify(registry: SpecRegistry, projectRoot: string, activePhase: 
 
     if (!definedChannels) {
       status = 'skip';
-      actual = 'channels.ts not found';
+      actual = 'channels.ts 文件不存在';
     } else if (definedChannels.has(channel.name)) {
       status = 'pass';
-      actual = `channel '${channel.name}' defined`;
+      actual = `已定义: ${channel.name}`;
     } else {
       status = 'fail';
-      actual = `channel '${channel.name}' not found in channels.ts`;
+      actual = `未找到 channel 定义: ${channel.name}`;
     }
 
     results.push({
       id: `A2.ipc.${channel.name}`,
       dimension: 'A',
-      description: `IPC channel constant defined: ${channel.name}`,
+      description: `IPC Channel 常量定义: ${channel.name}`,
       status,
-      expected: `channel '${channel.name}' should be defined in channels.ts`,
+      expected: `channels.ts 中包含 '${channel.name}'`,
       actual,
       sourceRef: channel.sourceLocation,
     });
@@ -61,6 +59,6 @@ registerVerifier({
   id: 'A2',
   dimension: 'A',
   dimensionName: 'A.静态结构',
-  name: 'IPC通道常量',
+  name: 'IPC通道定义',
   fn: verify,
 });

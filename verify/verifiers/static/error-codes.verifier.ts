@@ -1,51 +1,45 @@
 import { registerVerifier } from '../runner.js';
 import type { SpecRegistry, CheckResult } from '../../spec/registry.js';
 import { readFileContent, resolveProjectPath, globFiles } from '../../utils/file-helpers.js';
-import { escapeRegex } from '../../utils/pattern-matchers.js';
+import { contentContains } from '../../utils/pattern-matchers.js';
 
 async function verify(registry: SpecRegistry, projectRoot: string, _activePhase: string): Promise<CheckResult[]> {
   const results: CheckResult[] = [];
 
   // Search src/shared/ and src/main/ for .ts files
-  const srcDir = resolveProjectPath(projectRoot, 'src');
-  const sharedFiles = await globFiles('shared/**/*.ts', srcDir);
-  const mainFiles = await globFiles('main/**/*.ts', srcDir);
+  const sharedFiles = await globFiles('**/*.ts', resolveProjectPath(projectRoot, 'src/shared'));
+  const mainFiles = await globFiles('**/*.ts', resolveProjectPath(projectRoot, 'src/main'));
 
-  const allFiles = new Set([...sharedFiles, ...mainFiles]);
+  const allFiles = [...sharedFiles, ...mainFiles];
 
-  // Read all file contents into a combined string
-  let combinedContent = '';
-  for (const filePath of allFiles) {
-    const content = readFileContent(filePath);
-    if (content) {
-      combinedContent += content + '\n';
-    }
+  // Read all file contents
+  const allContents: string[] = [];
+  for (const file of allFiles) {
+    const content = readFileContent(file);
+    if (content) allContents.push(content);
   }
+  const combinedContent = allContents.join('\n');
 
   for (const errorCode of registry.errorCodes) {
     let status: 'pass' | 'fail' | 'skip';
     let actual: string;
 
-    if (!combinedContent) {
+    if (allFiles.length === 0) {
       status = 'skip';
-      actual = 'no source files found in src/shared/ or src/main/';
+      actual = 'src/shared/ 和 src/main/ 下未找到 .ts 文件';
     } else {
-      const escaped = escapeRegex(errorCode.code);
-      const pattern = new RegExp(`['"\`]${escaped}['"\`]`);
-      const found = pattern.test(combinedContent);
-
+      const found = contentContains(combinedContent, `'${errorCode.code}'`) ||
+                     contentContains(combinedContent, `"${errorCode.code}"`);
       status = found ? 'pass' : 'fail';
-      actual = found
-        ? `error code '${errorCode.code}' found in source`
-        : `error code '${errorCode.code}' not found`;
+      actual = found ? `错误码 '${errorCode.code}' 已定义` : `未找到错误码: ${errorCode.code}`;
     }
 
     results.push({
       id: `A10.error.${errorCode.code}`,
       dimension: 'A',
-      description: `Error code defined: ${errorCode.code}`,
+      description: `错误码定义: ${errorCode.code}`,
       status,
-      expected: `error code '${errorCode.code}' should be defined`,
+      expected: `错误码 '${errorCode.code}' 在代码中已定义`,
       actual,
       sourceRef: errorCode.sourceLocation,
     });

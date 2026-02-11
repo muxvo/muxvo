@@ -8,7 +8,6 @@ interface StoreEntry {
   phase: string;
 }
 
-// Store list from DEV-PLAN §5
 const STORES: StoreEntry[] = [
   { name: 'terminal', phase: 'V1' },
   { name: 'layout', phase: 'V1' },
@@ -34,10 +33,10 @@ async function verify(_registry: SpecRegistry, projectRoot: string, activePhase:
     results.push({
       id: `A7.store.${store.name}`,
       dimension: 'A',
-      description: `Store file exists: ${store.name}.store.ts`,
+      description: `Store 文件存在: ${store.name}.store.ts`,
       status: exists ? 'pass' : 'fail',
-      expected: `${store.name}.store.ts should exist`,
-      actual: exists ? 'file exists' : 'file not found',
+      expected: `文件存在: src/renderer/stores/${store.name}.store.ts`,
+      actual: exists ? '文件存在' : '文件不存在',
       sourceRef: { file: 'DEV-PLAN.md', line: 0 },
     });
   }

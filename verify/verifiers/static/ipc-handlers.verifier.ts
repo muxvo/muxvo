@@ -25,41 +25,46 @@ async function verify(registry: SpecRegistry, projectRoot: string, activePhase: 
       let status: 'pass' | 'fail' | 'skip';
       let actual: string;
 
-      // M→R channels are push from main, no handler registration needed
+      // M→R direction means main pushes to renderer, no handler needed
       if (channel.direction === 'M→R') {
         status = 'pass';
-        actual = 'push channel (M→R), no handler needed';
+        actual = '推送通道，无需 handler 注册';
       } else if (!content) {
         status = 'skip';
-        actual = `handler file ${domain}.ipc.ts not found`;
+        actual = `handler 文件不存在: src/main/ipc/${domain}.ipc.ts`;
       } else {
-        // Search for handler registration patterns
-        const escaped = escapeRegex(channel.name);
-        const handlePattern = new RegExp(`ipcMain\\.(handle|on)\\s*\\(\\s*['"\`]${escaped}['"\`]`);
+        // Search for ipcMain.handle('channel-name' or ipcMain.on('channel-name'
+        const channelEscaped = escapeRegex(channel.name);
+        const handlePattern = new RegExp(
+          `ipcMain\\.(handle|on)\\s*\\(\\s*['"]${channelEscaped}['"]`,
+        );
         // Also search for constant reference patterns like CHANNELS.TERMINAL.CREATE
         const parts = channel.name.split(':');
-        const constPattern = parts.length >= 2
-          ? new RegExp(`CHANNELS\\.${escapeRegex(parts[0].toUpperCase())}\\.${escapeRegex(parts[1].toUpperCase().replace(/-/g, '_'))}`)
+        const constRef = parts.length === 2
+          ? `CHANNELS.${parts[0].toUpperCase()}.${parts[1].toUpperCase().replace(/-/g, '_')}`
+          : null;
+        const constPattern = constRef
+          ? new RegExp(`ipcMain\\.(handle|on)\\s*\\(\\s*${escapeRegex(constRef)}`)
           : null;
 
-        const directMatch = handlePattern.test(content);
-        const constMatch = constPattern ? constPattern.test(content) : false;
+        const hasDirectMatch = handlePattern.test(content);
+        const hasConstMatch = constPattern ? constPattern.test(content) : false;
 
-        if (directMatch || constMatch) {
+        if (hasDirectMatch || hasConstMatch) {
           status = 'pass';
-          actual = 'handler registration found';
+          actual = 'handler 已注册';
         } else {
           status = 'fail';
-          actual = `no handler found for '${channel.name}' in ${domain}.ipc.ts`;
+          actual = `未找到 ipcMain.handle/on 注册: ${channel.name}`;
         }
       }
 
       results.push({
         id: `A3.handler.${channel.name}`,
         dimension: 'A',
-        description: `IPC handler registered: ${channel.name}`,
+        description: `IPC Handler 注册: ${channel.name}`,
         status,
-        expected: `handler for '${channel.name}' should be registered`,
+        expected: `ipcMain.handle/on('${channel.name}') 已注册`,
         actual,
         sourceRef: channel.sourceLocation,
       });
@@ -73,6 +78,6 @@ registerVerifier({
   id: 'A3',
   dimension: 'A',
   dimensionName: 'A.静态结构',
-  name: 'IPC处理器',
+  name: 'IPC Handler注册',
   fn: verify,
 });

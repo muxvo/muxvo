@@ -1,120 +1,58 @@
-// state-machines.parser.ts — 从 PRD.md §6 提取状态机定义
+// state-machines.parser.ts — 从 PRD.md §6 提取状态机
+import { parseMarkdown, extractCodeBlocksUnderHeading } from './markdown-parser.js';
 import type { StateMachineSpec, TransitionSpec } from '../registry.js';
-import {
-  parseMarkdown,
-  extractCodeBlocksUnderHeading,
-  extractSectionsAtLevel,
-} from './markdown-parser.js';
 
 /**
- * 从 PRD.md 的 `## 6、状态机` 部分提取 mermaid stateDiagram-v2。
+ * 从 PRD.md §6 提取所有状态机定义
  *
- * 解析:
- * - `[*] --> StateName` → 初始状态
- * - `StateA --> StateB: event` → 状态转换
- * - `state StateName { ... }` → 嵌套状态
- * - `StateName --> [*]` → 终止
+ * 格式:
+ * ### 6.1 应用生命周期
+ * ```mermaid
+ * stateDiagram-v2
+ *     [*] --> Launching: 用户启动 Muxvo
+ *     state Running { ... }
+ * ```
  */
 export function extractStateMachines(prdContent: string): StateMachineSpec[] {
   const root = parseMarkdown(prdContent);
-  const results: StateMachineSpec[] = [];
+  const specs: StateMachineSpec[] = [];
 
-  // 查找 ### 6.x 级别的子节（状态机章节）
-  const sections = extractSectionsAtLevel(root, /^6\.\d+/, 3);
+  // 匹配 ### 6.x 开头的标题
+  const sections = extractCodeBlocksUnderHeading(root, /^6\.\d+/, 3, 'mermaid');
 
   for (const section of sections) {
-    const sectionMatch = section.heading.match(/^(6\.\d+)\s+(.+)/);
-    if (!sectionMatch) continue;
+    // 从标题提取名称和编号
+    const headingMatch = section.heading.match(/^(6\.\d+)\s+(.+)$/);
+    if (!headingMatch) continue;
 
-    const prdSection = sectionMatch[1];
-    const sectionTitle = sectionMatch[2].trim();
+    const prdSection = headingMatch[1];
+    const rawName = headingMatch[2].trim();
 
-    // 推导文件名: e.g. "应用生命周期" → 从目录树中匹配
-    // 使用 section number 推导: 6.1 → app-lifecycle.machine.ts
-    const fileName = inferMachineFileName(prdSection);
+    // 生成文件名: "应用生命周期" → "app-lifecycle.machine.ts"
+    const fileName = sectionToFileName(prdSection);
 
-    // 提取 mermaid 代码块
-    const codeBlocks = section.children.filter(
-      n => n.type === 'code' && (n as any).lang === 'mermaid',
-    );
+    for (const block of section.blocks) {
+      const { states, transitions } = parseMermaidStateDiagram(block.value);
 
-    if (codeBlocks.length === 0) continue;
-
-    for (const codeBlock of codeBlocks) {
-      const mermaidCode = (codeBlock as any).value as string;
-      const { states, transitions } = parseMermaidStateDiagram(mermaidCode);
-
-      results.push({
-        name: sectionTitle,
+      specs.push({
+        name: rawName,
         fileName,
         prdSection,
         states,
         transitions,
         sourceLocation: {
           file: 'PRD.md',
-          line: codeBlock.position?.start?.line ?? section.headingLine,
+          line: block._startLine,
         },
       });
     }
   }
 
-  return results;
+  return specs;
 }
 
-/** 从 mermaid stateDiagram-v2 代码中提取状态与转换 */
-function parseMermaidStateDiagram(code: string): {
-  states: string[];
-  transitions: TransitionSpec[];
-} {
-  const states = new Set<string>();
-  const transitions: TransitionSpec[] = [];
-
-  const lines = code.split('\n');
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    // 跳过空行、注释、指令
-    if (!trimmed || trimmed.startsWith('%%') || trimmed === 'stateDiagram-v2') continue;
-
-    // 匹配 note 行（跳过）
-    if (trimmed.startsWith('note ')) continue;
-
-    // 匹配 state 声明（嵌套状态）: state StateName { 或 state "name" as alias
-    const stateMatch = trimmed.match(/^state\s+(\S+)\s*\{/);
-    if (stateMatch) {
-      const stateName = stateMatch[1].replace(/"/g, '');
-      states.add(stateName);
-      continue;
-    }
-
-    // 匹配转换: StateA --> StateB: event
-    const transMatch = trimmed.match(/^(.+?)\s*-->\s*(.+?)(?:\s*:\s*(.+))?$/);
-    if (transMatch) {
-      const from = transMatch[1].trim();
-      const to = transMatch[2].trim();
-      const event = transMatch[3]?.trim() ?? '';
-
-      // 收集非特殊状态名
-      if (from !== '[*]') states.add(from);
-      if (to !== '[*]') states.add(to);
-
-      transitions.push({ from, to, event });
-      continue;
-    }
-
-    // 匹配闭合大括号（跳过）
-    if (trimmed === '}') continue;
-  }
-
-  return {
-    states: Array.from(states),
-    transitions,
-  };
-}
-
-/** 从 PRD section number 推导状态机文件名 */
-function inferMachineFileName(prdSection: string): string {
+/** 根据 PRD section 编号映射文件名 */
+function sectionToFileName(section: string): string {
   const mapping: Record<string, string> = {
     '6.1': 'app-lifecycle.machine.ts',
     '6.2': 'terminal-process.machine.ts',
@@ -135,5 +73,49 @@ function inferMachineFileName(prdSection: string): string {
     '6.17': 'auth.machine.ts',
     '6.18': 'showcase.machine.ts',
   };
-  return mapping[prdSection] ?? `unknown-${prdSection}.machine.ts`;
+  return mapping[section] ?? `section-${section}.machine.ts`;
+}
+
+/** 解析 mermaid stateDiagram-v2 代码 */
+function parseMermaidStateDiagram(code: string): { states: string[]; transitions: TransitionSpec[] } {
+  const statesSet = new Set<string>();
+  const transitions: TransitionSpec[] = [];
+  const lines = code.split('\n');
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+
+    // 跳过空行和指令行
+    if (!line || line.startsWith('stateDiagram') || line.startsWith('note ') || line === '}') continue;
+
+    // 状态转换: StateA --> StateB: event
+    const transitionMatch = line.match(/^(\[?\*?\]?|\w+)\s*-->\s*(\[?\*?\]?|\w+)\s*(?::\s*(.+))?$/);
+    if (transitionMatch) {
+      const from = transitionMatch[1];
+      const to = transitionMatch[2];
+      const event = transitionMatch[3]?.trim() ?? '';
+
+      // 收集非特殊状态
+      if (from !== '[*]') statesSet.add(from);
+      if (to !== '[*]') statesSet.add(to);
+
+      transitions.push({ from, to, event });
+      continue;
+    }
+
+    // 嵌套状态声明: state StateName { 或 state StateName
+    const stateMatch = line.match(/^state\s+(\w+)\s*\{?/);
+    if (stateMatch) {
+      statesSet.add(stateMatch[1]);
+      continue;
+    }
+
+    // 简单状态行（以 [*] 或标识符开头但不是转换）
+    // 例如已经被上面的转换规则处理了
+  }
+
+  return {
+    states: Array.from(statesSet).sort(),
+    transitions,
+  };
 }
