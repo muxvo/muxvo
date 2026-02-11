@@ -1004,6 +1004,7 @@ graph TD
     A1 --> A4[A4: CSS Grid]
     A2 --> A3[A3: xterm.js]
     A2 --> A5[A5: 进程生命周期]
+    A5 --> A7[A7: WaitingInput 检测]
     A4 --> A6[A6: config 持久化]
 
     A4 --> B1[B: 聚焦模式]
@@ -1016,6 +1017,7 @@ graph TD
     D4 --> D5[D5: 项目列表]
     D4 --> D6[D6: 会话列表]
     D4 --> D7[D7: 会话详情]
+    D4 --> D9[D9: 虚拟滚动]
 
     G1[G1: Markdown 引擎] --> G2[G2: 代码高亮]
     G1 --> G3[G3: 预览/编辑模式]
@@ -1266,6 +1268,24 @@ graph TD
 | Skill 发现安装 | 打开浏览器 → 搜索 → 查看详情 → 安装 → 验证已安装 |
 | AI 评分展示 | 选中 Skill → 评分 → 查看雷达图 → 保存 PNG |
 | 展示页发布 | 评分 → 生成展示页 → 编辑 → 发布 → 分享 |
+| Skill 发现者完整旅程 | 打开浏览器 → 搜索 → 查看详情 → 审查 Hook → 安装 → 验证已安装列表 |
+| Skill 展示者完整旅程 | 选中 Skill → 触发评分 → 等待结果 → 查看雷达图 → 生成展示页 → 编辑 → 发布 → 分享 |
+
+### 12.5 跨平台测试矩阵
+
+| 平台 | 架构 | CI 环境 | 测试范围 |
+|------|------|---------|---------|
+| macOS | arm64 (Apple Silicon) | GitHub Actions macos-14 | 全量（单元 + 集成 + E2E） |
+| macOS | x86_64 (Intel) | GitHub Actions macos-13 | 全量（单元 + 集成 + E2E） |
+| Windows | x64 | GitHub Actions windows-latest | 全量（单元 + 集成 + E2E） |
+| Linux | x64 | GitHub Actions ubuntu-latest | 单元 + 集成（E2E 需 xvfb） |
+
+**跨平台重点验证项**：
+- node-pty 原生模块编译与加载
+- 文件路径分隔符（`/` vs `\`）
+- 快捷键映射（Cmd vs Ctrl）
+- 字体渲染差异
+- 系统通知与托盘图标
 
 ---
 
@@ -1283,6 +1303,8 @@ graph TD
 ### Milestone 2：交互增强（Week 4-5）
 
 **交付物**：聚焦模式 + 双段式命名 + tcgetpgrp + 3D 效果 + 快捷键
+
+**说明**：W4-5 含 M1 收尾 Bug 修复（~1.5 天）+ 集成联调缓冲（~1.5 天），剩余时间用于 M2 新功能开发。
 
 **验收标准**：
 - 双击聚焦、Esc 返回、右栏切换
@@ -1392,9 +1414,9 @@ graph TD
 | N2-6 | Muxvo 商城数据源适配器 | Service | N2-1 | 0.5d |
 | N2-7 | 本地已安装数据源 | Service | N2-1 | 0.5d |
 | N2-8 | 聚合引擎：并行请求 + 去重 + 缓存 + 降级 | Service | N2-2~7 | 2d |
-| N2-9 | 浏览器全屏覆盖层 UI | UI/Renderer | N2-8 | 2d |
-| N2-10 | 包详情页面板 | UI/Renderer | N2-9 | 1d |
-| N2-11 | 搜索功能（300ms 去抖 + 跨源搜索） | UI/Service | N2-9 | 0.5d |
+| N2-9 | 浏览器全屏覆盖层 UI。埋点：`skill:browser-open` | UI/Renderer | N2-8 | 2d |
+| N2-10 | 包详情页面板。埋点：`skill:detail-view` | UI/Renderer | N2-9 | 1d |
+| N2-11 | 搜索功能（300ms 去抖 + 跨源搜索）。埋点：`skill:search` | UI/Service | N2-9 | 0.5d |
 
 ### O — 一键安装（~5 天）
 
@@ -1403,8 +1425,8 @@ graph TD
 | O-1 | 下载引擎（多源下载 + 进度回调） | Main | N2-1 | 1d |
 | O-2 | 包解压 + 文件放置 | Main | O-1 | 0.5d |
 | O-3 | 本地注册表 marketplace.json | Main | 无 | 1d |
-| O-4 | 安装状态机 UI | UI/Renderer | O-1,O-2,O-3 | 1d |
-| O-5 | 卸载功能 | Main/UI | O-3 | 0.5d |
+| O-4 | 安装状态机 UI。埋点：`skill:install` | UI/Renderer | O-1,O-2,O-3 | 1d |
+| O-5 | 卸载功能。埋点：`skill:uninstall` | Main/UI | O-3 | 0.5d |
 | O-6 | chokidar 目录监听 → 列表刷新 | Main | V1 配置管理器 | 0.5d |
 
 ### U — Hook 安全审查（~2.5 天）
@@ -1425,10 +1447,10 @@ graph TD
 | SR-3 | 评分触发机制（检测 CC 终端 → 发送指令）。含评分 Skill 自动安装检测：首次评分 → 检查 scorer 是否安装 → 未安装触发自动安装 → 安装完成自动触发评分。埋点：`score:trigger` / `score:complete` | Main | V1 终端管理, SR-1 | 1d |
 | SR-4 | 文件监听通信（chokidar 监听 skill-scores/） | Main | SR-1 | 0.5d |
 | SR-5 | 评分缓存 + 内容 hash + promptVersion 失效 | Service | SR-4 | 0.5d |
-| SR-6 | 评分卡 UI（六维度雷达图 + 总分 + 等级 + 称号） | UI/Renderer | SR-4 | 2d |
+| SR-6 | 评分卡 UI（六维度雷达图 + 总分 + 等级 + 称号）。埋点：`score:result` / `score:fail` | UI/Renderer | SR-4 | 2d |
 | SR-7 | 评分详情面板（各维度理由 + 改进建议） | UI/Renderer | SR-6 | 0.5d |
-| SR-8 | 评分卡导出（PNG / 剪贴板） | UI/Renderer | SR-6 | 1d |
-| SR-9 | 评分重试机制（最多 3 次 + 手动重试） | Service/UI | SR-3 | 0.5d |
+| SR-8 | 评分卡导出（PNG / 剪贴板）。埋点：`score:save-image` / `score:copy-image` | UI/Renderer | SR-6 | 1d |
+| SR-9 | 评分重试机制（最多 3 次 + 手动重试）。埋点：`score:retry` | Service/UI | SR-3 | 0.5d |
 
 ### T — 更新检测（~3 天）
 
@@ -1436,35 +1458,35 @@ graph TD
 |---|------|--------|---------|------|
 | T-1 | 更新检测引擎（遍历注册表 → 查询最新版本 → 语义版本比较） | Service | O-3, N2-8 | 1d |
 | T-2 | 定时触发（启动 + 每 6 小时） | Main | T-1 | 0.5d |
-| T-3 | 更新提示 UI（红色徽章 + amber 标记） | UI/Renderer | T-1 | 0.5d |
-| T-4 | 单个/批量更新操作 | Main/Service | O-1, T-1 | 1d |
+| T-3 | 更新提示 UI（红色徽章 + amber 标记）。埋点：`skill:update-available` | UI/Renderer | T-1 | 0.5d |
+| T-4 | 单个/批量更新操作。埋点：`skill:update` / `skill:batch-update` | Main/Service | O-1, T-1 | 1d |
 
 ### SS — Skill Showcase 展示页（~10.5 天）
 
 | # | 任务 | 涉及层 | 前置依赖 | 预估 |
 |---|------|--------|---------|------|
-| SS-1 | SKILL.md 解析器（YAML frontmatter + Markdown body） | Service | 无 | 1d |
-| SS-2 | 展示页模板系统（2-3 套主题） | Template | 无 | 3d |
-| SS-3 | HTML 生成引擎（合并评分 + SKILL.md → 静态 HTML + DOMPurify XSS 防护 + 图片白名单域名） | Service | SS-1, SS-2, SR | 2d |
-| SS-4 | 展示页编辑/预览 UI | UI/Renderer | SS-3 | 2d |
-| SS-5 | OG Card 图片生成（1200x630px） | Main | SR-6 | 1d |
-| SS-6 | 微信分享图生成（750x1334px） | Main | SR-6 | 1d |
+| SS-1 | SKILL.md 解析器（YAML frontmatter + Markdown body）。埋点：`showcase:parse` | Service | 无 | 1d |
+| SS-2 | 展示页模板系统（2-3 套主题）。模板 metadata 预留 `{ free: boolean, price?: number }` 字段，为后续付费模板扩展预埋。埋点：`showcase:template-switch` | Template | 无 | 3d |
+| SS-3 | HTML 生成引擎（合并评分 + SKILL.md → 静态 HTML + DOMPurify XSS 防护 + 图片白名单域名）。异常处理：图片资源上传失败 → 自动压缩重试，最终失败用占位图。埋点：`showcase:generate` | Service | SS-1, SS-2, SR | 2d |
+| SS-4 | 展示页编辑/预览 UI。埋点：`showcase:screenshot-add` | UI/Renderer | SS-3 | 2d |
+| SS-5 | OG Card 图片生成（1200x630px）。埋点：`showcase:og-generate` | Main | SR-6 | 1d |
+| SS-6 | 微信分享图生成（750x1334px）。异常处理：微信分享图生成失败 → fallback 为复制链接分享。埋点：`showcase:share-image-generate` | Main | SR-6 | 1d |
 | SS-7 | 安装按钮 JS（deep link + 3 秒超时降级） | Template | 无 | 0.5d |
 
 ### P2 — Skill 发布/分享（~11.5 天）
 
 | # | 任务 | 涉及层 | 前置依赖 | 预估 |
 |---|------|--------|---------|------|
-| P2-1 | GitHub OAuth PKCE（code_verifier/challenge + 本地 HTTP + 回调） | Main | 无 | 2d |
-| P2-2 | Deep Link 协议注册（muxvo:// macOS/Windows/Linux） | Main | 无 | 1d |
+| P2-1 | GitHub OAuth PKCE（code_verifier/challenge + 本地 HTTP + 回调）。埋点：`auth:github-login` / `auth:github-login-success` | Main | 无 | 2d |
+| P2-2 | Deep Link 协议注册（muxvo:// macOS/Windows/Linux）。埋点：`deeplink:trigger` | Main | 无 | 1d |
 | P2-3 | Token 安全存储（Electron safeStorage） | Main | P2-1 | 0.5d |
-| P2-4 | 发布前安全检查引擎 | Service | 无 | 1d |
-| P2-5 | GitHub Pages 自动发布 | Service | P2-1, SS-3 | 2d |
+| P2-4 | 发布前安全检查引擎。埋点：`showcase:security-check` / `showcase:security-check-fail` | Service | 无 | 1d |
+| P2-5 | GitHub Pages 自动发布。异常处理：GitHub Pages 发布超时 → 自动保存为草稿。埋点：`showcase:publish` / `showcase:publish-success` | Service | P2-1, SS-3 | 2d |
 | P2-6 | showcase-index 索引仓库更新 | Service | P2-5 | 0.5d |
-| P2-7 | 分享面板 UI（多平台分享 + 徽章） | UI/Renderer | P2-5 | 1.5d |
-| P2-8 | muxvo-publisher CC Plugin 开发 | CC Plugin | P2-4, P2-5, SR-1 | 2d |
+| P2-7 | 分享面板 UI（多平台分享 + 徽章）。异常处理：GitHub 仓库被手动删除 → 检测后标记 Unpublished + 提示重新发布。埋点：`showcase:share-link-copy` | UI/Renderer | P2-5 | 1.5d |
+| P2-8 | muxvo-publisher CC Plugin 开发。独立 GitHub 仓库 `muxvo/muxvo-publisher`。未授权时终端提示"请先在 Muxvo 中登录 GitHub"。埋点：`showcase:cli-publish` | CC Plugin | P2-4, P2-5, SR-1 | 2d |
 | P2-9 | Token 传递机制（临时文件 + 权限 600） | Main/Plugin | P2-3, P2-8 | 0.5d |
-| P2-10 | 发布草稿管理 | Service/UI | P2-5 | 0.5d |
+| P2-10 | 发布草稿管理（草稿本地存储 drafts/ + 状态机 draft→preview→published + 自动保存间隔 30s）。埋点：`showcase:draft-save` / `showcase:draft-resume` | Service/UI | P2-5 | 0.5d |
 
 ### RE3 — 富编辑器高级（~3 天）
 
@@ -1489,6 +1511,8 @@ graph TD
 - 跨源去重：`name + source` 为唯一键
 - 降级：连续 3 次失败后递增重试（30s→60s→120s）
 - README 渲染缓存：已查看的包详情页渲染结果缓存到内存（LRU 缓存，最多 50 条）
+- 分页策略：每页 20 条，前端滚动触底加载
+- 更新检查合并：批量版本查询合并为一次 API 调用（`POST /batch-check` 或 `Promise.allSettled` 并行），避免逐个查询
 
 ### 16.2 GitHub OAuth PKCE（Electron）
 
@@ -1513,6 +1537,12 @@ graph TD
 
 **方案**：EJS 模板引擎，每套模板 = EJS + CSS。CSS 内联到 HTML，雷达图 SVG 内联，OG meta 自动注入。
 
+**DOMPurify 清洗规则**：
+- 允许标签：`h1-h6`, `p`, `a`, `img`, `code`, `pre`, `ul`, `ol`, `li`, `blockquote`, `table`, `thead`, `tbody`, `tr`, `th`, `td`, `svg`, `path`
+- 允许属性：`href`, `src`, `alt`, `class`, `id`, `width`, `height`, `viewBox`, `d`, `fill`, `stroke`
+- 图片 `src` 域名白名单：`github.com`, `raw.githubusercontent.com`, `user-images.githubusercontent.com`
+- 移除所有 `on*` 事件属性和 `javascript:` 协议
+
 ### 16.5 雷达图渲染
 
 **方案**：纯 SVG 手绘（path 计算六边形 + 数据多边形），无需第三方库。PNG 导出用 Electron `nativeImage`。不选 ECharts（体积 ~800KB 太大）或 Canvas（不能内联到静态 HTML）。
@@ -1536,7 +1566,7 @@ API 调用序列：
 3. 不存在 → `POST /user/repos` 创建
 4. `PUT /repos/.../contents/{skill-name}/index.html` → 提交 HTML
 5. `POST /repos/.../pages` → 启用 Pages
-6. 轮询 Pages 部署状态
+6. 轮询 Pages 部署状态（超时 30 秒 → 自动保存发布状态为草稿，下次可从草稿续发）
 7. 返回 `https://{username}.github.io/muxvo-skills/{skill-name}`
 
 ### 16.9 Token 传递（Muxvo → muxvo-publisher）
@@ -1546,6 +1576,15 @@ API 调用序列：
 ### 16.10 安全检查引擎
 
 正则扫描引擎逐行匹配：API Key (`sk-*`, `ghp_*`, `AKIA*`, `xoxb-*`)、密钥文件 (`-----BEGIN PRIVATE KEY-----`)、硬编码路径 (`/Users/*/`, `C:\\Users\\`)、敏感文件 (`.env`, `.pem`)。返回 `{ passed, issues: [{ type, line, column, snippet, severity }] }`。
+
+### 16.11 国际化（i18n）方案
+
+**方案**：
+- 展示页模板支持中英文切换
+- 系统语言检测（`navigator.language`）自动选择默认语言
+- 模板双语文案存储：JSON 格式 locale 文件（`locales/zh-CN.json`、`locales/en.json`）
+- 展示页生成时根据用户选择注入对应语言文案
+- V2-P2 阶段实现，仅覆盖展示页模板，不涉及 Muxvo 应用本体 UI
 
 ---
 
@@ -1565,7 +1604,7 @@ API 调用序列：
 
 | 扩展点 | 位置 | 说明 |
 |--------|------|------|
-| IPC 通道命名空间 | Main | 预留 `skill-browser:*`、`skill-score:*`、`skill-publish:*` |
+| IPC 通道命名空间 | Main | 预留 `skill-browser:*`、`skill-score:*`、`skill-publish:*`。包名统一使用 `@scope/name` namespace 格式 |
 | 覆盖层容器 | Renderer | 确保覆盖层可叠加 |
 | Pty 写入 API | Main | 暴露「向指定终端写入文本」的 IPC 接口 |
 | 终端状态查询 | Main | 暴露"是否运行中 + 是否空闲"的查询接口 |
@@ -1594,8 +1633,8 @@ API 调用序列：
 'auth:logout'                   // 登出（auth 域，对应 2.9）
 
 // 终端管理扩展
-'terminal:write-to-pty'         // 向指定终端写入文本
-'terminal:get-status'           // 查询终端运行状态
+// 终端写入使用 §2.1 已定义的 terminal:write
+// 终端状态查询使用 §2.1 已定义的 terminal:get-state
 ```
 
 ---
@@ -1659,15 +1698,17 @@ API 调用序列：
 |------|---------|---------|---------|
 | **V1-P0** | 6-7 周 | 终端管理 + 聚焦 + 聊天历史 + Markdown + 命名 | node-pty 集成、JSONL 性能 |
 | **V1-P1** | 5-6 周 | 拖拽排序 + 搜索 + 文件浏览 + 配置浏览 + 富编辑器基础 | 搜索索引性能、富编辑器↔PTY |
-| **V1-P2** | 4-5 周 | 时间线 + 分类查看 + 编辑 + 富编辑器完善 | ASB 检测、多工具协议 |
-| **V1 合计** | **15-18 周** | | |
+| **V1-P2** | 6-7 周 | 时间线 + 分类查看 + 编辑 + 富编辑器完善 + 埋点 + 异常处理 | ASB 检测、多工具协议 |
+| **V1 合计** | **17-20 周** | | |
 | **V2-P0** | 3-4 周 | 聚合浏览器 + 安装 + 审查 | 聚合源 API 可用性 |
 | **V2-P1** | 2-3 周 | AI 评分 + 更新检测 | CC Skill 通信 + 评分一致性 |
 | **V2-P2** | 5-6 周 | 展示页 + 发布 + 分享 | GitHub OAuth PKCE + Pages 发布 |
 | **V2-P3** | 8-10 周 | 社区平台 | 用户增长门槛 |
 | **V2 合计** | **18-23 周** | | |
-| **总计** | **33-41 周** | | |
+| **总计** | **35-43 周** | | |
 
 > 以上工期假设 1 个全栈开发者。V2 依赖 V1 基础设施稳定运行。建议在 V2-P0 开发前完成所有待确认项的技术 PoC。
+
+> **V1 工期调整说明**：相比初始估算（15-18 周），V1 合计上调至 17-20 周。新增任务包括：A7 WaitingInput 检测（+0.5 天）、D9 虚拟滚动（+0.5 天）、X4 缺省态扩展至 20 个场景（+1.5 天）、X5 异常处理框架含 32 条映射（+1 天）、X6 Electron 自动更新与签名（+2 天）、X7 数据埋点框架（+3 天）、X8 使用统计面板（+2 天），合计新增约 10.5 天。主要影响 V1-P2 阶段，从 4-5 周上调至 6-7 周。
 
 > **跨平台适配说明**：以上工期基于 macOS 单平台开发。Windows/Linux 适配（路径映射、tcgetpgrp 替代方案、快捷键映射、Electron 打包配置）预估额外需要 2-3 周，建议在 V1-P2 完成后安排。
