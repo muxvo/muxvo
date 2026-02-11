@@ -1,0 +1,6746 @@
+{
+  "version": "1.0.0",
+  "extractedAt": "2026-02-11T13:34:24.406Z",
+  "sourceFiles": {
+    "prd": "/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo/PRD.md",
+    "devPlan": "/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo/DEV-PLAN.md"
+  },
+  "ipcChannels": [
+    {
+      "name": "terminal:create",
+      "domain": "terminal",
+      "direction": "R→M",
+      "paramType": "{ cwd: string }",
+      "returnType": "{ id: string, pid: number }",
+      "description": "创建新终端（spawn shell）",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 77
+      }
+    },
+    {
+      "name": "terminal:write",
+      "domain": "terminal",
+      "direction": "R→M (send)",
+      "paramType": "{ id: string, data: string }",
+      "returnType": "void",
+      "description": "向 PTY 写入数据（同时用于 V2 评分指令写入）",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 78
+      }
+    },
+    {
+      "name": "terminal:resize",
+      "domain": "terminal",
+      "direction": "R→M (send)",
+      "paramType": "{ id: string, cols: number, rows: number }",
+      "returnType": "void",
+      "description": "调整 PTY 尺寸",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 79
+      }
+    },
+    {
+      "name": "terminal:close",
+      "domain": "terminal",
+      "direction": "R→M",
+      "paramType": "{ id: string, force?: boolean }",
+      "returnType": "{ success: boolean }",
+      "description": "关闭终端（先 SIGINT，超时后 SIGKILL）",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 80
+      }
+    },
+    {
+      "name": "terminal:output",
+      "domain": "terminal",
+      "direction": "M→R",
+      "paramType": "{ id: string, data: string }",
+      "returnType": "-",
+      "description": "PTY 输出数据流推送",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 81
+      }
+    },
+    {
+      "name": "terminal:state-change",
+      "domain": "terminal",
+      "direction": "M→R",
+      "paramType": "{ id: string, state: TerminalState, processName?: string }",
+      "returnType": "-",
+      "description": "终端状态变更推送",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 82
+      }
+    },
+    {
+      "name": "terminal:exit",
+      "domain": "terminal",
+      "direction": "M→R",
+      "paramType": "{ id: string, code: number }",
+      "returnType": "-",
+      "description": "进程退出事件",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 83
+      }
+    },
+    {
+      "name": "terminal:get-foreground-process",
+      "domain": "terminal",
+      "direction": "R→M",
+      "paramType": "{ id: string }",
+      "returnType": "{ name: string, pid: number }",
+      "description": "获取前台进程信息",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 84
+      }
+    },
+    {
+      "name": "terminal:list",
+      "domain": "terminal",
+      "direction": "R→M",
+      "paramType": "void",
+      "returnType": "TerminalInfo[]",
+      "description": "获取所有终端信息",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 85
+      }
+    },
+    {
+      "name": "terminal:get-state",
+      "domain": "terminal",
+      "direction": "R→M",
+      "paramType": "{ id: string }",
+      "returnType": "TerminalInfo",
+      "description": "获取单个终端状态（供 V2 AI 评分检测 CC 终端状态使用）",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 86
+      }
+    },
+    {
+      "name": "fs:read-dir",
+      "domain": "fs",
+      "direction": "R→M",
+      "paramType": "{ path: string }",
+      "returnType": "FileEntry[]",
+      "description": "读取目录内容",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 92
+      }
+    },
+    {
+      "name": "fs:read-file",
+      "domain": "fs",
+      "direction": "R→M",
+      "paramType": "{ path: string }",
+      "returnType": "{ content: string, encoding: string }",
+      "description": "读取文件内容",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 93
+      }
+    },
+    {
+      "name": "fs:write-file",
+      "domain": "fs",
+      "direction": "R→M",
+      "paramType": "{ path: string, content: string }",
+      "returnType": "{ success: boolean }",
+      "description": "写入文件（仅限可编辑的配置文件）",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 94
+      }
+    },
+    {
+      "name": "fs:watch-start",
+      "domain": "fs",
+      "direction": "R→M",
+      "paramType": "{ id: string, paths: string[] }",
+      "returnType": "{ success: boolean }",
+      "description": "启动文件监听",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 95
+      }
+    },
+    {
+      "name": "fs:watch-stop",
+      "domain": "fs",
+      "direction": "R→M",
+      "paramType": "{ id: string }",
+      "returnType": "void",
+      "description": "停止文件监听",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 96
+      }
+    },
+    {
+      "name": "fs:change",
+      "domain": "fs",
+      "direction": "M→R",
+      "paramType": "{ path: string, event: 'add'|'change'|'unlink', isNew?: boolean }",
+      "returnType": "-",
+      "description": "文件变更事件推送",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 97
+      }
+    },
+    {
+      "name": "fs:select-directory",
+      "domain": "fs",
+      "direction": "R→M",
+      "paramType": "void",
+      "returnType": "{ path: string } | null",
+      "description": "打开系统目录选择对话框",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 98
+      }
+    },
+    {
+      "name": "fs:write-temp-image",
+      "domain": "fs",
+      "direction": "R→M",
+      "paramType": "{ imageData: string, format: 'png'|'jpg' }",
+      "returnType": "{ path: string }",
+      "description": "将图片写入临时文件（富编辑器粘贴图片用）",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 99
+      }
+    },
+    {
+      "name": "fs:write-clipboard-image",
+      "domain": "fs",
+      "direction": "R→M",
+      "paramType": "{ imagePath: string }",
+      "returnType": "{ success: boolean }",
+      "description": "将图片写入系统剪贴板（RE2 剪贴板模拟用）",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 100
+      }
+    },
+    {
+      "name": "chat:get-history",
+      "domain": "chat",
+      "direction": "R→M",
+      "paramType": "{ limit?: number, offset?: number }",
+      "returnType": "HistoryEntry[]",
+      "description": "获取历史列表（从 history.jsonl）",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 106
+      }
+    },
+    {
+      "name": "chat:get-session",
+      "domain": "chat",
+      "direction": "R→M",
+      "paramType": "{ projectId: string, sessionId: string }",
+      "returnType": "SessionMessage[]",
+      "description": "获取 session 完整对话",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 107
+      }
+    },
+    {
+      "name": "chat:search",
+      "domain": "chat",
+      "direction": "R→M",
+      "paramType": "{ query: string }",
+      "returnType": "SearchResult[]",
+      "description": "全文搜索聊天记录",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 108
+      }
+    },
+    {
+      "name": "chat:session-update",
+      "domain": "chat",
+      "direction": "M→R",
+      "paramType": "{ projectId: string, sessionId: string }",
+      "returnType": "-",
+      "description": "Session 文件更新推送",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 109
+      }
+    },
+    {
+      "name": "chat:sync-status",
+      "domain": "chat",
+      "direction": "M→R",
+      "paramType": "{ status: 'syncing'|'idle'|'error' }",
+      "returnType": "-",
+      "description": "镜像同步状态推送",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 110
+      }
+    },
+    {
+      "name": "chat:export",
+      "domain": "chat",
+      "direction": "R→M",
+      "paramType": "{ projectIds?: string[], format: 'markdown'|'json', dateRange?: { start: string, end: string } }",
+      "returnType": "{ outputPath: string }",
+      "description": "导出聊天历史",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 111
+      }
+    },
+    {
+      "name": "config:get-resources",
+      "domain": "config",
+      "direction": "R→M",
+      "paramType": "{ type: 'skills'|'hooks'|'plans'|'tasks'|'mcp'|'plugins' }",
+      "returnType": "Resource[]",
+      "description": "获取资源列表",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 117
+      }
+    },
+    {
+      "name": "config:get-resource-content",
+      "domain": "config",
+      "direction": "R→M",
+      "paramType": "{ type: string, name: string }",
+      "returnType": "{ content: string }",
+      "description": "获取资源内容",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 118
+      }
+    },
+    {
+      "name": "config:get-settings",
+      "domain": "config",
+      "direction": "R→M",
+      "paramType": "void",
+      "returnType": "CCSettings",
+      "description": "读取 CC settings.json",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 119
+      }
+    },
+    {
+      "name": "config:save-settings",
+      "domain": "config",
+      "direction": "R→M",
+      "paramType": "{ settings: Partial<CCSettings> }",
+      "returnType": "{ success: boolean }",
+      "description": "写入 CC settings.json",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 120
+      }
+    },
+    {
+      "name": "config:get-claude-md",
+      "domain": "config",
+      "direction": "R→M",
+      "paramType": "{ scope: 'global'|'project', projectPath?: string }",
+      "returnType": "{ content: string }",
+      "description": "读取 CLAUDE.md",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 121
+      }
+    },
+    {
+      "name": "config:save-claude-md",
+      "domain": "config",
+      "direction": "R→M",
+      "paramType": "{ scope: string, content: string, projectPath?: string }",
+      "returnType": "{ success: boolean }",
+      "description": "写入 CLAUDE.md",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 122
+      }
+    },
+    {
+      "name": "config:get-memory",
+      "domain": "config",
+      "direction": "R→M",
+      "paramType": "{ projectPath: string }",
+      "returnType": "{ content: string }",
+      "description": "读取 MEMORY.md",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 123
+      }
+    },
+    {
+      "name": "config:resource-change",
+      "domain": "config",
+      "direction": "M→R",
+      "paramType": "{ type: string, event: string, name: string }",
+      "returnType": "-",
+      "description": "资源文件变更推送",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 124
+      }
+    },
+    {
+      "name": "app:get-config",
+      "domain": "app",
+      "direction": "R→M",
+      "paramType": "void",
+      "returnType": "MuxvoConfig",
+      "description": "读取 Muxvo 本地配置",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 130
+      }
+    },
+    {
+      "name": "app:save-config",
+      "domain": "app",
+      "direction": "R→M",
+      "paramType": "Partial<MuxvoConfig>",
+      "returnType": "{ success: boolean }",
+      "description": "保存 Muxvo 本地配置",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 131
+      }
+    },
+    {
+      "name": "app:get-preferences",
+      "domain": "app",
+      "direction": "R→M",
+      "paramType": "void",
+      "returnType": "UserPreferences",
+      "description": "读取用户偏好",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 132
+      }
+    },
+    {
+      "name": "app:save-preferences",
+      "domain": "app",
+      "direction": "R→M",
+      "paramType": "Partial<UserPreferences>",
+      "returnType": "{ success: boolean }",
+      "description": "保存用户偏好",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 133
+      }
+    },
+    {
+      "name": "app:memory-warning",
+      "domain": "app",
+      "direction": "M→R",
+      "paramType": "{ usageMB: number, threshold: number }",
+      "returnType": "-",
+      "description": "内存使用超阈值警告推送（memory-monitor.ts 每 60s 检查，超 2GB 时推送）",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 134
+      }
+    },
+    {
+      "name": "app:detect-cli-tools",
+      "domain": "app",
+      "direction": "R→M",
+      "paramType": "void",
+      "returnType": "{ claude: boolean, codex: boolean, gemini: boolean }",
+      "description": "检测系统 PATH 中已安装的 AI CLI 工具（首次引导流程使用，PRD §8.14）",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 135
+      }
+    },
+    {
+      "name": "marketplace:fetch-sources",
+      "domain": "marketplace",
+      "direction": "R→M",
+      "paramType": "{ sources?: string[] }",
+      "returnType": "AggregatedPackage[]",
+      "description": "聚合多源获取包列表",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 141
+      }
+    },
+    {
+      "name": "marketplace:search",
+      "domain": "marketplace",
+      "direction": "R→M",
+      "paramType": "{ query: string, source?: string }",
+      "returnType": "AggregatedPackage[]",
+      "description": "搜索包",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 142
+      }
+    },
+    {
+      "name": "marketplace:install",
+      "domain": "marketplace",
+      "direction": "R→M",
+      "paramType": "{ name: string, source: string, type: 'skill'|'hook', version?: string }",
+      "returnType": "{ success: boolean }",
+      "description": "安装包（version 可选，用于更新检测后安装特定版本）",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 143
+      }
+    },
+    {
+      "name": "marketplace:uninstall",
+      "domain": "marketplace",
+      "direction": "R→M",
+      "paramType": "{ name: string }",
+      "returnType": "{ success: boolean }",
+      "description": "卸载包",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 144
+      }
+    },
+    {
+      "name": "marketplace:get-installed",
+      "domain": "marketplace",
+      "direction": "R→M",
+      "paramType": "void",
+      "returnType": "InstalledPackage[]",
+      "description": "获取已安装列表",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 145
+      }
+    },
+    {
+      "name": "marketplace:install-progress",
+      "domain": "marketplace",
+      "direction": "M→R",
+      "paramType": "{ name: string, progress: number, status: string }",
+      "returnType": "-",
+      "description": "安装进度推送",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 146
+      }
+    },
+    {
+      "name": "marketplace:check-updates",
+      "domain": "marketplace",
+      "direction": "R→M",
+      "paramType": "void",
+      "returnType": "UpdateInfo[]",
+      "description": "检查更新",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 147
+      }
+    },
+    {
+      "name": "marketplace:packages-loaded",
+      "domain": "marketplace",
+      "direction": "M→R",
+      "paramType": "{ packages: AggregatedPackage[], source: string }",
+      "returnType": "-",
+      "description": "聚合数据加载完成推送（异步加载模式下，各源数据就绪时逐批推送）",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 148
+      }
+    },
+    {
+      "name": "marketplace:update-available",
+      "domain": "marketplace",
+      "direction": "M→R",
+      "paramType": "{ packages: UpdateInfo[] }",
+      "returnType": "-",
+      "description": "发现可更新包推送（后台定时检测发现更新时推送）",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 149
+      }
+    },
+    {
+      "name": "score:run",
+      "domain": "score",
+      "direction": "R→M",
+      "paramType": "{ skillDirName: string, includeAnalytics?: boolean }",
+      "returnType": "SkillScore",
+      "description": "触发 AI 评分（includeAnalytics 控制是否纳入使用统计数据，需用户授权）",
+      "phase": "V2-P1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 155
+      }
+    },
+    {
+      "name": "score:check-scorer",
+      "domain": "score",
+      "direction": "R→M",
+      "paramType": "void",
+      "returnType": "{ installed: boolean, version?: string }",
+      "description": "检查评分 Skill（muxvo-skill-scorer）是否已安装",
+      "phase": "V2-P1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 156
+      }
+    },
+    {
+      "name": "score:get-cached",
+      "domain": "score",
+      "direction": "R→M",
+      "paramType": "{ skillDirName: string }",
+      "returnType": "SkillScore | null",
+      "description": "获取缓存评分",
+      "phase": "V2-P1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 157
+      }
+    },
+    {
+      "name": "score:progress",
+      "domain": "score",
+      "direction": "M→R",
+      "paramType": "{ skillDirName: string, status: string }",
+      "returnType": "-",
+      "description": "评分进度推送",
+      "phase": "V2-P1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 158
+      }
+    },
+    {
+      "name": "score:result",
+      "domain": "score",
+      "direction": "M→R",
+      "paramType": "{ skillDirName: string, score: SkillScore }",
+      "returnType": "-",
+      "description": "评分最终结果推送（评分完成后异步通知 Renderer）",
+      "phase": "V2-P1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 159
+      }
+    },
+    {
+      "name": "showcase:generate",
+      "domain": "showcase",
+      "direction": "R→M",
+      "paramType": "{ skillDirName: string, template: string }",
+      "returnType": "ShowcaseConfig",
+      "description": "生成展示页",
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 165
+      }
+    },
+    {
+      "name": "showcase:publish",
+      "domain": "showcase",
+      "direction": "R→M",
+      "paramType": "{ skillDirName: string, details?: { problem: string, solution: string, screenshots: string[] }, securityChecked: boolean }",
+      "returnType": "{ url: string }",
+      "description": "发布到 GitHub Pages（details 为用户填写的详情，securityChecked 标识是否已通过安全检查）",
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 166
+      }
+    },
+    {
+      "name": "showcase:unpublish",
+      "domain": "showcase",
+      "direction": "R→M",
+      "paramType": "{ skillDirName: string }",
+      "returnType": "{ success: boolean }",
+      "description": "下线展示页",
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 167
+      }
+    },
+    {
+      "name": "showcase:publish-result",
+      "domain": "showcase",
+      "direction": "M→R",
+      "paramType": "{ skillDirName: string, success: boolean, url?: string, error?: string }",
+      "returnType": "-",
+      "description": "发布结果异步通知（发布耗时较长时，通过推送通知 Renderer 最终结果）",
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 168
+      }
+    },
+    {
+      "name": "auth:login-github",
+      "domain": "auth",
+      "direction": "R→M",
+      "paramType": "void",
+      "returnType": "{ username: string, loggedIn: boolean }",
+      "description": "GitHub OAuth PKCE 登录（token 仅在 Main 进程通过 safeStorage 管理，Renderer 不接触 token）",
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 174
+      }
+    },
+    {
+      "name": "auth:logout",
+      "domain": "auth",
+      "direction": "R→M",
+      "paramType": "void",
+      "returnType": "{ success: boolean }",
+      "description": "登出",
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 175
+      }
+    },
+    {
+      "name": "auth:get-status",
+      "domain": "auth",
+      "direction": "R→M",
+      "paramType": "void",
+      "returnType": "{ loggedIn: boolean, username?: string }",
+      "description": "获取认证状态",
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 176
+      }
+    },
+    {
+      "name": "analytics:track",
+      "domain": "analytics",
+      "direction": "R→M (send)",
+      "paramType": "{ event: string, params?: Record<string, any> }",
+      "returnType": "void",
+      "description": "记录埋点事件",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 182
+      }
+    },
+    {
+      "name": "analytics:get-summary",
+      "domain": "analytics",
+      "direction": "R→M",
+      "paramType": "{ startDate: string, endDate: string }",
+      "returnType": "DailySummary[]",
+      "description": "获取每日摘要",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 183
+      }
+    },
+    {
+      "name": "analytics:clear",
+      "domain": "analytics",
+      "direction": "R→M",
+      "paramType": "void",
+      "returnType": "{ success: boolean }",
+      "description": "清除所有埋点数据",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 184
+      }
+    }
+  ],
+  "directoryTree": [
+    {
+      "path": "package.json",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 425
+      }
+    },
+    {
+      "path": "electron-builder.yml",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 426
+      }
+    },
+    {
+      "path": "tsconfig.json",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 427
+      }
+    },
+    {
+      "path": "vite.config.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 428
+      }
+    },
+    {
+      "path": "src",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 430
+      }
+    },
+    {
+      "path": "src/main",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 431
+      }
+    },
+    {
+      "path": "src/main/index.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 432
+      }
+    },
+    {
+      "path": "src/main/ipc",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 433
+      }
+    },
+    {
+      "path": "src/main/ipc/terminal.ipc.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 434
+      }
+    },
+    {
+      "path": "src/main/ipc/fs.ipc.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 435
+      }
+    },
+    {
+      "path": "src/main/ipc/chat.ipc.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 436
+      }
+    },
+    {
+      "path": "src/main/ipc/config.ipc.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 437
+      }
+    },
+    {
+      "path": "src/main/ipc/app.ipc.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 438
+      }
+    },
+    {
+      "path": "src/main/ipc/marketplace.ipc.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 439
+      }
+    },
+    {
+      "path": "src/main/ipc/score.ipc.ts",
+      "type": "file",
+      "phase": "V2-P1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 440
+      }
+    },
+    {
+      "path": "src/main/ipc/showcase.ipc.ts",
+      "type": "file",
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 441
+      }
+    },
+    {
+      "path": "src/main/ipc/auth.ipc.ts",
+      "type": "file",
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 442
+      }
+    },
+    {
+      "path": "src/main/ipc/analytics.ipc.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 443
+      }
+    },
+    {
+      "path": "src/main/services",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 444
+      }
+    },
+    {
+      "path": "src/main/services/pty-manager.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 445
+      }
+    },
+    {
+      "path": "src/main/services/file-watcher.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 446
+      }
+    },
+    {
+      "path": "src/main/services/chat-sync.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 447
+      }
+    },
+    {
+      "path": "src/main/services/search-index.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 448
+      }
+    },
+    {
+      "path": "src/main/services/process-detector.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 449
+      }
+    },
+    {
+      "path": "src/main/services/package-installer.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 450
+      }
+    },
+    {
+      "path": "src/main/services/aggregator.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 451
+      }
+    },
+    {
+      "path": "src/main/services/auth-service.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 452
+      }
+    },
+    {
+      "path": "src/main/services/analytics.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 453
+      }
+    },
+    {
+      "path": "src/main/services/memory-monitor.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 454
+      }
+    },
+    {
+      "path": "src/main/utils",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 455
+      }
+    },
+    {
+      "path": "src/main/utils/cc-data-reader.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 456
+      }
+    },
+    {
+      "path": "src/main/utils/config-store.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 457
+      }
+    },
+    {
+      "path": "src/main/utils/paths.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 458
+      }
+    },
+    {
+      "path": "src/preload",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 460
+      }
+    },
+    {
+      "path": "src/preload/index.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 461
+      }
+    },
+    {
+      "path": "src/renderer",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 463
+      }
+    },
+    {
+      "path": "src/renderer/index.html",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 464
+      }
+    },
+    {
+      "path": "src/renderer/main.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 465
+      }
+    },
+    {
+      "path": "src/renderer/App.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 466
+      }
+    },
+    {
+      "path": "src/renderer/stores",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 468
+      }
+    },
+    {
+      "path": "src/renderer/stores/index.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 469
+      }
+    },
+    {
+      "path": "src/renderer/stores/terminal.store.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 470
+      }
+    },
+    {
+      "path": "src/renderer/stores/layout.store.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 471
+      }
+    },
+    {
+      "path": "src/renderer/stores/chat.store.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 472
+      }
+    },
+    {
+      "path": "src/renderer/stores/config.store.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 473
+      }
+    },
+    {
+      "path": "src/renderer/stores/marketplace.store.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 474
+      }
+    },
+    {
+      "path": "src/renderer/stores/preferences.store.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 475
+      }
+    },
+    {
+      "path": "src/renderer/stores/score.store.ts",
+      "type": "file",
+      "phase": "V2-P1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 476
+      }
+    },
+    {
+      "path": "src/renderer/stores/showcase.store.ts",
+      "type": "file",
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 477
+      }
+    },
+    {
+      "path": "src/renderer/stores/analytics.store.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 478
+      }
+    },
+    {
+      "path": "src/renderer/stores/publish-draft.store.ts",
+      "type": "file",
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 479
+      }
+    },
+    {
+      "path": "src/renderer/machines",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 481
+      }
+    },
+    {
+      "path": "src/renderer/machines/app-lifecycle.machine.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 482
+      }
+    },
+    {
+      "path": "src/renderer/machines/terminal-process.machine.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 483
+      }
+    },
+    {
+      "path": "src/renderer/machines/view-mode.machine.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 484
+      }
+    },
+    {
+      "path": "src/renderer/machines/tile-interaction.machine.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 485
+      }
+    },
+    {
+      "path": "src/renderer/machines/file-panel.machine.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 486
+      }
+    },
+    {
+      "path": "src/renderer/machines/temp-view.machine.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 487
+      }
+    },
+    {
+      "path": "src/renderer/machines/cwd-switch.machine.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 488
+      }
+    },
+    {
+      "path": "src/renderer/machines/custom-name.machine.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 489
+      }
+    },
+    {
+      "path": "src/renderer/machines/grid-resize.machine.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 490
+      }
+    },
+    {
+      "path": "src/renderer/machines/chat-panel.machine.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 491
+      }
+    },
+    {
+      "path": "src/renderer/machines/config-panel.machine.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 492
+      }
+    },
+    {
+      "path": "src/renderer/machines/file-watcher.machine.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 493
+      }
+    },
+    {
+      "path": "src/renderer/machines/rich-editor.machine.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 494
+      }
+    },
+    {
+      "path": "src/renderer/machines/skill-browser.machine.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 495
+      }
+    },
+    {
+      "path": "src/renderer/machines/package-install.machine.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 496
+      }
+    },
+    {
+      "path": "src/renderer/machines/ai-score.machine.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 497
+      }
+    },
+    {
+      "path": "src/renderer/machines/auth.machine.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 498
+      }
+    },
+    {
+      "path": "src/renderer/machines/showcase.machine.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 499
+      }
+    },
+    {
+      "path": "src/renderer/components",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 501
+      }
+    },
+    {
+      "path": "src/renderer/components/terminal",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 502
+      }
+    },
+    {
+      "path": "src/renderer/components/terminal/TerminalGrid.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 503
+      }
+    },
+    {
+      "path": "src/renderer/components/terminal/TerminalTile.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 504
+      }
+    },
+    {
+      "path": "src/renderer/components/terminal/TerminalHeader.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 505
+      }
+    },
+    {
+      "path": "src/renderer/components/terminal/XTermRenderer.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 506
+      }
+    },
+    {
+      "path": "src/renderer/components/terminal/FocusedView.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 507
+      }
+    },
+    {
+      "path": "src/renderer/components/terminal/CwdSwitcher.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 508
+      }
+    },
+    {
+      "path": "src/renderer/components/rich-editor",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 509
+      }
+    },
+    {
+      "path": "src/renderer/components/rich-editor/RichEditor.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 510
+      }
+    },
+    {
+      "path": "src/renderer/components/rich-editor/EditorToolbar.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 511
+      }
+    },
+    {
+      "path": "src/renderer/components/rich-editor/SlashCommand.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 512
+      }
+    },
+    {
+      "path": "src/renderer/components/file-browser",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 513
+      }
+    },
+    {
+      "path": "src/renderer/components/file-browser/FilePanel.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 514
+      }
+    },
+    {
+      "path": "src/renderer/components/file-browser/TempView.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 515
+      }
+    },
+    {
+      "path": "src/renderer/components/file-browser/FileTree.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 516
+      }
+    },
+    {
+      "path": "src/renderer/components/file-browser/MarkdownPreview.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 517
+      }
+    },
+    {
+      "path": "src/renderer/components/chat-history",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 518
+      }
+    },
+    {
+      "path": "src/renderer/components/chat-history/ChatPanel.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 519
+      }
+    },
+    {
+      "path": "src/renderer/components/chat-history/SessionList.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 520
+      }
+    },
+    {
+      "path": "src/renderer/components/chat-history/SessionDetail.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 521
+      }
+    },
+    {
+      "path": "src/renderer/components/config-manager",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 522
+      }
+    },
+    {
+      "path": "src/renderer/components/config-manager/ConfigPanel.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 523
+      }
+    },
+    {
+      "path": "src/renderer/components/config-manager/ResourceList.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 524
+      }
+    },
+    {
+      "path": "src/renderer/components/config-manager/ResourcePreview.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 525
+      }
+    },
+    {
+      "path": "src/renderer/components/config-manager/SettingsEditor.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 526
+      }
+    },
+    {
+      "path": "src/renderer/components/skill-browser",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 527
+      }
+    },
+    {
+      "path": "src/renderer/components/skill-browser/SkillBrowser.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 528
+      }
+    },
+    {
+      "path": "src/renderer/components/skill-browser/PackageCard.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 529
+      }
+    },
+    {
+      "path": "src/renderer/components/skill-browser/PackageDetail.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 530
+      }
+    },
+    {
+      "path": "src/renderer/components/skill-browser/SecurityReview.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 531
+      }
+    },
+    {
+      "path": "src/renderer/components/showcase",
+      "type": "directory",
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 532
+      }
+    },
+    {
+      "path": "src/renderer/components/showcase/ScoreCard.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 533
+      }
+    },
+    {
+      "path": "src/renderer/components/showcase/ShowcasePreview.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 534
+      }
+    },
+    {
+      "path": "src/renderer/components/showcase/SharePanel.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 535
+      }
+    },
+    {
+      "path": "src/renderer/components/plugins",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 536
+      }
+    },
+    {
+      "path": "src/renderer/components/plugins/PluginList.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 537
+      }
+    },
+    {
+      "path": "src/renderer/components/plugins/PluginDetail.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 538
+      }
+    },
+    {
+      "path": "src/renderer/components/onboarding",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 539
+      }
+    },
+    {
+      "path": "src/renderer/components/onboarding/WelcomePage.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 540
+      }
+    },
+    {
+      "path": "src/renderer/components/onboarding/GuideOverlay.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 541
+      }
+    },
+    {
+      "path": "src/renderer/components/onboarding/StepHighlight.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 542
+      }
+    },
+    {
+      "path": "src/renderer/components/layout",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 543
+      }
+    },
+    {
+      "path": "src/renderer/components/layout/MenuBar.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 544
+      }
+    },
+    {
+      "path": "src/renderer/components/layout/BottomBar.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 545
+      }
+    },
+    {
+      "path": "src/renderer/components/layout/EscHandler.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 546
+      }
+    },
+    {
+      "path": "src/renderer/components/shared",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 547
+      }
+    },
+    {
+      "path": "src/renderer/components/shared/SearchInput.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 548
+      }
+    },
+    {
+      "path": "src/renderer/components/shared/StatusDot.tsx",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 549
+      }
+    },
+    {
+      "path": "src/renderer/hooks",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 551
+      }
+    },
+    {
+      "path": "src/renderer/hooks/useTerminal.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 552
+      }
+    },
+    {
+      "path": "src/renderer/hooks/useIPC.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 553
+      }
+    },
+    {
+      "path": "src/renderer/hooks/useMachine.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 554
+      }
+    },
+    {
+      "path": "src/renderer/hooks/useFileWatcher.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 555
+      }
+    },
+    {
+      "path": "src/renderer/styles",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 557
+      }
+    },
+    {
+      "path": "src/renderer/styles/variables.css",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 558
+      }
+    },
+    {
+      "path": "src/renderer/styles/global.css",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 559
+      }
+    },
+    {
+      "path": "src/renderer/styles/themes",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 560
+      }
+    },
+    {
+      "path": "src/renderer/styles/themes/dark.css",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 561
+      }
+    },
+    {
+      "path": "src/shared",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 563
+      }
+    },
+    {
+      "path": "src/shared/types",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 564
+      }
+    },
+    {
+      "path": "src/shared/types/terminal.types.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 565
+      }
+    },
+    {
+      "path": "src/shared/types/chat.types.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 566
+      }
+    },
+    {
+      "path": "src/shared/types/config.types.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 567
+      }
+    },
+    {
+      "path": "src/shared/types/marketplace.types.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 568
+      }
+    },
+    {
+      "path": "src/shared/types/score.types.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 569
+      }
+    },
+    {
+      "path": "src/shared/types/showcase.types.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 570
+      }
+    },
+    {
+      "path": "src/shared/types/ipc.types.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 571
+      }
+    },
+    {
+      "path": "src/shared/types/analytics.types.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 572
+      }
+    },
+    {
+      "path": "src/shared/types/publish-draft.types.ts",
+      "type": "file",
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 573
+      }
+    },
+    {
+      "path": "src/shared/constants",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 574
+      }
+    },
+    {
+      "path": "src/shared/constants/channels.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 575
+      }
+    },
+    {
+      "path": "src/shared/constants/paths.ts",
+      "type": "file",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 576
+      }
+    },
+    {
+      "path": "resources",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 578
+      }
+    },
+    {
+      "path": "resources/icons",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 579
+      }
+    },
+    {
+      "path": "tests",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 580
+      }
+    },
+    {
+      "path": "tests/main",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 581
+      }
+    },
+    {
+      "path": "tests/renderer",
+      "type": "directory",
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 582
+      }
+    }
+  ],
+  "stateMachines": [
+    {
+      "name": "应用生命周期",
+      "fileName": "app-lifecycle.machine.ts",
+      "prdSection": "6.1",
+      "states": [
+        "EmptyState",
+        "Idle",
+        "Launching",
+        "Processing",
+        "Restoring",
+        "RestoringTerminals",
+        "Running",
+        "Saving",
+        "ShuttingDown"
+      ],
+      "transitions": [
+        {
+          "from": "[*]",
+          "to": "Launching",
+          "event": "用户启动 Muxvo"
+        },
+        {
+          "from": "Launching",
+          "to": "Restoring",
+          "event": "读取本地配置"
+        },
+        {
+          "from": "Restoring",
+          "to": "RestoringTerminals",
+          "event": "有上次会话记录"
+        },
+        {
+          "from": "Restoring",
+          "to": "EmptyState",
+          "event": "无上次会话"
+        },
+        {
+          "from": "RestoringTerminals",
+          "to": "Running",
+          "event": "在记录的 cwd 重新打开 shell"
+        },
+        {
+          "from": "EmptyState",
+          "to": "Running",
+          "event": "用户创建第一个终端"
+        },
+        {
+          "from": "Running",
+          "to": "Saving",
+          "event": "用户关闭窗口"
+        },
+        {
+          "from": "Saving",
+          "to": "ShuttingDown",
+          "event": "布局/配置已保存"
+        },
+        {
+          "from": "ShuttingDown",
+          "to": "[*]",
+          "event": "所有子进程已终止"
+        },
+        {
+          "from": "[*]",
+          "to": "Idle",
+          "event": ""
+        },
+        {
+          "from": "Idle",
+          "to": "Processing",
+          "event": "用户操作"
+        },
+        {
+          "from": "Processing",
+          "to": "Idle",
+          "event": "操作完成"
+        }
+      ],
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 635
+      }
+    },
+    {
+      "name": "终端进程生命周期",
+      "fileName": "terminal-process.machine.ts",
+      "prdSection": "6.2",
+      "states": [
+        "Busy",
+        "Created",
+        "Disconnected",
+        "Failed",
+        "Removed",
+        "Running",
+        "Starting",
+        "Stopped",
+        "Stopping",
+        "WaitingInput"
+      ],
+      "transitions": [
+        {
+          "from": "[*]",
+          "to": "Created",
+          "event": "用户点击「+ 新建终端」"
+        },
+        {
+          "from": "Created",
+          "to": "Starting",
+          "event": "选择目录后 spawn claude"
+        },
+        {
+          "from": "Starting",
+          "to": "Running",
+          "event": "进程 stdout 就绪"
+        },
+        {
+          "from": "Starting",
+          "to": "Failed",
+          "event": "spawn 失败（路径不存在/权限不足）"
+        },
+        {
+          "from": "Running",
+          "to": "Busy",
+          "event": "CC 开始处理（检测到思考中输出）"
+        },
+        {
+          "from": "Busy",
+          "to": "Running",
+          "event": "CC 输出完成（检测到 prompt 符号）"
+        },
+        {
+          "from": "Running",
+          "to": "WaitingInput",
+          "event": "CC 输出选项等待用户选择"
+        },
+        {
+          "from": "WaitingInput",
+          "to": "Running",
+          "event": "用户选择选项 / 输入回复"
+        },
+        {
+          "from": "Running",
+          "to": "Stopping",
+          "event": "用户发送 /exit 或点击关闭"
+        },
+        {
+          "from": "Running",
+          "to": "Disconnected",
+          "event": "进程异常退出 (exit code ≠ 0)"
+        },
+        {
+          "from": "Stopping",
+          "to": "Stopped",
+          "event": "进程正常退出 (exit code = 0)"
+        },
+        {
+          "from": "Stopping",
+          "to": "Disconnected",
+          "event": "超时未退出 (5s timeout)"
+        },
+        {
+          "from": "Disconnected",
+          "to": "Starting",
+          "event": "用户点击「重新连接」"
+        },
+        {
+          "from": "Disconnected",
+          "to": "Removed",
+          "event": "用户确认关闭"
+        },
+        {
+          "from": "Stopped",
+          "to": "Removed",
+          "event": "自动或用户手动移除 tile"
+        },
+        {
+          "from": "Failed",
+          "to": "Removed",
+          "event": "用户关闭错误提示"
+        },
+        {
+          "from": "Removed",
+          "to": "[*]",
+          "event": ""
+        }
+      ],
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 666
+      }
+    },
+    {
+      "name": "视图模式",
+      "fileName": "view-mode.machine.ts",
+      "prdSection": "6.3",
+      "states": [
+        "FilePanel",
+        "Focused",
+        "TempView",
+        "Tiling"
+      ],
+      "transitions": [
+        {
+          "from": "[*]",
+          "to": "Tiling",
+          "event": "应用启动"
+        },
+        {
+          "from": "Tiling",
+          "to": "Focused",
+          "event": "双击终端 tile"
+        },
+        {
+          "from": "Focused",
+          "to": "Tiling",
+          "event": "按 Esc / 点击「返回平铺」（焦点不在终端内时）"
+        },
+        {
+          "from": "Focused",
+          "to": "Focused",
+          "event": "点击右侧栏其他终端（切换聚焦目标）"
+        },
+        {
+          "from": "Tiling",
+          "to": "FilePanel",
+          "event": "点击任一 tile 的「文件」按钮"
+        },
+        {
+          "from": "Focused",
+          "to": "FilePanel",
+          "event": "点击聚焦终端的「文件」按钮"
+        },
+        {
+          "from": "FilePanel",
+          "to": "TempView",
+          "event": "点击目录中的文件"
+        },
+        {
+          "from": "FilePanel",
+          "to": "Tiling",
+          "event": "按 Esc / 点击面板外 / 点击 ✕"
+        },
+        {
+          "from": "FilePanel",
+          "to": "Focused",
+          "event": "按 Esc（若从聚焦模式进入）"
+        },
+        {
+          "from": "TempView",
+          "to": "Tiling",
+          "event": "按 Esc / 点击 ✕"
+        }
+      ],
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 710
+      }
+    },
+    {
+      "name": "终端 Tile 交互状态",
+      "fileName": "tile-interaction.machine.ts",
+      "prdSection": "6.4",
+      "states": [
+        "Default",
+        "DragOver",
+        "Dragging",
+        "Focused",
+        "Hover",
+        "Selected"
+      ],
+      "transitions": [
+        {
+          "from": "[*]",
+          "to": "Default",
+          "event": ""
+        },
+        {
+          "from": "Default",
+          "to": "Hover",
+          "event": "mouseenter"
+        },
+        {
+          "from": "Hover",
+          "to": "Default",
+          "event": "mouseleave"
+        },
+        {
+          "from": "Default",
+          "to": "Selected",
+          "event": "click（单击选中，高亮边框）"
+        },
+        {
+          "from": "Hover",
+          "to": "Selected",
+          "event": "click"
+        },
+        {
+          "from": "Selected",
+          "to": "Default",
+          "event": "click other tile"
+        },
+        {
+          "from": "Selected",
+          "to": "Focused",
+          "event": "dblclick（双击进入聚焦模式）"
+        },
+        {
+          "from": "Default",
+          "to": "Focused",
+          "event": "dblclick"
+        },
+        {
+          "from": "Default",
+          "to": "Dragging",
+          "event": "dragstart"
+        },
+        {
+          "from": "Hover",
+          "to": "Dragging",
+          "event": "dragstart"
+        },
+        {
+          "from": "Selected",
+          "to": "Dragging",
+          "event": "dragstart"
+        },
+        {
+          "from": "Dragging",
+          "to": "Default",
+          "event": "dragend"
+        },
+        {
+          "from": "Default",
+          "to": "DragOver",
+          "event": "dragover from other"
+        },
+        {
+          "from": "DragOver",
+          "to": "Default",
+          "event": "dragleave"
+        },
+        {
+          "from": "DragOver",
+          "to": "Default",
+          "event": "drop"
+        }
+      ],
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 751
+      }
+    },
+    {
+      "name": "文件面板状态",
+      "fileName": "file-panel.machine.ts",
+      "prdSection": "6.5",
+      "states": [
+        "Closed",
+        "Closing",
+        "Open",
+        "Opening",
+        "TransitionToTempView"
+      ],
+      "transitions": [
+        {
+          "from": "[*]",
+          "to": "Closed",
+          "event": ""
+        },
+        {
+          "from": "Closed",
+          "to": "Opening",
+          "event": "click file btn"
+        },
+        {
+          "from": "Opening",
+          "to": "Open",
+          "event": "transition done 300ms"
+        },
+        {
+          "from": "Open",
+          "to": "Open",
+          "event": "click another file btn"
+        },
+        {
+          "from": "Open",
+          "to": "TransitionToTempView",
+          "event": "click a file item"
+        },
+        {
+          "from": "TransitionToTempView",
+          "to": "Closed",
+          "event": "panel closes"
+        },
+        {
+          "from": "Open",
+          "to": "Closing",
+          "event": "Esc or click outside"
+        },
+        {
+          "from": "Closing",
+          "to": "Closed",
+          "event": "transition done 300ms"
+        }
+      ],
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 796
+      }
+    },
+    {
+      "name": "三栏临时视图状态",
+      "fileName": "temp-view.machine.ts",
+      "prdSection": "6.6",
+      "states": [
+        "Active",
+        "ContentLoaded",
+        "EditMode",
+        "Editing",
+        "Entering",
+        "Exiting",
+        "Hidden",
+        "PreviewMode",
+        "ResizingLeft",
+        "ResizingRight",
+        "Saving",
+        "UnsavedPrompt",
+        "UpdatingContent"
+      ],
+      "transitions": [
+        {
+          "from": "[*]",
+          "to": "Hidden",
+          "event": ""
+        },
+        {
+          "from": "Hidden",
+          "to": "Entering",
+          "event": "从文件面板点击文件"
+        },
+        {
+          "from": "Entering",
+          "to": "Active",
+          "event": "Grid 隐藏，三栏渲染完成"
+        },
+        {
+          "from": "[*]",
+          "to": "PreviewMode",
+          "event": ""
+        },
+        {
+          "from": "[*]",
+          "to": "ContentLoaded",
+          "event": ""
+        },
+        {
+          "from": "ContentLoaded",
+          "to": "UpdatingContent",
+          "event": "点击右栏另一个文件"
+        },
+        {
+          "from": "UpdatingContent",
+          "to": "ContentLoaded",
+          "event": "中栏内容更新完成"
+        },
+        {
+          "from": "[*]",
+          "to": "Editing",
+          "event": ""
+        },
+        {
+          "from": "Editing",
+          "to": "Saving",
+          "event": "⌘S"
+        },
+        {
+          "from": "Saving",
+          "to": "Editing",
+          "event": "保存完成"
+        },
+        {
+          "from": "Editing",
+          "to": "UnsavedPrompt",
+          "event": "⌘/ 且有未保存修改"
+        },
+        {
+          "from": "UnsavedPrompt",
+          "to": "PreviewMode",
+          "event": "用户选择保存或放弃"
+        },
+        {
+          "from": "UnsavedPrompt",
+          "to": "Editing",
+          "event": "用户取消"
+        },
+        {
+          "from": "PreviewMode",
+          "to": "EditMode",
+          "event": "⌘/ 切换到编辑模式"
+        },
+        {
+          "from": "EditMode",
+          "to": "PreviewMode",
+          "event": "⌘/ 切换到预览模式（无未保存修改时）"
+        },
+        {
+          "from": "PreviewMode",
+          "to": "ResizingLeft",
+          "event": "拖拽左侧 resize handle"
+        },
+        {
+          "from": "PreviewMode",
+          "to": "ResizingRight",
+          "event": "拖拽右侧 resize handle"
+        },
+        {
+          "from": "ResizingLeft",
+          "to": "PreviewMode",
+          "event": "mouseup（宽度持久化）"
+        },
+        {
+          "from": "ResizingRight",
+          "to": "PreviewMode",
+          "event": "mouseup（宽度持久化）"
+        },
+        {
+          "from": "Active",
+          "to": "Exiting",
+          "event": "Esc / 点击 ✕"
+        },
+        {
+          "from": "Exiting",
+          "to": "Hidden",
+          "event": "Grid 恢复显示"
+        }
+      ],
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 823
+      }
+    },
+    {
+      "name": "目录切换状态（按前台进程状态分支）",
+      "fileName": "cwd-switch.machine.ts",
+      "prdSection": "6.7",
+      "states": [
+        "Browsing",
+        "CheckProcess",
+        "Closed",
+        "ConfirmExit",
+        "DirectCD",
+        "ExitAndCD",
+        "QuickAccess"
+      ],
+      "transitions": [
+        {
+          "from": "[*]",
+          "to": "Closed",
+          "event": ""
+        },
+        {
+          "from": "Closed",
+          "to": "QuickAccess",
+          "event": "点击 tile header 的 cwd 路径"
+        },
+        {
+          "from": "QuickAccess",
+          "to": "Browsing",
+          "event": "点击「浏览...」"
+        },
+        {
+          "from": "QuickAccess",
+          "to": "CheckProcess",
+          "event": "点击快捷路径（~, ~/Desktop 等）"
+        },
+        {
+          "from": "Browsing",
+          "to": "Browsing",
+          "event": "点击子文件夹（进入）"
+        },
+        {
+          "from": "Browsing",
+          "to": "Browsing",
+          "event": "点击「..」（返回上级）"
+        },
+        {
+          "from": "Browsing",
+          "to": "CheckProcess",
+          "event": "点击「选择此目录」"
+        },
+        {
+          "from": "CheckProcess",
+          "to": "DirectCD",
+          "event": "前台进程为 shell（bash/zsh 等）"
+        },
+        {
+          "from": "CheckProcess",
+          "to": "ConfirmExit",
+          "event": "前台进程为 AI 工具或其他程序"
+        },
+        {
+          "from": "DirectCD",
+          "to": "Closed",
+          "event": "向 PTY 发送 cd 命令，cwd 更新完成"
+        },
+        {
+          "from": "ConfirmExit",
+          "to": "ExitAndCD",
+          "event": "用户确认退出"
+        },
+        {
+          "from": "ConfirmExit",
+          "to": "Closed",
+          "event": "用户取消"
+        },
+        {
+          "from": "ExitAndCD",
+          "to": "Closed",
+          "event": "退出前台进程 → 等待回到 shell → 发送 cd 命令"
+        },
+        {
+          "from": "QuickAccess",
+          "to": "Closed",
+          "event": "Esc / 点击外部"
+        },
+        {
+          "from": "Browsing",
+          "to": "Closed",
+          "event": "Esc / 点击外部"
+        }
+      ],
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 884
+      }
+    },
+    {
+      "name": "自定义名称编辑状态",
+      "fileName": "custom-name.machine.ts",
+      "prdSection": "6.8",
+      "states": [
+        "DisplayEmpty",
+        "DisplayNamed",
+        "DisplayPrevious",
+        "Editing"
+      ],
+      "transitions": [
+        {
+          "from": "[*]",
+          "to": "DisplayEmpty",
+          "event": "新建终端（无自定义名称）"
+        },
+        {
+          "from": "DisplayEmpty",
+          "to": "Editing",
+          "event": "点击占位文本\"命名...\""
+        },
+        {
+          "from": "DisplayNamed",
+          "to": "Editing",
+          "event": "点击已有名称"
+        },
+        {
+          "from": "Editing",
+          "to": "DisplayNamed",
+          "event": "Enter / blur（输入框有内容）"
+        },
+        {
+          "from": "Editing",
+          "to": "DisplayEmpty",
+          "event": "Enter / blur（输入框为空）"
+        },
+        {
+          "from": "Editing",
+          "to": "DisplayPrevious",
+          "event": "Esc（取消编辑，恢复原值）"
+        },
+        {
+          "from": "DisplayPrevious",
+          "to": "DisplayEmpty",
+          "event": "原值为空"
+        },
+        {
+          "from": "DisplayPrevious",
+          "to": "DisplayNamed",
+          "event": "原值非空"
+        }
+      ],
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 935
+      }
+    },
+    {
+      "name": "Grid 边框调整状态",
+      "fileName": "grid-resize.machine.ts",
+      "prdSection": "6.9",
+      "states": [
+        "ColResizeCursor",
+        "DetectingGap",
+        "DraggingCol",
+        "DraggingRow",
+        "Idle",
+        "ResetCol",
+        "ResetRow",
+        "RowResizeCursor"
+      ],
+      "transitions": [
+        {
+          "from": "[*]",
+          "to": "Idle",
+          "event": ""
+        },
+        {
+          "from": "Idle",
+          "to": "DetectingGap",
+          "event": "mousemove near gap"
+        },
+        {
+          "from": "DetectingGap",
+          "to": "ColResizeCursor",
+          "event": "on column gap"
+        },
+        {
+          "from": "DetectingGap",
+          "to": "RowResizeCursor",
+          "event": "on row gap"
+        },
+        {
+          "from": "DetectingGap",
+          "to": "Idle",
+          "event": "mouse leaves gap"
+        },
+        {
+          "from": "ColResizeCursor",
+          "to": "DraggingCol",
+          "event": "mousedown"
+        },
+        {
+          "from": "RowResizeCursor",
+          "to": "DraggingRow",
+          "event": "mousedown"
+        },
+        {
+          "from": "ColResizeCursor",
+          "to": "Idle",
+          "event": "mouse leaves"
+        },
+        {
+          "from": "RowResizeCursor",
+          "to": "Idle",
+          "event": "mouse leaves"
+        },
+        {
+          "from": "DraggingCol",
+          "to": "DraggingCol",
+          "event": "mousemove"
+        },
+        {
+          "from": "DraggingRow",
+          "to": "DraggingRow",
+          "event": "mousemove"
+        },
+        {
+          "from": "DraggingCol",
+          "to": "Idle",
+          "event": "mouseup"
+        },
+        {
+          "from": "DraggingRow",
+          "to": "Idle",
+          "event": "mouseup"
+        },
+        {
+          "from": "ColResizeCursor",
+          "to": "ResetCol",
+          "event": "dblclick"
+        },
+        {
+          "from": "RowResizeCursor",
+          "to": "ResetRow",
+          "event": "dblclick"
+        },
+        {
+          "from": "ResetCol",
+          "to": "Idle",
+          "event": ""
+        },
+        {
+          "from": "ResetRow",
+          "to": "Idle",
+          "event": ""
+        }
+      ],
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 956
+      }
+    },
+    {
+      "name": "聊天历史面板状态",
+      "fileName": "chat-panel.machine.ts",
+      "prdSection": "6.10",
+      "states": [
+        "Closed",
+        "EmptySearch",
+        "Error",
+        "HasResults",
+        "Loading",
+        "NoResults",
+        "Ready",
+        "Searching",
+        "SessionDetail"
+      ],
+      "transitions": [
+        {
+          "from": "[*]",
+          "to": "Closed",
+          "event": ""
+        },
+        {
+          "from": "Closed",
+          "to": "Loading",
+          "event": "⌘F / 点击「历史聊天」按钮"
+        },
+        {
+          "from": "Loading",
+          "to": "Ready",
+          "event": "history.jsonl 索引加载完成"
+        },
+        {
+          "from": "Loading",
+          "to": "Error",
+          "event": "文件读取失败"
+        },
+        {
+          "from": "[*]",
+          "to": "EmptySearch",
+          "event": "搜索框为空"
+        },
+        {
+          "from": "EmptySearch",
+          "to": "Searching",
+          "event": "用户输入搜索词（300ms 去抖）"
+        },
+        {
+          "from": "Searching",
+          "to": "HasResults",
+          "event": "找到匹配会话"
+        },
+        {
+          "from": "Searching",
+          "to": "NoResults",
+          "event": "无匹配结果"
+        },
+        {
+          "from": "HasResults",
+          "to": "Searching",
+          "event": "修改搜索词"
+        },
+        {
+          "from": "NoResults",
+          "to": "Searching",
+          "event": "修改搜索词"
+        },
+        {
+          "from": "HasResults",
+          "to": "EmptySearch",
+          "event": "清空搜索框"
+        },
+        {
+          "from": "NoResults",
+          "to": "EmptySearch",
+          "event": "清空搜索框"
+        },
+        {
+          "from": "Ready",
+          "to": "SessionDetail",
+          "event": "点击某条会话"
+        },
+        {
+          "from": "SessionDetail",
+          "to": "Ready",
+          "event": "点击「返回」"
+        },
+        {
+          "from": "SessionDetail",
+          "to": "Closed",
+          "event": "双击会话 → 跳转到对应终端"
+        },
+        {
+          "from": "Ready",
+          "to": "Closed",
+          "event": "Esc / 点击关闭"
+        },
+        {
+          "from": "Error",
+          "to": "Closed",
+          "event": "用户关闭错误提示"
+        }
+      ],
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 995
+      }
+    },
+    {
+      "name": "配置管理器状态",
+      "fileName": "config-panel.machine.ts",
+      "prdSection": "6.11",
+      "states": [
+        "CategoryList",
+        "ClaudeMdEditing",
+        "ClaudeMdView",
+        "Closed",
+        "HooksList",
+        "McpView",
+        "MemoryView",
+        "Overview",
+        "PlansList",
+        "ResourcePreview",
+        "SettingsEditing",
+        "SettingsView",
+        "SkillsList",
+        "TasksList"
+      ],
+      "transitions": [
+        {
+          "from": "[*]",
+          "to": "Closed",
+          "event": ""
+        },
+        {
+          "from": "Closed",
+          "to": "CategoryList",
+          "event": "点击「配置」按钮"
+        },
+        {
+          "from": "[*]",
+          "to": "Overview",
+          "event": "显示分类卡片"
+        },
+        {
+          "from": "Overview",
+          "to": "SkillsList",
+          "event": "点击 Skills 卡片"
+        },
+        {
+          "from": "Overview",
+          "to": "HooksList",
+          "event": "点击 Hooks 卡片"
+        },
+        {
+          "from": "Overview",
+          "to": "PlansList",
+          "event": "点击 Plans 卡片"
+        },
+        {
+          "from": "Overview",
+          "to": "TasksList",
+          "event": "点击 Tasks 卡片"
+        },
+        {
+          "from": "Overview",
+          "to": "SettingsView",
+          "event": "点击 Settings 卡片"
+        },
+        {
+          "from": "Overview",
+          "to": "ClaudeMdView",
+          "event": "点击 CLAUDE.md 卡片"
+        },
+        {
+          "from": "Overview",
+          "to": "MemoryView",
+          "event": "点击 Memory 卡片"
+        },
+        {
+          "from": "Overview",
+          "to": "McpView",
+          "event": "点击 MCP 卡片"
+        },
+        {
+          "from": "SkillsList",
+          "to": "ResourcePreview",
+          "event": "点击某个 skill"
+        },
+        {
+          "from": "HooksList",
+          "to": "ResourcePreview",
+          "event": "点击某个 hook"
+        },
+        {
+          "from": "PlansList",
+          "to": "ResourcePreview",
+          "event": "点击某个 plan"
+        },
+        {
+          "from": "TasksList",
+          "to": "ResourcePreview",
+          "event": "点击某个 task"
+        },
+        {
+          "from": "ResourcePreview",
+          "to": "SkillsList",
+          "event": "返回列表"
+        },
+        {
+          "from": "ResourcePreview",
+          "to": "HooksList",
+          "event": "返回列表"
+        },
+        {
+          "from": "ResourcePreview",
+          "to": "PlansList",
+          "event": "返回列表"
+        },
+        {
+          "from": "ResourcePreview",
+          "to": "TasksList",
+          "event": "返回列表"
+        },
+        {
+          "from": "SettingsView",
+          "to": "SettingsEditing",
+          "event": "用户修改设置"
+        },
+        {
+          "from": "SettingsEditing",
+          "to": "SettingsView",
+          "event": "保存成功"
+        },
+        {
+          "from": "ClaudeMdView",
+          "to": "ClaudeMdEditing",
+          "event": "用户修改内容"
+        },
+        {
+          "from": "ClaudeMdEditing",
+          "to": "ClaudeMdView",
+          "event": "保存成功"
+        },
+        {
+          "from": "CategoryList",
+          "to": "Closed",
+          "event": "Esc / 点击关闭"
+        }
+      ],
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1028
+      }
+    },
+    {
+      "name": "文件监听状态",
+      "fileName": "file-watcher.machine.ts",
+      "prdSection": "6.12",
+      "states": [
+        "Inactive",
+        "WatchError",
+        "Watching"
+      ],
+      "transitions": [
+        {
+          "from": "[*]",
+          "to": "Inactive",
+          "event": "应用启动"
+        },
+        {
+          "from": "Inactive",
+          "to": "Watching",
+          "event": "终端创建 → 监听其 cwd 目录"
+        },
+        {
+          "from": "Watching",
+          "to": "Watching",
+          "event": "新文件创建 → UI 标记 NEW"
+        },
+        {
+          "from": "Watching",
+          "to": "Watching",
+          "event": "文件修改 → UI 刷新"
+        },
+        {
+          "from": "Watching",
+          "to": "Watching",
+          "event": "文件删除 → UI 移除"
+        },
+        {
+          "from": "Watching",
+          "to": "WatchError",
+          "event": "fs.watch 错误（权限/路径不存在）"
+        },
+        {
+          "from": "WatchError",
+          "to": "Watching",
+          "event": "自动重试 (3s interval, max 3 retries)"
+        },
+        {
+          "from": "WatchError",
+          "to": "Inactive",
+          "event": "重试失败 → 停止监听"
+        },
+        {
+          "from": "Watching",
+          "to": "Inactive",
+          "event": "终端关闭 → 停止监听该目录"
+        }
+      ],
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1082
+      }
+    },
+    {
+      "name": "富编辑器覆盖层状态",
+      "fileName": "rich-editor.machine.ts",
+      "prdSection": "6.13",
+      "states": [
+        "Composing",
+        "Idle",
+        "ImageAttaching",
+        "RawTerminal",
+        "RichEditor",
+        "Sending"
+      ],
+      "transitions": [
+        {
+          "from": "[*]",
+          "to": "RichEditor",
+          "event": "终端启动（默认）"
+        },
+        {
+          "from": "[*]",
+          "to": "Idle",
+          "event": "编辑器空闲"
+        },
+        {
+          "from": "Idle",
+          "to": "Composing",
+          "event": "用户开始输入"
+        },
+        {
+          "from": "Composing",
+          "to": "Composing",
+          "event": "继续输入 / 粘贴文本"
+        },
+        {
+          "from": "Composing",
+          "to": "ImageAttaching",
+          "event": "用户粘贴图片（Ctrl+V）"
+        },
+        {
+          "from": "ImageAttaching",
+          "to": "Composing",
+          "event": "图片保存到临时文件，编辑器显示缩略图"
+        },
+        {
+          "from": "Composing",
+          "to": "Sending",
+          "event": "用户按发送（Enter / Cmd+Enter）"
+        },
+        {
+          "from": "Sending",
+          "to": "Idle",
+          "event": "提取文本 → 检测前台进程 → 按协议转换 → pty.write() → 清空编辑器"
+        },
+        {
+          "from": "RichEditor",
+          "to": "RawTerminal",
+          "event": "Alternate Screen Buffer 进入（\\x1b[?1049h）/ 手动快捷键切换"
+        },
+        {
+          "from": "RawTerminal",
+          "to": "RichEditor",
+          "event": "Alternate Screen Buffer 退出（\\x1b[?1049l）/ 手动快捷键切换"
+        }
+      ],
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1112
+      }
+    },
+    {
+      "name": "Skill 聚合浏览器状态",
+      "fileName": "skill-browser.machine.ts",
+      "prdSection": "6.14",
+      "states": [
+        "Closed",
+        "Discovery",
+        "LoadError",
+        "Loading",
+        "PackageDetail",
+        "PartialReady",
+        "Ready",
+        "SearchResults"
+      ],
+      "transitions": [
+        {
+          "from": "[*]",
+          "to": "Closed",
+          "event": ""
+        },
+        {
+          "from": "Closed",
+          "to": "Loading",
+          "event": "点击「Skills」按钮 / 点击「浏览更多」"
+        },
+        {
+          "from": "Loading",
+          "to": "Ready",
+          "event": "多源聚合数据加载完成"
+        },
+        {
+          "from": "Loading",
+          "to": "PartialReady",
+          "event": "部分源加载成功，部分失败"
+        },
+        {
+          "from": "Loading",
+          "to": "LoadError",
+          "event": "所有源加载失败"
+        },
+        {
+          "from": "[*]",
+          "to": "Discovery",
+          "event": "默认展示（按来源优先排序）"
+        },
+        {
+          "from": "Discovery",
+          "to": "SearchResults",
+          "event": "用户输入搜索词（300ms 去抖）"
+        },
+        {
+          "from": "SearchResults",
+          "to": "Discovery",
+          "event": "清空搜索框"
+        },
+        {
+          "from": "SearchResults",
+          "to": "SearchResults",
+          "event": "修改搜索词"
+        },
+        {
+          "from": "Discovery",
+          "to": "PackageDetail",
+          "event": "点击某个包"
+        },
+        {
+          "from": "SearchResults",
+          "to": "PackageDetail",
+          "event": "点击某个包"
+        },
+        {
+          "from": "PackageDetail",
+          "to": "Discovery",
+          "event": "点击返回"
+        },
+        {
+          "from": "PartialReady",
+          "to": "Ready",
+          "event": "失败源重试成功"
+        },
+        {
+          "from": "Ready",
+          "to": "Closed",
+          "event": "Esc / 点击 ✕"
+        },
+        {
+          "from": "LoadError",
+          "to": "Closed",
+          "event": "Esc / 关闭"
+        },
+        {
+          "from": "LoadError",
+          "to": "Loading",
+          "event": "点击「重试」"
+        }
+      ],
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1151
+      }
+    },
+    {
+      "name": "包安装状态",
+      "fileName": "package-install.machine.ts",
+      "prdSection": "6.15",
+      "states": [
+        "Downloading",
+        "InstallFailed",
+        "Installed",
+        "Installing",
+        "NotInstalled",
+        "SecurityReview",
+        "Uninstalling",
+        "UpdateAvailable"
+      ],
+      "transitions": [
+        {
+          "from": "[*]",
+          "to": "NotInstalled",
+          "event": ""
+        },
+        {
+          "from": "NotInstalled",
+          "to": "Downloading",
+          "event": "用户点击「安装」"
+        },
+        {
+          "from": "Downloading",
+          "to": "SecurityReview",
+          "event": "类型为 Hook"
+        },
+        {
+          "from": "Downloading",
+          "to": "Installing",
+          "event": "类型为 Skill，下载完成"
+        },
+        {
+          "from": "SecurityReview",
+          "to": "Installing",
+          "event": "用户确认"
+        },
+        {
+          "from": "SecurityReview",
+          "to": "NotInstalled",
+          "event": "用户取消"
+        },
+        {
+          "from": "Installing",
+          "to": "Installed",
+          "event": "解压 + 注册完成"
+        },
+        {
+          "from": "Installing",
+          "to": "InstallFailed",
+          "event": "解压/写入失败"
+        },
+        {
+          "from": "Installed",
+          "to": "UpdateAvailable",
+          "event": "检测到新版本"
+        },
+        {
+          "from": "UpdateAvailable",
+          "to": "Downloading",
+          "event": "用户点击「更新」"
+        },
+        {
+          "from": "Installed",
+          "to": "Uninstalling",
+          "event": "用户点击「卸载」"
+        },
+        {
+          "from": "UpdateAvailable",
+          "to": "Uninstalling",
+          "event": "用户点击「卸载」"
+        },
+        {
+          "from": "Uninstalling",
+          "to": "NotInstalled",
+          "event": "删除本地文件 + 注册表记录"
+        },
+        {
+          "from": "InstallFailed",
+          "to": "NotInstalled",
+          "event": "用户关闭错误提示"
+        }
+      ],
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1182
+      }
+    },
+    {
+      "name": "AI 评分状态（V2-P1）",
+      "fileName": "ai-score.machine.ts",
+      "prdSection": "6.16",
+      "states": [
+        "GeneratingShowcase",
+        "NotScored",
+        "ScoreFailed",
+        "Scored",
+        "Scoring"
+      ],
+      "transitions": [
+        {
+          "from": "[*]",
+          "to": "NotScored",
+          "event": "Skill 存在但未评分"
+        },
+        {
+          "from": "NotScored",
+          "to": "Scoring",
+          "event": "点击「AI 评分」"
+        },
+        {
+          "from": "Scoring",
+          "to": "Scored",
+          "event": "评分完成"
+        },
+        {
+          "from": "Scoring",
+          "to": "ScoreFailed",
+          "event": "API 调用失败"
+        },
+        {
+          "from": "ScoreFailed",
+          "to": "Scoring",
+          "event": "重试"
+        },
+        {
+          "from": "ScoreFailed",
+          "to": "NotScored",
+          "event": "取消"
+        },
+        {
+          "from": "Scored",
+          "to": "Scoring",
+          "event": "Skill 内容变更后重新评分"
+        },
+        {
+          "from": "Scored",
+          "to": "GeneratingShowcase",
+          "event": "点击「生成展示页」"
+        }
+      ],
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1218
+      }
+    },
+    {
+      "name": "用户认证状态（V2-P2）",
+      "fileName": "auth.machine.ts",
+      "prdSection": "6.17",
+      "states": [
+        "Authorizing",
+        "LoggedIn",
+        "LoggedOut"
+      ],
+      "transitions": [
+        {
+          "from": "[*]",
+          "to": "LoggedOut",
+          "event": ""
+        },
+        {
+          "from": "LoggedOut",
+          "to": "Authorizing",
+          "event": "点击「GitHub 登录」"
+        },
+        {
+          "from": "Authorizing",
+          "to": "LoggedIn",
+          "event": "收到 access_token"
+        },
+        {
+          "from": "Authorizing",
+          "to": "LoggedOut",
+          "event": "授权失败/取消"
+        },
+        {
+          "from": "LoggedIn",
+          "to": "LoggedOut",
+          "event": "token 过期 / 用户登出"
+        }
+      ],
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1237
+      }
+    },
+    {
+      "name": "Showcase 展示页生命周期状态",
+      "fileName": "showcase.machine.ts",
+      "prdSection": "6.18",
+      "states": [
+        "Editing",
+        "GenerateFailed",
+        "Generating",
+        "NotGenerated",
+        "Previewing",
+        "PublishFailed",
+        "Published",
+        "Publishing",
+        "Unpublished",
+        "Updating"
+      ],
+      "transitions": [
+        {
+          "from": "[*]",
+          "to": "NotGenerated",
+          "event": "Skill 已评分但未生成展示页"
+        },
+        {
+          "from": "NotGenerated",
+          "to": "Generating",
+          "event": "点击「生成展示页」"
+        },
+        {
+          "from": "Generating",
+          "to": "Previewing",
+          "event": "生成草稿（合并评分卡 + SKILL.md 数据）"
+        },
+        {
+          "from": "Generating",
+          "to": "GenerateFailed",
+          "event": "生成失败"
+        },
+        {
+          "from": "GenerateFailed",
+          "to": "Generating",
+          "event": "重试"
+        },
+        {
+          "from": "GenerateFailed",
+          "to": "NotGenerated",
+          "event": "取消"
+        },
+        {
+          "from": "Previewing",
+          "to": "Editing",
+          "event": "用户修改模板/截图/Problem&Solution"
+        },
+        {
+          "from": "Editing",
+          "to": "Previewing",
+          "event": "保存修改，刷新预览"
+        },
+        {
+          "from": "Previewing",
+          "to": "Publishing",
+          "event": "点击「发布展示页」"
+        },
+        {
+          "from": "Publishing",
+          "to": "Published",
+          "event": "GitHub Pages 发布成功"
+        },
+        {
+          "from": "Publishing",
+          "to": "PublishFailed",
+          "event": "发布失败（网络/权限/API 限制）"
+        },
+        {
+          "from": "PublishFailed",
+          "to": "Publishing",
+          "event": "重试"
+        },
+        {
+          "from": "PublishFailed",
+          "to": "Previewing",
+          "event": "返回编辑"
+        },
+        {
+          "from": "Published",
+          "to": "Updating",
+          "event": "修改已发布的展示页"
+        },
+        {
+          "from": "Updating",
+          "to": "Published",
+          "event": "更新成功"
+        },
+        {
+          "from": "Updating",
+          "to": "PublishFailed",
+          "event": "更新失败"
+        },
+        {
+          "from": "Published",
+          "to": "Unpublished",
+          "event": "用户主动下线"
+        },
+        {
+          "from": "Unpublished",
+          "to": "Publishing",
+          "event": "重新发布"
+        },
+        {
+          "from": "Unpublished",
+          "to": "NotGenerated",
+          "event": "删除展示页配置"
+        }
+      ],
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1250
+      }
+    }
+  ],
+  "dataStructures": [
+    {
+      "name": "CCData",
+      "fields": [
+        {
+          "name": "display",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "pastedContents",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "timestamp",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "project",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "sessionId",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "sourceFile": "chat.types.ts",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1304
+      }
+    },
+    {
+      "name": "CCData",
+      "fields": [
+        {
+          "name": "type",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "messageId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "sessionId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "timestamp",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "cwd",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "gitBranch",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "message",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "sourceFile": "chat.types.ts",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1315
+      }
+    },
+    {
+      "name": "CCData",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "subject",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "blocks",
+          "type": "array",
+          "required": true
+        },
+        {
+          "name": "blockedBy",
+          "type": "array",
+          "required": true
+        }
+      ],
+      "sourceFile": "chat.types.ts",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1328
+      }
+    },
+    {
+      "name": "MuxvoConfig",
+      "fields": [
+        {
+          "name": "window",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "width",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "height",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "x",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "y",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "openTerminals",
+          "type": "array",
+          "required": true
+        },
+        {
+          "name": "gridLayout",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "columnRatios",
+          "type": "array",
+          "required": true
+        },
+        {
+          "name": "rowRatios",
+          "type": "array",
+          "required": true
+        },
+        {
+          "name": "ftvLeftWidth",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "ftvRightWidth",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "theme",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "fontSize",
+          "type": "number",
+          "required": true
+        }
+      ],
+      "sourceFile": "config.types.ts",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1343
+      }
+    },
+    {
+      "name": "Package",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "displayName",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "readme",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "author",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "username",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "avatarUrl",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "badges",
+          "type": "array",
+          "required": true
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "tags",
+          "type": "array",
+          "required": true
+        },
+        {
+          "name": "license",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "stats",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "downloads",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "weeklyDownloads",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "avgRating",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "reviewCount",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "favoriteCount",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "latestVersion",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "versions",
+          "type": "array",
+          "required": true
+        },
+        {
+          "name": "version",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "changelog",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "publishedAt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "fileSize",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "fileList",
+          "type": "array",
+          "required": true
+        },
+        {
+          "name": "createdAt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "sourceFile": "marketplace.types.ts",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1369
+      }
+    },
+    {
+      "name": "Review",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "packageName",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "author",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "username",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "avatarUrl",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "rating",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "body",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "createdAt",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "sourceFile": "marketplace.types.ts",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1411
+      }
+    },
+    {
+      "name": "MarketplaceRegistry",
+      "fields": [
+        {
+          "name": "auth",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "username",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "avatarUrl",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "installed",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "version",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "packageId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "source",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "sourceUrl",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "installedAt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "version",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "packageId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "source",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "sourceUrl",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "installedAt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "hookConfig",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "event",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "command",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "skillUsage",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "totalInvocations",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "sessionCount",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "lastUsed",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "avgDurationSec",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "weeklyAvg",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "lastUpdateCheck",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "sourceFile": "marketplace.types.ts",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1428
+      }
+    },
+    {
+      "name": "Package",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "version",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "displayName",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "tags",
+          "type": "array",
+          "required": true
+        },
+        {
+          "name": "license",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "files",
+          "type": "array",
+          "required": true
+        }
+      ],
+      "sourceFile": "marketplace.types.ts",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1487
+      }
+    },
+    {
+      "name": "Package",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "version",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "hookConfig",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "event",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "matcher",
+          "type": "unknown",
+          "required": true
+        },
+        {
+          "name": "command",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "timeout",
+          "type": "number",
+          "required": true
+        }
+      ],
+      "sourceFile": "marketplace.types.ts",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1503
+      }
+    },
+    {
+      "name": "SkillScore",
+      "fields": [
+        {
+          "name": "version",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "skillDirName",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "contentHash",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "scores",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "practicality",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "engineering",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "intentClarity",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "designCleverness",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "documentation",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "reusability",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "total",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "grade",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "suggestions",
+          "type": "array",
+          "required": true
+        },
+        {
+          "name": "scoredAt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "apiModel",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "sourceFile": "score.types.ts",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1521
+      }
+    },
+    {
+      "name": "SkillShowcase",
+      "fields": [
+        {
+          "name": "version",
+          "type": "number",
+          "required": true
+        },
+        {
+          "name": "skillDirName",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "template",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "hero",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "tagline",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "problemSolution",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "problem",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "solution",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "features",
+          "type": "array",
+          "required": true
+        },
+        {
+          "name": "demos",
+          "type": "array",
+          "required": true
+        },
+        {
+          "name": "tags",
+          "type": "array",
+          "required": true
+        },
+        {
+          "name": "scoreRef",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "publish",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "publishedAt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "url",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "githubRepo",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "lastGeneratedAt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "lastEditedAt",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "sourceFile": "showcase.types.ts",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1550
+      }
+    },
+    {
+      "name": "MuxvoPublisher",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "components",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "skill",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "command",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "config",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "tokenSource",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "outputDir",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "sourceFile": "publish-draft.types.ts",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1586
+      }
+    },
+    {
+      "name": "PublishDraft",
+      "fields": [
+        {
+          "name": "skillDirName",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "securityCheck",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "passed",
+          "type": "boolean",
+          "required": true
+        },
+        {
+          "name": "issues",
+          "type": "array",
+          "required": true
+        },
+        {
+          "name": "checkedAt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "details",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "tags",
+          "type": "array",
+          "required": true
+        },
+        {
+          "name": "problem",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "solution",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "screenshots",
+          "type": "array",
+          "required": true
+        },
+        {
+          "name": "scoreRef",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "publishedUrl",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "publishedAt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "version",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "sourceFile": "types.ts",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 1605
+      }
+    }
+  ],
+  "shortcuts": [
+    {
+      "action": "新建终端",
+      "macOS": "⌘T",
+      "windowsLinux": "Ctrl+T",
+      "scope": "terminal",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 276
+      }
+    },
+    {
+      "action": "关闭当前终端",
+      "macOS": "⌘W",
+      "windowsLinux": "Ctrl+W",
+      "scope": "terminal",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 277
+      }
+    },
+    {
+      "action": "聚焦第 N 个终端",
+      "macOS": "⌘1~9",
+      "windowsLinux": "Ctrl+1~9",
+      "scope": "terminal",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 278
+      }
+    },
+    {
+      "action": "切换到上/下一个终端",
+      "macOS": "⌘[ / ⌘]",
+      "windowsLinux": "Ctrl+[ / Ctrl+]",
+      "scope": "terminal",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 279
+      }
+    },
+    {
+      "action": "返回平铺/关闭面板/关闭临时视图",
+      "macOS": "Esc",
+      "windowsLinux": "Esc",
+      "scope": "panel",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 280
+      }
+    },
+    {
+      "action": "搜索（上下文感知）",
+      "macOS": "⌘F",
+      "windowsLinux": "Ctrl+F",
+      "scope": "global",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 281
+      }
+    },
+    {
+      "action": "切换文件面板",
+      "macOS": "⌘E",
+      "windowsLinux": "Ctrl+E",
+      "scope": "panel",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 282
+      }
+    },
+    {
+      "action": "打开/关闭 Skill 浏览器",
+      "macOS": "⌘⇧M",
+      "windowsLinux": "Ctrl+Shift+M",
+      "scope": "skill-browser",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 283
+      }
+    },
+    {
+      "action": "切换 Markdown 预览/编辑模式",
+      "macOS": "⌘/",
+      "windowsLinux": "Ctrl+/",
+      "scope": "editor",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 284
+      }
+    },
+    {
+      "action": "保存编辑中的文件",
+      "macOS": "⌘S",
+      "windowsLinux": "Ctrl+S",
+      "scope": "panel",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 285
+      }
+    },
+    {
+      "action": "Skill 浏览器内聚焦搜索框",
+      "macOS": "/",
+      "windowsLinux": "/",
+      "scope": "skill-browser",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 286
+      }
+    }
+  ],
+  "analyticsEvents": [
+    {
+      "name": "terminal.create",
+      "category": "terminal",
+      "params": {
+        "cwd": "any",
+        "timestamp": "any"
+      },
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2844
+      }
+    },
+    {
+      "name": "terminal.close",
+      "category": "terminal",
+      "params": {
+        "cwd": "any",
+        "duration_seconds": "any",
+        "had_foreground_process": "any"
+      },
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2845
+      }
+    },
+    {
+      "name": "terminal.focus",
+      "category": "terminal",
+      "params": {
+        "terminal_index": "any"
+      },
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2846
+      }
+    },
+    {
+      "name": "terminal.cwd_switch",
+      "category": "terminal",
+      "params": {
+        "from_cwd": "any",
+        "to_cwd": "any",
+        "method": "\"direct_cd\" | \"exit_and_cd\""
+      },
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2847
+      }
+    },
+    {
+      "name": "terminal.drag_reorder",
+      "category": "terminal",
+      "params": {
+        "terminal_count": "any"
+      },
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2848
+      }
+    },
+    {
+      "name": "terminal.resize_border",
+      "category": "terminal",
+      "params": {},
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2849
+      }
+    },
+    {
+      "name": "panel.file_open",
+      "category": "panel",
+      "params": {
+        "cwd": "any"
+      },
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2855
+      }
+    },
+    {
+      "name": "panel.file_preview",
+      "category": "panel",
+      "params": {
+        "file_type": "any"
+      },
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2856
+      }
+    },
+    {
+      "name": "panel.history_open",
+      "category": "panel",
+      "params": {},
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2857
+      }
+    },
+    {
+      "name": "panel.history_search",
+      "category": "panel",
+      "params": {
+        "query_length": "any",
+        "result_count": "any"
+      },
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2858
+      }
+    },
+    {
+      "name": "panel.history_export",
+      "category": "panel",
+      "params": {
+        "format": "any",
+        "project_count": "any",
+        "session_count": "any"
+      },
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2859
+      }
+    },
+    {
+      "name": "panel.config_open",
+      "category": "panel",
+      "params": {},
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2860
+      }
+    },
+    {
+      "name": "panel.config_category",
+      "category": "panel",
+      "params": {
+        "category": "any"
+      },
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2861
+      }
+    },
+    {
+      "name": "panel.skill_browser_open",
+      "category": "panel",
+      "params": {},
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2862
+      }
+    },
+    {
+      "name": "editor.activate",
+      "category": "editor",
+      "params": {
+        "terminal_index": "any"
+      },
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2868
+      }
+    },
+    {
+      "name": "editor.image_paste",
+      "category": "editor",
+      "params": {
+        "image_size_kb": "any",
+        "source": "\"clipboard\"|\"drag\""
+      },
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2869
+      }
+    },
+    {
+      "name": "editor.multiline_send",
+      "category": "editor",
+      "params": {
+        "line_count": "any",
+        "char_count": "any"
+      },
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2870
+      }
+    },
+    {
+      "name": "editor.fallback_to_terminal",
+      "category": "editor",
+      "params": {
+        "trigger_program": "string"
+      },
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2871
+      }
+    },
+    {
+      "name": "editor.return_from_terminal",
+      "category": "editor",
+      "params": {
+        "fallback_duration_seconds": "any"
+      },
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2872
+      }
+    },
+    {
+      "name": "skill.search",
+      "category": "skill",
+      "params": {
+        "query": "any",
+        "result_count": "any",
+        "sources_searched": "any"
+      },
+      "phase": "V2-P0",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2878
+      }
+    },
+    {
+      "name": "skill.detail_view",
+      "category": "skill",
+      "params": {
+        "package_name": "any",
+        "source": "any"
+      },
+      "phase": "V2-P0",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2879
+      }
+    },
+    {
+      "name": "skill.install",
+      "category": "skill",
+      "params": {
+        "package_name": "any",
+        "type": "any",
+        "source": "any"
+      },
+      "phase": "V2-P0",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2880
+      }
+    },
+    {
+      "name": "skill.uninstall",
+      "category": "skill",
+      "params": {
+        "package_name": "any"
+      },
+      "phase": "V2-P0",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2881
+      }
+    },
+    {
+      "name": "score.generate",
+      "category": "score",
+      "params": {
+        "skill_name": "any",
+        "cached": "boolean"
+      },
+      "phase": "V2-P1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2887
+      }
+    },
+    {
+      "name": "score.result",
+      "category": "score",
+      "params": {
+        "skill_name": "any",
+        "total_score": "any",
+        "grade": "any",
+        "duration_ms": "any"
+      },
+      "phase": "V2-P1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2888
+      }
+    },
+    {
+      "name": "score.fail",
+      "category": "score",
+      "params": {
+        "skill_name": "any",
+        "error_type": "\"cc_not_running\"|\"skill_not_installed\"|\"run_fail\"|\"json_parse\""
+      },
+      "phase": "V2-P1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2889
+      }
+    },
+    {
+      "name": "score.save_image",
+      "category": "score",
+      "params": {
+        "skill_name": "any"
+      },
+      "phase": "V2-P1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2890
+      }
+    },
+    {
+      "name": "score.copy_image",
+      "category": "score",
+      "params": {
+        "skill_name": "any"
+      },
+      "phase": "V2-P1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2891
+      }
+    },
+    {
+      "name": "showcase.generate",
+      "category": "showcase",
+      "params": {
+        "skill_name": "any",
+        "has_frontmatter": "boolean"
+      },
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2897
+      }
+    },
+    {
+      "name": "showcase.template_switch",
+      "category": "showcase",
+      "params": {
+        "from_template": "any",
+        "to_template": "any"
+      },
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2898
+      }
+    },
+    {
+      "name": "showcase.screenshot_add",
+      "category": "showcase",
+      "params": {
+        "file_type": "any",
+        "file_size_kb": "any"
+      },
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2899
+      }
+    },
+    {
+      "name": "showcase.publish",
+      "category": "showcase",
+      "params": {
+        "skill_name": "any",
+        "template": "any",
+        "has_screenshots": "boolean",
+        "publish_duration_ms": "any"
+      },
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2900
+      }
+    },
+    {
+      "name": "showcase.publish_fail",
+      "category": "showcase",
+      "params": {
+        "skill_name": "any",
+        "error_type": "\"auth\"|\"network\"|\"rate_limit\"|\"repo_create\""
+      },
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2901
+      }
+    },
+    {
+      "name": "showcase.share_link_copy",
+      "category": "showcase",
+      "params": {
+        "skill_name": "any",
+        "context": "\"publish_success\"|\"skill_list\""
+      },
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2902
+      }
+    },
+    {
+      "name": "showcase.update",
+      "category": "showcase",
+      "params": {
+        "skill_name": "any",
+        "changed_fields": "string[]"
+      },
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2903
+      }
+    },
+    {
+      "name": "app.launch",
+      "category": "app",
+      "params": {
+        "terminal_count_restored": "any",
+        "version": "any",
+        "platform": "any"
+      },
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2909
+      }
+    },
+    {
+      "name": "app.quit",
+      "category": "app",
+      "params": {
+        "session_duration_minutes": "any",
+        "terminal_count": "any"
+      },
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2910
+      }
+    },
+    {
+      "name": "app.onboarding_complete",
+      "category": "app",
+      "params": {
+        "skipped": "boolean"
+      },
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2911
+      }
+    },
+    {
+      "name": "terminal.spawn_failed",
+      "category": "terminal",
+      "params": {},
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 204
+      }
+    },
+    {
+      "name": "terminal.close_timeout",
+      "category": "terminal",
+      "params": {},
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 205
+      }
+    },
+    {
+      "name": "chat.parse_failed",
+      "category": "other",
+      "params": {},
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 206
+      }
+    },
+    {
+      "name": "marketplace.download_failed",
+      "category": "other",
+      "params": {},
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 207
+      }
+    },
+    {
+      "name": "marketplace.install_failed",
+      "category": "other",
+      "params": {},
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 208
+      }
+    },
+    {
+      "name": "score.cc_not_running",
+      "category": "score",
+      "params": {},
+      "phase": "V2-P1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 209
+      }
+    },
+    {
+      "name": "score.parse_failed",
+      "category": "score",
+      "params": {},
+      "phase": "V2-P1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 210
+      }
+    },
+    {
+      "name": "showcase.publish_failed",
+      "category": "showcase",
+      "params": {},
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 211
+      }
+    },
+    {
+      "name": "auth.oauth_failed",
+      "category": "other",
+      "params": {},
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 212
+      }
+    },
+    {
+      "name": "fs.permission_denied",
+      "category": "other",
+      "params": {},
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 213
+      }
+    },
+    {
+      "name": "fs.not_found",
+      "category": "other",
+      "params": {},
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 214
+      }
+    },
+    {
+      "name": "ipcMain.handle",
+      "category": "other",
+      "params": {},
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 216
+      }
+    },
+    {
+      "name": "github.com",
+      "category": "showcase",
+      "params": {},
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 384
+      }
+    },
+    {
+      "name": "githubusercontent.com",
+      "category": "showcase",
+      "params": {},
+      "phase": "V2-P2",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 384
+      }
+    },
+    {
+      "name": "Promise.allSettled",
+      "category": "other",
+      "params": {},
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 1613
+      }
+    },
+    {
+      "name": "Info.plist",
+      "category": "other",
+      "params": {},
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 1660
+      }
+    },
+    {
+      "name": "navigator.language",
+      "category": "other",
+      "params": {},
+      "phase": "V1",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 1688
+      }
+    }
+  ],
+  "errorCodes": [
+    {
+      "code": "terminal.spawn_failed",
+      "domain": "terminal",
+      "description": "PTY 创建失败（路径不存在/权限不足）",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 204
+      }
+    },
+    {
+      "code": "terminal.close_timeout",
+      "domain": "terminal",
+      "description": "终端关闭超时（SIGINT 后仍未退出）",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 205
+      }
+    },
+    {
+      "code": "chat.parse_failed",
+      "domain": "chat",
+      "description": "Session JSONL 解析失败",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 206
+      }
+    },
+    {
+      "code": "marketplace.download_failed",
+      "domain": "marketplace",
+      "description": "包下载失败",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 207
+      }
+    },
+    {
+      "code": "marketplace.install_failed",
+      "domain": "marketplace",
+      "description": "包安装失败（解压/权限/版本冲突）",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 208
+      }
+    },
+    {
+      "code": "score.cc_not_running",
+      "domain": "score",
+      "description": "CC 未运行或未就绪",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 209
+      }
+    },
+    {
+      "code": "score.parse_failed",
+      "domain": "score",
+      "description": "评分结果 JSON 解析失败",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 210
+      }
+    },
+    {
+      "code": "showcase.publish_failed",
+      "domain": "showcase",
+      "description": "发布失败（未登录/超时/名称冲突/网络中断）",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 211
+      }
+    },
+    {
+      "code": "auth.oauth_failed",
+      "domain": "auth",
+      "description": "OAuth 流程失败",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 212
+      }
+    },
+    {
+      "code": "fs.permission_denied",
+      "domain": "fs",
+      "description": "文件系统权限不足",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 213
+      }
+    },
+    {
+      "code": "fs.not_found",
+      "domain": "fs",
+      "description": "文件或目录不存在",
+      "sourceLocation": {
+        "file": "DEV-PLAN.md",
+        "line": 214
+      }
+    }
+  ],
+  "exceptions": [
+    {
+      "id": 1,
+      "scenario": "前台进程崩溃",
+      "handling": "标签状态变红，提供重启按钮",
+      "copyText": "进程已断开，点击重新启动 shell",
+      "responsibleTask": "terminal",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2650
+      }
+    },
+    {
+      "id": 2,
+      "scenario": "文件读取失败",
+      "handling": "显示错误提示",
+      "copyText": "无法读取文件，请检查文件权限",
+      "responsibleTask": "fs",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2651
+      }
+    },
+    {
+      "id": 3,
+      "scenario": "JSONL 解析错误",
+      "handling": "跳过错误行，继续解析",
+      "copyText": "静默处理",
+      "responsibleTask": "chat",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2652
+      }
+    },
+    {
+      "id": 4,
+      "scenario": "~/.claude/ 目录不存在",
+      "handling": "功能降级，聊天历史和配置管理不可用，终端管理正常",
+      "copyText": "未检测到 Claude Code 数据目录，聊天历史和配置管理功能暂不可用",
+      "responsibleTask": "config",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2653
+      }
+    },
+    {
+      "id": 5,
+      "scenario": "磁盘空间不足",
+      "handling": "提示清理",
+      "copyText": "磁盘空间不足，建议清理旧的 debug 日志",
+      "responsibleTask": "fs",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2654
+      }
+    },
+    {
+      "id": 6,
+      "scenario": "网络不可用",
+      "handling": "显示离线提示，仅展示本地已安装数据",
+      "copyText": "无法连接聚合源，请检查网络",
+      "responsibleTask": "marketplace",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2655
+      }
+    },
+    {
+      "id": 7,
+      "scenario": "下载失败",
+      "handling": "自动重试 1 次，仍失败则提示",
+      "copyText": "下载失败，请稍后重试",
+      "responsibleTask": "marketplace",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2656
+      }
+    },
+    {
+      "id": 8,
+      "scenario": "包完整性校验失败",
+      "handling": "拒绝安装，提示重新下载",
+      "copyText": "文件校验失败，请重新下载",
+      "responsibleTask": "marketplace",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2657
+      }
+    },
+    {
+      "id": 9,
+      "scenario": "安装路径无写入权限",
+      "handling": "提示权限问题",
+      "copyText": "无法写入 ~/.claude/skills/，请检查目录权限",
+      "responsibleTask": "fs",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2658
+      }
+    },
+    {
+      "id": 10,
+      "scenario": "发布时未登录（V2-P2）",
+      "handling": "引导登录",
+      "copyText": "请先登录 GitHub 账号",
+      "responsibleTask": "auth",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2659
+      }
+    },
+    {
+      "id": 11,
+      "scenario": "GitHub OAuth 失败（V2-P2）",
+      "handling": "提示重试",
+      "copyText": "GitHub 授权失败，请重试",
+      "responsibleTask": "auth",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2660
+      }
+    },
+    {
+      "id": 12,
+      "scenario": "CC 终端未运行（AI 评分）",
+      "handling": "提示启动 CC",
+      "copyText": "请先启动一个 Claude Code 终端",
+      "responsibleTask": "terminal",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2661
+      }
+    },
+    {
+      "id": 13,
+      "scenario": "评分 Skill 未安装（AI 评分）",
+      "handling": "自动安装 muxvo-skill-scorer",
+      "copyText": "显示安装进度，安装完成后自动继续评分",
+      "responsibleTask": "marketplace",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2662
+      }
+    },
+    {
+      "id": 14,
+      "scenario": "评分 Skill 运行失败（AI 评分）",
+      "handling": "最多重试 3 次，仍失败则提示",
+      "copyText": "评分失败，请检查网络连接后重试",
+      "responsibleTask": "score",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2663
+      }
+    },
+    {
+      "id": 15,
+      "scenario": "评分结果 JSON 解析失败（AI 评分）",
+      "handling": "重新评分 1 次，仍失败则提示",
+      "copyText": "评分结果格式异常，已自动重试",
+      "responsibleTask": "score",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2664
+      }
+    },
+    {
+      "id": 16,
+      "scenario": "聚合源返回错误",
+      "handling": "显示通用错误，切换到其他可用源",
+      "copyText": "部分聚合源不可用，已切换到备用源",
+      "responsibleTask": "marketplace",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2665
+      }
+    },
+    {
+      "id": 17,
+      "scenario": "已安装的包版本冲突（本地已修改）",
+      "handling": "提示用户选择",
+      "copyText": "本地文件已修改，覆盖还是保留本地版本？",
+      "responsibleTask": "marketplace",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2666
+      }
+    },
+    {
+      "id": 18,
+      "scenario": "CC 聊天记录被清理",
+      "handling": "自动切换到 Muxvo 镜像副本，用户无感知",
+      "copyText": "部分历史记录来自本地备份\"（可选提示）",
+      "responsibleTask": "chat",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2667
+      }
+    },
+    {
+      "id": 19,
+      "scenario": "Muxvo 镜像目录权限不足",
+      "handling": "降级为纯只读模式（仅读 CC 原始文件，不同步）",
+      "copyText": "无法写入数据目录，历史备份已暂停",
+      "responsibleTask": "fs",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2668
+      }
+    },
+    {
+      "id": 20,
+      "scenario": "同步过程中 CC 文件被锁定",
+      "handling": "跳过该文件，下次同步时重试",
+      "copyText": "无提示（静默重试）",
+      "responsibleTask": "fs",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2669
+      }
+    },
+    {
+      "id": 21,
+      "scenario": "CC 数据格式变更",
+      "handling": "版本检测 + 降级处理",
+      "copyText": "CC 数据格式已更新，部分功能可能受限，请更新 Muxvo",
+      "responsibleTask": "config",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2670
+      }
+    },
+    {
+      "id": 22,
+      "scenario": "SKILL.md 解析失败（展示页生成）",
+      "handling": "切换为手动填写模式，用文件名作 name",
+      "copyText": "提供 SKILL.md 格式规范链接",
+      "responsibleTask": "showcase",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2671
+      }
+    },
+    {
+      "id": 23,
+      "scenario": "GitHub Pages 发布超时（展示页发布）",
+      "handling": "30秒超时后提示重试",
+      "copyText": "保存草稿到本地，可稍后重试",
+      "responsibleTask": "showcase",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2672
+      }
+    },
+    {
+      "id": 24,
+      "scenario": "GitHub API rate limit（展示页发布）",
+      "handling": "提示\"GitHub API 配额已用完，请稍后再试\"",
+      "copyText": "显示配额重置时间",
+      "responsibleTask": "showcase",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2673
+      }
+    },
+    {
+      "id": 25,
+      "scenario": "展示页图片上传失败（截图补充）",
+      "handling": "提示文件大小限制（单张 ≤ 5MB）和格式限制（PNG/JPG/GIF）",
+      "copyText": "自动压缩重试",
+      "responsibleTask": "showcase",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2674
+      }
+    },
+    {
+      "id": 26,
+      "scenario": "GitHub 仓库被手动删除（已发布展示页）",
+      "handling": "检测到仓库不存在，状态标记为 Unpublished",
+      "copyText": "提示用户重新发布",
+      "responsibleTask": "showcase",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2675
+      }
+    },
+    {
+      "id": 27,
+      "scenario": "发布安全检查不通过",
+      "handling": "阻止发布，标红提示具体文件和行号",
+      "copyText": "检测到敏感信息（第 N 行），请移除后重试",
+      "responsibleTask": "showcase",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2676
+      }
+    },
+    {
+      "id": 28,
+      "scenario": "名称已被占用（发布）",
+      "handling": "提示冲突，建议改名",
+      "copyText": "商城中已有同名 Skill，请更换名称或添加前缀",
+      "responsibleTask": "showcase",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2677
+      }
+    },
+    {
+      "id": 29,
+      "scenario": "网络中断（发布中）",
+      "handling": "保存草稿到本地",
+      "copyText": "网络中断，草稿已保存。网络恢复后可在 Skills 列表继续发布",
+      "responsibleTask": "marketplace",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2678
+      }
+    },
+    {
+      "id": 30,
+      "scenario": "微信分享图生成失败",
+      "handling": "回退为复制链接",
+      "copyText": "分享图生成失败，已复制链接到剪贴板",
+      "responsibleTask": "showcase",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2679
+      }
+    },
+    {
+      "id": 31,
+      "scenario": "Deep Link 未响应（Web 页面安装）",
+      "handling": "3 秒后自动展开手动安装选项",
+      "copyText": "未检测到 Muxvo，请选择其他安装方式",
+      "responsibleTask": "marketplace",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2680
+      }
+    },
+    {
+      "id": 32,
+      "scenario": "对话式发布 GitHub 未授权",
+      "handling": "提示在 Muxvo GUI 中登录",
+      "copyText": "请先在 Muxvo 中登录 GitHub 账号",
+      "responsibleTask": "auth",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2681
+      }
+    }
+  ],
+  "performanceParams": [
+    {
+      "name": "JSONL 延迟加载",
+      "value": "",
+      "numericValue": 0,
+      "unit": "",
+      "context": "聊天历史仅在打开时加载，不预加载所有文件",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2687
+      }
+    },
+    {
+      "name": "JSONL 并发读取安全",
+      "value": "200ms",
+      "numericValue": 200,
+      "unit": "ms",
+      "context": "AI CLI 工具可能正在写入 JSONL 文件，Muxvo 读取时需处理：(1) 忽略不以 \\n 结尾的末尾行（可能是写入中的不完整 JSON）(2) 解析失败的行静默跳过 (3) chokidar 检测到文件变化后延迟 200ms 再读取，避免读到写入一半的数据",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2688
+      }
+    },
+    {
+      "name": "文件索引缓存",
+      "value": "",
+      "numericValue": 0,
+      "unit": "",
+      "context": "首次扫描后缓存文件列表，后续通过 fs.watch 增量更新",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2689
+      }
+    },
+    {
+      "name": "虚拟滚动",
+      "value": "129 个",
+      "numericValue": 129,
+      "unit": "个",
+      "context": "长列表（如 129 个 Plans）使用虚拟滚动渲染",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2690
+      }
+    },
+    {
+      "name": "终端缓冲区限制",
+      "value": "10000 行",
+      "numericValue": 10000,
+      "unit": "行",
+      "context": "聚焦/可见终端保留 10000 行滚动缓冲区；非可见终端自动缩减至 1000 行；重新可见时不恢复已丢弃的行",
+      "codePattern": "scrollback",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2691
+      }
+    },
+    {
+      "name": "终端缓冲区限制",
+      "value": "1000 行",
+      "numericValue": 1000,
+      "unit": "行",
+      "context": "聚焦/可见终端保留 10000 行滚动缓冲区；非可见终端自动缩减至 1000 行；重新可见时不恢复已丢弃的行",
+      "codePattern": "scrollback",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2691
+      }
+    },
+    {
+      "name": "最大终端数限制",
+      "value": "上限 20 个",
+      "numericValue": 20,
+      "unit": "个",
+      "context": "上限 20 个终端。达到上限时「+ 新建终端」按钮变灰并提示\"已达最大终端数，请关闭不用的终端\"。如需调整上限，可在 Settings 中配置",
+      "codePattern": "MAX_TERMINALS",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2692
+      }
+    },
+    {
+      "name": "内存监控",
+      "value": "60 秒",
+      "numericValue": 60,
+      "unit": "s",
+      "context": "每 60 秒检查 Electron 进程内存占用。超过 2GB 时在菜单栏显示黄色警告图标，hover 提示\"内存占用较高，建议关闭部分终端\"",
+      "codePattern": "memoryUsage",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2693
+      }
+    },
+    {
+      "name": "内存监控",
+      "value": "2GB",
+      "numericValue": 2,
+      "unit": "GB",
+      "context": "每 60 秒检查 Electron 进程内存占用。超过 2GB 时在菜单栏显示黄色警告图标，hover 提示\"内存占用较高，建议关闭部分终端\"",
+      "codePattern": "memoryUsage",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2693
+      }
+    },
+    {
+      "name": "搜索去抖",
+      "value": "300ms",
+      "numericValue": 300,
+      "unit": "ms",
+      "context": "搜索输入 300ms 去抖，避免频繁 IO",
+      "codePattern": "debounce",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2694
+      }
+    },
+    {
+      "name": "分页加载",
+      "value": "每页 20 条",
+      "numericValue": 20,
+      "unit": "条/页",
+      "context": "市场包列表每页 20 条，滚动到底部加载下一页",
+      "codePattern": "pageSize",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2695
+      }
+    },
+    {
+      "name": "缓存热门列表",
+      "value": "1 小时",
+      "numericValue": 1,
+      "unit": "h",
+      "context": "热门/精选列表缓存 1 小时，减少请求",
+      "codePattern": "cache",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2696
+      }
+    },
+    {
+      "name": "图片懒加载",
+      "value": "",
+      "numericValue": 0,
+      "unit": "",
+      "context": "用户头像滚动到可见区域时加载",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2697
+      }
+    },
+    {
+      "name": "更新检查合并",
+      "value": "",
+      "numericValue": 0,
+      "unit": "",
+      "context": "所有已安装包的更新检查合并为一次请求",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2698
+      }
+    },
+    {
+      "name": "README 渲染缓存",
+      "value": "",
+      "numericValue": 0,
+      "unit": "",
+      "context": "已查看过的包详情页缓存渲染结果",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2699
+      }
+    },
+    {
+      "name": "搜索索引",
+      "value": "",
+      "numericValue": 0,
+      "unit": "",
+      "context": "首次启动时建立倒排索引（基于 JSONL），后续通过 chokidar 增量更新。索引存储在 ~/Library/Application Support/Muxvo/search-index/",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2700
+      }
+    },
+    {
+      "name": "索引构建策略",
+      "value": "30 秒",
+      "numericValue": 30,
+      "unit": "s",
+      "context": "后台 Web Worker 执行，不阻塞 UI。显示进度条（\"正在建立搜索索引... N%\"）。渐进式可用：已索引的文件立即可搜索。超时保护：单个文件索引超过 30 秒则跳过。总构建超过 5 分钟则暂停，下次启动继续",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2701
+      }
+    },
+    {
+      "name": "索引构建策略",
+      "value": "5 分钟",
+      "numericValue": 5,
+      "unit": "min",
+      "context": "后台 Web Worker 执行，不阻塞 UI。显示进度条（\"正在建立搜索索引... N%\"）。渐进式可用：已索引的文件立即可搜索。超时保护：单个文件索引超过 30 秒则跳过。总构建超过 5 分钟则暂停，下次启动继续",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2701
+      }
+    },
+    {
+      "name": "大文件保护",
+      "value": "6 个",
+      "numericValue": 6,
+      "unit": "个",
+      "context": "单个 JSONL > 100MB 时，仅索引最近 6 个月的记录",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2702
+      }
+    },
+    {
+      "name": "大文件保护",
+      "value": "100MB",
+      "numericValue": 100,
+      "unit": "MB",
+      "context": "单个 JSONL > 100MB 时，仅索引最近 6 个月的记录",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2702
+      }
+    },
+    {
+      "name": "大文件保护",
+      "value": "6 个月",
+      "numericValue": 6,
+      "unit": "月",
+      "context": "单个 JSONL > 100MB 时，仅索引最近 6 个月的记录",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2702
+      }
+    }
+  ],
+  "emptyStates": [
+    {
+      "area": "",
+      "scenario": "无打开的终端（首次使用后）",
+      "copyText": "按 ⌘T 新建终端，开始工作",
+      "icon": "终端图标",
+      "actionButton": "[新建终端]",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2709
+      }
+    },
+    {
+      "area": "",
+      "scenario": "终端已全部关闭",
+      "copyText": "所有终端已关闭",
+      "icon": "-",
+      "actionButton": "[新建终端] [恢复上次布局]",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2710
+      }
+    },
+    {
+      "area": "",
+      "scenario": "无聊天历史（未检测到 CC）",
+      "copyText": "未检测到 Claude Code 聊天记录。安装 CC 并使用后，历史会自动出现",
+      "icon": "对话气泡图标",
+      "actionButton": "[了解 Claude Code]",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2712
+      }
+    },
+    {
+      "area": "",
+      "scenario": "无聊天历史（CC 已安装但无记录）",
+      "copyText": "还没有聊天记录，开始一段对话后这里会自动更新",
+      "icon": "对话气泡图标",
+      "actionButton": "-",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2713
+      }
+    },
+    {
+      "area": "",
+      "scenario": "聊天搜索无结果",
+      "copyText": "没有找到匹配的记录，试试其他关键词",
+      "icon": "搜索图标",
+      "actionButton": "[清除搜索]",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2714
+      }
+    },
+    {
+      "area": "",
+      "scenario": "搜索索引构建中",
+      "copyText": "正在建立搜索索引...（已完成 N%）\\n可以先浏览最近的会话",
+      "icon": "进度条",
+      "actionButton": "-",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2715
+      }
+    },
+    {
+      "area": "",
+      "scenario": "空目录",
+      "copyText": "此目录为空",
+      "icon": "文件夹图标",
+      "actionButton": "-",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2717
+      }
+    },
+    {
+      "area": "",
+      "scenario": "文件加载中",
+      "copyText": "Loading 动画",
+      "icon": "旋转图标",
+      "actionButton": "-",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2718
+      }
+    },
+    {
+      "area": "",
+      "scenario": "无权限读取",
+      "copyText": "无法读取此目录，请检查权限",
+      "icon": "锁图标",
+      "actionButton": "-",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2719
+      }
+    },
+    {
+      "area": "",
+      "scenario": "无 Plans",
+      "copyText": "当前没有 Plans",
+      "icon": "文档图标",
+      "actionButton": "-",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2721
+      }
+    },
+    {
+      "area": "",
+      "scenario": "无 Skills",
+      "copyText": "还没有 Skills，可以在终端中使用 claude code 自动创建",
+      "icon": "闪电图标",
+      "actionButton": "-",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2722
+      }
+    },
+    {
+      "area": "",
+      "scenario": "无 Hooks",
+      "copyText": "还没有配置 Hooks",
+      "icon": "钩子图标",
+      "actionButton": "-",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2723
+      }
+    },
+    {
+      "area": "",
+      "scenario": "Settings 读取失败",
+      "copyText": "无法读取 settings.json",
+      "icon": "警告图标",
+      "actionButton": "[重试]",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2724
+      }
+    },
+    {
+      "area": "",
+      "scenario": "聚合浏览器首次打开",
+      "copyText": "发现来自多个来源的 Skills，开始探索吧",
+      "icon": "搜索图标",
+      "actionButton": "[浏览 Skills]",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2726
+      }
+    },
+    {
+      "area": "",
+      "scenario": "搜索无结果",
+      "copyText": "没有找到匹配的 Skill，试试其他关键词",
+      "icon": "搜索图标",
+      "actionButton": "[清除搜索]",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2727
+      }
+    },
+    {
+      "area": "",
+      "scenario": "无已安装的社区包",
+      "copyText": "还没有安装任何 Skill，浏览热门 Skill 试试？",
+      "icon": "闪电图标",
+      "actionButton": "[浏览 Skills]",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2728
+      }
+    },
+    {
+      "area": "",
+      "scenario": "聚合源全部不可用",
+      "copyText": "无法连接聚合源，请检查网络",
+      "icon": "断网图标",
+      "actionButton": "[重试]",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2729
+      }
+    },
+    {
+      "area": "Showcase",
+      "scenario": "无本地 Skill",
+      "copyText": "还没有本地 Skill。创建一个 Skill 后即可生成展示页。[如何创建 Skill]",
+      "icon": "",
+      "actionButton": "[如何创建 Skill]",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2735
+      }
+    },
+    {
+      "area": "Showcase",
+      "scenario": "SKILL.md 解析失败（无 frontmatter）",
+      "copyText": "无法自动提取信息，请手动填写 Skill 名称和描述。[手动填写]",
+      "icon": "",
+      "actionButton": "[手动填写]",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2736
+      }
+    },
+    {
+      "area": "Showcase",
+      "scenario": "未进行 AI 评分",
+      "copyText": "生成展示页前需要先完成 AI 评分。[立即评分]",
+      "icon": "",
+      "actionButton": "[立即评分]",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2737
+      }
+    },
+    {
+      "area": "Showcase",
+      "scenario": "GitHub OAuth 未登录",
+      "copyText": "发布展示页需要 GitHub 账号。[登录 GitHub] 或 [导出为本地 HTML]",
+      "icon": "",
+      "actionButton": "[登录 GitHub] [导出为本地 HTML]",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2738
+      }
+    },
+    {
+      "area": "Showcase",
+      "scenario": "GitHub Pages 发布失败",
+      "copyText": "发布失败：{错误原因}。[重试] [导出为本地 HTML]",
+      "icon": "",
+      "actionButton": "[重试] [导出为本地 HTML]",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2739
+      }
+    },
+    {
+      "area": "Showcase",
+      "scenario": "展示页 CDN 未生效",
+      "copyText": "展示页已发布，GitHub Pages 通常需要 1-2 分钟生效。[刷新检查]",
+      "icon": "",
+      "actionButton": "[刷新检查]",
+      "sourceLocation": {
+        "file": "PRD.md",
+        "line": 2740
+      }
+    }
+  ],
+  "testCoverage": {
+    "unit": [
+      {
+        "module": "JSONL 解析器",
+        "description": "正常解析、格式错误跳过、不完整行、空文件、大文件",
+        "expectedCount": 15
+      },
+      {
+        "module": "Grid 布局算法",
+        "description": "1-20 终端行列计算、5 终端特殊布局",
+        "expectedCount": 10
+      },
+      {
+        "module": "终端状态机",
+        "description": "所有状态转换、异常处理",
+        "expectedCount": 20
+      },
+      {
+        "module": "进程检测",
+        "description": "shell 检测、AI 工具检测、未知进程",
+        "expectedCount": 8
+      },
+      {
+        "module": "聊天历史同步",
+        "description": "mtime 比较、去重、增量同步",
+        "expectedCount": 12
+      },
+      {
+        "module": "富编辑器文本转发",
+        "description": "CC 多行协议、shell 直接发送、图片路径",
+        "expectedCount": 10
+      },
+      {
+        "module": "Markdown 渲染",
+        "description": "各格式、GFM 扩展、暗色主题",
+        "expectedCount": 15
+      },
+      {
+        "module": "搜索索引",
+        "description": "构建、增量更新、大文件保护",
+        "expectedCount": 10
+      },
+      {
+        "module": "文件路径 hash",
+        "description": "SHA-256 截取、反查",
+        "expectedCount": 5
+      },
+      {
+        "module": "analytics 模块",
+        "description": "事件采集、每日聚合、90 天明细清理、1 年摘要清理",
+        "expectedCount": 10
+      },
+      {
+        "module": "config 持久化",
+        "description": "config.json 读写、原子写入（.tmp → rename）、文件损坏恢复",
+        "expectedCount": 8
+      },
+      {
+        "module": "cwd 切换逻辑",
+        "description": "shell 直接 cd、AI 工具退出后 cd、QuickAccess 选择、进程检测分支",
+        "expectedCount": 6
+      },
+      {
+        "module": "自动归组算法",
+        "description": "同目录检测、归组触发、cwd 变更后拆组、边界情况",
+        "expectedCount": 5
+      },
+      {
+        "module": "WaitingInput 检测",
+        "description": "选项列表模式匹配、CC 提示符检测、误检排除",
+        "expectedCount": 5
+      },
+      {
+        "module": "[V2] 多源聚合引擎",
+        "description": "并行请求、去重、降级、缓存",
+        "expectedCount": 15
+      },
+      {
+        "module": "[V2] 安装引擎",
+        "description": "下载、解压、注册表更新、卸载",
+        "expectedCount": 10
+      },
+      {
+        "module": "[V2] 安全检查引擎",
+        "description": "API Key/路径/敏感文件正则匹配",
+        "expectedCount": 12
+      },
+      {
+        "module": "[V2] AI 评分缓存",
+        "description": "内容 hash、promptVersion 失效、缓存命中",
+        "expectedCount": 8
+      },
+      {
+        "module": "[V2] 展示页 HTML 生成",
+        "description": "模板渲染、OG meta 注入、SVG 雷达图",
+        "expectedCount": 10
+      },
+      {
+        "module": "[V2] OAuth PKCE",
+        "description": "code_verifier 生成、token 交换、存储",
+        "expectedCount": 8
+      },
+      {
+        "module": "[V2] 更新检测引擎",
+        "description": "语义版本比较、注册表遍历、定时触发逻辑",
+        "expectedCount": 8
+      },
+      {
+        "module": "[V2] Hook 安全审查",
+        "description": "Hook 源码解析、风险关键词匹配（curl/eval/rm -rf）、高亮标注",
+        "expectedCount": 6
+      },
+      {
+        "module": "[V2] SKILL.md 解析器",
+        "description": "YAML frontmatter 解析、fallback 手动填写、格式异常处理",
+        "expectedCount": 5
+      },
+      {
+        "module": "[V2] Deep Link 协议",
+        "description": "URL 格式解析（muxvo://install/...）、协议注册验证",
+        "expectedCount": 5
+      }
+    ],
+    "integration": [
+      {
+        "scenario": "终端完整生命周期",
+        "description": "spawn → 交互 → 关闭 → 状态清理"
+      },
+      {
+        "scenario": "聊天历史端到端",
+        "description": "JSONL 读取 → 解析 → 三栏联动展示"
+      },
+      {
+        "scenario": "文件监听链路",
+        "description": "chokidar 触发 → 数据更新 → UI 刷新"
+      },
+      {
+        "scenario": "同步模块端到端",
+        "description": "CC 文件变化 → 镜像同步 → 双源切换"
+      },
+      {
+        "scenario": "富编辑器→PTY",
+        "description": "编辑器输入 → 前台进程检测 → 协议编码 → pty.write → xterm 输出"
+      },
+      {
+        "scenario": "布局持久化",
+        "description": "调整布局 → 关闭 → 重启 → 布局恢复"
+      },
+      {
+        "scenario": "cwd 切换端到端",
+        "description": "点击 cwd → QuickAccess 弹窗 → 选择目录 → 进程检测 → cd 执行 → 名称更新"
+      },
+      {
+        "scenario": "自动归组端到端",
+        "description": "新建终端 → 检测同目录 → 归组动画 → cwd 切换 → 拆组验证"
+      },
+      {
+        "scenario": "快捷键系统端到端",
+        "description": "快捷键触发 → Esc 优先级验证 → 视图模式切换 → 面板开关"
+      },
+      {
+        "scenario": "数据埋点端到端",
+        "description": "事件触发 → 采集写入 → analytics.json 存储 → 每日聚合 → 90 天清理"
+      },
+      {
+        "scenario": "聊天导出端到端",
+        "description": "选择会话范围 → 选择导出格式 → 文件写入 → 验证内容完整"
+      },
+      {
+        "scenario": "[V2] 聚合浏览端到端",
+        "description": "多源请求 → 聚合 → 搜索 → 展示"
+      },
+      {
+        "scenario": "[V2] 安装完整流程",
+        "description": "点击安装 → 下载 → 解压 → 注册 → 列表刷新"
+      },
+      {
+        "scenario": "[V2] AI 评分端到端",
+        "description": "触发评分 → CC 运行 → 文件监听 → 结果渲染"
+      },
+      {
+        "scenario": "[V2] 展示页发布",
+        "description": "生成 → 预览 → OAuth → GitHub Pages → 链接"
+      },
+      {
+        "scenario": "[V2] Hook 安全审查端到端",
+        "description": "安装含 Hook 的 Skill → 弹出审查对话框 → 查看源码 → 风险高亮 → 确认/取消"
+      },
+      {
+        "scenario": "[V2] 更新检测端到端",
+        "description": "启动/定时触发 → 版本比较 → 徽章显示 → 点击更新 → 安装验证"
+      }
+    ],
+    "e2e": [
+      {
+        "flow": "核心工作流",
+        "description": "启动 → 新建终端 → 双击聚焦 → Esc 返回 → 关闭终端"
+      },
+      {
+        "flow": "文件浏览",
+        "description": "点击文件按钮 → 面板滑出 → 点击文件 → 三栏视图 → Esc 返回"
+      },
+      {
+        "flow": "聊天历史",
+        "description": "打开历史 → 选项目 → 选会话 → 查看详情 → 搜索 → 导出"
+      },
+      {
+        "flow": "配置管理",
+        "description": "打开配置 → 浏览 Skills → 查看 Settings → 编辑 CLAUDE.md → 保存"
+      },
+      {
+        "flow": "富编辑器",
+        "description": "输入文本 → 粘贴图片 → 发送 → 验证终端输出"
+      },
+      {
+        "flow": "引导流程",
+        "description": "启动（首次） → 检测首次使用 → 引导步骤逐步完成 → 创建首个终端 → 完成引导"
+      },
+      {
+        "flow": "拖拽排序+边框调整",
+        "description": "拖拽终端卡片 → 验证布局位置变化 → 拖拽边框 → 验证列比例更新 → 双击重置等分"
+      },
+      {
+        "flow": "cwd 切换旅程",
+        "description": "点击 cwd 区域 → QuickAccess 浏览器弹出 → 选择新目录 → 验证 Header 名称更新 → 验证终端 cd"
+      },
+      {
+        "flow": "同目录归组",
+        "description": "新建 2 个同目录终端 → 验证自动归组效果 → 切换其中一个 cwd → 验证拆组"
+      },
+      {
+        "flow": "时间线视图切换",
+        "description": "切换到时间线视图 → 验证按天分组显示 → 选择会话 → 查看详情 → 切换回三栏视图"
+      },
+      {
+        "flow": "[V2] Skill 发现安装",
+        "description": "打开浏览器 → 搜索 → 查看详情 → 安装 → 验证已安装"
+      },
+      {
+        "flow": "[V2] AI 评分展示",
+        "description": "选中 Skill → 评分 → 查看雷达图 → 保存 PNG"
+      },
+      {
+        "flow": "[V2] 展示页发布",
+        "description": "评分 → 生成展示页 → 编辑 → 发布 → 分享"
+      },
+      {
+        "flow": "[V2] Skill 发现者完整旅程",
+        "description": "打开浏览器 → 搜索 → 查看详情 → 审查 Hook → 安装 → 验证已安装列表"
+      },
+      {
+        "flow": "[V2] Skill 展示者完整旅程",
+        "description": "选中 Skill → 触发评分 → 等待结果 → 查看雷达图 → 生成展示页 → 编辑 → 发布 → 分享"
+      },
+      {
+        "flow": "[V2] 更新流程",
+        "description": "发现可更新包 → 验证徽章显示 → 点击更新 → 下载安装 → 验证版本更新"
+      },
+      {
+        "flow": "[V2] 重评分循环",
+        "description": "修改 SKILL.md → 检测内容变化 → 重新触发评分 → 验证分数/等级变化"
+      },
+      {
+        "flow": "[V2] 外部浏览者旅程",
+        "description": "打开展示页 URL → 查看展示页内容 → 点击 Deep Link 安装按钮 → 验证 muxvo:// 协议触发"
+      }
+    ]
+  }
+}

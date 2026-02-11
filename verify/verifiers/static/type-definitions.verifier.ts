@@ -8,16 +8,16 @@ async function verify(registry: SpecRegistry, projectRoot: string, _activePhase:
 
   for (const ds of registry.dataStructures) {
     const typeFile = resolveProjectPath(projectRoot, `src/shared/types/${ds.sourceFile}`);
+    const exists = fileExists(typeFile);
 
-    if (!fileExists(typeFile)) {
-      // Type-level skip
+    if (!exists) {
       results.push({
         id: `A8.type.${ds.name}`,
         dimension: 'A',
-        description: `Type definition exists: ${ds.name}`,
+        description: `类型定义文件存在: ${ds.sourceFile}`,
         status: 'skip',
-        expected: `${ds.name} should be defined in ${ds.sourceFile}`,
-        actual: `file ${ds.sourceFile} not found`,
+        expected: `文件存在: src/shared/types/${ds.sourceFile}`,
+        actual: '文件不存在',
         sourceRef: ds.sourceLocation,
       });
       continue;
@@ -28,43 +28,43 @@ async function verify(registry: SpecRegistry, projectRoot: string, _activePhase:
       results.push({
         id: `A8.type.${ds.name}`,
         dimension: 'A',
-        description: `Type definition exists: ${ds.name}`,
+        description: `类型定义: ${ds.name}`,
         status: 'skip',
-        expected: `${ds.name} should be defined in ${ds.sourceFile}`,
-        actual: `failed to read ${ds.sourceFile}`,
+        expected: `interface/type ${ds.name} 已定义`,
+        actual: '无法读取文件',
         sourceRef: ds.sourceLocation,
       });
       continue;
     }
 
-    // Check if the type/interface is defined
-    const typePattern = new RegExp(`(?:interface|type)\\s+${escapeRegex(ds.name)}\\b`);
-    const typeFound = typePattern.test(content);
+    // Check if the interface/type is defined
+    const nameEscaped = escapeRegex(ds.name);
+    const typeDefPattern = new RegExp(`(interface|type)\\s+${nameEscaped}\\b`);
+    const typeFound = typeDefPattern.test(content);
 
     results.push({
       id: `A8.type.${ds.name}`,
       dimension: 'A',
-      description: `Type definition exists: ${ds.name}`,
+      description: `类型定义: ${ds.name}`,
       status: typeFound ? 'pass' : 'fail',
-      expected: `${ds.name} should be defined`,
-      actual: typeFound ? 'type/interface found' : `${ds.name} not found in ${ds.sourceFile}`,
+      expected: `interface/type ${ds.name} 已定义`,
+      actual: typeFound ? '类型已定义' : `未找到 interface/type ${ds.name}`,
       sourceRef: ds.sourceLocation,
     });
 
     // Check each field
     for (const field of ds.fields) {
-      const fieldPattern = new RegExp(`\\b${escapeRegex(field.name)}\\s*[?]?\\s*:`);
-      const fieldFound = fieldPattern.test(content);
+      const fieldEscaped = escapeRegex(field.name);
+      const fieldPattern = new RegExp(`\\b${fieldEscaped}\\s*[?:]`);
+      const fieldFound = content ? fieldPattern.test(content) : false;
 
       results.push({
         id: `A8.type.${ds.name}.${field.name}`,
         dimension: 'A',
-        description: `Field '${field.name}' in type '${ds.name}'`,
-        status: typeFound ? (fieldFound ? 'pass' : 'fail') : 'skip',
-        expected: `field '${field.name}' should exist in ${ds.name}`,
-        actual: typeFound
-          ? (fieldFound ? 'field found' : `field '${field.name}' not found`)
-          : `type ${ds.name} not found, skipping field check`,
+        description: `类型字段: ${ds.name}.${field.name}`,
+        status: fieldFound ? 'pass' : 'fail',
+        expected: `字段 '${field.name}' 存在于 ${ds.name}`,
+        actual: fieldFound ? '字段已定义' : `未找到字段 '${field.name}'`,
         sourceRef: ds.sourceLocation,
       });
     }

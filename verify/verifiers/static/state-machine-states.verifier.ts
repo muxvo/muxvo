@@ -4,66 +4,71 @@ import { isPhaseIncluded } from '../../spec/registry.js';
 import { fileExists, readFileContent, resolveProjectPath } from '../../utils/file-helpers.js';
 import { toCamelCase } from '../../utils/pattern-matchers.js';
 
-/**
- * Map prdSection to a phase string.
- */
-function sectionToPhase(prdSection: string): string {
-  const num = parseFloat(prdSection);
-  if (num <= 6.13) return 'V1';
-  if (num <= 6.15) return 'V2-P0';
-  if (num <= 6.16) return 'V2-P1';
-  return 'V2-P2';
+function prdSectionToPhase(section: string): string {
+  const num = parseFloat(section);
+  if (num >= 6.1 && num <= 6.13) return 'V1';
+  if (num >= 6.14 && num <= 6.15) return 'V2-P0';
+  if (num === 6.16) return 'V2-P1';
+  if (num >= 6.17 && num <= 6.18) return 'V2-P2';
+  return 'V1';
 }
 
 /**
  * Extract state names from XState machine file content.
- * Tries multiple patterns to find state definitions.
+ * Searches for state property keys within the `states: { ... }` block
+ * and also looks for XState v5 state('Name', ...) patterns.
  */
 function extractStateNames(content: string): Set<string> {
   const states = new Set<string>();
 
-  // Method 1: Match property names inside a `states: {` block
-  // Look for lines like `  stateName: {` at appropriate indentation
+  // Method 1: Extract keys from `states: { stateName: { ... } }` pattern
+  // Find the states block and extract top-level property names
   const statesBlockMatch = content.match(/states\s*:\s*\{/);
   if (statesBlockMatch && statesBlockMatch.index !== undefined) {
-    const afterStates = content.slice(statesBlockMatch.index);
-    // Track brace depth to find top-level state keys
-    let depth = 0;
-    let started = false;
+    const startIdx = statesBlockMatch.index + statesBlockMatch[0].length;
+    let depth = 1;
+    let i = startIdx;
+    let currentKey = '';
     let inKey = true;
-    const lines = afterStates.split('\n');
 
-    for (const line of lines) {
-      for (const ch of line) {
-        if (ch === '{') {
-          depth++;
-          started = true;
+    while (i < content.length && depth > 0) {
+      const ch = content[i];
+      if (ch === '{') {
+        depth++;
+        inKey = false;
+      } else if (ch === '}') {
+        depth--;
+        if (depth === 0) break;
+        if (depth === 1) inKey = true;
+      } else if (depth === 1 && inKey) {
+        // At top level of states block, look for property keys
+        if (ch === ':' && currentKey.trim()) {
+          states.add(currentKey.trim().replace(/['"]/g, ''));
+          currentKey = '';
           inKey = false;
-        }
-        if (ch === '}') depth--;
-      }
-      // Top-level properties inside states: { ... } are at depth 1
-      if (started && depth === 1) {
-        const propMatch = line.match(/^\s+['"]?(\w[\w-]*)['"]?\s*:\s*\{/);
-        if (propMatch) {
-          states.add(propMatch[1]);
+        } else if (ch === ',' || ch === '\n') {
+          currentKey = '';
+          inKey = true;
+        } else if (ch !== ' ' && ch !== '\t' && ch !== '\r') {
+          currentKey += ch;
         }
       }
-      if (started && depth <= 0) break;
+      i++;
     }
   }
 
-  // Method 2: Search for XState v5 state builder patterns
-  // e.g., state('StateName', ...) or .state('StateName')
-  const stateCallRegex = /\.?state\s*\(\s*['"](\w[\w-]*)['"]/g;
-  let match: RegExpExecArray | null;
-  while ((match = stateCallRegex.exec(content)) !== null) {
+  // Method 2: Search for XState v5 state function pattern
+  const stateCallPattern = /state\s*\(\s*['"]([^'"]+)['"]/g;
+  let match;
+  while ((match = stateCallPattern.exec(content)) !== null) {
     states.add(match[1]);
   }
 
-  // Method 3: createMachine states enumeration via string union / enum
-  const enumRegex = /['"](\w[\w-]*)['"]\s*(?:,|\|)/g;
-  // This is too broad; only use methods 1 & 2
+  // Method 3: Search for quoted property names in states-like context
+  const quotedKeyPattern = /['"](\w[\w-]*)['"](?:\s*:\s*\{)/g;
+  while ((match = quotedKeyPattern.exec(content)) !== null) {
+    states.add(match[1]);
+  }
 
   return states;
 }
@@ -72,21 +77,21 @@ async function verify(registry: SpecRegistry, projectRoot: string, activePhase: 
   const results: CheckResult[] = [];
 
   for (const machine of registry.stateMachines) {
-    const machinePhase = sectionToPhase(machine.prdSection);
+    const machinePhase = prdSectionToPhase(machine.prdSection);
     if (!isPhaseIncluded(machinePhase, activePhase)) continue;
 
     const machineFile = resolveProjectPath(projectRoot, `src/renderer/machines/${machine.fileName}`);
+    const exists = fileExists(machineFile);
 
-    if (!fileExists(machineFile)) {
-      // Skip all states for missing machine files
+    if (!exists) {
       for (const stateName of machine.states) {
         results.push({
           id: `A6.machine.${machine.name}.state.${stateName}`,
           dimension: 'A',
-          description: `State '${stateName}' in machine '${machine.name}'`,
+          description: `状态机 ${machine.name} 状态: ${stateName}`,
           status: 'skip',
-          expected: `state '${stateName}' should exist`,
-          actual: `machine file ${machine.fileName} not found`,
+          expected: `状态 '${stateName}' 已定义`,
+          actual: `状态机文件不存在: ${machine.fileName}`,
           sourceRef: machine.sourceLocation,
         });
       }
@@ -99,10 +104,10 @@ async function verify(registry: SpecRegistry, projectRoot: string, activePhase: 
         results.push({
           id: `A6.machine.${machine.name}.state.${stateName}`,
           dimension: 'A',
-          description: `State '${stateName}' in machine '${machine.name}'`,
+          description: `状态机 ${machine.name} 状态: ${stateName}`,
           status: 'skip',
-          expected: `state '${stateName}' should exist`,
-          actual: `failed to read ${machine.fileName}`,
+          expected: `状态 '${stateName}' 已定义`,
+          actual: '无法读取状态机文件',
           sourceRef: machine.sourceLocation,
         });
       }
@@ -110,27 +115,22 @@ async function verify(registry: SpecRegistry, projectRoot: string, activePhase: 
     }
 
     const foundStates = extractStateNames(content);
-    // Build a lowercase set for case-insensitive matching
+    // Build lowercase set for case-insensitive matching
     const foundStatesLower = new Set([...foundStates].map(s => s.toLowerCase()));
 
     for (const stateName of machine.states) {
-      const nameVariants = [
-        stateName,
-        stateName.toLowerCase(),
-        toCamelCase(stateName),
-        toCamelCase(stateName).toLowerCase(),
-      ];
+      const lowerName = stateName.toLowerCase();
+      const camelName = toCamelCase(stateName).toLowerCase();
 
-      const found = nameVariants.some(v => foundStates.has(v)) ||
-        nameVariants.some(v => foundStatesLower.has(v.toLowerCase()));
+      const found = foundStatesLower.has(lowerName) || foundStatesLower.has(camelName);
 
       results.push({
         id: `A6.machine.${machine.name}.state.${stateName}`,
         dimension: 'A',
-        description: `State '${stateName}' in machine '${machine.name}'`,
+        description: `状态机 ${machine.name} 状态: ${stateName}`,
         status: found ? 'pass' : 'fail',
-        expected: `state '${stateName}' should be defined`,
-        actual: found ? 'state found' : `state '${stateName}' not found in ${machine.fileName}`,
+        expected: `状态 '${stateName}' 已定义`,
+        actual: found ? '状态已找到' : `未找到状态 '${stateName}'`,
         sourceRef: machine.sourceLocation,
       });
     }

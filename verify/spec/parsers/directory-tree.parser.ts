@@ -1,113 +1,84 @@
-// directory-tree.parser.ts — 从 DEV-PLAN.md §5 提取项目目录结构
+// directory-tree.parser.ts — 从 DEV-PLAN.md §5 提取目录结构
+import { parseMarkdown, extractCodeBlocksUnderHeading } from './markdown-parser.js';
 import type { DirectoryEntrySpec } from '../registry.js';
-import {
-  parseMarkdown,
-  extractCodeBlocksUnderHeading,
-} from './markdown-parser.js';
 
 /**
- * 从 DEV-PLAN.md 的 `## 5. 项目目录结构` 提取代码块中的目录树。
+ * 从 DEV-PLAN.md §5 提取项目目录结构
  *
- * 树形结构使用 ├──、└──、│ 等字符。
- * 注释 # V2-P1 表示 phase。
- * 含 . 的为 file，否则为 directory。
+ * 代码块格式:
+ * muxvo/
+ * ├── package.json
+ * │   ├── ipc/                 # IPC Handler 按域分组
+ * │   │   ├── score.ipc.ts      # V2-P1
  */
 export function extractDirectoryTree(devPlanContent: string): DirectoryEntrySpec[] {
   const root = parseMarkdown(devPlanContent);
-  const results: DirectoryEntrySpec[] = [];
+  const specs: DirectoryEntrySpec[] = [];
 
+  // 查找 ## 5. 项目目录结构 下的代码块
   const sections = extractCodeBlocksUnderHeading(root, /^5\.\s*项目目录/, 2);
-  if (sections.length === 0) return results;
+  if (sections.length === 0) return specs;
 
   for (const section of sections) {
     for (const block of section.blocks) {
       const lines = block.value.split('\n');
-      parseTreeLines(lines, block._startLine + 1, results);
+      const pathStack: string[] = [];
+
+      for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+        const line = lines[lineIdx];
+        if (!line.trim()) continue;
+
+        // 从行内注释提取 phase
+        const commentMatch = line.match(/#\s*(V\d+-?P?\d*)/);
+        const phase = commentMatch ? commentMatch[1] : 'V1';
+
+        // 移除注释部分
+        const cleanLine = line.replace(/#.*$/, '');
+
+        // 提取文件/目录名
+        // 替换树形字符后计算缩进深度
+        const withoutTreeChars = cleanLine.replace(/[├└│─]/g, ' ').replace(/\s+$/, '');
+        const nameMatch = withoutTreeChars.match(/^(\s*)(\S+)/);
+        if (!nameMatch) continue;
+
+        const indent = nameMatch[1].length;
+        let name = nameMatch[2].trim();
+
+        // 如果是根目录行（如 "muxvo/"）
+        if (indent === 0) {
+          name = name.replace(/\/$/, '');
+          pathStack.length = 0;
+          pathStack.push(name);
+          continue;
+        }
+
+        // 计算深度：每 4 个字符一层
+        const depth = Math.floor(indent / 4);
+
+        // 去除尾部斜杠
+        const isDirectory = name.endsWith('/') || !name.includes('.');
+        name = name.replace(/\/$/, '');
+
+        // 更新路径栈
+        pathStack.length = depth;
+        pathStack.push(name);
+
+        // 从第二个元素开始（跳过根目录 "muxvo"）拼接路径
+        const fullPath = pathStack.slice(1).join('/');
+        if (!fullPath) continue;
+
+        specs.push({
+          path: fullPath,
+          type: isDirectory ? 'directory' : 'file',
+          phase,
+          sourceLocation: {
+            file: 'DEV-PLAN.md',
+            line: block._startLine + lineIdx,
+          },
+        });
+      }
     }
   }
 
-  return results;
-}
-
-function parseTreeLines(
-  lines: string[],
-  baseLineNumber: number,
-  results: DirectoryEntrySpec[],
-): void {
-  // 路径栈，按深度追踪当前路径
-  const pathStack: string[] = [];
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (!line.trim()) continue;
-
-    // 提取 phase 注释: # V2-P1
-    const phaseMatch = line.match(/#\s*(V\d+-?P?\d*)/);
-    const phase = phaseMatch ? phaseMatch[1] : 'V1';
-
-    // 移除注释部分以获取纯路径信息
-    const cleanLine = line.replace(/#.*$/, '').trimEnd();
-
-    // 计算深度：统计 tree 字符占据的前导宽度
-    // 每一层缩进由 `│   ` (4 chars) 或 `    ` (4 chars) 表示
-    // 实际名称之前的 tree 结构字符: ├── 或 └── 或 │
-    const depth = getTreeDepth(cleanLine);
-
-    // 提取名称: 移除 tree 结构字符
-    const name = cleanLine
-      .replace(/^[│├└─\s]+/, '')
-      .trim();
-
-    if (!name) continue;
-
-    // 更新路径栈
-    // 深度 0 = root (e.g., "muxvo/")
-    pathStack.length = depth;
-    pathStack[depth] = name.replace(/\/$/, ''); // 移除尾部 /
-
-    // 构建完整路径
-    const fullPath = pathStack.slice(0, depth + 1).join('/');
-
-    // 判断类型: 名称含 . 且不以 / 结尾的为 file，否则为 directory
-    const isFile = name.includes('.') && !name.endsWith('/');
-    const type: 'file' | 'directory' = isFile ? 'file' : 'directory';
-
-    results.push({
-      path: fullPath,
-      type,
-      phase,
-      sourceLocation: { file: 'DEV-PLAN.md', line: baseLineNumber + i },
-    });
-  }
-}
-
-function getTreeDepth(line: string): number {
-  // 找到第一个非 tree 字符的位置
-  let pos = 0;
-  let depth = 0;
-
-  while (pos < line.length) {
-    const ch = line[pos];
-    if (ch === '│' || ch === '├' || ch === '└' || ch === '─' || ch === ' ') {
-      pos++;
-    } else {
-      break;
-    }
-  }
-
-  // 每层约 4 个字符宽（考虑 unicode 字符宽度）
-  // 使用 tree 连接符的位置来计算
-  // ├── name  → depth 1
-  // │   ├── name → depth 2
-  // │   │   ├── name → depth 3
-  // 连接符（├ or └）前面每 4 个字符代表一层
-  const connectorPos = line.search(/[├└]/);
-  if (connectorPos < 0) {
-    // 根元素（如 "muxvo/"），没有连接符
-    return 0;
-  }
-
-  // 连接符前每一层占 4 个字符（│ + 3 spaces 或 4 spaces）
-  depth = Math.floor(connectorPos / 4) + 1;
-  return depth;
+  return specs;
 }

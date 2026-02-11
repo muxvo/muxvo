@@ -2,28 +2,26 @@ import { registerVerifier } from '../runner.js';
 import type { SpecRegistry, CheckResult } from '../../spec/registry.js';
 import { isPhaseIncluded } from '../../spec/registry.js';
 import { readFileContent, resolveProjectPath, globFiles } from '../../utils/file-helpers.js';
-import { escapeRegex } from '../../utils/pattern-matchers.js';
+import { contentContains } from '../../utils/pattern-matchers.js';
 
 async function verify(registry: SpecRegistry, projectRoot: string, activePhase: string): Promise<CheckResult[]> {
   const results: CheckResult[] = [];
 
-  // Collect all relevant source files
+  // Search for files containing analytics or events, plus constants directory
   const srcDir = resolveProjectPath(projectRoot, 'src');
-
   const analyticsFiles = await globFiles('**/*analytics*.ts', srcDir);
-  const eventsFiles = await globFiles('**/*events*.ts', srcDir);
-  const constantsFiles = await globFiles('**/shared/constants/**/*.ts', srcDir);
+  const eventFiles = await globFiles('**/*event*.ts', srcDir);
+  const constantFiles = await globFiles('**/constants/**/*.ts', srcDir);
 
-  const allFiles = new Set([...analyticsFiles, ...eventsFiles, ...constantsFiles]);
+  const allFiles = [...new Set([...analyticsFiles, ...eventFiles, ...constantFiles])];
 
-  // Read all file contents into a single combined string for searching
-  let combinedContent = '';
-  for (const filePath of allFiles) {
-    const content = readFileContent(filePath);
-    if (content) {
-      combinedContent += content + '\n';
-    }
+  // Read all file contents into a combined string for searching
+  const allContents: string[] = [];
+  for (const file of allFiles) {
+    const content = readFileContent(file);
+    if (content) allContents.push(content);
   }
+  const combinedContent = allContents.join('\n');
 
   for (const event of registry.analyticsEvents) {
     if (!isPhaseIncluded(event.phase, activePhase)) continue;
@@ -31,26 +29,22 @@ async function verify(registry: SpecRegistry, projectRoot: string, activePhase: 
     let status: 'pass' | 'fail' | 'skip';
     let actual: string;
 
-    if (!combinedContent) {
+    if (allFiles.length === 0) {
       status = 'skip';
-      actual = 'no analytics/events files found';
+      actual = '未找到 analytics/events 相关文件';
     } else {
-      const escaped = escapeRegex(event.name);
-      const pattern = new RegExp(`['"\`]${escaped}['"\`]`);
-      const found = pattern.test(combinedContent);
-
+      const found = contentContains(combinedContent, `'${event.name}'`) ||
+                     contentContains(combinedContent, `"${event.name}"`);
       status = found ? 'pass' : 'fail';
-      actual = found
-        ? `event '${event.name}' found in source`
-        : `event '${event.name}' not found in analytics/events files`;
+      actual = found ? `事件 '${event.name}' 已定义` : `未找到事件定义: ${event.name}`;
     }
 
     results.push({
       id: `A9.event.${event.name}`,
       dimension: 'A',
-      description: `Analytics event defined: ${event.name}`,
+      description: `Analytics 事件定义: ${event.name}`,
       status,
-      expected: `event '${event.name}' should be defined`,
+      expected: `事件 '${event.name}' 在代码中已定义`,
       actual,
       sourceRef: event.sourceLocation,
     });
@@ -63,6 +57,6 @@ registerVerifier({
   id: 'A9',
   dimension: 'A',
   dimensionName: 'A.静态结构',
-  name: '埋点事件',
+  name: 'Analytics事件',
   fn: verify,
 });
