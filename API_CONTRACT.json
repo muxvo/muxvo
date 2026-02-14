@@ -1,9 +1,21 @@
 {
-  "generatedAt": "2026-02-14T14:10:23.086Z",
+  "generatedAt": "2026-02-14T15:37:43.812Z",
   "projectPath": "/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo",
-  "totalApis": 1,
-  "scannedFiles": 39,
+  "totalApis": 2,
+  "scannedFiles": 62,
   "categories": {
+    "工具函数": [
+      {
+        "path": "{变量:channel}",
+        "method": "GET",
+        "file": "tests/helpers/mock-ipc.ts",
+        "line": 49,
+        "functionName": "handlers.get",
+        "params": [],
+        "responseFields": [],
+        "category": "工具函数"
+      }
+    ],
     "verify": [
       {
         "path": "{成员访问}",
@@ -18,6 +30,16 @@
     ]
   },
   "apis": [
+    {
+      "path": "{变量:channel}",
+      "method": "GET",
+      "file": "tests/helpers/mock-ipc.ts",
+      "line": 49,
+      "functionName": "handlers.get",
+      "params": [],
+      "responseFields": [],
+      "category": "工具函数"
+    },
     {
       "path": "{成员访问}",
       "method": "GET",

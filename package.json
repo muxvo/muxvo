@@ -1,0 +1,21 @@
+{
+  "name": "muxvo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Electron desktop workbench for AI CLI tools",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:l1": "vitest run tests/l1/",
+    "test:l2": "vitest run tests/l2/",
+    "test:l3": "vitest run tests/l3/",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0",
+    "typescript": "^5.7.0",
+    "@vitest/coverage-v8": "^3.0.0",
+    "electron": "^34.0.0",
+    "@playwright/test": "^1.50.0"
+  }
+}
