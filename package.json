@@ -4,6 +4,8 @@
   "private": true,
   "description": "Electron desktop workbench for AI CLI tools",
   "scripts": {
+    "verify:coverage": "tsx tests/scripts/verify-coverage.ts",
+    "pretest": "tsx tests/scripts/verify-coverage.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:l1": "vitest run tests/l1/",

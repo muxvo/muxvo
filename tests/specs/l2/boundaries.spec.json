@@ -15,7 +15,15 @@
     "docs/Muxvo_测试_v2/02_modules/test_V2_INSTALL.md"
   ],
   "fixtureSource": "tests/helpers/test-fixtures.ts (defaultConfig, timeConstants, securityPatterns, imageFixtures)",
-  "totalCases": 22,
+  "totalCases": 16,
+  "removedCases": [
+    { "id": "ESC_PRIORITY", "reason": "composite — individual tests TERM_L2_48~55 exist in stubs" },
+    { "id": "PUBLISH_L2_01_BOUNDARY", "reason": "duplicate of publish-rules.spec.json PUBLISH_L2_01" },
+    { "id": "PUBLISH_FILE_SIZE_SKILL", "reason": "duplicate of publish-rules.spec.json PUBLISH_L2_02" },
+    { "id": "PUBLISH_FILE_SIZE_PLUGIN", "reason": "duplicate of publish-rules.spec.json PUBLISH_L2_08" },
+    { "id": "INSTALL_TYPE_ROUTING", "reason": "composite — INSTALL_L2_03 + INSTALL_L2_04 exist in stubs" },
+    { "id": "BROWSER_SEARCH_DEBOUNCE", "reason": "duplicate of perf-thresholds.spec.json PERF_L2_05" }
+  ],
   "cases": [
     {
       "id": "APP_L2_02",
@@ -35,7 +43,7 @@
       "priority": "P0"
     },
     {
-      "id": "TERM_L2_83",
+      "id": "TERM_L2_83_max_terminal_20",
       "description": "终端上限 20 个",
       "type": "boundary",
       "category": "accumulation-limit",
@@ -46,7 +54,7 @@
       "priority": "P0"
     },
     {
-      "id": "TERM_L2_84",
+      "id": "TERM_L2_84_buffer_limit_focused",
       "description": "聚焦/可见终端滚动缓冲区 10000 行",
       "type": "boundary",
       "category": "buffer-limit",
@@ -57,7 +65,7 @@
       "priority": "P1"
     },
     {
-      "id": "TERM_L2_85",
+      "id": "TERM_L2_85_buffer_limit_hidden",
       "description": "非可见终端缓冲区缩减至 1000 行",
       "type": "boundary",
       "category": "buffer-limit",
@@ -68,7 +76,7 @@
       "priority": "P1"
     },
     {
-      "id": "TERM_L2_86",
+      "id": "TERM_L2_86_buffer_no_restore",
       "description": "缓冲区缩减不可逆",
       "type": "boundary",
       "category": "buffer-limit",
@@ -79,7 +87,7 @@
       "priority": "P1"
     },
     {
-      "id": "TERM_L2_87",
+      "id": "TERM_L2_87_default_grid_ratios",
       "description": "默认 Grid 比例等分",
       "type": "boundary",
       "category": "default-value",
@@ -90,7 +98,7 @@
       "priority": "P1"
     },
     {
-      "id": "TERM_L2_88",
+      "id": "TERM_L2_88_default_tile_style",
       "description": "Tile Default 状态默认样式",
       "type": "boundary",
       "category": "default-value",
@@ -101,7 +109,7 @@
       "priority": "P1"
     },
     {
-      "id": "TERM_L2_63",
+      "id": "TERM_L2_63_focus_sidebar_max3",
       "description": "聚焦模式右侧栏最多显示 3 个终端",
       "type": "boundary",
       "category": "focus-sidebar",
@@ -112,7 +120,7 @@
       "priority": "P0"
     },
     {
-      "id": "TERM_L2_89",
+      "id": "TERM_L2_89_focus_dblclick_layout",
       "description": "聚焦模式下终端约 75% 宽度",
       "type": "boundary",
       "category": "focus-layout",
@@ -120,27 +128,6 @@
         { "parameter": "focusedTerminalWidthPercent", "expected": 75, "tolerance": 5 }
       ],
       "priority": "P1"
-    },
-    {
-      "id": "ESC_PRIORITY",
-      "description": "Esc 键 7 级优先级序列",
-      "type": "boundary",
-      "category": "esc-priority",
-      "boundaries": [
-        { "priority": 1, "context": "安全审查对话框打开", "action": "关闭对话框（不安装）", "testId": "TERM_L2_48" },
-        { "priority": 2, "context": "文件夹选择器打开", "action": "关闭文件夹选择器", "testId": "TERM_L2_49" },
-        { "priority": 3, "context": "Skill 浏览器打开", "action": "关闭 Skill 浏览器", "testId": "TERM_L2_50" },
-        { "priority": 4, "context": "三栏临时视图打开", "action": "关闭临时视图，返回平铺", "testId": "TERM_L2_51" },
-        { "priority": 5, "context": "文件面板打开", "action": "关闭文件面板", "testId": "TERM_L2_52" },
-        { "priority": 6, "context": "聚焦模式（焦点不在终端内）", "action": "返回平铺模式", "testId": "TERM_L2_53" },
-        { "priority": 7, "context": "平铺模式", "action": "无操作", "testId": "TERM_L2_54" }
-      ],
-      "specialRule": {
-        "context": "焦点在终端内（任何模式）",
-        "action": "Esc 直接透传到终端，不截获",
-        "testId": "TERM_L2_55"
-      },
-      "priority": "P0"
     },
     {
       "id": "SHOWCASE_L2_01",
@@ -168,54 +155,7 @@
       "priority": "P1"
     },
     {
-      "id": "PUBLISH_L2_01_BOUNDARY",
-      "description": "截图数量边界值",
-      "type": "boundary",
-      "category": "accumulation-limit",
-      "boundaries": [
-        { "value": 4, "expected": { "canUpload": true } },
-        { "value": 5, "expected": { "canUpload": true } },
-        { "value": 6, "expected": { "canUpload": false, "reason": "截图/GIF 最多 5 张" } }
-      ],
-      "priority": "P1"
-    },
-    {
-      "id": "PUBLISH_FILE_SIZE_SKILL",
-      "description": "Skill 文件大小边界值 — 1MB 警告线",
-      "type": "boundary",
-      "category": "file-size-limit",
-      "boundaries": [
-        { "fileSizeBytes": 1048575, "fileType": "skill", "expected": { "warning": false } },
-        { "fileSizeBytes": 1048576, "fileType": "skill", "expected": { "warning": false }, "note": "恰好 1MB 不警告" },
-        { "fileSizeBytes": 1048577, "fileType": "skill", "expected": { "warning": true, "reason": "Skill 文件超过 1MB，建议精简" } }
-      ],
-      "priority": "P1"
-    },
-    {
-      "id": "PUBLISH_FILE_SIZE_PLUGIN",
-      "description": "Plugin 文件大小边界值 — 10MB 警告线",
-      "type": "boundary",
-      "category": "file-size-limit",
-      "boundaries": [
-        { "fileSizeBytes": 10485759, "fileType": "plugin", "expected": { "warning": false } },
-        { "fileSizeBytes": 10485760, "fileType": "plugin", "expected": { "warning": false }, "note": "恰好 10MB 不警告" },
-        { "fileSizeBytes": 10485761, "fileType": "plugin", "expected": { "warning": true, "reason": "Plugin 文件超过 10MB，建议精简" } }
-      ],
-      "priority": "P2"
-    },
-    {
-      "id": "INSTALL_TYPE_ROUTING",
-      "description": "安装类型路由 — Hook vs Skill",
-      "type": "boundary",
-      "category": "type-routing",
-      "boundaries": [
-        { "packageType": "skill", "expected": { "route": "Installing", "securityReview": false }, "testId": "INSTALL_L2_04" },
-        { "packageType": "hook", "expected": { "route": "SecurityReview", "securityReview": true }, "testId": "INSTALL_L2_03" }
-      ],
-      "priority": "P0"
-    },
-    {
-      "id": "APP_ANALYTICS_RETENTION",
+      "id": "APP_L2_01",
       "description": "数据保留策略边界值",
       "type": "boundary",
       "category": "data-retention",
@@ -226,7 +166,7 @@
       "priority": "P2"
     },
     {
-      "id": "APP_SHUTDOWN_TIMEOUT",
+      "id": "APP_L2_06",
       "description": "关闭时子进程超时 5 秒",
       "type": "threshold",
       "parameter": "processStopTimeout",
@@ -236,7 +176,7 @@
       "priority": "P0"
     },
     {
-      "id": "STOPPING_TIMEOUT",
+      "id": "TERM_L2_31_trans_stopping_disconnected",
       "description": "Stopping -> Disconnected 超时 5 秒",
       "type": "threshold",
       "parameter": "stoppingDisconnectTimeout",
@@ -246,17 +186,7 @@
       "priority": "P1"
     },
     {
-      "id": "BROWSER_SEARCH_DEBOUNCE",
-      "description": "浏览器搜索去抖 300ms",
-      "type": "threshold",
-      "parameter": "browserSearchDebounce",
-      "expectedValue": 300,
-      "unit": "ms",
-      "rule": "快速连续输入后仅最后一次 300ms 后触发搜索",
-      "priority": "P1"
-    },
-    {
-      "id": "DOWNLOAD_RETRY",
+      "id": "INSTALL_L2_15",
       "description": "下载失败自动重试 1 次",
       "type": "threshold",
       "parameter": "downloadAutoRetryCount",
@@ -266,7 +196,7 @@
       "priority": "P1"
     },
     {
-      "id": "PUBLISH_TIMEOUT",
+      "id": "PUBLISH_L2_16",
       "description": "GitHub Pages 发布超时 30 秒",
       "type": "threshold",
       "parameter": "publishTimeout",

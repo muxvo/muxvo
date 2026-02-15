@@ -8,7 +8,7 @@
   "totalCases": 11,
   "cases": [
     {
-      "id": "TERM_L2_01",
+      "id": "TERM_L2_01_grid_1",
       "description": "1 个终端 -> 1x1 全屏",
       "type": "algorithm",
       "function": "calculateGridLayout",
@@ -18,7 +18,7 @@
       "priority": "P0"
     },
     {
-      "id": "TERM_L2_02",
+      "id": "TERM_L2_02_grid_2",
       "description": "2 个终端 -> 2x1 左右对半",
       "type": "algorithm",
       "function": "calculateGridLayout",
@@ -28,7 +28,7 @@
       "priority": "P0"
     },
     {
-      "id": "TERM_L2_03",
+      "id": "TERM_L2_03_grid_3",
       "description": "3 个终端 -> 3x1 三等分",
       "type": "algorithm",
       "function": "calculateGridLayout",
@@ -38,7 +38,7 @@
       "priority": "P0"
     },
     {
-      "id": "TERM_L2_04",
+      "id": "TERM_L2_04_grid_4",
       "description": "4 个终端 -> 2x2 四宫格",
       "type": "algorithm",
       "function": "calculateGridLayout",
@@ -48,7 +48,7 @@
       "priority": "P0"
     },
     {
-      "id": "TERM_L2_05",
+      "id": "TERM_L2_05_grid_5",
       "description": "5 个终端 -> 上 3 下 2（下行居中）",
       "type": "algorithm",
       "function": "calculateGridLayout",
@@ -58,7 +58,7 @@
       "priority": "P0"
     },
     {
-      "id": "TERM_L2_06",
+      "id": "TERM_L2_06_grid_6",
       "description": "6 个终端 -> 3x2 六宫格",
       "type": "algorithm",
       "function": "calculateGridLayout",
@@ -68,7 +68,7 @@
       "priority": "P0"
     },
     {
-      "id": "TERM_L2_07",
+      "id": "TERM_L2_07_grid_7",
       "description": "7 个终端 -> 3 列, 3+3+1 分布",
       "type": "algorithm",
       "function": "calculateGridLayout",
@@ -78,7 +78,7 @@
       "priority": "P1"
     },
     {
-      "id": "TERM_L2_08",
+      "id": "TERM_L2_08_grid_9",
       "description": "9 个终端 -> 3x3 九宫格",
       "type": "algorithm",
       "function": "calculateGridLayout",
@@ -88,7 +88,7 @@
       "priority": "P1"
     },
     {
-      "id": "TERM_L2_09",
+      "id": "TERM_L2_09_grid_10",
       "description": "10 个终端 -> 4 列布局",
       "type": "algorithm",
       "function": "calculateGridLayout",
@@ -98,7 +98,7 @@
       "priority": "P1"
     },
     {
-      "id": "TERM_L2_10",
+      "id": "TERM_L2_10_grid_16",
       "description": "16 个终端 -> 4x4 十六宫格",
       "type": "algorithm",
       "function": "calculateGridLayout",
@@ -108,7 +108,7 @@
       "priority": "P2"
     },
     {
-      "id": "TERM_L2_11",
+      "id": "TERM_L2_11_grid_20",
       "description": "20 个终端（上限） -> 5 列布局",
       "type": "algorithm",
       "function": "calculateGridLayout",
