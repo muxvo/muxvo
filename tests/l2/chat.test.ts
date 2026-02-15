@@ -6,72 +6,193 @@
  *         JSONL parsing, search rules, mtime sync, special rules
  *
  * Total cases: 34
+ *
+ * RED phase: all tests have real assertions but will FAIL because
+ * source modules are not yet implemented.
  */
-import { describe, test } from 'vitest';
+import { describe, test, expect, beforeEach } from 'vitest';
+import { resetIpcMocks } from '../helpers/mock-ipc';
+import {
+  jsonlFixtures,
+  searchFixtures,
+  chatLayoutFixtures,
+  timeConstants,
+} from '../helpers/test-fixtures';
 
 describe('CHAT L2 -- 规则层测试', () => {
+  beforeEach(() => {
+    resetIpcMocks();
+  });
+
   // ---------------------------------------------------------------------------
   // 3.1 聊天面板状态机 -- L2 规则路径
   // ---------------------------------------------------------------------------
   describe('聊天面板状态机', () => {
     describe('大文件保护与索引超时', () => {
-      test.todo('CHAT_L2_02_large_file_protection: 大文件 >100MB 仅索引最近 6 个月');
-      // Pre-condition: 存在单个 session JSONL > 100MB
-      // Trigger: 建立搜索索引
-      // Expected: 该文件仅索引最近 6 个月的记录，不索引全部
-      // Rule: PRD 8.3.4/L1879 阈值=100MB, 策略=按 timestamp 过滤
+      test('CHAT_L2_02_large_file_protection: 大文件 >100MB 仅索引最近 6 个月', async () => {
+        const { createSearchIndexer } = await import(
+          '@/main/services/chat-search-indexer'
+        );
+        const indexer = createSearchIndexer();
 
-      test.todo('CHAT_L2_04_index_timeout: 索引超时保护');
-      // Pre-condition: 大量 JSONL 文件
-      // Trigger: 建立搜索索引
-      // Expected: 单文件索引 >30s 则跳过；总构建 >5min 则暂停，下次启动继续
-      // Rule: PRD 11.2/L2701
+        const largeFileSize = searchFixtures.largeFileThreshold + 1; // >100MB
+        const result = await indexer.indexFile({
+          path: '/mock/session.jsonl',
+          size: largeFileSize,
+        });
 
-      test.todo('CHAT_L2_20_index_resume: 索引断点续传');
-      // Pre-condition: 上次索引构建因 5min 超时暂停
-      // Trigger: 重新启动应用
-      // Expected: 从断点处继续构建索引，不从头开始
+        expect(result.strategy).toBe('recent_only');
+        expect(result.timeRangeMonths).toBe(6);
+        // Should not index the entire file
+        expect(result.fullIndex).toBe(false);
+      });
 
-      test.todo('CHAT_L2_21_index_progress: 索引构建中搜索');
-      // Pre-condition: 索引正在构建（完成 50%）
-      // Trigger: 输入搜索词
-      // Expected: 已索引的文件可搜索；未索引的不可搜索；显示"索引构建中"提示
-      // Rule: PRD 11.2/L2701 渐进式可用
+      test('CHAT_L2_04_index_timeout: 索引超时保护', async () => {
+        const { createSearchIndexer } = await import(
+          '@/main/services/chat-search-indexer'
+        );
+        const indexer = createSearchIndexer();
+
+        // Verify timeout thresholds match fixtures
+        expect(indexer.singleFileTimeoutMs).toBe(searchFixtures.indexTimeoutSingle); // 30000ms
+        expect(indexer.totalBuildTimeoutMs).toBe(searchFixtures.indexTimeoutTotal); // 300000ms
+
+        // Simulate single file exceeding timeout
+        const result = await indexer.indexFile({
+          path: '/mock/huge.jsonl',
+          simulateTimeoutMs: 35000, // >30s
+        });
+        expect(result.skipped).toBe(true);
+        expect(result.reason).toContain('timeout');
+      });
+
+      test('CHAT_L2_20_index_resume: 索引断点续传', async () => {
+        const { createSearchIndexer } = await import(
+          '@/main/services/chat-search-indexer'
+        );
+        const indexer = createSearchIndexer();
+
+        // Simulate previous run paused at file #5 of 10
+        indexer.loadCheckpoint({ lastIndexedFile: 4, totalFiles: 10 });
+        const result = await indexer.resumeBuild();
+
+        // Should start from file #5, not from the beginning
+        expect(result.startedFromFile).toBe(5);
+        expect(result.resumedFromCheckpoint).toBe(true);
+      });
+
+      test('CHAT_L2_21_index_progress: 索引构建中搜索', async () => {
+        const { createSearchIndexer } = await import(
+          '@/main/services/chat-search-indexer'
+        );
+        const indexer = createSearchIndexer();
+
+        // Set indexer to 50% progress
+        indexer.setBuildProgress(0.5);
+
+        const searchResult = indexer.search('test query');
+
+        // Already indexed files should be searchable
+        expect(searchResult.partialResults).toBe(true);
+        expect(searchResult.indexProgress).toBeCloseTo(0.5, 1);
+        expect(searchResult.hint).toContain('索引构建中');
+      });
     });
 
     describe('三栏布局约束', () => {
-      test.todo('CHAT_L2_03_layout_min_widths: 三栏最小宽度约束');
-      // Pre-condition: 聊天历史面板已打开
-      // Trigger: 拖拽缩小各栏宽度
-      // Expected: 左栏>=180px, 中栏>=280px, 右栏>=400px
-      // Rule: PRD 8.3.3/L1839
+      test('CHAT_L2_03_layout_min_widths: 三栏最小宽度约束', async () => {
+        const { createChatLayoutManager } = await import(
+          '@/renderer/stores/chat-layout'
+        );
+        const manager = createChatLayoutManager();
 
-      test.todo('CHAT_L2_22_layout_collapse: 窗口不足时左栏收起');
-      // Pre-condition: 窗口宽度缩小至无法容纳三栏最小值
-      // Trigger: 缩小窗口 (< 860px = 180+280+400)
-      // Expected: 左栏收起为图标模式（60px）
+        // Try to resize left panel below minimum
+        manager.resizeLeft(100); // below 180px minimum
+        expect(manager.leftWidth).toBeGreaterThanOrEqual(chatLayoutFixtures.leftMin);
 
-      test.todo('CHAT_L2_23_layout_restore: 窗口恢复时左栏展开');
-      // Pre-condition: 左栏已收起为 60px
-      // Trigger: 放大窗口宽度超过阈值
-      // Expected: 左栏恢复为正常宽度（220px）
+        // Try to resize center panel below minimum
+        manager.resizeCenter(200); // below 280px minimum
+        expect(manager.centerWidth).toBeGreaterThanOrEqual(chatLayoutFixtures.centerMin);
+
+        // Right panel should respect minimum too
+        expect(manager.rightWidth).toBeGreaterThanOrEqual(chatLayoutFixtures.rightMin);
+      });
+
+      test('CHAT_L2_22_layout_collapse: 窗口不足时左栏收起', async () => {
+        const { createChatLayoutManager } = await import(
+          '@/renderer/stores/chat-layout'
+        );
+        // Total min: 180+280+400 = 860px
+        const manager = createChatLayoutManager({ windowWidth: 800 });
+
+        // Left panel should collapse to icon mode
+        expect(manager.leftWidth).toBe(chatLayoutFixtures.leftCollapsed); // 60px
+        expect(manager.leftMode).toBe('collapsed');
+      });
+
+      test('CHAT_L2_23_layout_restore: 窗口恢复时左栏展开', async () => {
+        const { createChatLayoutManager } = await import(
+          '@/renderer/stores/chat-layout'
+        );
+        // Start collapsed
+        const manager = createChatLayoutManager({ windowWidth: 800 });
+        expect(manager.leftMode).toBe('collapsed');
+
+        // Increase window width
+        manager.setWindowWidth(1200);
+
+        expect(manager.leftWidth).toBeGreaterThanOrEqual(chatLayoutFixtures.leftMin);
+        expect(manager.leftMode).toBe('expanded');
+      });
     });
 
     describe('快捷键', () => {
-      test.todo('CHAT_L2_31_shortcut_open: Cmd+F 打开搜索');
-      // Pre-condition: 聊天历史面板关闭
-      // Trigger: Cmd+F
-      // Expected: 打开聊天历史面板，焦点在搜索框
+      test('CHAT_L2_31_shortcut_open: Cmd+F 打开搜索', async () => {
+        const { createChatShortcutHandler } = await import(
+          '@/renderer/utils/chat-shortcuts'
+        );
+        const handler = createChatShortcutHandler({
+          panelOpen: false,
+        });
 
-      test.todo('CHAT_L2_32_shortcut_esc: Esc 关闭面板');
-      // Pre-condition: 聊天历史面板已打开
-      // Trigger: Esc
-      // Expected: 关闭面板，返回终端
+        const result = handler.handle({ key: 'f', metaKey: true });
 
-      test.todo('CHAT_L2_33_shortcut_arrows: 上下箭头切换搜索结果');
-      // Pre-condition: 搜索有结果
-      // Trigger: Up/Down
-      // Expected: 切换选中的搜索结果
+        expect(result.action).toBe('openPanel');
+        expect(result.focusTarget).toBe('searchInput');
+      });
+
+      test('CHAT_L2_32_shortcut_esc: Esc 关闭面板', async () => {
+        const { createChatShortcutHandler } = await import(
+          '@/renderer/utils/chat-shortcuts'
+        );
+        const handler = createChatShortcutHandler({
+          panelOpen: true,
+        });
+
+        const result = handler.handle({ key: 'Escape' });
+
+        expect(result.action).toBe('closePanel');
+      });
+
+      test('CHAT_L2_33_shortcut_arrows: 上下箭头切换搜索结果', async () => {
+        const { createChatShortcutHandler } = await import(
+          '@/renderer/utils/chat-shortcuts'
+        );
+        const handler = createChatShortcutHandler({
+          panelOpen: true,
+          searchResults: ['r1', 'r2', 'r3'],
+          selectedIndex: 0,
+        });
+
+        // Down arrow
+        const downResult = handler.handle({ key: 'ArrowDown' });
+        expect(downResult.action).toBe('selectNext');
+        expect(downResult.selectedIndex).toBe(1);
+
+        // Up arrow
+        const upResult = handler.handle({ key: 'ArrowUp' });
+        expect(upResult.action).toBe('selectPrevious');
+      });
     });
   });
 
@@ -79,166 +200,448 @@ describe('CHAT L2 -- 规则层测试', () => {
   // 3.2 双源读取规则 (PRD 8.3.1)
   // ---------------------------------------------------------------------------
   describe('双源读取规则', () => {
-    test.todo('CHAT_L2_06_primary_source: 主源（CC 原始文件）读取成功');
-    // Pre-condition: CC ~/.claude/history.jsonl 存在且可读
-    // Trigger: 打开聊天历史
-    // Expected: 读取 CC 原始文件，数据正确显示
-    // Decision: CC 存在 -> 读 CC
+    test('CHAT_L2_06_primary_source: 主源（CC 原始文件）读取成功', async () => {
+      const { createDualSourceReader } = await import(
+        '@/main/services/chat-dual-source'
+      );
+      const reader = createDualSourceReader({
+        ccPath: '~/.claude/history.jsonl',
+        mirrorPath: '~/.muxvo/mirror/history.jsonl',
+        ccExists: true,
+        ccReadable: true,
+      });
 
-    test.todo('CHAT_L2_07_fallback_mirror: CC 文件不存在时切换到镜像');
-    // Pre-condition: CC 原始文件不存在（已被删除）
-    // Trigger: 打开聊天历史
-    // Expected: 自动切换读取 Muxvo 镜像；数据正常显示；用户无感知
-    // Decision: CC 不存在 -> 切换 Muxvo 镜像
+      const result = await reader.read();
 
-    test.todo('CHAT_L2_08_fallback_permission: CC 权限不足时切换到镜像');
-    // Pre-condition: CC 文件存在但权限不足 (chmod 000)
-    // Trigger: 打开聊天历史
-    // Expected: 自动切换到镜像副本；不显示错误提示
-    // Decision: CC 不可读 -> 与不存在同处理
+      expect(result.source).toBe('cc');
+      expect(result.data).toBeDefined();
+      expect(result.fallback).toBe(false);
+    });
 
-    test.todo('CHAT_L2_09_both_unavailable: 主备源均不可用进入 Error');
-    // Pre-condition: CC 文件不存在 + Muxvo 镜像不存在
-    // Trigger: 打开聊天历史
-    // Expected: 进入 Error 状态；显示友好错误提示
-    // Decision: 双源均失败 -> Error
+    test('CHAT_L2_07_fallback_mirror: CC 文件不存在时切换到镜像', async () => {
+      const { createDualSourceReader } = await import(
+        '@/main/services/chat-dual-source'
+      );
+      const reader = createDualSourceReader({
+        ccPath: '~/.claude/history.jsonl',
+        mirrorPath: '~/.muxvo/mirror/history.jsonl',
+        ccExists: false,
+        mirrorExists: true,
+      });
 
-    test.todo('CHAT_L2_10_mirror_hint: 镜像数据来源提示');
-    // Pre-condition: 数据来自 Muxvo 镜像
-    // Trigger: 查看面板
-    // Expected: 可选显示提示「部分历史记录来自本地备份」
-    // Rule: PRD 8.3.2 同步状态 UI
+      const result = await reader.read();
+
+      expect(result.source).toBe('mirror');
+      expect(result.data).toBeDefined();
+      expect(result.fallback).toBe(true);
+      // User should not see error
+      expect(result.error).toBeUndefined();
+    });
+
+    test('CHAT_L2_08_fallback_permission: CC 权限不足时切换到镜像', async () => {
+      const { createDualSourceReader } = await import(
+        '@/main/services/chat-dual-source'
+      );
+      const reader = createDualSourceReader({
+        ccPath: '~/.claude/history.jsonl',
+        mirrorPath: '~/.muxvo/mirror/history.jsonl',
+        ccExists: true,
+        ccReadable: false, // chmod 000
+        mirrorExists: true,
+      });
+
+      const result = await reader.read();
+
+      expect(result.source).toBe('mirror');
+      expect(result.fallback).toBe(true);
+      // Should not display error to user
+      expect(result.error).toBeUndefined();
+    });
+
+    test('CHAT_L2_09_both_unavailable: 主备源均不可用进入 Error', async () => {
+      const { createDualSourceReader } = await import(
+        '@/main/services/chat-dual-source'
+      );
+      const reader = createDualSourceReader({
+        ccPath: '~/.claude/history.jsonl',
+        mirrorPath: '~/.muxvo/mirror/history.jsonl',
+        ccExists: false,
+        mirrorExists: false,
+      });
+
+      const result = await reader.read();
+
+      expect(result.source).toBeNull();
+      expect(result.error).toBeDefined();
+      expect(result.state).toBe('Error');
+    });
+
+    test('CHAT_L2_10_mirror_hint: 镜像数据来源提示', async () => {
+      const { createDualSourceReader } = await import(
+        '@/main/services/chat-dual-source'
+      );
+      const reader = createDualSourceReader({
+        ccPath: '~/.claude/history.jsonl',
+        mirrorPath: '~/.muxvo/mirror/history.jsonl',
+        ccExists: false,
+        mirrorExists: true,
+      });
+
+      const result = await reader.read();
+
+      expect(result.source).toBe('mirror');
+      expect(result.hint).toContain('本地备份');
+    });
   });
 
   // ---------------------------------------------------------------------------
   // 3.3 JSONL 解析规则 (PRD 8.3.1)
   // ---------------------------------------------------------------------------
   describe('JSONL 解析规则', () => {
-    test.todo('CHAT_L2_11_skip_bad_line: 格式错误行跳过');
-    // Pre-condition: history.jsonl 中第 3、7 行为非法 JSON
-    // Trigger: 加载聊天历史
-    // Expected: 第 3、7 行被跳过；其余行正常解析
-    // Rule: PRD 8.3.1 "遇到格式错误的行：跳过该行，继续解析（静默处理）"
+    test('CHAT_L2_11_skip_bad_line: 格式错误行跳过', async () => {
+      const { parseJsonl } = await import('@/main/services/jsonl-parser');
 
-    test.todo('CHAT_L2_12_ignore_incomplete_tail: 忽略不完整末尾行');
-    // Pre-condition: history.jsonl 末尾行不以 \\n 结尾
-    // Trigger: 加载聊天历史
-    // Expected: 忽略该末尾行；其余行正常解析
-    // Rule: PRD 11.2 "忽略不以 \\n 结尾的末尾行（可能是写入中的不完整 JSON）"
+      // Mix valid and invalid lines
+      const input =
+        jsonlFixtures.validLine +
+        jsonlFixtures.invalidLine +
+        jsonlFixtures.validLine;
 
-    test.todo('CHAT_L2_13_stream_parse: 逐行流式读取大文件');
-    // Pre-condition: 大 session JSONL 文件（10MB）
-    // Trigger: 打开 session 详情
-    // Expected: 逐行流式读取，不一次性加载整个文件
-    // Rule: PRD 8.3.1 "每行独立 JSON，逐行流式读取"
+      const result = parseJsonl(input);
 
-    test.todo('CHAT_L2_14_unknown_fields: 未知字段兼容');
-    // Pre-condition: JSONL 行含 CC 新增的未知字段
-    // Trigger: 加载聊天历史
-    // Expected: 未知字段忽略（向前兼容），已知字段正常解析
-    // Rule: PRD 3.3 "遇到未知字段：忽略（向前兼容）"
+      // Should parse 2 valid lines, skip 1 invalid
+      expect(result.entries).toHaveLength(2);
+      expect(result.skippedLines).toBe(1);
+      expect(result.errors).toHaveLength(0); // Silent skip, no user-facing errors
+    });
+
+    test('CHAT_L2_12_ignore_incomplete_tail: 忽略不完整末尾行', async () => {
+      const { parseJsonl } = await import('@/main/services/jsonl-parser');
+
+      // Valid line followed by incomplete (no trailing \n)
+      const input = jsonlFixtures.validLine + jsonlFixtures.incompleteLine;
+
+      const result = parseJsonl(input);
+
+      // Should only parse the first complete line
+      expect(result.entries).toHaveLength(1);
+      expect(result.incompleteTailIgnored).toBe(true);
+    });
+
+    test('CHAT_L2_13_stream_parse: 逐行流式读取大文件', async () => {
+      const { createStreamParser } = await import(
+        '@/main/services/jsonl-parser'
+      );
+
+      const parser = createStreamParser();
+      const chunks: unknown[] = [];
+
+      parser.onEntry((entry: unknown) => {
+        chunks.push(entry);
+      });
+
+      // Simulate streaming multiLine data in two chunks
+      const lines = jsonlFixtures.multiLine;
+      const midpoint = Math.floor(lines.length / 2);
+      parser.feed(lines.slice(0, midpoint));
+      parser.feed(lines.slice(midpoint));
+      parser.end();
+
+      // Should have parsed 3 entries from multiLine fixture
+      expect(chunks).toHaveLength(3);
+    });
+
+    test('CHAT_L2_14_unknown_fields: 未知字段兼容', async () => {
+      const { parseJsonl } = await import('@/main/services/jsonl-parser');
+
+      // JSON line with known + unknown fields
+      const lineWithExtra =
+        '{"type":"human","content":"hello","unknownField":"value","futureFeature":123}\n';
+
+      const result = parseJsonl(lineWithExtra);
+
+      expect(result.entries).toHaveLength(1);
+      expect(result.entries[0].type).toBe('human');
+      expect(result.entries[0].content).toBe('hello');
+      // Unknown fields are ignored but parsing succeeds
+      expect(result.errors).toHaveLength(0);
+    });
   });
 
   // ---------------------------------------------------------------------------
   // 3.4 搜索规则 (PRD 8.3.4)
   // ---------------------------------------------------------------------------
   describe('搜索规则', () => {
-    test.todo('CHAT_L2_01_search_debounce_300ms: 搜索 300ms 去抖');
-    // Pre-condition: 聊天历史面板 Ready 状态
-    // Trigger: 连续快速输入 "t" "te" "tes" "test" (间隔<300ms)
-    // Expected: 仅最后一次输入 "test" 触发搜索请求；前 3 次不触发
-    // Rule: PRD 6.10/L1005 "300ms 去抖"
+    test('CHAT_L2_01_search_debounce_300ms: 搜索 300ms 去抖', async () => {
+      const { createSearchDebouncer } = await import(
+        '@/renderer/utils/search-debounce'
+      );
 
-    test.todo('CHAT_L2_15_search_index_build: 倒排索引构建');
-    // Pre-condition: 首次启动，无持久化索引
-    // Trigger: 启动应用
-    // Expected: 后台 Web Worker 建立倒排索引；显示进度条；渐进式可用
-    // Rule: PRD 11.2/L2701
+      const calls: string[] = [];
+      const debouncer = createSearchDebouncer({
+        delayMs: searchFixtures.debounceMs,
+        onSearch: (query: string) => calls.push(query),
+      });
 
-    test.todo('CHAT_L2_16_search_index_persist: 索引持久化');
-    // Pre-condition: 索引已建立
-    // Trigger: 关闭应用再重新打开
-    // Expected: 索引从 search-index/ 加载，无需重建；搜索立即可用
-    // Rule: PRD 8.3.4
+      // Rapid input under 300ms
+      debouncer.input('t');
+      debouncer.input('te');
+      debouncer.input('tes');
+      debouncer.input('test');
 
-    test.todo('CHAT_L2_17_search_incremental: 增量更新索引');
-    // Pre-condition: 索引已建立；新 session 写入
-    // Trigger: chokidar 检测到 JSONL 变化
-    // Expected: 增量更新索引（仅索引新增内容），不重建全部
-    // Rule: PRD 8.3.4 "chokidar 监听 JSONL 文件变化，增量更新索引"
+      // Before debounce completes, no search triggered
+      expect(calls).toHaveLength(0);
 
-    test.todo('CHAT_L2_18_search_highlight: 搜索结果高亮');
-    // Pre-condition: 搜索词 "error"
-    // Trigger: 执行搜索
-    // Expected: 匹配关键词高亮；每条结果显示上下文片段（前后各 50 字符）+ 项目 + 时间
+      // Wait for debounce
+      await debouncer.flush();
 
-    test.todo('CHAT_L2_19_search_empty_no_results: 搜索无结果文案');
-    // Pre-condition: 搜索索引已建立
-    // Trigger: 输入无匹配的关键词
-    // Expected: 显示"没有找到匹配的记录，试试其他关键词" + 搜索图标 + [清除搜索]
-    // Rule: PRD 11.3 缺省态规范
+      // Only the last input should trigger
+      expect(calls).toHaveLength(1);
+      expect(calls[0]).toBe('test');
+    });
+
+    test('CHAT_L2_15_search_index_build: 倒排索引构建', async () => {
+      const { createSearchIndexer } = await import(
+        '@/main/services/chat-search-indexer'
+      );
+      const indexer = createSearchIndexer();
+
+      const buildResult = await indexer.build({
+        files: ['/mock/a.jsonl', '/mock/b.jsonl'],
+      });
+
+      expect(buildResult.indexType).toBe('inverted');
+      expect(buildResult.fileCount).toBe(2);
+      expect(buildResult.progressiveAvailable).toBe(true);
+    });
+
+    test('CHAT_L2_16_search_index_persist: 索引持久化', async () => {
+      const { createSearchIndexer } = await import(
+        '@/main/services/chat-search-indexer'
+      );
+      const indexer = createSearchIndexer();
+
+      // Build index
+      await indexer.build({ files: ['/mock/a.jsonl'] });
+
+      // Persist
+      const persistResult = await indexer.persist();
+      expect(persistResult.saved).toBe(true);
+      expect(persistResult.path).toMatch(/search-index\//);
+
+      // Load from persisted
+      const loadResult = await indexer.loadPersisted();
+      expect(loadResult.loaded).toBe(true);
+      expect(loadResult.needsRebuild).toBe(false);
+    });
+
+    test('CHAT_L2_17_search_incremental: 增量更新索引', async () => {
+      const { createSearchIndexer } = await import(
+        '@/main/services/chat-search-indexer'
+      );
+      const indexer = createSearchIndexer();
+
+      // Build initial index
+      await indexer.build({ files: ['/mock/a.jsonl'] });
+
+      // Simulate file change detected by chokidar
+      const updateResult = await indexer.incrementalUpdate({
+        changedFile: '/mock/a.jsonl',
+        changeType: 'append',
+      });
+
+      expect(updateResult.incrementalUpdate).toBe(true);
+      expect(updateResult.fullRebuild).toBe(false);
+    });
+
+    test('CHAT_L2_18_search_highlight: 搜索结果高亮', async () => {
+      const { createSearchHighlighter } = await import(
+        '@/renderer/utils/search-highlight'
+      );
+      const highlighter = createSearchHighlighter();
+
+      const result = highlighter.highlight({
+        text: 'Found an error in the build process',
+        query: 'error',
+        contextChars: 50,
+      });
+
+      expect(result.highlighted).toContain('<mark>error</mark>');
+      expect(result.context.length).toBeLessThanOrEqual(100 + 'error'.length);
+    });
+
+    test('CHAT_L2_19_search_empty_no_results: 搜索无结果文案', async () => {
+      const { getNoResultsConfig } = await import(
+        '@/renderer/components/chat/search-empty-state'
+      );
+      const config = getNoResultsConfig();
+
+      expect(config.message).toContain('没有找到匹配的记录');
+      expect(config.suggestion).toContain('其他关键词');
+      expect(config.icon).toBe('search');
+      expect(config.action).toBeDefined();
+      expect(config.action.text).toContain('清除搜索');
+    });
   });
 
   // ---------------------------------------------------------------------------
   // 3.5 mtime 同步规则 (PRD 8.3.2)
   // ---------------------------------------------------------------------------
   describe('mtime 同步规则', () => {
-    test.todo('CHAT_L2_24_mtime_second_precision: mtime 秒级精度比较（相同）');
-    // Pre-condition: CC mtimeMs=1700000000123, 镜像 mtimeMs=1700000000456
-    // Trigger: 同步检查
-    // Expected: Math.floor(123/1000)==Math.floor(456/1000)==1700000000, 不触发同步
-    // Rule: PRD 8.3.2/L1816 "mtime 比较精度为秒级"
+    test('CHAT_L2_24_mtime_second_precision: mtime 秒级精度比较（相同）', async () => {
+      const { compareMtime } = await import('@/main/services/chat-sync');
 
-    test.todo('CHAT_L2_25_mtime_different: mtime 不同触发同步');
-    // Pre-condition: CC mtimeMs=1700001000000, 镜像 mtimeMs=1700000000000
-    // Trigger: 同步检查
-    // Expected: 1700001000 != 1700000000, 触发同步覆盖镜像
+      // Same second, different milliseconds
+      const ccMtime = 1700000000123;
+      const mirrorMtime = 1700000000456;
 
-    test.todo('CHAT_L2_26_dedup_session_id: 按 sessionId 去重');
-    // Pre-condition: CC 有 session A/B, 镜像已有 A
-    // Trigger: 同步
-    // Expected: 仅同步 B，不重复写入 A（除非 mtime 更新）
-    // Rule: PRD 8.3.2 "按 sessionId 去重"
+      const result = compareMtime(ccMtime, mirrorMtime);
+
+      // Floor to seconds: both become 1700000000
+      expect(result.needsSync).toBe(false);
+      expect(Math.floor(ccMtime / 1000)).toBe(Math.floor(mirrorMtime / 1000));
+    });
+
+    test('CHAT_L2_25_mtime_different: mtime 不同触发同步', async () => {
+      const { compareMtime } = await import('@/main/services/chat-sync');
+
+      const ccMtime = 1700001000000; // 1700001000 seconds
+      const mirrorMtime = 1700000000000; // 1700000000 seconds
+
+      const result = compareMtime(ccMtime, mirrorMtime);
+
+      expect(result.needsSync).toBe(true);
+      expect(Math.floor(ccMtime / 1000)).not.toBe(Math.floor(mirrorMtime / 1000));
+    });
+
+    test('CHAT_L2_26_dedup_session_id: 按 sessionId 去重', async () => {
+      const { createSyncManager } = await import(
+        '@/main/services/chat-sync'
+      );
+      const syncManager = createSyncManager();
+
+      // CC has sessions A and B, mirror already has A
+      const ccSessions = [
+        { sessionId: 'A', mtime: 1700000000000 },
+        { sessionId: 'B', mtime: 1700000000000 },
+      ];
+      const mirrorSessions = [
+        { sessionId: 'A', mtime: 1700000000000 },
+      ];
+
+      const syncPlan = syncManager.calculateSyncPlan(ccSessions, mirrorSessions);
+
+      // Only B should be synced (A already exists with same mtime)
+      expect(syncPlan.toSync).toHaveLength(1);
+      expect(syncPlan.toSync[0].sessionId).toBe('B');
+      expect(syncPlan.skipped).toHaveLength(1);
+      expect(syncPlan.skipped[0].sessionId).toBe('A');
+    });
   });
 
   // ---------------------------------------------------------------------------
   // 3.6 特殊规则 (附录 H)
   // ---------------------------------------------------------------------------
   describe('特殊规则', () => {
-    test.todo('CHAT_L2_05_default_all_projects: 默认选中全部项目');
-    // Pre-condition: 首次打开聊天历史面板
-    // Trigger: 打开面板
-    // Expected: 「全部项目」默认选中；显示总会话数；中栏显示所有项目的会话
-    // Rule: PRD 8.3.3/L1842
+    test('CHAT_L2_05_default_all_projects: 默认选中全部项目', async () => {
+      const { useChatPanelStore } = await import(
+        '@/renderer/stores/chat-panel'
+      );
+      const store = useChatPanelStore();
 
-    test.todo('CHAT_L2_27_lazy_load: 延迟加载历史数据');
-    // Pre-condition: 应用已启动，未打开历史面板
-    // Trigger: 检查内存/IO
-    // Expected: 不预加载 history.jsonl；仅在打开面板时加载
-    // Rule: PRD 8.3.6
+      expect(store.selectedProject).toBe('全部项目');
+      // Should show total session count
+      expect(store.totalSessionCount).toBeGreaterThanOrEqual(0);
+    });
 
-    test.todo('CHAT_L2_28_virtual_scroll: 虚拟滚动渲染');
-    // Pre-condition: 会话列表 > 50 条
-    // Trigger: 滚动会话列表
-    // Expected: 使用虚拟滚动渲染，DOM 中仅渲染可见区域
-    // Rule: PRD 8.3.6
+    test('CHAT_L2_27_lazy_load: 延迟加载历史数据', async () => {
+      const { createChatHistoryLoader } = await import(
+        '@/main/services/chat-history-loader'
+      );
+      const loader = createChatHistoryLoader();
 
-    test.todo('CHAT_L2_29_paged_detail: 分页加载会话详情');
-    // Pre-condition: 会话消息数 > 50 条
-    // Trigger: 打开会话详情
-    // Expected: 首次加载 50 条消息；滚动到顶部加载更多
-    // Rule: PRD 8.3.6
+      // Before panel opens, data should NOT be loaded
+      expect(loader.isDataLoaded).toBe(false);
+      expect(loader.memoryUsage).toBe(0);
 
-    test.todo('CHAT_L2_30_sync_throttle: 镜像同步节流');
-    // Pre-condition: 多个 JSONL 文件短时间内变化
-    // Trigger: 触发同步
-    // Expected: 批量合并同步操作，避免频繁 IO
-    // Rule: PRD 8.3.6
+      // Open panel triggers load
+      await loader.loadOnDemand();
+      expect(loader.isDataLoaded).toBe(true);
+    });
 
-    test.todo('CHAT_L2_34_shortcut_enter: Enter 打开选中会话');
-    // Pre-condition: 搜索结果中选中某条
-    // Trigger: Enter
-    // Expected: 打开该会话的详情
-    // Rule: PRD 8.3.4
+    test('CHAT_L2_28_virtual_scroll: 虚拟滚动渲染', async () => {
+      const { createVirtualScroller } = await import(
+        '@/renderer/utils/virtual-scroll'
+      );
+
+      const scroller = createVirtualScroller({
+        totalItems: 200,
+        itemHeight: 60,
+        containerHeight: 400,
+      });
+
+      // Only visible items should be rendered
+      const rendered = scroller.getVisibleItems();
+      const maxVisible = Math.ceil(400 / 60) + 2; // +2 for buffer
+      expect(rendered.length).toBeLessThanOrEqual(maxVisible);
+      expect(rendered.length).toBeLessThan(200);
+    });
+
+    test('CHAT_L2_29_paged_detail: 分页加载会话详情', async () => {
+      const { createSessionDetailLoader } = await import(
+        '@/renderer/stores/session-detail-loader'
+      );
+      const loader = createSessionDetailLoader({
+        totalMessages: 120,
+        pageSize: 50,
+      });
+
+      // First load: 50 messages
+      const firstPage = await loader.loadPage(1);
+      expect(firstPage).toHaveLength(50);
+
+      // Scroll to top loads more
+      const secondPage = await loader.loadPage(2);
+      expect(secondPage).toHaveLength(50);
+
+      // Total loaded so far
+      expect(loader.loadedCount).toBe(100);
+    });
+
+    test('CHAT_L2_30_sync_throttle: 镜像同步节流', async () => {
+      const { createSyncThrottler } = await import(
+        '@/main/services/chat-sync'
+      );
+      const throttler = createSyncThrottler();
+
+      const syncCalls: number[] = [];
+      throttler.onSync(() => syncCalls.push(Date.now()));
+
+      // Trigger multiple syncs in rapid succession
+      throttler.triggerSync();
+      throttler.triggerSync();
+      throttler.triggerSync();
+
+      await throttler.flush();
+
+      // Should batch into single sync operation
+      expect(syncCalls).toHaveLength(1);
+    });
+
+    test('CHAT_L2_34_shortcut_enter: Enter 打开选中会话', async () => {
+      const { createChatShortcutHandler } = await import(
+        '@/renderer/utils/chat-shortcuts'
+      );
+      const handler = createChatShortcutHandler({
+        panelOpen: true,
+        searchResults: ['r1', 'r2', 'r3'],
+        selectedIndex: 1,
+      });
+
+      const result = handler.handle({ key: 'Enter' });
+
+      expect(result.action).toBe('openSession');
+      expect(result.sessionId).toBe('r2');
+    });
   });
 });
