@@ -45,7 +45,8 @@ export function App(): JSX.Element {
   }, []);
 
   const addTerminal = useCallback(async () => {
-    const result = await window.api.terminal.create(process.cwd?.() || '/');
+    const home = typeof process !== 'undefined' && process.env?.HOME ? process.env.HOME : '/';
+    const result = await window.api.terminal.create(home);
     if (result?.success && result.data) {
       setTerminals((prev) => [...prev, { id: result.data.id, state: 'Running' }]);
     }
