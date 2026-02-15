@@ -1,0 +1,90 @@
+/**
+ * IPC Channel 名称常量
+ * 来源: DEV-PLAN.md §2.1~2.10
+ */
+
+export const IPC_CHANNELS = {
+  TERMINAL: {
+    CREATE: 'terminal:create',
+    WRITE: 'terminal:write',
+    RESIZE: 'terminal:resize',
+    CLOSE: 'terminal:close',
+    OUTPUT: 'terminal:output',
+    STATE_CHANGE: 'terminal:state-change',
+    EXIT: 'terminal:exit',
+    GET_FOREGROUND_PROCESS: 'terminal:get-foreground-process',
+    LIST: 'terminal:list',
+    GET_STATE: 'terminal:get-state',
+  },
+  FS: {
+    READ_DIR: 'fs:read-dir',
+    READ_FILE: 'fs:read-file',
+    WRITE_FILE: 'fs:write-file',
+    WATCH_START: 'fs:watch-start',
+    WATCH_STOP: 'fs:watch-stop',
+    CHANGE: 'fs:change',
+    SELECT_DIRECTORY: 'fs:select-directory',
+    WRITE_TEMP_IMAGE: 'fs:write-temp-image',
+    WRITE_CLIPBOARD_IMAGE: 'fs:write-clipboard-image',
+  },
+  CHAT: {
+    GET_HISTORY: 'chat:get-history',
+    GET_SESSION: 'chat:get-session',
+    SEARCH: 'chat:search',
+    SESSION_UPDATE: 'chat:session-update',
+    SYNC_STATUS: 'chat:sync-status',
+    EXPORT: 'chat:export',
+  },
+  CONFIG: {
+    GET_RESOURCES: 'config:get-resources',
+    GET_RESOURCE_CONTENT: 'config:get-resource-content',
+    GET_SETTINGS: 'config:get-settings',
+    SAVE_SETTINGS: 'config:save-settings',
+    GET_CLAUDE_MD: 'config:get-claude-md',
+    SAVE_CLAUDE_MD: 'config:save-claude-md',
+    GET_MEMORY: 'config:get-memory',
+    RESOURCE_CHANGE: 'config:resource-change',
+  },
+  APP: {
+    GET_CONFIG: 'app:get-config',
+    SAVE_CONFIG: 'app:save-config',
+    GET_PREFERENCES: 'app:get-preferences',
+    SAVE_PREFERENCES: 'app:save-preferences',
+    MEMORY_WARNING: 'app:memory-warning',
+    DETECT_CLI_TOOLS: 'app:detect-cli-tools',
+  },
+  MARKETPLACE: {
+    FETCH_SOURCES: 'marketplace:fetch-sources',
+    SEARCH: 'marketplace:search',
+    INSTALL: 'marketplace:install',
+    UNINSTALL: 'marketplace:uninstall',
+    GET_INSTALLED: 'marketplace:get-installed',
+    INSTALL_PROGRESS: 'marketplace:install-progress',
+    CHECK_UPDATES: 'marketplace:check-updates',
+    PACKAGES_LOADED: 'marketplace:packages-loaded',
+    UPDATE_AVAILABLE: 'marketplace:update-available',
+  },
+  SCORE: {
+    RUN: 'score:run',
+    CHECK_SCORER: 'score:check-scorer',
+    GET_CACHED: 'score:get-cached',
+    PROGRESS: 'score:progress',
+    RESULT: 'score:result',
+  },
+  SHOWCASE: {
+    GENERATE: 'showcase:generate',
+    PUBLISH: 'showcase:publish',
+    UNPUBLISH: 'showcase:unpublish',
+    PUBLISH_RESULT: 'showcase:publish-result',
+  },
+  AUTH: {
+    LOGIN_GITHUB: 'auth:login-github',
+    LOGOUT: 'auth:logout',
+    GET_STATUS: 'auth:get-status',
+  },
+  ANALYTICS: {
+    TRACK: 'analytics:track',
+    GET_SUMMARY: 'analytics:get-summary',
+    CLEAR: 'analytics:clear',
+  },
+} as const;
