@@ -1,0 +1,14 @@
+.bottom-bar {
+  height: var(--bottom-bar-height);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  user-select: none;
+}
+
+.bottom-bar-info {
+  font-size: 11px;
+  color: var(--text-secondary);
+}

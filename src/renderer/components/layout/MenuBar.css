@@ -1,0 +1,24 @@
+.menu-bar {
+  height: var(--menu-bar-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+  user-select: none;
+}
+
+.menu-bar-drag-region {
+  position: absolute;
+  inset: 0;
+  -webkit-app-region: drag;
+}
+
+.menu-bar-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  pointer-events: none;
+  z-index: 1;
+}
