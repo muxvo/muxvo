@@ -5,7 +5,7 @@
   "source": "tests/l2/cross.test.ts",
   "docSource": "docs/Muxvo_测试_v2/02_modules/test_CROSS.md",
   "fixtureSource": "tests/helpers/test-fixtures.ts (timeConstants, searchFixtures)",
-  "totalCases": 10,
+  "totalCases": 9,
   "cases": [
     {
       "id": "PERF_L2_01",
@@ -31,24 +31,15 @@
       "priority": "P1"
     },
     {
-      "id": "PERF_L2_03_FOCUSED",
-      "description": "聚焦终端缓冲区限制 10000 行",
+      "id": "PERF_L2_03",
+      "description": "终端缓冲区限制 — 聚焦 10000 行 / 非可见 1000 行",
       "type": "threshold",
-      "parameter": "focusedTerminalBufferLines",
-      "expectedValue": 10000,
+      "parameters": {
+        "focusedTerminalBufferLines": 10000,
+        "hiddenTerminalBufferLines": 1000
+      },
       "unit": "行",
-      "rule": "聚焦/可见终端 maxLines = 10000",
-      "prdRef": "PRD 11.2 / L2691",
-      "priority": "P1"
-    },
-    {
-      "id": "PERF_L2_03_HIDDEN",
-      "description": "非可见终端缓冲区缩减至 1000 行",
-      "type": "threshold",
-      "parameter": "hiddenTerminalBufferLines",
-      "expectedValue": 1000,
-      "unit": "行",
-      "rule": "非可见终端 maxLines = 1000; 缩减不可逆",
+      "rule": "聚焦/可见终端 maxLines = 10000; 非可见终端 maxLines = 1000; 缩减不可逆",
       "prdRef": "PRD 11.2 / L2691",
       "priority": "P1"
     },

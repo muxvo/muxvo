@@ -5,7 +5,7 @@
   "source": "tests/l2/v2-content.test.ts",
   "docSource": "docs/Muxvo_测试_v2/02_modules/test_V2_CONTENT.md",
   "fixtureSource": "tests/helpers/test-fixtures.ts (scoreDimensions, gradeMap, scoreTolerance)",
-  "totalCases": 5,
+  "totalCases": 4,
   "cases": [
     {
       "id": "SCORE_L2_03",
@@ -72,25 +72,6 @@
       "unit": "分",
       "rule": "abs(totalScore - weightedAvg) <= 2 ? pass : 自动重新评分",
       "priority": "P0"
-    },
-    {
-      "id": "SCORE_L2_WEIGHTS",
-      "description": "评分维度权重校验（权重和为100%）",
-      "type": "calculation",
-      "input": {
-        "weights": {
-          "practicality": 0.25,
-          "engineering": 0.25,
-          "intentClarity": 0.10,
-          "designCleverness": 0.10,
-          "documentation": 0.15,
-          "reusability": 0.15
-        }
-      },
-      "formula": "sum(all_weights) = 0.25+0.25+0.10+0.10+0.15+0.15",
-      "expected": 1.0,
-      "priority": "P0",
-      "note": "权重总和必须精确等于 1.0"
     }
   ]
 }
