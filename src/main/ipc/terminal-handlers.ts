@@ -14,14 +14,19 @@ type TerminalManager = ReturnType<typeof createTerminalManager>;
 /**
  * Register all terminal IPC handlers with a manager instance.
  * Called from main/index.ts at app startup.
+ * @param onTerminalChange Optional callback fired after terminal create/close for config persistence.
  */
-export function registerTerminalHandlers(manager: TerminalManager): void {
+export function registerTerminalHandlers(
+  manager: TerminalManager,
+  onTerminalChange?: () => void,
+): void {
   // terminal:create — invoke (R->M request-response)
   ipcMain.handle(IPC_CHANNELS.TERMINAL.CREATE, async (_event, req: { cwd: string }) => {
     const result = manager.spawn({ cwd: req.cwd });
     if (!result.success) {
       return { success: false, error: result.message };
     }
+    onTerminalChange?.();
     return { success: true, data: { id: result.id, pid: result.pid } };
   });
 
@@ -37,7 +42,9 @@ export function registerTerminalHandlers(manager: TerminalManager): void {
 
   // terminal:close — invoke
   ipcMain.handle(IPC_CHANNELS.TERMINAL.CLOSE, async (_event, req: { id: string; force?: boolean }) => {
-    return manager.close(req.id, req.force);
+    const result = manager.close(req.id, req.force);
+    onTerminalChange?.();
+    return result;
   });
 
   // terminal:list — invoke

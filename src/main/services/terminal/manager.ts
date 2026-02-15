@@ -8,12 +8,17 @@
 import { BrowserWindow } from 'electron';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 import type { PtyAdapter, PtyProcess } from './pty-adapter';
+import { getForegroundProcessName } from './foreground-detector';
+import { detectWaitingInput } from './input-detector';
 import type {
   TerminalInfo,
   ForegroundProcessInfo,
 } from '@/shared/types/terminal.types';
 import { TerminalState } from '@/shared/types/terminal.types';
 import { createTerminalMachine } from '@/shared/machines/terminal-process';
+
+const MAX_TERMINALS = 20;
+const GRACEFUL_CLOSE_TIMEOUT = 5000;
 
 interface SpawnOptions {
   cwd: string;
@@ -42,6 +47,13 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
   const terminals = new Map<string, ManagedTerminal>();
   const ptyAdapter = deps?.pty;
 
+  function pushStateChange(id: string, state: string, processName?: string): void {
+    const win = BrowserWindow.getAllWindows()[0];
+    if (win) {
+      win.webContents.send(IPC_CHANNELS.TERMINAL.STATE_CHANGE, { id, state, processName });
+    }
+  }
+
   function spawn(options: SpawnOptions): SpawnResult {
     // Validate cwd exists
     if (!isValidCwd(options.cwd)) {
@@ -49,6 +61,15 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
         success: false,
         state: 'Failed',
         message: '终端启动失败：进程已断开 -- 无效的工作目录',
+      };
+    }
+
+    // Check max terminal limit
+    if (terminals.size >= MAX_TERMINALS) {
+      return {
+        success: false,
+        state: 'Failed',
+        message: '最多支持 20 个终端',
       };
     }
 
@@ -66,11 +87,19 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
 
         terminals.set(id, { id, process: proc, cwd: options.cwd, machine });
 
+        pushStateChange(id, machine.state);
+
         // Push terminal output to renderer
         proc.onData((data) => {
           const win = BrowserWindow.getAllWindows()[0];
           if (win) {
             win.webContents.send(IPC_CHANNELS.TERMINAL.OUTPUT, { id, data });
+          }
+
+          // Detect interactive prompts → transition to WaitingInput
+          if (machine.state === 'Running' && detectWaitingInput(data)) {
+            machine.send('WAIT_INPUT');
+            pushStateChange(id, machine.state);
           }
         });
 
@@ -84,6 +113,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
             win.webContents.send(IPC_CHANNELS.TERMINAL.EXIT, { id, code });
           }
 
+          pushStateChange(id, machine.state);
           terminals.delete(id);
         });
 
@@ -108,6 +138,11 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
   function write(id: string, data: string): void {
     const terminal = terminals.get(id);
     if (terminal) {
+      // If waiting for user input, transition back to Running
+      if (terminal.machine.state === 'WaitingInput') {
+        terminal.machine.send('USER_INPUT');
+        pushStateChange(id, terminal.machine.state);
+      }
       terminal.process.write(data);
     }
   }
@@ -119,16 +154,39 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
     }
   }
 
-  function close(id: string, force?: boolean): { success: boolean } {
+  async function close(id: string, force?: boolean): Promise<{ success: boolean }> {
     const terminal = terminals.get(id);
     if (!terminal) {
       return { success: false };
     }
 
+    if (force) {
+      terminal.machine.send('CLOSE');
+      pushStateChange(id, terminal.machine.state);
+      terminal.process.kill();
+      terminals.delete(id);
+      return { success: true };
+    }
+
+    // Graceful close: send SIGINT via Ctrl+C, then wait for exit with timeout
     terminal.machine.send('CLOSE');
-    terminal.process.kill();
-    terminals.delete(id);
-    return { success: true };
+    pushStateChange(id, terminal.machine.state);
+    terminal.process.write('\x03');
+
+    return new Promise<{ success: boolean }>((resolve) => {
+      const timeout = setTimeout(() => {
+        // Timeout — force kill
+        terminal.process.kill();
+        terminals.delete(id);
+        resolve({ success: true });
+      }, GRACEFUL_CLOSE_TIMEOUT);
+
+      terminal.process.onExit(() => {
+        clearTimeout(timeout);
+        terminals.delete(id);
+        resolve({ success: true });
+      });
+    });
   }
 
   function list(): TerminalInfo[] {
@@ -149,7 +207,8 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
   function getForegroundProcess(id: string): ForegroundProcessInfo | null {
     const terminal = terminals.get(id);
     if (!terminal) return null;
-    return { name: 'shell', pid: terminal.process.pid };
+    const name = getForegroundProcessName(terminal.process.pid);
+    return { name: name ?? 'shell', pid: terminal.process.pid };
   }
 
   function closeAll(): void {

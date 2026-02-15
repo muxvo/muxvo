@@ -29,7 +29,12 @@
   justify-content: center;
 }
 
-.bottom-bar-add:hover {
+.bottom-bar-add:hover:not(:disabled) {
   background: var(--bg-tertiary);
   color: var(--text-primary);
+}
+
+.bottom-bar-add--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
