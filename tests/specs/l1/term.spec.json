@@ -1,0 +1,176 @@
+{
+  "module": "TERM",
+  "layer": "L1",
+  "source": "tests/l1/term.test.ts",
+  "docSource": "docs/Muxvo_测试_v2/02_modules/test_TERM.md",
+  "totalCases": 15,
+  "cases": [
+    {
+      "id": "TERM_L1_01",
+      "description": "terminal:create IPC 格式 -- 发送 { cwd } 返回 { terminalId, pid }",
+      "type": "ipc",
+      "channel": "terminal:create",
+      "direction": "invoke",
+      "input": {
+        "cwd": "~/project"
+      },
+      "expectedResponse": {
+        "terminalId": "string",
+        "pid": "number"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "TERM_L1_02",
+      "description": "terminal:write IPC 格式 -- 发送 { terminalId, data } 返回 { success }",
+      "type": "ipc",
+      "channel": "terminal:write",
+      "direction": "invoke",
+      "input": {
+        "terminalId": "t1",
+        "data": "ls\n"
+      },
+      "expectedResponse": {
+        "success": true
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "TERM_L1_03",
+      "description": "terminal:resize IPC 格式 -- 发送 { terminalId, cols, rows } 返回 { success }",
+      "type": "ipc",
+      "channel": "terminal:resize",
+      "direction": "invoke",
+      "input": {
+        "terminalId": "t1",
+        "cols": 80,
+        "rows": 24
+      },
+      "expectedResponse": {
+        "success": true
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "TERM_L1_04",
+      "description": "terminal:close IPC 格式 -- 发送 { terminalId } 返回 { success }",
+      "type": "ipc",
+      "channel": "terminal:close",
+      "direction": "invoke",
+      "input": {
+        "terminalId": "t1"
+      },
+      "expectedResponse": {
+        "success": true
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "TERM_L1_05",
+      "description": "terminal:output push 格式 -- Renderer 收到 { terminalId, data }",
+      "type": "ipc-push",
+      "channel": "terminal:output",
+      "expectedPayload": {
+        "terminalId": "string",
+        "data": "string"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "TERM_L1_06",
+      "description": "terminal:state-change push 格式 -- Renderer 收到 { terminalId, state }",
+      "type": "ipc-push",
+      "channel": "terminal:state-change",
+      "expectedPayload": {
+        "terminalId": "string",
+        "state": "string"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "TERM_L1_07",
+      "description": "terminal:exit push 格式 -- Renderer 收到 { terminalId, exitCode }",
+      "type": "ipc-push",
+      "channel": "terminal:exit",
+      "expectedPayload": {
+        "terminalId": "string",
+        "exitCode": "number"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "TERM_L1_08",
+      "description": "默认窗口尺寸 -- 首次启动 1400x900",
+      "type": "default-value",
+      "target": "window.size",
+      "expectedValue": {
+        "width": 1400,
+        "height": 900
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "TERM_L1_09",
+      "description": "默认字体大小 -- 首次启动 fontSize=14",
+      "type": "default-value",
+      "target": "fontSize",
+      "expectedValue": 14,
+      "priority": "P1"
+    },
+    {
+      "id": "TERM_L1_10",
+      "description": "默认主题 -- 首次启动 theme=\"dark\"",
+      "type": "default-value",
+      "target": "theme",
+      "expectedValue": "dark",
+      "priority": "P1"
+    },
+    {
+      "id": "TERM_L1_11",
+      "description": "默认列比例 -- 2 个终端时 columnRatios=[1,1]",
+      "type": "default-value",
+      "target": "gridLayout.columnRatios",
+      "expectedValue": [1, 1],
+      "priority": "P1"
+    },
+    {
+      "id": "TERM_L1_12",
+      "description": "默认行比例 -- 4 个终端时 rowRatios=[1,1]",
+      "type": "default-value",
+      "target": "gridLayout.rowRatios",
+      "expectedValue": [1, 1],
+      "priority": "P1"
+    },
+    {
+      "id": "TERM_L1_13",
+      "description": "Default 状态 border -- border = var(--border)",
+      "type": "ui-state",
+      "state": "default",
+      "expectedCSS": {
+        "border": "var(--border)"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "TERM_L1_14",
+      "description": "Default 状态 opacity -- opacity = 1",
+      "type": "ui-state",
+      "state": "default",
+      "expectedCSS": {
+        "opacity": 1
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "TERM_L1_15",
+      "description": "名称占位符 -- 新建终端显示灰色斜体\"命名...\"",
+      "type": "ui-state",
+      "state": "displayEmpty",
+      "expectedUI": {
+        "placeholderText": "命名...",
+        "style": "gray italic"
+      },
+      "priority": "P1"
+    }
+  ]
+}
