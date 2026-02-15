@@ -1,54 +1,114 @@
 {
-  "generatedAt": "2026-02-14T17:19:00.621Z",
+  "generatedAt": "2026-02-15T08:48:29.738Z",
   "projectPath": "/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo",
-  "totalApis": 2,
-  "scannedFiles": 62,
+  "totalApis": 5,
+  "scannedFiles": 189,
   "categories": {
-    "工具函数": [
-      {
-        "path": "{变量:channel}",
-        "method": "GET",
-        "file": "tests/helpers/mock-ipc.ts",
-        "line": 49,
-        "functionName": "handlers.get",
-        "params": [],
-        "responseFields": [],
-        "category": "工具函数"
-      }
-    ],
-    "verify": [
+    "API 服务": [
       {
         "path": "{成员访问}",
         "method": "GET",
-        "file": "verify/verifiers/static/ipc-handlers.verifier.ts",
-        "line": 14,
-        "functionName": "domainChannels.get",
+        "file": "main/services/chat-sync.ts",
+        "line": 48,
+        "functionName": "mirrorMap.get",
         "params": [],
         "responseFields": [],
-        "category": "verify"
+        "category": "API 服务"
+      },
+      {
+        "path": "{变量:path}",
+        "method": "GET",
+        "file": "main/services/data-sync/sync-manager.ts",
+        "line": 99,
+        "functionName": "lockedFiles.get",
+        "params": [],
+        "responseFields": [],
+        "category": "API 服务"
+      }
+    ],
+    "modules": [
+      {
+        "path": "{变量:event}",
+        "method": "GET",
+        "file": "modules/marketplace/directory-watcher.ts",
+        "line": 23,
+        "functionName": "listeners.get",
+        "params": [],
+        "responseFields": [],
+        "category": "modules"
+      },
+      {
+        "path": "change",
+        "method": "GET",
+        "file": "modules/marketplace/directory-watcher.ts",
+        "line": 28,
+        "functionName": "listeners.get",
+        "params": [],
+        "responseFields": [],
+        "category": "modules"
+      },
+      {
+        "path": "{变量:key}",
+        "method": "GET",
+        "file": "modules/score/cache.ts",
+        "line": 37,
+        "functionName": "store.get",
+        "params": [],
+        "responseFields": [],
+        "category": "modules"
       }
     ]
   },
   "apis": [
     {
-      "path": "{变量:channel}",
-      "method": "GET",
-      "file": "tests/helpers/mock-ipc.ts",
-      "line": 49,
-      "functionName": "handlers.get",
-      "params": [],
-      "responseFields": [],
-      "category": "工具函数"
-    },
-    {
       "path": "{成员访问}",
       "method": "GET",
-      "file": "verify/verifiers/static/ipc-handlers.verifier.ts",
-      "line": 14,
-      "functionName": "domainChannels.get",
+      "file": "main/services/chat-sync.ts",
+      "line": 48,
+      "functionName": "mirrorMap.get",
       "params": [],
       "responseFields": [],
-      "category": "verify"
+      "category": "API 服务"
+    },
+    {
+      "path": "{变量:path}",
+      "method": "GET",
+      "file": "main/services/data-sync/sync-manager.ts",
+      "line": 99,
+      "functionName": "lockedFiles.get",
+      "params": [],
+      "responseFields": [],
+      "category": "API 服务"
+    },
+    {
+      "path": "{变量:event}",
+      "method": "GET",
+      "file": "modules/marketplace/directory-watcher.ts",
+      "line": 23,
+      "functionName": "listeners.get",
+      "params": [],
+      "responseFields": [],
+      "category": "modules"
+    },
+    {
+      "path": "change",
+      "method": "GET",
+      "file": "modules/marketplace/directory-watcher.ts",
+      "line": 28,
+      "functionName": "listeners.get",
+      "params": [],
+      "responseFields": [],
+      "category": "modules"
+    },
+    {
+      "path": "{变量:key}",
+      "method": "GET",
+      "file": "modules/score/cache.ts",
+      "line": 37,
+      "functionName": "store.get",
+      "params": [],
+      "responseFields": [],
+      "category": "modules"
     }
   ]
 }

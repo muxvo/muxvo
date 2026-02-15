@@ -1,10 +1,10 @@
 # API 接口契约文档
 
 > 此文档由 Claude Code Hook 自动生成（AST 解析版）
-> 生成时间: 2026-02-14T17:19:00.621Z
+> 生成时间: 2026-02-15T08:48:29.738Z
 > 项目路径: /Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo
-> 扫描文件数: 62
-> 接口总数: 2
+> 扫描文件数: 189
+> 接口总数: 5
 
 ## 基础信息
 
@@ -13,20 +13,38 @@
 
 ## 接口列表
 
-### 工具函数
-
-#### `GET {变量:channel}`
-
-- **位置**: `tests/helpers/mock-ipc.ts:49`
-- **调用函数**: `handlers.get()`
-- **请求参数**: 无额外参数
-
-### verify
+### API 服务
 
 #### `GET {成员访问}`
 
-- **位置**: `verify/verifiers/static/ipc-handlers.verifier.ts:14`
-- **调用函数**: `domainChannels.get()`
+- **位置**: `main/services/chat-sync.ts:48`
+- **调用函数**: `mirrorMap.get()`
+- **请求参数**: 无额外参数
+
+#### `GET {变量:path}`
+
+- **位置**: `main/services/data-sync/sync-manager.ts:99`
+- **调用函数**: `lockedFiles.get()`
+- **请求参数**: 无额外参数
+
+### modules
+
+#### `GET {变量:event}`
+
+- **位置**: `modules/marketplace/directory-watcher.ts:23`
+- **调用函数**: `listeners.get()`
+- **请求参数**: 无额外参数
+
+#### `GET change`
+
+- **位置**: `modules/marketplace/directory-watcher.ts:28`
+- **调用函数**: `listeners.get()`
+- **请求参数**: 无额外参数
+
+#### `GET {变量:key}`
+
+- **位置**: `modules/score/cache.ts:37`
+- **调用函数**: `store.get()`
 - **请求参数**: 无额外参数
 
 ---
@@ -35,5 +53,8 @@
 
 | 方法 | 接口路径 | 所属模块 | 文件位置 |
 |-----|---------|---------|---------|
-| GET | `{变量:channel}` | 工具函数 | tests/helpers/mock-ipc.ts:49 |
-| GET | `{成员访问}` | verify | verify/verifiers/static/ipc-handlers.verifier.ts:14 |
+| GET | `{成员访问}` | API 服务 | main/services/chat-sync.ts:48 |
+| GET | `{变量:path}` | API 服务 | main/services/data-sync/sync-manager.ts:99 |
+| GET | `{变量:event}` | modules | modules/marketplace/directory-watcher.ts:23 |
+| GET | `change` | modules | modules/marketplace/directory-watcher.ts:28 |
+| GET | `{变量:key}` | modules | modules/score/cache.ts:37 |
