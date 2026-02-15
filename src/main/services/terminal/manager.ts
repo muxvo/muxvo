@@ -2,7 +2,18 @@
  * Terminal Manager
  *
  * Manages terminal process spawning with error handling.
+ * Uses DI pattern: pass { pty } for real PTY, omit for stub behavior (tests).
  */
+
+import { BrowserWindow } from 'electron';
+import { IPC_CHANNELS } from '@/shared/constants/channels';
+import type { PtyAdapter, PtyProcess } from './pty-adapter';
+import type {
+  TerminalInfo,
+  ForegroundProcessInfo,
+} from '@/shared/types/terminal.types';
+import { TerminalState } from '@/shared/types/terminal.types';
+import { createTerminalMachine } from '@/shared/machines/terminal-process';
 
 interface SpawnOptions {
   cwd: string;
@@ -12,9 +23,25 @@ interface SpawnResult {
   success: boolean;
   state: string;
   message?: string;
+  id?: string;
+  pid?: number;
 }
 
-export function createTerminalManager() {
+interface ManagedTerminal {
+  id: string;
+  process: PtyProcess;
+  cwd: string;
+  machine: ReturnType<typeof createTerminalMachine>;
+}
+
+interface TerminalManagerDeps {
+  pty?: PtyAdapter;
+}
+
+export function createTerminalManager(deps?: TerminalManagerDeps) {
+  const terminals = new Map<string, ManagedTerminal>();
+  const ptyAdapter = deps?.pty;
+
   function spawn(options: SpawnOptions): SpawnResult {
     // Validate cwd exists
     if (!isValidCwd(options.cwd)) {
@@ -25,13 +52,114 @@ export function createTerminalManager() {
       };
     }
 
+    // If we have a real PTY adapter, create a real process
+    if (ptyAdapter) {
+      const machine = createTerminalMachine();
+      machine.send('SPAWN');
+
+      try {
+        const shell = ptyAdapter.getDefaultShell();
+        const proc = ptyAdapter.spawn(shell, options.cwd, 80, 24);
+        const id = `term-${proc.pid}`;
+
+        machine.send('SPAWN_SUCCESS');
+
+        terminals.set(id, { id, process: proc, cwd: options.cwd, machine });
+
+        // Push terminal output to renderer
+        proc.onData((data) => {
+          const win = BrowserWindow.getAllWindows()[0];
+          if (win) {
+            win.webContents.send(IPC_CHANNELS.TERMINAL.OUTPUT, { id, data });
+          }
+        });
+
+        // Push terminal exit to renderer
+        proc.onExit((code) => {
+          machine.send('CLOSE');
+          machine.send('EXIT_NORMAL');
+
+          const win = BrowserWindow.getAllWindows()[0];
+          if (win) {
+            win.webContents.send(IPC_CHANNELS.TERMINAL.EXIT, { id, code });
+          }
+
+          terminals.delete(id);
+        });
+
+        return { success: true, state: machine.state, id, pid: proc.pid };
+      } catch {
+        machine.send('SPAWN_FAILURE');
+        return {
+          success: false,
+          state: 'Failed',
+          message: '终端启动失败：进程已断开 -- PTY 创建失败',
+        };
+      }
+    }
+
+    // No adapter — stub behavior for tests
     return {
       success: true,
       state: 'Running',
     };
   }
 
-  return { spawn };
+  function write(id: string, data: string): void {
+    const terminal = terminals.get(id);
+    if (terminal) {
+      terminal.process.write(data);
+    }
+  }
+
+  function resize(id: string, cols: number, rows: number): void {
+    const terminal = terminals.get(id);
+    if (terminal) {
+      terminal.process.resize(cols, rows);
+    }
+  }
+
+  function close(id: string, force?: boolean): { success: boolean } {
+    const terminal = terminals.get(id);
+    if (!terminal) {
+      return { success: false };
+    }
+
+    terminal.machine.send('CLOSE');
+    terminal.process.kill();
+    terminals.delete(id);
+    return { success: true };
+  }
+
+  function list(): TerminalInfo[] {
+    return Array.from(terminals.values()).map((t) => ({
+      id: t.id,
+      pid: t.process.pid,
+      cwd: t.cwd,
+      state: t.machine.state as TerminalState,
+    }));
+  }
+
+  function getState(id: string): { state: string } | null {
+    const terminal = terminals.get(id);
+    if (!terminal) return null;
+    return { state: terminal.machine.state };
+  }
+
+  function getForegroundProcess(id: string): ForegroundProcessInfo | null {
+    const terminal = terminals.get(id);
+    if (!terminal) return null;
+    return { name: 'shell', pid: terminal.process.pid };
+  }
+
+  function closeAll(): void {
+    for (const [id, terminal] of terminals) {
+      terminal.process.kill();
+      terminals.delete(id);
+    }
+  }
+
+  return { spawn, write, resize, close, list, getState, getForegroundProcess, closeAll };
 }
 
 function isValidCwd(cwd: string): boolean {
