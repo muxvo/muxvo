@@ -114,8 +114,8 @@
       "type": "boundary",
       "category": "focus-sidebar",
       "boundaries": [
-        { "terminalCount": 4, "focusedSidebarVisible": 3, "scrollable": false },
-        { "terminalCount": 6, "focusedSidebarVisible": 3, "scrollable": true }
+        { "terminalCount": 4, "focusedSidebarVisible": 3, "scrollable": false, "expected": { "maxVisible": 3, "scrollable": false } },
+        { "terminalCount": 6, "focusedSidebarVisible": 3, "scrollable": true, "expected": { "maxVisible": 3, "scrollable": true } }
       ],
       "priority": "P0"
     },
@@ -160,8 +160,8 @@
       "type": "boundary",
       "category": "data-retention",
       "boundaries": [
-        { "dataType": "events", "retentionDays": 90 },
-        { "dataType": "daily_summary", "retentionDays": 365 }
+        { "dataType": "events", "retentionDays": 90, "expected": 90 },
+        { "dataType": "daily_summary", "retentionDays": 365, "expected": 365 }
       ],
       "priority": "P2"
     },
