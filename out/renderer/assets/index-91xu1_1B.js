@@ -12442,15 +12442,16 @@ function MenuBar() {
     /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "menu-bar-title", children: "Muxvo" })
   ] });
 }
-function BottomBar({ terminalCount = 0, onAddTerminal }) {
+function BottomBar({ terminalCount = 0, onAddTerminal, maxReached }) {
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("footer", { className: "bottom-bar", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bottom-bar-info", children: terminalCount === 0 ? "No terminals" : `${terminalCount} terminal${terminalCount > 1 ? "s" : ""}` }),
     onAddTerminal && /* @__PURE__ */ jsxRuntimeExports.jsx(
       "button",
       {
-        className: "bottom-bar-add",
+        className: `bottom-bar-add${maxReached ? " bottom-bar-add--disabled" : ""}`,
         onClick: onAddTerminal,
-        title: "New terminal",
+        disabled: maxReached,
+        title: maxReached ? "Maximum 20 terminals reached" : "New terminal",
         children: "+"
       }
     )
@@ -21091,8 +21092,29 @@ function TerminalGrid({ terminals }) {
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: gridStyle, children: terminals.map((t) => /* @__PURE__ */ jsxRuntimeExports.jsx(TerminalTile, { id: t.id, state: t.state }, t.id)) });
 }
+function CloseConfirmDialog({ open, processName, onConfirm, onCancel }) {
+  if (!open) return null;
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "close-confirm-overlay", onClick: onCancel, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "close-confirm-dialog", onClick: (e) => e.stopPropagation(), children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "close-confirm-message", children: [
+      "当前终端有进程正在运行（",
+      processName,
+      "），确定关闭？"
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "close-confirm-actions", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "close-confirm-cancel", onClick: onCancel, children: "取消" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "close-confirm-ok", onClick: onConfirm, children: "确定关闭" })
+    ] })
+  ] }) });
+}
+var define_process_env_default = {};
+const MAX_TERMINALS = 20;
 function App() {
   const [terminals, setTerminals] = reactExports.useState([]);
+  const [closeConfirm, setCloseConfirm] = reactExports.useState({
+    open: false,
+    terminalId: "",
+    processName: ""
+  });
   reactExports.useEffect(() => {
     window.api.terminal.list().then((result) => {
       if (result?.success && result.data) {
@@ -21113,15 +21135,31 @@ function App() {
     };
   }, []);
   const addTerminal = reactExports.useCallback(async () => {
-    const result = await window.api.terminal.create(process.cwd?.() || "/");
+    const home = typeof process !== "undefined" && define_process_env_default?.HOME ? define_process_env_default.HOME : "/";
+    const result = await window.api.terminal.create(home);
     if (result?.success && result.data) {
       setTerminals((prev) => [...prev, { id: result.data.id, state: "Running" }]);
     }
   }, []);
   reactExports.useCallback(async (id) => {
+    const fgResult = await window.api.terminal.getForegroundProcess(id);
+    if (fgResult?.success && fgResult.data && fgResult.data.name !== "shell") {
+      setCloseConfirm({ open: true, terminalId: id, processName: fgResult.data.name });
+      return;
+    }
     await window.api.terminal.close(id);
     setTerminals((prev) => prev.filter((t) => t.id !== id));
   }, []);
+  const handleCloseConfirm = reactExports.useCallback(async () => {
+    const { terminalId } = closeConfirm;
+    setCloseConfirm({ open: false, terminalId: "", processName: "" });
+    await window.api.terminal.close(terminalId, true);
+    setTerminals((prev) => prev.filter((t) => t.id !== terminalId));
+  }, [closeConfirm]);
+  const handleCloseCancel = reactExports.useCallback(() => {
+    setCloseConfirm({ open: false, terminalId: "", processName: "" });
+  }, []);
+  const maxReached = terminals.length >= MAX_TERMINALS;
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "app", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(MenuBar, {}),
     /* @__PURE__ */ jsxRuntimeExports.jsx("main", { className: "app-content", children: /* @__PURE__ */ jsxRuntimeExports.jsx(TerminalGrid, { terminals }) }),
@@ -21129,7 +21167,18 @@ function App() {
       BottomBar,
       {
         terminalCount: terminals.length,
-        onAddTerminal: addTerminal
+        onAddTerminal: addTerminal,
+        maxReached
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      CloseConfirmDialog,
+      {
+        open: closeConfirm.open,
+        terminalId: closeConfirm.terminalId,
+        processName: closeConfirm.processName,
+        onConfirm: handleCloseConfirm,
+        onCancel: handleCloseCancel
       }
     )
   ] });

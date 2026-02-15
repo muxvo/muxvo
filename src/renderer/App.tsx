@@ -2,21 +2,36 @@
  * Muxvo — Root Application Component
  * DEV-PLAN A1: 主窗口布局（菜单栏 36px + 内容区 + 底部控制栏）
  * DEV-PLAN A4: Terminal grid integration
+ * DEV-PLAN A5: Terminal lifecycle (max 20, close confirm)
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { MenuBar } from './components/layout/MenuBar';
 import { BottomBar } from './components/layout/BottomBar';
 import { TerminalGrid } from './components/terminal/TerminalGrid';
+import { CloseConfirmDialog } from './components/terminal/CloseConfirmDialog';
 import './App.css';
+
+const MAX_TERMINALS = 20;
 
 interface TerminalEntry {
   id: string;
   state: string;
 }
 
+interface CloseConfirmState {
+  open: boolean;
+  terminalId: string;
+  processName: string;
+}
+
 export function App(): JSX.Element {
   const [terminals, setTerminals] = useState<TerminalEntry[]>([]);
+  const [closeConfirm, setCloseConfirm] = useState<CloseConfirmState>({
+    open: false,
+    terminalId: '',
+    processName: '',
+  });
 
   useEffect(() => {
     // Load existing terminals on mount
@@ -53,9 +68,30 @@ export function App(): JSX.Element {
   }, []);
 
   const removeTerminal = useCallback(async (id: string) => {
+    // Check if there's a foreground process running
+    const fgResult = await window.api.terminal.getForegroundProcess(id);
+    if (fgResult?.success && fgResult.data && fgResult.data.name !== 'shell') {
+      // Show confirmation dialog
+      setCloseConfirm({ open: true, terminalId: id, processName: fgResult.data.name });
+      return;
+    }
+    // No active process or just shell — close directly
     await window.api.terminal.close(id);
     setTerminals((prev) => prev.filter((t) => t.id !== id));
   }, []);
+
+  const handleCloseConfirm = useCallback(async () => {
+    const { terminalId } = closeConfirm;
+    setCloseConfirm({ open: false, terminalId: '', processName: '' });
+    await window.api.terminal.close(terminalId, true);
+    setTerminals((prev) => prev.filter((t) => t.id !== terminalId));
+  }, [closeConfirm]);
+
+  const handleCloseCancel = useCallback(() => {
+    setCloseConfirm({ open: false, terminalId: '', processName: '' });
+  }, []);
+
+  const maxReached = terminals.length >= MAX_TERMINALS;
 
   return (
     <div className="app">
@@ -66,6 +102,14 @@ export function App(): JSX.Element {
       <BottomBar
         terminalCount={terminals.length}
         onAddTerminal={addTerminal}
+        maxReached={maxReached}
+      />
+      <CloseConfirmDialog
+        open={closeConfirm.open}
+        terminalId={closeConfirm.terminalId}
+        processName={closeConfirm.processName}
+        onConfirm={handleCloseConfirm}
+        onCancel={handleCloseCancel}
       />
     </div>
   );

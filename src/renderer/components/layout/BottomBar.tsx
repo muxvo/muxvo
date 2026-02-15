@@ -9,9 +9,10 @@ import './BottomBar.css';
 interface Props {
   terminalCount?: number;
   onAddTerminal?: () => void;
+  maxReached?: boolean;
 }
 
-export function BottomBar({ terminalCount = 0, onAddTerminal }: Props): JSX.Element {
+export function BottomBar({ terminalCount = 0, onAddTerminal, maxReached }: Props): JSX.Element {
   return (
     <footer className="bottom-bar">
       <span className="bottom-bar-info">
@@ -19,9 +20,10 @@ export function BottomBar({ terminalCount = 0, onAddTerminal }: Props): JSX.Elem
       </span>
       {onAddTerminal && (
         <button
-          className="bottom-bar-add"
+          className={`bottom-bar-add${maxReached ? ' bottom-bar-add--disabled' : ''}`}
           onClick={onAddTerminal}
-          title="New terminal"
+          disabled={maxReached}
+          title={maxReached ? 'Maximum 20 terminals reached' : 'New terminal'}
         >
           +
         </button>

@@ -2,7 +2,9 @@
 const electron = require("electron");
 const path = require("path");
 const utils = require("@electron-toolkit/utils");
+const child_process = require("child_process");
 const pty = require("node-pty");
+const fs = require("fs");
 function _interopNamespaceDefault(e) {
   const n = Object.create(null, { [Symbol.toStringTag]: { value: "Module" } });
   if (e) {
@@ -19,7 +21,9 @@ function _interopNamespaceDefault(e) {
   n.default = e;
   return Object.freeze(n);
 }
+const path__namespace = /* @__PURE__ */ _interopNamespaceDefault(path);
 const pty__namespace = /* @__PURE__ */ _interopNamespaceDefault(pty);
+const fs__namespace = /* @__PURE__ */ _interopNamespaceDefault(fs);
 const IPC_CHANNELS = {
   TERMINAL: {
     CREATE: "terminal:create",
@@ -105,6 +109,46 @@ const IPC_CHANNELS = {
     CLEAR: "analytics:clear"
   }
 };
+function getForegroundProcessName(pid) {
+  try {
+    const name = child_process.execSync(`ps -p ${pid} -o comm=`, { encoding: "utf-8" }).trim();
+    return name || null;
+  } catch {
+    return null;
+  }
+}
+const PROMPT_PATTERNS = [
+  // inquirer/prompts style: "? Select an option:"
+  /^\s*\?\s+.+[:：]\s*$/m,
+  // yes/no confirmation: "(y/n)", "(Y/n)", "[y/N]"
+  /\([yYnN]\/[yYnN]\)/,
+  /\[[yYnN]\/[yYnN]\]/,
+  // Numbered option lists: "  1) option" or "  1. option"
+  /^\s*\d+[).]\s+\S/m,
+  // "Press any key", "Enter to continue"
+  /press\s+(any\s+)?key/i,
+  /enter\s+to\s+continue/i,
+  // Claude Code / AI CLI prompts
+  /Do you want to proceed/i,
+  /Would you like to/i
+];
+const EXCLUDE_PATTERNS = [
+  /^\s*\d+[%％]/,
+  // Progress bar: "50%"
+  /\[\d+\/\d+\]/,
+  // Progress: "[3/10]"
+  /^(INFO|WARN|ERROR|DEBUG)/i
+  // Log lines
+];
+function detectWaitingInput(output) {
+  for (const exclude of EXCLUDE_PATTERNS) {
+    if (exclude.test(output)) return false;
+  }
+  for (const pattern of PROMPT_PATTERNS) {
+    if (pattern.test(output)) return true;
+  }
+  return false;
+}
 const transitions = {
   Created: { SPAWN: "Starting" },
   Starting: { SPAWN_SUCCESS: "Running", SPAWN_FAILURE: "Failed" },
@@ -138,15 +182,30 @@ function createTerminalMachine() {
     send
   };
 }
+const MAX_TERMINALS = 20;
+const GRACEFUL_CLOSE_TIMEOUT = 5e3;
 function createTerminalManager(deps) {
   const terminals = /* @__PURE__ */ new Map();
   const ptyAdapter = deps?.pty;
+  function pushStateChange(id, state, processName) {
+    const win = electron.BrowserWindow.getAllWindows()[0];
+    if (win) {
+      win.webContents.send(IPC_CHANNELS.TERMINAL.STATE_CHANGE, { id, state, processName });
+    }
+  }
   function spawn(options) {
     if (!isValidCwd(options.cwd)) {
       return {
         success: false,
         state: "Failed",
         message: "终端启动失败：进程已断开 -- 无效的工作目录"
+      };
+    }
+    if (terminals.size >= MAX_TERMINALS) {
+      return {
+        success: false,
+        state: "Failed",
+        message: "最多支持 20 个终端"
       };
     }
     if (ptyAdapter) {
@@ -158,10 +217,15 @@ function createTerminalManager(deps) {
         const id = `term-${proc.pid}`;
         machine.send("SPAWN_SUCCESS");
         terminals.set(id, { id, process: proc, cwd: options.cwd, machine });
+        pushStateChange(id, machine.state);
         proc.onData((data) => {
           const win = electron.BrowserWindow.getAllWindows()[0];
           if (win) {
             win.webContents.send(IPC_CHANNELS.TERMINAL.OUTPUT, { id, data });
+          }
+          if (machine.state === "Running" && detectWaitingInput(data)) {
+            machine.send("WAIT_INPUT");
+            pushStateChange(id, machine.state);
           }
         });
         proc.onExit((code) => {
@@ -171,6 +235,7 @@ function createTerminalManager(deps) {
           if (win) {
             win.webContents.send(IPC_CHANNELS.TERMINAL.EXIT, { id, code });
           }
+          pushStateChange(id, machine.state);
           terminals.delete(id);
         });
         return { success: true, state: machine.state, id, pid: proc.pid };
@@ -191,6 +256,10 @@ function createTerminalManager(deps) {
   function write(id, data) {
     const terminal = terminals.get(id);
     if (terminal) {
+      if (terminal.machine.state === "WaitingInput") {
+        terminal.machine.send("USER_INPUT");
+        pushStateChange(id, terminal.machine.state);
+      }
       terminal.process.write(data);
     }
   }
@@ -200,15 +269,33 @@ function createTerminalManager(deps) {
       terminal.process.resize(cols, rows);
     }
   }
-  function close(id, force) {
+  async function close(id, force) {
     const terminal = terminals.get(id);
     if (!terminal) {
       return { success: false };
     }
+    if (force) {
+      terminal.machine.send("CLOSE");
+      pushStateChange(id, terminal.machine.state);
+      terminal.process.kill();
+      terminals.delete(id);
+      return { success: true };
+    }
     terminal.machine.send("CLOSE");
-    terminal.process.kill();
-    terminals.delete(id);
-    return { success: true };
+    pushStateChange(id, terminal.machine.state);
+    terminal.process.write("");
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        terminal.process.kill();
+        terminals.delete(id);
+        resolve({ success: true });
+      }, GRACEFUL_CLOSE_TIMEOUT);
+      terminal.process.onExit(() => {
+        clearTimeout(timeout);
+        terminals.delete(id);
+        resolve({ success: true });
+      });
+    });
   }
   function list() {
     return Array.from(terminals.values()).map((t) => ({
@@ -226,7 +313,8 @@ function createTerminalManager(deps) {
   function getForegroundProcess(id) {
     const terminal = terminals.get(id);
     if (!terminal) return null;
-    return { name: "shell", pid: terminal.process.pid };
+    const name = getForegroundProcessName(terminal.process.pid);
+    return { name: name ?? "shell", pid: terminal.process.pid };
   }
   function closeAll() {
     for (const [id, terminal] of terminals) {
@@ -269,12 +357,13 @@ function createRealPtyAdapter() {
     }
   };
 }
-function registerTerminalHandlers(manager) {
+function registerTerminalHandlers(manager, onTerminalChange) {
   electron.ipcMain.handle(IPC_CHANNELS.TERMINAL.CREATE, async (_event, req) => {
     const result = manager.spawn({ cwd: req.cwd });
     if (!result.success) {
       return { success: false, error: result.message };
     }
+    onTerminalChange?.();
     return { success: true, data: { id: result.id, pid: result.pid } };
   });
   electron.ipcMain.on(IPC_CHANNELS.TERMINAL.WRITE, (_event, req) => {
@@ -284,7 +373,9 @@ function registerTerminalHandlers(manager) {
     manager.resize(req.id, req.cols, req.rows);
   });
   electron.ipcMain.handle(IPC_CHANNELS.TERMINAL.CLOSE, async (_event, req) => {
-    return manager.close(req.id, req.force);
+    const result = manager.close(req.id, req.force);
+    onTerminalChange?.();
+    return result;
   });
   electron.ipcMain.handle(IPC_CHANNELS.TERMINAL.LIST, async () => {
     return { success: true, data: manager.list() };
@@ -304,11 +395,78 @@ function registerTerminalHandlers(manager) {
     return { success: true, data: info };
   });
 }
+const DEFAULT_CONFIG = {
+  window: { width: 1400, height: 900, x: 100, y: 100 },
+  openTerminals: [],
+  gridLayout: { columnRatios: [1, 1], rowRatios: [1, 1] },
+  theme: "dark",
+  fontSize: 14,
+  ftvLeftWidth: 250,
+  ftvRightWidth: 300
+};
+let _configDir = null;
+function initConfigDir(dir) {
+  _configDir = dir;
+}
+function getConfigPath(configDir) {
+  const dir = configDir ?? _configDir;
+  if (!dir) return null;
+  return path__namespace.join(dir, "config.json");
+}
+function getTmpPath(configDir) {
+  const dir = configDir ?? _configDir;
+  if (!dir) return null;
+  return path__namespace.join(dir, ".config.json.tmp");
+}
+function createConfigManager(deps) {
+  const fsAdapter = fs__namespace;
+  const configDir = _configDir;
+  function loadConfig() {
+    const configPath = getConfigPath(configDir);
+    if (!configPath) return { ...DEFAULT_CONFIG };
+    try {
+      if (!fsAdapter.existsSync(configPath)) {
+        return { ...DEFAULT_CONFIG };
+      }
+      const raw = fsAdapter.readFileSync(configPath, "utf-8");
+      const parsed = JSON.parse(raw);
+      return { ...DEFAULT_CONFIG, ...parsed };
+    } catch {
+      return { ...DEFAULT_CONFIG };
+    }
+  }
+  function saveConfig(config) {
+    const configPath = getConfigPath(configDir);
+    const tmpPath = getTmpPath(configDir);
+    if (!configPath || !tmpPath || !configDir) {
+      return { success: true };
+    }
+    try {
+      if (!fsAdapter.existsSync(configDir)) {
+        fsAdapter.mkdirSync(configDir, { recursive: true });
+      }
+      const fullConfig = { ...DEFAULT_CONFIG, ...config };
+      const data = JSON.stringify(fullConfig, null, 2);
+      fsAdapter.writeFileSync(tmpPath, data, "utf-8");
+      fsAdapter.renameSync(tmpPath, configPath);
+      return { success: true };
+    } catch {
+      try {
+        if (fsAdapter.existsSync(tmpPath)) {
+          fsAdapter.unlinkSync(tmpPath);
+        }
+      } catch {
+      }
+      return { success: true };
+    }
+  }
+  return { loadConfig, saveConfig };
+}
 let mainWindow = null;
-function createWindow() {
-  mainWindow = new electron.BrowserWindow({
-    width: 1280,
-    height: 800,
+function createWindow(windowConfig) {
+  const opts = {
+    width: windowConfig?.width ?? 1280,
+    height: windowConfig?.height ?? 800,
     minWidth: 800,
     minHeight: 600,
     show: false,
@@ -319,7 +477,12 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: false
     }
-  });
+  };
+  if (windowConfig?.x !== void 0 && windowConfig?.y !== void 0) {
+    opts.x = windowConfig.x;
+    opts.y = windowConfig.y;
+  }
+  mainWindow = new electron.BrowserWindow(opts);
   mainWindow.on("ready-to-show", () => {
     mainWindow?.show();
   });
@@ -335,17 +498,62 @@ function createWindow() {
 }
 let terminalManager = null;
 electron.app.whenReady().then(() => {
+  initConfigDir(electron.app.getPath("userData"));
+  const configManager = createConfigManager();
+  const savedConfig = configManager.loadConfig();
   const ptyAdapter = createRealPtyAdapter();
   terminalManager = createTerminalManager({ pty: ptyAdapter });
-  registerTerminalHandlers(terminalManager);
-  createWindow();
+  registerTerminalHandlers(terminalManager, () => {
+    saveTerminalConfig(configManager);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.APP.GET_CONFIG, async () => {
+    return { success: true, data: configManager.loadConfig() };
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.APP.SAVE_CONFIG, async (_event, config) => {
+    const result = configManager.saveConfig(config);
+    return { success: true, data: result };
+  });
+  createWindow(savedConfig.window);
+  if (savedConfig.openTerminals && savedConfig.openTerminals.length > 0) {
+    for (const terminal of savedConfig.openTerminals) {
+      terminalManager.spawn({ cwd: terminal.cwd });
+    }
+    if (mainWindow) {
+      mainWindow.webContents.once("did-finish-load", () => {
+        mainWindow?.webContents.send(IPC_CHANNELS.TERMINAL.LIST);
+      });
+    }
+  }
   electron.app.on("activate", () => {
     if (electron.BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     }
   });
 });
+function saveTerminalConfig(configManager) {
+  if (!terminalManager) return;
+  const terminals = terminalManager.list();
+  configManager.saveConfig({
+    openTerminals: terminals.map((t) => ({ cwd: t.cwd }))
+  });
+}
+function saveCurrentConfig() {
+  if (!mainWindow || !terminalManager) return;
+  const configManager = createConfigManager();
+  const bounds = mainWindow.getBounds();
+  const terminals = terminalManager.list();
+  configManager.saveConfig({
+    window: {
+      width: bounds.width,
+      height: bounds.height,
+      x: bounds.x,
+      y: bounds.y
+    },
+    openTerminals: terminals.map((t) => ({ cwd: t.cwd }))
+  });
+}
 electron.app.on("window-all-closed", () => {
+  saveCurrentConfig();
   if (terminalManager) {
     terminalManager.closeAll();
   }

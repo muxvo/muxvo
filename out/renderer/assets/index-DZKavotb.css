@@ -53,9 +53,14 @@
   justify-content: center;
 }
 
-.bottom-bar-add:hover {
+.bottom-bar-add:hover:not(:disabled) {
   background: var(--bg-tertiary);
   color: var(--text-primary);
+}
+
+.bottom-bar-add--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 /**
  * Copyright (c) 2014 The xterm.js authors. All rights reserved.
@@ -341,6 +346,68 @@
 }
 .xterm .xterm-scrollable-element > .shadow.top.left {
 	box-shadow: var(--vscode-scrollbar-shadow, #000) 6px 0 6px -6px inset;
+}
+.close-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.close-confirm-dialog {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px 24px;
+  min-width: 320px;
+  max-width: 420px;
+}
+
+.close-confirm-message {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.close-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.close-confirm-cancel,
+.close-confirm-ok {
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+}
+
+.close-confirm-cancel {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.close-confirm-cancel:hover {
+  background: var(--bg-tertiary);
+}
+
+.close-confirm-ok {
+  background: var(--accent-color, #e74c3c);
+  color: #fff;
+  border-color: transparent;
+}
+
+.close-confirm-ok:hover {
+  opacity: 0.9;
 }
 /* Muxvo global styles — dark theme terminal workbench */
 
