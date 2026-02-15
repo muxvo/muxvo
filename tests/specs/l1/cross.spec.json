@@ -1,0 +1,183 @@
+{
+  "module": "CROSS",
+  "layer": "L1",
+  "source": "tests/l1/cross.test.ts",
+  "docSource": "docs/Muxvo_测试_v2/02_modules/test_CROSS.md",
+  "totalCases": 12,
+  "cases": [
+    {
+      "id": "APP_L1_01",
+      "description": "app:get-config IPC 格式 -- 返回完整 config 结构",
+      "type": "ipc",
+      "channel": "app:get-config",
+      "direction": "invoke",
+      "input": null,
+      "expectedResponse": {
+        "window": "{ width: number, height: number, x: number, y: number }",
+        "openTerminals": "[]",
+        "gridLayout": "{ columnRatios: number[], rowRatios: number[] }",
+        "ftvLeftWidth": "number",
+        "ftvRightWidth": "number",
+        "theme": "string",
+        "fontSize": "number"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "APP_L1_02",
+      "description": "app:save-config IPC 格式 -- 传入配置对象返回 { success }",
+      "type": "ipc",
+      "channel": "app:save-config",
+      "direction": "invoke",
+      "input": {
+        "config": "object"
+      },
+      "expectedResponse": {
+        "success": "boolean"
+      },
+      "sideEffect": "config.json file updated",
+      "priority": "P0"
+    },
+    {
+      "id": "APP_L1_03",
+      "description": "app:get-preferences IPC 格式 -- 返回用户偏好设置",
+      "type": "ipc",
+      "channel": "app:get-preferences",
+      "direction": "invoke",
+      "input": null,
+      "expectedResponse": {
+        "preferences": "object"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "APP_L1_04",
+      "description": "app:save-preferences IPC 格式 -- 传入偏好对象返回 { success }",
+      "type": "ipc",
+      "channel": "app:save-preferences",
+      "direction": "invoke",
+      "input": {
+        "preferences": "object"
+      },
+      "expectedResponse": {
+        "success": "boolean"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "APP_L1_05",
+      "description": "app:memory-warning push 事件格式 -- 内存超阈值推送警告",
+      "type": "ipc-push",
+      "channel": "app:memory-warning",
+      "expectedPayload": {
+        "currentMemoryMB": "number",
+        "threshold": "number",
+        "message": "string"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "ONBOARD_L1_01",
+      "description": "引导步骤数据格式 -- 返回 steps 数组及当前步骤",
+      "type": "default-value",
+      "target": "onboard.stepsFormat",
+      "expectedValue": {
+        "steps": "Array<{ id: number, title: string, content: string, action: string }>",
+        "currentStep": "number",
+        "completed": "boolean"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "ONBOARD_L1_02",
+      "description": "CLI 工具检测格式 -- 步骤 2 自动检测 PATH 中的 AI CLI 工具",
+      "type": "default-value",
+      "target": "onboard.cliDetection",
+      "expectedValue": {
+        "detectedTools": "Array<{ name: string, path: string, version?: string }>",
+        "scannedTools": ["claude", "codex", "gemini"]
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "PERF_L1_01",
+      "description": "性能指标数据格式 -- 返回内存/终端数/缓冲区行数",
+      "type": "default-value",
+      "target": "perf.metricsFormat",
+      "expectedValue": {
+        "memoryUsageMB": "number",
+        "terminalCount": "number",
+        "bufferLines": "{ focused: number, background: number[] }"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "PERF_L1_02",
+      "description": "内存警告 push 事件格式 -- 超 2GB 阈值推送",
+      "type": "ipc-push",
+      "channel": "app:memory-warning",
+      "expectedPayload": {
+        "currentMemoryMB": "number",
+        "threshold": 2048,
+        "message": "内存占用较高，建议关闭部分终端"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "ERROR_L1_01",
+      "description": "统一错误响应格式 -- 返回 { code, message, details? }",
+      "type": "default-value",
+      "target": "error.responseFormat",
+      "expectedValue": {
+        "code": "string (machine-readable identifier)",
+        "message": "string (human-readable description)",
+        "details": "any (optional)"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "ERROR_L1_02",
+      "description": "错误码枚举验证 -- 包含所有预定义错误码",
+      "type": "default-value",
+      "target": "error.codes",
+      "expectedValue": {
+        "codes": [
+          "SPAWN_FAILED",
+          "FILE_READ_ERROR",
+          "NETWORK_ERROR",
+          "INSTALL_FAILED",
+          "SCORE_FAILED",
+          "AUTH_FAILED",
+          "PUBLISH_BLOCKED"
+        ]
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "ERROR_L1_03",
+      "description": "错误分类验证 -- 可恢复/需用户操作/阻止操作三级分类",
+      "type": "default-value",
+      "target": "error.categories",
+      "expectedValue": {
+        "autoRecoverable": [
+          "download retry",
+          "JSONL skip",
+          "file locked skip",
+          "partial source fallback"
+        ],
+        "userActionRequired": [
+          "process crash",
+          "file read fail",
+          "network offline",
+          "permission error"
+        ],
+        "blocking": [
+          "API key detected",
+          "sensitive file detected",
+          "integrity check failed"
+        ]
+      },
+      "priority": "P0"
+    }
+  ]
+}

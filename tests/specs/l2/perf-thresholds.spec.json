@@ -1,0 +1,122 @@
+{
+  "module": "PERF",
+  "layer": "L2",
+  "category": "performance-thresholds",
+  "source": "tests/l2/cross.test.ts",
+  "docSource": "docs/Muxvo_测试_v2/02_modules/test_CROSS.md",
+  "fixtureSource": "tests/helpers/test-fixtures.ts (timeConstants, searchFixtures)",
+  "totalCases": 10,
+  "cases": [
+    {
+      "id": "PERF_L2_01",
+      "description": "内存检查间隔 60 秒",
+      "type": "threshold",
+      "parameter": "memoryCheckInterval",
+      "expectedValue": 60000,
+      "unit": "ms",
+      "formula": "60 * 1000 = 60000ms",
+      "prdRef": "PRD 11.2 / L2693",
+      "priority": "P1"
+    },
+    {
+      "id": "PERF_L2_02",
+      "description": "内存超 2GB 警告",
+      "type": "threshold",
+      "parameter": "memoryWarningThreshold",
+      "expectedValue": 2147483648,
+      "unit": "bytes",
+      "formula": "2 * 1024 * 1024 * 1024 = 2147483648 bytes (2GB)",
+      "rule": "currentMemory > threshold -> 显示黄色警告图标",
+      "prdRef": "PRD 11.2 / L2693",
+      "priority": "P1"
+    },
+    {
+      "id": "PERF_L2_03_FOCUSED",
+      "description": "聚焦终端缓冲区限制 10000 行",
+      "type": "threshold",
+      "parameter": "focusedTerminalBufferLines",
+      "expectedValue": 10000,
+      "unit": "行",
+      "rule": "聚焦/可见终端 maxLines = 10000",
+      "prdRef": "PRD 11.2 / L2691",
+      "priority": "P1"
+    },
+    {
+      "id": "PERF_L2_03_HIDDEN",
+      "description": "非可见终端缓冲区缩减至 1000 行",
+      "type": "threshold",
+      "parameter": "hiddenTerminalBufferLines",
+      "expectedValue": 1000,
+      "unit": "行",
+      "rule": "非可见终端 maxLines = 1000; 缩减不可逆",
+      "prdRef": "PRD 11.2 / L2691",
+      "priority": "P1"
+    },
+    {
+      "id": "PERF_L2_05",
+      "description": "搜索去抖 300ms",
+      "type": "threshold",
+      "parameter": "searchDebounceTime",
+      "expectedValue": 300,
+      "unit": "ms",
+      "rule": "仅在最后一次输入后 300ms 发起搜索请求",
+      "prdRef": "PRD 11.2 / L2694",
+      "priority": "P1"
+    },
+    {
+      "id": "PERF_L2_06",
+      "description": "市场列表每页 20 条",
+      "type": "threshold",
+      "parameter": "marketplacePageSize",
+      "expectedValue": 20,
+      "unit": "条",
+      "rule": "初始 20 条，滚动底部加载下一页 20 条（无限滚动）",
+      "prdRef": "PRD 11.2 / L2695",
+      "priority": "P2"
+    },
+    {
+      "id": "PERF_L2_07",
+      "description": "最大终端数 20 限制",
+      "type": "threshold",
+      "parameter": "maxTerminalCount",
+      "expectedValue": 20,
+      "unit": "个",
+      "rule": "count(terminals) >= 20 -> 禁用新建按钮",
+      "prdRef": "PRD 11.2 / L2692",
+      "priority": "P1"
+    },
+    {
+      "id": "PERF_L2_08",
+      "description": "热门列表缓存 1 小时",
+      "type": "threshold",
+      "parameter": "hotListCacheExpiry",
+      "expectedValue": 3600000,
+      "unit": "ms",
+      "formula": "3600 * 1000 = 3600000ms (1h)",
+      "prdRef": "PRD 11.2 / L2696",
+      "priority": "P2"
+    },
+    {
+      "id": "PERF_L2_10",
+      "description": "缓冲区丢弃行不恢复",
+      "type": "threshold",
+      "parameter": "bufferDiscardReversible",
+      "expectedValue": false,
+      "unit": "boolean",
+      "rule": "设计原则 — 丢弃不可逆，重新聚焦时不恢复已丢弃的行",
+      "prdRef": "PRD 11.2 / L2691",
+      "priority": "P1"
+    },
+    {
+      "id": "INSTALL_L2_01",
+      "description": "更新检测 6h 轮询间隔",
+      "type": "threshold",
+      "parameter": "updateCheckInterval",
+      "expectedValue": 21600000,
+      "unit": "ms",
+      "formula": "6 * 3600 * 1000 = 21600000ms (6h)",
+      "rule": "启动时检测一次 + 每 6 小时自动检测",
+      "priority": "P1"
+    }
+  ]
+}

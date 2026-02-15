@@ -1,0 +1,290 @@
+{
+  "module": "CONFIG",
+  "layer": "L1",
+  "source": "tests/l1/config.test.ts",
+  "docSource": "docs/Muxvo_测试_v2/02_modules/test_FILE_CONFIG.md",
+  "totalCases": 27,
+  "cases": [
+    {
+      "id": "CONFIG_L1_01",
+      "description": "config:get-resources IPC 格式 -- 按类型获取资源列表",
+      "type": "ipc",
+      "channel": "config:get-resources",
+      "direction": "invoke",
+      "input": {
+        "type": "skills"
+      },
+      "expectedResponse": {
+        "resources": "Array<{name: string, path: string, type: string}>"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "CONFIG_L1_02",
+      "description": "config:get-resource-content IPC 格式 -- 获取单个资源内容",
+      "type": "ipc",
+      "channel": "config:get-resource-content",
+      "direction": "invoke",
+      "input": {
+        "path": "string"
+      },
+      "expectedResponse": {
+        "content": "string",
+        "format": "\"md\"|\"json\"|\"sh\""
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "CONFIG_L1_03",
+      "description": "config:get-settings IPC 格式 -- 获取 settings.json 完整内容",
+      "type": "ipc",
+      "channel": "config:get-settings",
+      "direction": "invoke",
+      "input": null,
+      "expectedResponse": {
+        "settings": "object"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "CONFIG_L1_04",
+      "description": "config:save-settings IPC 格式 -- 写入 settings.json",
+      "type": "ipc",
+      "channel": "config:save-settings",
+      "direction": "invoke",
+      "input": {
+        "settings": "object"
+      },
+      "expectedResponse": {
+        "success": true
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "CONFIG_L1_05",
+      "description": "config:get-claude-md IPC 格式 -- 获取 CLAUDE.md 内容",
+      "type": "ipc",
+      "channel": "config:get-claude-md",
+      "direction": "invoke",
+      "input": null,
+      "expectedResponse": {
+        "content": "string"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "CONFIG_L1_06",
+      "description": "config:save-claude-md IPC 格式 -- 写入 CLAUDE.md",
+      "type": "ipc",
+      "channel": "config:save-claude-md",
+      "direction": "invoke",
+      "input": {
+        "content": "string"
+      },
+      "expectedResponse": {
+        "success": true
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "CONFIG_L1_07",
+      "description": "config:get-memory IPC 格式 -- 获取项目记忆内容",
+      "type": "ipc",
+      "channel": "config:get-memory",
+      "direction": "invoke",
+      "input": {
+        "projectId": "string"
+      },
+      "expectedResponse": {
+        "content": "string"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "CONFIG_L1_08",
+      "description": "config:resource-change 推送格式 -- ~/.claude/ 文件变化通知",
+      "type": "ipc-push",
+      "channel": "config:resource-change",
+      "expectedPayload": {
+        "type": "\"skills\"|\"hooks\"|\"plans\"|\"tasks\"|\"settings\"|\"claudemd\"|\"memory\"|\"mcp\"",
+        "action": "\"add\"|\"change\"|\"unlink\"",
+        "path": "string"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "CONFIG_L1_09",
+      "description": "分类卡片显示 -- 8 种资源类型卡片及数量",
+      "type": "ui-state",
+      "state": "overview",
+      "expectedUI": {
+        "cards": ["Skills", "Hooks", "Plans", "Tasks", "Settings", "CLAUDE.md", "Memory", "MCP"],
+        "cardCount": 8,
+        "eachCardShows": "resource count"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "CONFIG_L1_10",
+      "description": "资源操作权限 -- Skills/Hooks/Plans/Tasks/Memory/MCP 只读, Settings/CLAUDE.md 可编辑",
+      "type": "default-value",
+      "target": "config.resourcePermissions",
+      "expectedValue": {
+        "readOnly": ["Skills", "Hooks", "Plans", "Tasks", "Memory", "MCP"],
+        "editable": ["Settings", "CLAUDE.md"]
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "CONFIG_L1_11",
+      "description": "浏览 Skills 列表 -- 点击 Skills 卡片展开列表, 支持搜索",
+      "type": "ui-state",
+      "state": "Overview -> SkillsList",
+      "action": "click Skills card",
+      "expectedBehavior": "expand Skills list with search support",
+      "priority": "P1"
+    },
+    {
+      "id": "CONFIG_L1_12",
+      "description": "预览 Skill 内容 -- 点击 Skill 显示 SKILL.md 渲染内容",
+      "type": "ui-state",
+      "state": "SkillsList -> ResourcePreview",
+      "action": "click a Skill in list",
+      "expectedBehavior": "show SKILL.md rendered markdown",
+      "priority": "P1"
+    },
+    {
+      "id": "CONFIG_L1_13",
+      "description": "编辑 Settings -- 修改 JSON 值, 保存后写入 settings.json",
+      "type": "ui-state",
+      "state": "SettingsView -> SettingsEditing -> SettingsView",
+      "action": "modify settings value and save",
+      "expectedBehavior": "writes to settings.json",
+      "priority": "P0"
+    },
+    {
+      "id": "CONFIG_L1_14",
+      "description": "编辑 CLAUDE.md -- 修改 Markdown, 保存后写入 CLAUDE.md",
+      "type": "ui-state",
+      "state": "ClaudeMdView -> ClaudeMdEditing -> ClaudeMdView",
+      "action": "modify CLAUDE.md content and save",
+      "expectedBehavior": "writes to CLAUDE.md",
+      "priority": "P0"
+    },
+    {
+      "id": "CONFIG_L1_15",
+      "description": "关闭配置管理器 -- Esc/关闭按钮返回 Closed",
+      "type": "ui-state",
+      "state": "CategoryList -> Closed",
+      "action": "Esc or click close",
+      "priority": "P0"
+    },
+    {
+      "id": "CONFIG_L1_16",
+      "description": "无 Skills 缺省态 -- 显示\"还没有 Skills...\"",
+      "type": "ui-state",
+      "state": "emptyState_skills",
+      "condition": "~/.claude/skills/ is empty",
+      "expectedUI": {
+        "message": "还没有 Skills，可以在终端中使用 claude code 自动创建"
+      },
+      "priority": "P2"
+    },
+    {
+      "id": "CONFIG_L1_17",
+      "description": "无 Hooks 缺省态 -- 显示\"还没有配置 Hooks\"",
+      "type": "ui-state",
+      "state": "emptyState_hooks",
+      "condition": "no hook configuration",
+      "expectedUI": {
+        "message": "还没有配置 Hooks"
+      },
+      "priority": "P2"
+    },
+    {
+      "id": "CONFIG_L1_18",
+      "description": "Settings 读取失败 -- 显示\"无法读取 settings.json\" + 警告图标 + 重试",
+      "type": "ui-state",
+      "state": "settingsReadError",
+      "condition": "settings.json is corrupted",
+      "expectedUI": {
+        "message": "无法读取 settings.json",
+        "icon": "warning",
+        "button": "[重试]"
+      },
+      "priority": "P2"
+    },
+    {
+      "id": "CONFIG_L1_19",
+      "description": "打开配置管理器 -- Closed -> CategoryList(Overview)",
+      "type": "ui-state",
+      "state": "Closed -> CategoryList(Overview)",
+      "action": "click config button",
+      "priority": "P0"
+    },
+    {
+      "id": "CONFIG_L1_20",
+      "description": "点击 Skills 卡片 -- Overview -> SkillsList",
+      "type": "ui-state",
+      "state": "Overview -> SkillsList",
+      "action": "click Skills card",
+      "priority": "P1"
+    },
+    {
+      "id": "CONFIG_L1_21",
+      "description": "点击 Hooks 卡片 -- Overview -> HooksList",
+      "type": "ui-state",
+      "state": "Overview -> HooksList",
+      "action": "click Hooks card",
+      "priority": "P1"
+    },
+    {
+      "id": "CONFIG_L1_22",
+      "description": "点击 Plans 卡片 -- Overview -> PlansList",
+      "type": "ui-state",
+      "state": "Overview -> PlansList",
+      "action": "click Plans card",
+      "priority": "P1"
+    },
+    {
+      "id": "CONFIG_L1_23",
+      "description": "点击 Tasks 卡片 -- Overview -> TasksList",
+      "type": "ui-state",
+      "state": "Overview -> TasksList",
+      "action": "click Tasks card",
+      "priority": "P1"
+    },
+    {
+      "id": "CONFIG_L1_24",
+      "description": "点击 Memory 卡片 -- Overview -> MemoryView",
+      "type": "ui-state",
+      "state": "Overview -> MemoryView",
+      "action": "click Memory card",
+      "priority": "P1"
+    },
+    {
+      "id": "CONFIG_L1_25",
+      "description": "点击 MCP 卡片 -- Overview -> McpView",
+      "type": "ui-state",
+      "state": "Overview -> McpView",
+      "action": "click MCP card",
+      "priority": "P1"
+    },
+    {
+      "id": "CONFIG_L1_26",
+      "description": "资源列表点击预览 -- SkillsList -> ResourcePreview -> SkillsList",
+      "type": "ui-state",
+      "state": "SkillsList -> ResourcePreview -> SkillsList",
+      "action": "click skill -> preview -> back to list",
+      "priority": "P1"
+    },
+    {
+      "id": "CONFIG_L1_27",
+      "description": "Settings/CLAUDE.md 编辑保存周期 -- View -> Editing -> View",
+      "type": "ui-state",
+      "state": "View -> Editing -> View",
+      "action": "edit -> save cycle for Settings and CLAUDE.md",
+      "priority": "P0"
+    }
+  ]
+}

@@ -1,0 +1,314 @@
+{
+  "module": "CHAT",
+  "layer": "L1",
+  "source": "tests/l1/chat.test.ts",
+  "docSource": "docs/Muxvo_测试_v2/02_modules/test_CHAT.md",
+  "totalCases": 27,
+  "cases": [
+    {
+      "id": "CHAT_L1_01",
+      "description": "chat:get-history IPC 格式 -- 返回 { sessions: Array<{display, timestamp, project, sessionId}> }",
+      "type": "ipc",
+      "channel": "chat:get-history",
+      "direction": "invoke",
+      "input": null,
+      "expectedResponse": {
+        "sessions": "Array<{display: string, timestamp: string, project: string, sessionId: string}>"
+      },
+      "statePath": "Closed -> Loading -> Ready",
+      "priority": "P0"
+    },
+    {
+      "id": "CHAT_L1_02",
+      "description": "chat:get-session IPC 格式 -- 传入 sessionId 返回 messages 数组",
+      "type": "ipc",
+      "channel": "chat:get-session",
+      "direction": "invoke",
+      "input": {
+        "sessionId": "string"
+      },
+      "expectedResponse": {
+        "messages": "Array<{type: string, message: string, timestamp: string, cwd: string}>"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "CHAT_L1_03",
+      "description": "chat:search IPC 格式 -- 传入 query 返回匹配 sessions",
+      "type": "ipc",
+      "channel": "chat:search",
+      "direction": "invoke",
+      "input": {
+        "query": "test"
+      },
+      "expectedResponse": {
+        "results": "Array<{sessionId: string, matches: number, context: string}>"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "CHAT_L1_04",
+      "description": "chat:get-history 错误响应 -- CC 文件不可用时返回统一错误格式",
+      "type": "ipc",
+      "channel": "chat:get-history",
+      "direction": "invoke",
+      "condition": "CC files and mirror both unavailable",
+      "expectedResponse": {
+        "code": "FILE_NOT_FOUND",
+        "message": "string"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "CHAT_L1_05",
+      "description": "chat:export IPC 格式 -- 导出为 Markdown 格式",
+      "type": "ipc",
+      "channel": "chat:export",
+      "direction": "invoke",
+      "input": {
+        "sessionId": "string",
+        "format": "md"
+      },
+      "expectedResponse": {
+        "filePath": "string"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "CHAT_L1_06",
+      "description": "chat:session-update 推送格式 -- 后台同步推送新/更新 session",
+      "type": "ipc-push",
+      "channel": "chat:session-update",
+      "expectedPayload": {
+        "sessionId": "string",
+        "action": "\"added\"|\"updated\"",
+        "data": "object"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "CHAT_L1_07",
+      "description": "chat:sync-status 推送格式 -- 同步状态变化通知",
+      "type": "ipc-push",
+      "channel": "chat:sync-status",
+      "expectedPayload": {
+        "status": "\"syncing\"|\"done\"|\"error\"",
+        "lastSync": "string",
+        "progress": "number (optional)"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "CHAT_L1_08",
+      "description": "默认选中全部项目 -- 左栏\"全部项目\"默认高亮",
+      "type": "default-value",
+      "target": "chatHistory.selectedProject",
+      "expectedValue": "全部项目",
+      "expectedUI": {
+        "leftPanel": "\"全部项目\" highlighted",
+        "middlePanel": "shows all sessions"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "CHAT_L1_09",
+      "description": "三栏默认布局 -- 左栏 220px, 中栏 340px, 右栏 flex",
+      "type": "default-value",
+      "target": "chatHistory.layout",
+      "expectedValue": {
+        "left": "220px",
+        "middle": "340px",
+        "right": "flex"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "CHAT_L1_10",
+      "description": "会话卡片默认字段 -- 标题/时间/预览/标签/tool calls 数",
+      "type": "default-value",
+      "target": "chatHistory.sessionCardFields",
+      "expectedValue": {
+        "fields": ["title", "time", "preview", "tags", "toolCallCount"],
+        "timeFormat": "today:HH:MM / yesterday / MM-DD",
+        "previewTruncate": "2 lines"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "CHAT_L1_11",
+      "description": "会话详情消息渲染 -- user 右侧气泡, assistant 左侧气泡, 代码块高亮",
+      "type": "ui-state",
+      "state": "sessionDetail",
+      "expectedUI": {
+        "userMessage": "right bubble, accent background",
+        "assistantMessage": "left bubble, elevated background",
+        "codeBlock": "syntax highlight + copy button"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "CHAT_L1_12",
+      "description": "工具调用默认折叠 -- 蓝色左边框, 默认折叠, 点击展开",
+      "type": "ui-state",
+      "state": "toolCallDisplay",
+      "expectedUI": {
+        "toolCall": {
+          "borderLeft": "blue",
+          "defaultState": "collapsed",
+          "action": "click to expand"
+        },
+        "toolResult": {
+          "borderLeft": "green",
+          "defaultState": "collapsed"
+        }
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "CHAT_L1_13",
+      "description": "同步状态 UI -- 面板底部显示\"Muxvo 镜像 -- 最后同步 HH:MM\"",
+      "type": "ui-state",
+      "state": "syncStatus",
+      "expectedUI": {
+        "text": "Muxvo 镜像 · 最后同步 HH:MM",
+        "syncingIcon": "spinning"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "CHAT_L1_14",
+      "description": "空状态(未检测到CC) -- 显示\"未检测到 Claude Code 聊天记录...\"",
+      "type": "ui-state",
+      "state": "emptyState_noCC",
+      "condition": "~/.claude/ directory does not exist",
+      "expectedUI": {
+        "message": "未检测到 Claude Code 聊天记录...",
+        "icon": "dialog bubble",
+        "button": "[了解 Claude Code]"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "CHAT_L1_15",
+      "description": "空状态(CC已装但无记录) -- 显示\"还没有聊天记录...\"",
+      "type": "ui-state",
+      "state": "emptyState_noHistory",
+      "condition": "~/.claude/ exists but history.jsonl is empty",
+      "expectedUI": {
+        "message": "还没有聊天记录..."
+      },
+      "priority": "P2"
+    },
+    {
+      "id": "CHAT_L1_16",
+      "description": "选择项目过滤会话 -- 左栏点击项目, 中栏仅显示该项目会话",
+      "type": "ui-state",
+      "state": "projectFilter",
+      "action": "click project in left panel",
+      "expectedBehavior": {
+        "middlePanel": "filters to that project's sessions",
+        "rightPanel": "clears"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "CHAT_L1_17",
+      "description": "点击会话加载详情 -- 中栏点击卡片, 右栏显示完整对话",
+      "type": "ui-state",
+      "state": "sessionDetail",
+      "action": "click session card in middle panel",
+      "expectedBehavior": {
+        "rightPanel": "loads and displays full conversation (bubble style)"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "CHAT_L1_18",
+      "description": "双击会话跳转终端 -- 关闭面板并跳转到对应终端",
+      "type": "ui-state",
+      "state": "sessionJump",
+      "action": "double-click session card",
+      "expectedBehavior": {
+        "panel": "closes",
+        "terminal": "jumps to corresponding terminal"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "CHAT_L1_19",
+      "description": "从详情返回列表 -- 点击返回保持项目筛选",
+      "type": "ui-state",
+      "state": "backToList",
+      "action": "click back from SessionDetail",
+      "expectedBehavior": {
+        "state": "Ready",
+        "filter": "maintain previous project filter"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "CHAT_L1_10_search",
+      "description": "搜索有结果 -- Searching 状态找到匹配会话进入 HasResults",
+      "type": "ui-state",
+      "state": "Searching -> HasResults",
+      "expectedBehavior": "search results displayed",
+      "priority": "P0"
+    },
+    {
+      "id": "CHAT_L1_11_search",
+      "description": "搜索无结果 -- Searching 状态无匹配进入 NoResults",
+      "type": "ui-state",
+      "state": "Searching -> NoResults",
+      "expectedBehavior": "no results UI displayed",
+      "priority": "P1"
+    },
+    {
+      "id": "CHAT_L1_12_search",
+      "description": "修改搜索词 -- HasResults/NoResults 重新进入 Searching",
+      "type": "ui-state",
+      "state": "HasResults/NoResults -> Searching",
+      "expectedBehavior": "re-trigger search with new query",
+      "priority": "P1"
+    },
+    {
+      "id": "CHAT_L1_13_search",
+      "description": "清空搜索框 -- HasResults/NoResults 回到 EmptySearch",
+      "type": "ui-state",
+      "state": "HasResults/NoResults -> EmptySearch",
+      "expectedBehavior": "clear search, show all sessions",
+      "priority": "P1"
+    },
+    {
+      "id": "CHAT_L1_14_close",
+      "description": "关闭面板 -- Ready 状态 Esc/关闭按钮回到 Closed",
+      "type": "ui-state",
+      "state": "Ready -> Closed",
+      "action": "Esc or click close",
+      "priority": "P0"
+    },
+    {
+      "id": "CHAT_L1_T07",
+      "description": "点击会话进入详情 -- Ready -> SessionDetail",
+      "type": "ui-state",
+      "state": "Ready -> SessionDetail",
+      "action": "click session",
+      "priority": "P0"
+    },
+    {
+      "id": "CHAT_L1_T08",
+      "description": "详情返回列表 -- SessionDetail -> Ready",
+      "type": "ui-state",
+      "state": "SessionDetail -> Ready",
+      "action": "click back",
+      "priority": "P1"
+    },
+    {
+      "id": "CHAT_L1_T09",
+      "description": "双击会话跳转终端关闭面板 -- SessionDetail -> Closed",
+      "type": "ui-state",
+      "state": "SessionDetail -> Closed",
+      "action": "double-click jump",
+      "priority": "P0"
+    }
+  ]
+}

