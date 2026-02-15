@@ -1,273 +1,674 @@
 /**
- * 跨功能模块 L2 测试 — APP + ONBOARD + PERF + ERROR
+ * 跨功能模块 L2 测试 -- APP + ONBOARD + PERF + ERROR
  *
  * 基于文档: docs/Muxvo_测试_v2/02_modules/test_CROSS.md
- * 测试层级: L2（规则层 — 状态机、业务规则、边界值）
+ * 测试层级: L2（规则层 -- 状态机、业务规则、边界值）
  * 用例总数: 38
+ *
+ * RED phase: All tests have real assertions but will FAIL because
+ * source modules are not yet implemented.
  */
-import { describe, test } from 'vitest';
+import { describe, test, expect, beforeEach } from 'vitest';
+import { resetIpcMocks, handleIpc, invokeIpc, onIpcPush, emitIpcPush } from '../helpers/mock-ipc';
+import { MockApp, MockBrowserWindow } from '../helpers/mock-electron';
+import {
+  defaultConfig,
+  timeConstants,
+  terminalFixtures,
+  imageFixtures,
+  securityPatterns,
+  searchFixtures,
+} from '../helpers/test-fixtures';
+import boundarySpec from '../specs/l2/boundaries.spec.json';
+import perfSpec from '../specs/l2/perf-thresholds.spec.json';
 
 // ============================================================
-// APP L2 — 应用生命周期规则层（7 cases）
+// APP L2 -- 应用生命周期规则层（7 cases）
 // ============================================================
-describe('APP L2 — 应用生命周期规则层', () => {
+describe('APP L2 -- 应用生命周期规则层', () => {
   describe('状态机: 启动与关闭', () => {
-    test.todo('APP_L2_01: 数据保留策略 — 明细 90 天 + 摘要 1 年');
-    // Trigger: 启动 Muxvo（触发清理）
-    // Pre-condition: analytics.json 中有超过 90 天的明细事件
-    // Expected: events 数组清理超过 90 天条目；daily_summary 保留最近 365 天
-    // Rule: 清理时机 = app.launch 时执行
+    // APP_L2_01: Data retention policy
+    test('APP_L2_01: 数据保留策略 -- 明细 90 天 + 摘要 1 年', () => {
+      const retentionCase = boundarySpec.cases.find((c) => c.id === 'APP_L2_01');
+      expect(retentionCase).toBeDefined();
 
-    test.todo('APP_L2_02: 首次启动默认配置值 — 8 个默认项');
-    // Trigger: 启动 Muxvo
-    // Pre-condition: config.json 不存在（首次启动）
-    // Expected: 创建 config.json，默认值:
-    //   window.width=1400, window.height=900
-    //   fontSize=14, theme="dark"
-    //   gridLayout.columnRatios=[1,1], gridLayout.rowRatios=[1,1]
-    //   ftvLeftWidth=250, ftvRightWidth=280
+      const { getRetentionPolicy } = require('@/main/services/analytics/retention');
+      const policy = getRetentionPolicy();
 
-    test.todo('APP_L2_03: 有上次会话的启动恢复 — Restoring → RestoringTerminals');
-    // Trigger: 启动 Muxvo
-    // Pre-condition: config.json 存在, openTerminals 包含 2 个终端记录
-    // Expected: openTerminals.length(2) > 0 → RestoringTerminals
-    //   在记录的 cwd 逐个重新启动新 shell 进程（非恢复旧进程），空白 shell
+      const boundaries = retentionCase!.boundaries as Array<{ dataType: string; retentionDays: number }>;
+      for (const b of boundaries) {
+        if (b.dataType === 'events') {
+          expect(policy.eventsRetentionDays).toBe(b.retentionDays);
+          expect(policy.eventsRetentionDays).toBe(timeConstants.analyticsRetention);
+        }
+        if (b.dataType === 'daily_summary') {
+          expect(policy.summaryRetentionDays).toBe(b.retentionDays);
+          expect(policy.summaryRetentionDays).toBe(timeConstants.analyticsSummaryRetention);
+        }
+      }
+    });
 
-    test.todo('APP_L2_04: 无上次会话的启动 — Restoring → EmptyState');
-    // Trigger: 启动 Muxvo
-    // Pre-condition: config.json 存在, openTerminals 为空数组
-    // Expected: openTerminals.length === 0 → EmptyState
-    //   显示空 Grid + 引导提示"按 Cmd+T 新建终端，开始工作"
+    // APP_L2_02: First launch default config values
+    test('APP_L2_02: 首次启动默认配置值 -- 8 个默认项', () => {
+      const configCase = boundarySpec.cases.find((c) => c.id === 'APP_L2_02');
+      expect(configCase).toBeDefined();
 
-    test.todo('APP_L2_05: 关闭时保存配置 — Running → Saving');
-    // Trigger: 点击关闭窗口
-    // Pre-condition: 应用运行中，有 3 个终端打开
-    // Expected: 序列化 Grid 布局、列宽比例、终端列表到 config.json
-    //   保存内容: openTerminals[3] + gridLayout + 窗口位置
+      const { getDefaultConfig } = require('@/main/services/config/defaults');
+      const config = getDefaultConfig();
 
-    test.todo('APP_L2_06: 关闭时子进程退出处理 — ShuttingDown');
-    // Trigger: 关闭应用
-    // Pre-condition: 有 3 个终端子进程运行中
-    // Expected: 等待所有子进程 exit 事件后调用 app.quit()
-    //   超时 5s 后强制终止
+      const boundaries = configCase!.boundaries as Array<{ parameter: string; expected: unknown }>;
+      for (const b of boundaries) {
+        if (b.parameter === 'window.width') {
+          expect(config.window.width).toBe(b.expected);
+          expect(config.window.width).toBe(defaultConfig.window.width);
+        }
+        if (b.parameter === 'window.height') {
+          expect(config.window.height).toBe(b.expected);
+          expect(config.window.height).toBe(defaultConfig.window.height);
+        }
+        if (b.parameter === 'fontSize') {
+          expect(config.fontSize).toBe(b.expected);
+          expect(config.fontSize).toBe(defaultConfig.font.size);
+        }
+        if (b.parameter === 'theme') {
+          expect(config.theme).toBe(b.expected);
+          expect(config.theme).toBe(defaultConfig.theme);
+        }
+        if (b.parameter === 'gridLayout.columnRatios') {
+          expect(config.gridLayout.columnRatios).toEqual(b.expected);
+          expect(config.gridLayout.columnRatios).toEqual(defaultConfig.tile.columnRatios);
+        }
+        if (b.parameter === 'gridLayout.rowRatios') {
+          expect(config.gridLayout.rowRatios).toEqual(b.expected);
+          expect(config.gridLayout.rowRatios).toEqual(defaultConfig.tile.rowRatios);
+        }
+        if (b.parameter === 'ftvLeftWidth') {
+          expect(config.ftvLeftWidth).toBe(b.expected);
+        }
+        if (b.parameter === 'ftvRightWidth') {
+          expect(config.ftvRightWidth).toBe(b.expected);
+        }
+      }
+    });
 
-    test.todo('APP_L2_07: 恢复时 cwd 目录不存在 — 降级处理');
-    // Trigger: 启动 Muxvo
-    // Pre-condition: config.json 中记录的 cwd 路径已被删除
-    // Expected: 该终端跳过或使用 home 目录替代，显示提示，其他终端正常恢复
+    // APP_L2_03: Resume with previous session
+    test('APP_L2_03: 有上次会话的启动恢复 -- Restoring -> RestoringTerminals', () => {
+      const { createAppLifecycleStore } = require('@/main/services/app/lifecycle');
+      const store = createAppLifecycleStore();
+
+      // Config has 2 saved terminals
+      store.dispatch({
+        type: 'LAUNCH',
+        config: {
+          openTerminals: [
+            { cwd: '/project-a', customName: 'A' },
+            { cwd: '/project-b', customName: 'B' },
+          ],
+        },
+      });
+
+      expect(store.getState()).toBe('RestoringTerminals');
+      expect(store.getTerminalsToRestore().length).toBe(2);
+    });
+
+    // APP_L2_04: No previous session -> EmptyState
+    test('APP_L2_04: 无上次会话的启动 -- Restoring -> EmptyState', () => {
+      const { createAppLifecycleStore } = require('@/main/services/app/lifecycle');
+      const store = createAppLifecycleStore();
+
+      store.dispatch({
+        type: 'LAUNCH',
+        config: { openTerminals: [] },
+      });
+
+      expect(store.getState()).toBe('EmptyState');
+    });
+
+    // APP_L2_05: Save config on close
+    test('APP_L2_05: 关闭时保存配置 -- Running -> Saving', () => {
+      const { createAppLifecycleStore } = require('@/main/services/app/lifecycle');
+      const store = createAppLifecycleStore();
+
+      store.dispatch({ type: 'LAUNCH', config: { openTerminals: [] } });
+      store.dispatch({ type: 'ADD_TERMINAL', cwd: '/a' });
+      store.dispatch({ type: 'ADD_TERMINAL', cwd: '/b' });
+      store.dispatch({ type: 'ADD_TERMINAL', cwd: '/c' });
+
+      store.dispatch({ type: 'CLOSE' });
+      expect(store.getState()).toBe('Saving');
+
+      const savedConfig = store.getSavedConfig();
+      expect(savedConfig.openTerminals.length).toBe(3);
+      expect(savedConfig).toHaveProperty('gridLayout');
+    });
+
+    // APP_L2_06: Subprocess exit handling on close
+    test('APP_L2_06: 关闭时子进程退出处理 -- ShuttingDown', () => {
+      const shutdownCase = boundarySpec.cases.find((c) => c.id === 'APP_L2_06');
+      expect(shutdownCase).toBeDefined();
+
+      const { createAppLifecycleStore } = require('@/main/services/app/lifecycle');
+      const store = createAppLifecycleStore();
+
+      store.dispatch({ type: 'LAUNCH', config: { openTerminals: [] } });
+      store.dispatch({ type: 'ADD_TERMINAL', cwd: '/a' });
+      store.dispatch({ type: 'ADD_TERMINAL', cwd: '/b' });
+      store.dispatch({ type: 'ADD_TERMINAL', cwd: '/c' });
+
+      store.dispatch({ type: 'SHUTDOWN' });
+      expect(store.getState()).toBe('ShuttingDown');
+      expect(store.getShutdownTimeout()).toBe(
+        (shutdownCase as { expectedValue: number }).expectedValue
+      );
+      expect(store.getShutdownTimeout()).toBe(timeConstants.processStopTimeout);
+    });
+
+    // APP_L2_07: Restore with missing cwd -- fallback
+    test('APP_L2_07: 恢复时 cwd 目录不存在 -- 降级处理', () => {
+      const { createAppLifecycleStore } = require('@/main/services/app/lifecycle');
+      const store = createAppLifecycleStore();
+
+      store.dispatch({
+        type: 'LAUNCH',
+        config: {
+          openTerminals: [
+            { cwd: '/valid/path' },
+            { cwd: '/nonexistent/path' },
+          ],
+        },
+      });
+
+      const restored = store.getRestoredTerminals();
+      const fallback = restored.find(
+        (t: { originalCwd: string }) => t.originalCwd === '/nonexistent/path'
+      );
+      expect(fallback).toBeDefined();
+      expect(fallback.usedFallback).toBe(true);
+      // Fallback uses home directory
+      expect(fallback.cwd).toMatch(/^\/Users\/|^\/home\//);
+    });
   });
 });
 
 // ============================================================
-// ONBOARD L2 — 首次使用引导规则层（8 cases）
+// ONBOARD L2 -- 首次使用引导规则层（8 cases）
 // ============================================================
-describe('ONBOARD L2 — 首次使用引导规则层', () => {
+describe('ONBOARD L2 -- 首次使用引导规则层', () => {
   describe('引导触发与状态锁定', () => {
-    test.todo('ONBOARD_L2_01: 引导完成后不再触发 — 状态锁定');
-    // Trigger: 再次启动 Muxvo
-    // Pre-condition: 首次引导已完成, onboardingCompleted=true
-    // Expected: 不显示引导流程，直接进入正常启动
+    test('ONBOARD_L2_01: 引导完成后不再触发 -- 状态锁定', () => {
+      const { createOnboardStore } = require('@/main/services/onboard/store');
+      const store = createOnboardStore({ onboardingCompleted: true });
 
-    test.todo('ONBOARD_L2_02: 首次启动触发引导');
-    // Trigger: 启动 Muxvo
-    // Pre-condition: config.json 不存在 或 onboardingCompleted=false
-    // Expected: 显示引导流程，从步骤 1 开始
+      store.dispatch({ type: 'APP_START' });
+      expect(store.shouldShowOnboarding()).toBe(false);
+    });
+
+    test('ONBOARD_L2_02: 首次启动触发引导', () => {
+      const { createOnboardStore } = require('@/main/services/onboard/store');
+      const store = createOnboardStore({ onboardingCompleted: false });
+
+      store.dispatch({ type: 'APP_START' });
+      expect(store.shouldShowOnboarding()).toBe(true);
+      expect(store.getCurrentStep()).toBe(1);
+    });
   });
 
   describe('4 步引导流程', () => {
-    test.todo('ONBOARD_L2_03: 步骤 1 欢迎页 — 产品简介');
-    // Trigger: 查看欢迎页，点击"开始"
-    // Pre-condition: 引导流程已触发
-    // Expected: 显示产品简介，点击后进入步骤 2
+    test('ONBOARD_L2_03: 步骤 1 欢迎页 -- 产品简介', () => {
+      const { createOnboardStore } = require('@/main/services/onboard/store');
+      const store = createOnboardStore({ onboardingCompleted: false });
+      store.dispatch({ type: 'APP_START' });
 
-    test.todo('ONBOARD_L2_04: 步骤 2 CLI 检测 — 无工具场景');
-    // Trigger: 等待检测完成
-    // Pre-condition: PATH 中无 claude/codex/gemini
-    // Expected: detectedTools.length === 0 → 提示"Muxvo 也可以作为普通终端使用"
+      expect(store.getCurrentStep()).toBe(1);
+      expect(store.getStepContent(1)).toHaveProperty('title');
+      expect(store.getStepContent(1)).toHaveProperty('content');
 
-    test.todo('ONBOARD_L2_05: 步骤 3 创建首个终端 — 选择目录');
-    // Trigger: 选择一个项目目录
-    // Pre-condition: 步骤 2 完成
-    // Expected: 在选定目录创建第一个终端
+      store.dispatch({ type: 'NEXT_STEP' });
+      expect(store.getCurrentStep()).toBe(2);
+    });
 
-    test.todo('ONBOARD_L2_06: 步骤 4 快捷键提示 — 完成引导');
-    // Trigger: 查看快捷键 overlay，点击"知道了"
-    // Pre-condition: 步骤 3 完成
-    // Expected: 显示 Cmd+T/双击/Cmd+F/Esc，关闭 overlay，标记 onboardingCompleted=true
+    test('ONBOARD_L2_04: 步骤 2 CLI 检测 -- 无工具场景', () => {
+      const { createOnboardStore } = require('@/main/services/onboard/store');
+      const store = createOnboardStore({
+        onboardingCompleted: false,
+        detectedTools: [],
+      });
+      store.dispatch({ type: 'APP_START' });
+      store.dispatch({ type: 'NEXT_STEP' }); // -> step 2
+
+      expect(store.getCurrentStep()).toBe(2);
+      expect(store.getDetectedTools()).toHaveLength(0);
+      expect(store.getStep2Message()).toContain('普通终端');
+    });
+
+    test('ONBOARD_L2_05: 步骤 3 创建首个终端 -- 选择目录', () => {
+      const { createOnboardStore } = require('@/main/services/onboard/store');
+      const store = createOnboardStore({ onboardingCompleted: false });
+      store.dispatch({ type: 'APP_START' });
+      store.dispatch({ type: 'NEXT_STEP' }); // -> step 2
+      store.dispatch({ type: 'NEXT_STEP' }); // -> step 3
+
+      expect(store.getCurrentStep()).toBe(3);
+      store.dispatch({ type: 'SELECT_DIRECTORY', path: '/my/project' });
+      expect(store.getSelectedDirectory()).toBe('/my/project');
+    });
+
+    test('ONBOARD_L2_06: 步骤 4 快捷键提示 -- 完成引导', () => {
+      const { createOnboardStore } = require('@/main/services/onboard/store');
+      const store = createOnboardStore({ onboardingCompleted: false });
+      store.dispatch({ type: 'APP_START' });
+      store.dispatch({ type: 'NEXT_STEP' }); // -> step 2
+      store.dispatch({ type: 'NEXT_STEP' }); // -> step 3
+      store.dispatch({ type: 'SELECT_DIRECTORY', path: '/my/project' });
+      store.dispatch({ type: 'NEXT_STEP' }); // -> step 4
+
+      expect(store.getCurrentStep()).toBe(4);
+      const shortcuts = store.getShortcutHints();
+      expect(shortcuts).toContain('Cmd+T');
+      expect(shortcuts).toContain('Esc');
+
+      store.dispatch({ type: 'COMPLETE' });
+      expect(store.isCompleted()).toBe(true);
+    });
   });
 
   describe('跳过引导', () => {
-    test.todo('ONBOARD_L2_07: 跳过引导 — 直接进入主界面');
-    // Trigger: 引导流程中任意步骤点击"跳过"
-    // Pre-condition: 引导流程中
-    // Expected: 跳过后续步骤，进入空白主界面，标记 onboardingCompleted=true
+    test('ONBOARD_L2_07: 跳过引导 -- 直接进入主界面', () => {
+      const { createOnboardStore } = require('@/main/services/onboard/store');
+      const store = createOnboardStore({ onboardingCompleted: false });
+      store.dispatch({ type: 'APP_START' });
 
-    test.todo('ONBOARD_L2_08: 跳过后再启动不触发');
-    // Trigger: 重新启动 Muxvo
-    // Pre-condition: 上次引导被跳过（已设 onboardingCompleted=true）
-    // Expected: 不再显示引导流程
+      store.dispatch({ type: 'SKIP' });
+      expect(store.isCompleted()).toBe(true);
+      expect(store.shouldShowOnboarding()).toBe(false);
+    });
+
+    test('ONBOARD_L2_08: 跳过后再启动不触发', () => {
+      const { createOnboardStore } = require('@/main/services/onboard/store');
+      // Simulate second launch after skip (onboardingCompleted already true)
+      const store = createOnboardStore({ onboardingCompleted: true });
+      store.dispatch({ type: 'APP_START' });
+
+      expect(store.shouldShowOnboarding()).toBe(false);
+    });
   });
 });
 
 // ============================================================
-// PERF L2 — 性能策略规则层（10 cases）
+// PERF L2 -- 性能策略规则层（10 cases）
 // ============================================================
-describe('PERF L2 — 性能策略规则层', () => {
+describe('PERF L2 -- 性能策略规则层', () => {
   describe('内存监控', () => {
-    test.todo('PERF_L2_01: 内存检查间隔 60 秒');
-    // Trigger: 监控内存检查调用频率
-    // Pre-condition: 应用运行中
-    // Expected: 每 60 秒检查一次 Electron 进程内存占用
-    // Rule: interval = 60 * 1000ms = 60000ms
+    // PERF_L2_01: Memory check interval
+    test('PERF_L2_01: 内存检查间隔 60 秒', () => {
+      const perfCase = perfSpec.cases.find((c) => c.id === 'PERF_L2_01');
+      expect(perfCase).toBeDefined();
 
-    test.todo('PERF_L2_02: 内存超 2GB 警告');
-    // Trigger: 模拟内存占用达到 2.1GB
-    // Pre-condition: 内存占用接近 2GB
-    // Expected: 菜单栏显示黄色警告图标，hover 提示"内存占用较高，建议关闭部分终端"
-    // Rule: currentMemory(2.1GB) > threshold(2GB) → 显示警告
+      const { getPerformanceConfig } = require('@/shared/utils/perf-config');
+      const config = getPerformanceConfig();
+      expect(config.memoryCheckInterval).toBe(perfCase!.expectedValue);
+      expect(config.memoryCheckInterval).toBe(timeConstants.memoryCheckInterval);
+    });
+
+    // PERF_L2_02: Memory > 2GB warning
+    test('PERF_L2_02: 内存超 2GB 警告', () => {
+      const perfCase = perfSpec.cases.find((c) => c.id === 'PERF_L2_02');
+      expect(perfCase).toBeDefined();
+
+      const { getPerformanceConfig } = require('@/shared/utils/perf-config');
+      const config = getPerformanceConfig();
+      expect(config.memoryWarningThreshold).toBe(perfCase!.expectedValue);
+      expect(config.memoryWarningThreshold).toBe(timeConstants.memoryWarningThreshold);
+
+      // Verify warning triggers above threshold
+      const { shouldShowMemoryWarning } = require('@/main/services/performance/monitor');
+      const aboveThreshold = 2.1 * 1024 * 1024 * 1024; // 2.1GB
+      expect(shouldShowMemoryWarning(aboveThreshold)).toBe(true);
+      const belowThreshold = 1.5 * 1024 * 1024 * 1024; // 1.5GB
+      expect(shouldShowMemoryWarning(belowThreshold)).toBe(false);
+    });
   });
 
   describe('缓冲区与虚拟滚动', () => {
-    test.todo('PERF_L2_03: 终端缓冲区限制 — 聚焦 10000 行 / 非可见 1000 行');
-    // Trigger: 聚焦终端输出超过 10000 行，切换终端
-    // Pre-condition: 终端有大量输出
-    // Expected: 聚焦 maxLines=10000；切换后缩减至 1000 行
-    //   重新聚焦时不恢复已丢弃的行
+    // PERF_L2_03: Terminal buffer limits
+    test('PERF_L2_03: 终端缓冲区限制 -- 聚焦 10000 行 / 非可见 1000 行', () => {
+      const perfCase = perfSpec.cases.find((c) => c.id === 'PERF_L2_03');
+      expect(perfCase).toBeDefined();
 
-    test.todo('PERF_L2_04: 虚拟滚动 — 仅渲染可视区域');
-    // Trigger: 打开配置管理器 Plans 列表（129 个）
-    // Pre-condition: 加载 129 个 Plans
-    // Expected: 虚拟滚动，仅渲染可视区域内 DOM 节点
-    // Rule: 列表项(129) >> 可视区域(~20) → 虚拟滚动
+      const params = (perfCase as { parameters: Record<string, number> }).parameters;
+      const { getPerformanceConfig } = require('@/shared/utils/perf-config');
+      const config = getPerformanceConfig();
+
+      expect(config.focusedTerminalBufferLines).toBe(params.focusedTerminalBufferLines);
+      expect(config.hiddenTerminalBufferLines).toBe(params.hiddenTerminalBufferLines);
+    });
+
+    // PERF_L2_04: Virtual scroll
+    test('PERF_L2_04: 虚拟滚动 -- 仅渲染可视区域', () => {
+      const { createVirtualScrollList } = require('@/renderer/components/virtual-scroll');
+      const list = createVirtualScrollList({ totalItems: 129, itemHeight: 40, viewportHeight: 600 });
+
+      const rendered = list.getRenderedCount();
+      expect(rendered).toBeLessThan(129);
+      expect(rendered).toBeLessThanOrEqual(20); // roughly visible region + buffer
+    });
   });
 
   describe('去抖与分页', () => {
-    test.todo('PERF_L2_05: 搜索 300ms 去抖');
-    // Trigger: 快速连续输入字符（间隔 100ms）
-    // Pre-condition: 搜索面板已打开
-    // Expected: 仅在最后一次输入后 300ms 发起搜索请求
-    // Rule: debounceTime = 300ms
+    // PERF_L2_05: Search debounce
+    test('PERF_L2_05: 搜索 300ms 去抖', () => {
+      const perfCase = perfSpec.cases.find((c) => c.id === 'PERF_L2_05');
+      expect(perfCase).toBeDefined();
 
-    test.todo('PERF_L2_06: 市场列表分页加载 — 每页 20 条');
-    // Trigger: 打开市场列表，滚动到底部
-    // Pre-condition: 市场包列表超过 20 条
-    // Expected: 初始 20 条，滚动底部加载下一页 20 条（无限滚动）
+      const { getPerformanceConfig } = require('@/shared/utils/perf-config');
+      const config = getPerformanceConfig();
+      expect(config.searchDebounceTime).toBe(perfCase!.expectedValue);
+      expect(config.searchDebounceTime).toBe(searchFixtures.debounceMs);
+    });
 
-    test.todo('PERF_L2_07: 最大终端数 20 限制');
-    // Trigger: 已打开 20 个终端，点击"+ 新建终端"
-    // Pre-condition: count(terminals) = 20
-    // Expected: 按钮变灰不可点击，提示"已达最大终端数，请关闭不用的终端"
-    // Rule: count(terminals) >= 20 → 禁用新建按钮
+    // PERF_L2_06: Marketplace pagination
+    test('PERF_L2_06: 市场列表分页加载 -- 每页 20 条', () => {
+      const perfCase = perfSpec.cases.find((c) => c.id === 'PERF_L2_06');
+      expect(perfCase).toBeDefined();
+
+      const { getPerformanceConfig } = require('@/shared/utils/perf-config');
+      const config = getPerformanceConfig();
+      expect(config.marketplacePageSize).toBe(perfCase!.expectedValue);
+      expect(config.marketplacePageSize).toBe(20);
+    });
+
+    // PERF_L2_07: Max 20 terminals
+    test('PERF_L2_07: 最大终端数 20 限制', () => {
+      const perfCase = perfSpec.cases.find((c) => c.id === 'PERF_L2_07');
+      expect(perfCase).toBeDefined();
+
+      const { getPerformanceConfig } = require('@/shared/utils/perf-config');
+      const config = getPerformanceConfig();
+      expect(config.maxTerminalCount).toBe(perfCase!.expectedValue);
+      expect(config.maxTerminalCount).toBe(20);
+
+      // Verify boundary behavior
+      const termBoundary = boundarySpec.cases.find((c) => c.id === 'TERM_L2_83_max_terminal_20');
+      expect(termBoundary).toBeDefined();
+    });
   });
 
   describe('缓存与懒加载', () => {
-    test.todo('PERF_L2_08: 热门列表缓存 1 小时');
-    // Trigger: 查看热门列表 → 关闭 → 60 分钟内重新打开
-    // Pre-condition: 市场浏览器已打开
-    // Expected: 第二次打开直接使用缓存数据，不重新请求
-    // Rule: cacheExpiry = 3600 * 1000ms = 1h
+    // PERF_L2_08: Hot list cache 1h
+    test('PERF_L2_08: 热门列表缓存 1 小时', () => {
+      const perfCase = perfSpec.cases.find((c) => c.id === 'PERF_L2_08');
+      expect(perfCase).toBeDefined();
 
-    test.todo('PERF_L2_09: 用户头像懒加载 — IntersectionObserver');
-    // Trigger: 滚动列表
-    // Pre-condition: 包列表有多个包，每个包有作者头像
-    // Expected: 仅可见区域头像才加载，不可见区域不预加载
+      const { getPerformanceConfig } = require('@/shared/utils/perf-config');
+      const config = getPerformanceConfig();
+      expect(config.hotListCacheExpiry).toBe(perfCase!.expectedValue);
+      expect(config.hotListCacheExpiry).toBe(3600000);
+    });
 
-    test.todo('PERF_L2_10: 缓冲区丢弃行不恢复');
-    // Trigger: 重新聚焦已缩减的终端
-    // Pre-condition: 非可见终端已缩减至 1000 行（丢弃了 9000 行）
-    // Expected: 缓冲区仍为 1000 行，不恢复已丢弃的 9000 行
-    // Rule: 设计原则 — 丢弃不可逆，不恢复
+    // PERF_L2_09: Avatar lazy loading
+    test('PERF_L2_09: 用户头像懒加载 -- IntersectionObserver', () => {
+      const { createLazyImageLoader } = require('@/renderer/components/lazy-image');
+      const loader = createLazyImageLoader();
+
+      expect(loader.usesIntersectionObserver()).toBe(true);
+      expect(loader.preloadsOffscreen()).toBe(false);
+    });
+
+    // PERF_L2_10: Buffer discard not reversible
+    test('PERF_L2_10: 缓冲区丢弃行不恢复', () => {
+      const perfCase = perfSpec.cases.find((c) => c.id === 'PERF_L2_10');
+      expect(perfCase).toBeDefined();
+      expect(perfCase!.expectedValue).toBe(false);
+
+      const { getPerformanceConfig } = require('@/shared/utils/perf-config');
+      const config = getPerformanceConfig();
+      expect(config.bufferDiscardReversible).toBe(false);
+    });
   });
 });
 
 // ============================================================
-// ERROR L2 — 异常处理规则层（13 cases）
+// ERROR L2 -- 异常处理规则层（13 cases）
 // ============================================================
-describe('ERROR L2 — 异常处理规则层', () => {
+describe('ERROR L2 -- 异常处理规则层', () => {
   // --- 终端与文件异常 ---
   describe('终端与文件异常', () => {
-    test.todo('ERROR_L2_01: 终端 spawn 失败 — 无效 cwd');
-    // Trigger: 新建终端指定不存在的目录
-    // Pre-condition: 无效的 cwd 路径
-    // Expected: Failed（红色状态点），提示"进程已断开，点击重新启动 shell"
+    test('ERROR_L2_01: 终端 spawn 失败 -- 无效 cwd', () => {
+      const { createTerminalManager } = require('@/main/services/terminal/manager');
+      const manager = createTerminalManager();
 
-    test.todo('ERROR_L2_02: 文件读取失败 — 权限不足');
-    // Trigger: 尝试读取无权限的文件
-    // Pre-condition: 文件权限不足
-    // Expected: 显示"无法读取文件，请检查文件权限"，不崩溃
+      const result = manager.spawn({ cwd: terminalFixtures.invalidCwd });
+      expect(result.success).toBe(false);
+      expect(result.state).toBe('Failed');
+      expect(result.message).toContain('进程已断开');
+    });
 
-    test.todo('ERROR_L2_06: JSONL 解析错误行处理 — 跳过继续');
-    // Trigger: 打开聊天历史
-    // Pre-condition: 某行 JSONL 格式损坏
-    // Expected: 跳过错误行，继续解析后续行，静默处理不提示用户
-    // Rule: 错误行 → skip; 下一行 → 继续解析
+    test('ERROR_L2_02: 文件读取失败 -- 权限不足', () => {
+      const { readFileSafe } = require('@/main/services/fs/safe-ops');
+      const result = readFileSafe(terminalFixtures.cwdNoPermission + '/secret.txt');
 
-    test.todo('ERROR_L2_07: ~/.claude/ 目录不存在 — 功能降级');
-    // Trigger: 启动 Muxvo
-    // Pre-condition: 未安装 Claude Code
-    // Expected: 聊天历史和配置管理不可用，终端管理正常
-    //   提示"未检测到 Claude Code 数据目录"
+      expect(result.success).toBe(false);
+      expect(result.error?.message).toContain('权限');
+    });
+
+    test('ERROR_L2_06: JSONL 解析错误行处理 -- 跳过继续', () => {
+      const { parseJsonlContent } = require('@/main/services/data-sync/jsonl-reader');
+
+      const mixedContent = [
+        '{"type":"human","content":"Q1"}\n',
+        '{bad json}\n',
+        '{"type":"assistant","content":"A1"}\n',
+      ].join('');
+
+      const result = parseJsonlContent(mixedContent);
+      expect(result.parsed.length).toBe(2); // valid lines
+      expect(result.errors.length).toBe(0); // silent skip
+    });
+
+    test('ERROR_L2_07: ~/.claude/ 目录不存在 -- 功能降级', () => {
+      const { createAppLifecycleStore } = require('@/main/services/app/lifecycle');
+      const store = createAppLifecycleStore();
+      store.dispatch({ type: 'LAUNCH', config: { openTerminals: [] }, claudeDirExists: false });
+
+      expect(store.isChatHistoryAvailable()).toBe(false);
+      expect(store.isConfigManagerAvailable()).toBe(false);
+      expect(store.isTerminalAvailable()).toBe(true);
+      expect(store.getDegradationMessage()).toContain('未检测到 Claude Code 数据目录');
+    });
   });
 
   // --- 网络与下载异常 ---
   describe('网络与下载异常', () => {
-    test.todo('ERROR_L2_03: 网络不可用 — 离线降级模式');
-    // Trigger: 断开网络，打开 Skill 浏览器
-    // Pre-condition: 网络不可用
-    // Expected: 显示"无法连接聚合源，请检查网络"；仅展示本地已安装数据
+    test('ERROR_L2_03: 网络不可用 -- 离线降级模式', () => {
+      const { createMarketplaceStore } = require('@/renderer/features/marketplace/store');
+      const store = createMarketplaceStore({ networkAvailable: false });
+      store.dispatch({ type: 'OPEN' });
 
-    test.todo('ERROR_L2_04: 安装路径无权限');
-    // Trigger: 尝试安装 Skill
-    // Pre-condition: ~/.claude/skills/ 无写入权限
-    // Expected: 提示"无法写入 ~/.claude/skills/，请检查目录权限"
+      expect(store.getState()).toBe('Offline');
+      expect(store.getMessage()).toContain('无法连接聚合源');
+      expect(store.showsLocalData()).toBe(true);
+    });
 
-    test.todo('ERROR_L2_05: 下载失败自动重试 1 次');
-    // Trigger: 点击安装，首次下载超时
-    // Pre-condition: 网络不稳定
-    // Expected: 自动重试 1 次；成功则继续安装；仍失败提示"下载失败，请稍后重试"
+    test('ERROR_L2_04: 安装路径无权限', () => {
+      const { installSkill } = require('@/main/services/marketplace/installer');
+      const result = installSkill({
+        skillId: 'test-skill',
+        targetDir: terminalFixtures.cwdNoPermission,
+      });
 
-    test.todo('ERROR_L2_12: 包完整性校验失败 — 拒绝安装');
-    // Trigger: 安装校验不通过的包
-    // Pre-condition: 下载的包文件损坏
-    // Expected: 拒绝安装，提示"文件校验失败，请重新下载"
-    // Rule: hash(file) !== expected → 阻止安装
+      expect(result.success).toBe(false);
+      expect(result.error?.message).toContain('权限');
+    });
+
+    test('ERROR_L2_05: 下载失败自动重试 1 次', () => {
+      const downloadCase = boundarySpec.cases.find((c) => c.id === 'INSTALL_L2_15');
+      expect(downloadCase).toBeDefined();
+      expect((downloadCase as { expectedValue: number }).expectedValue).toBe(1);
+
+      const { getDownloadConfig } = require('@/main/services/marketplace/download');
+      const config = getDownloadConfig();
+      expect(config.autoRetryCount).toBe(1);
+    });
+
+    test('ERROR_L2_12: 包完整性校验失败 -- 拒绝安装', () => {
+      const { verifyPackageIntegrity } = require('@/main/services/marketplace/installer');
+      const result = verifyPackageIntegrity({
+        filePath: '/tmp/corrupted.tar.gz',
+        expectedHash: 'abc123',
+        actualHash: 'def456',
+      });
+
+      expect(result.valid).toBe(false);
+      expect(result.message).toContain('校验失败');
+    });
   });
 
   // --- 评分异常 ---
   describe('评分异常', () => {
-    test.todo('ERROR_L2_08: 评分失败最多重试 3 次');
-    // Trigger: 触发评分，连续 3 次 API 失败
-    // Pre-condition: CC 终端运行中
-    // Expected: retry count 1→2→3 → final error"评分失败，请检查网络连接后重试" + 手动重试
+    test('ERROR_L2_08: 评分失败最多重试 3 次', () => {
+      const { createScoreManager } = require('@/main/services/score/manager');
+      const manager = createScoreManager();
 
-    test.todo('ERROR_L2_09: 评分结果 JSON 解析失败 — 自动重试 1 次');
-    // Trigger: 评分 Skill 返回非法 JSON
-    // Pre-condition: 评分 Skill 输出格式异常
-    // Expected: 自动重新评分 1 次；仍失败提示"评分结果格式异常，已自动重试"
+      // Simulate 3 API failures
+      manager.simulateApiFailure(true);
+      const result = manager.runScoring();
 
-    test.todo('ERROR_L2_10: CC 终端未运行时评分 — 阻止');
-    // Trigger: 点击"AI 评分"
-    // Pre-condition: 无 CC 终端在运行
-    // Expected: 提示"请先启动一个 Claude Code 终端"
+      expect(result.retryCount).toBe(3);
+      expect(result.success).toBe(false);
+      expect(result.error?.message).toContain('评分失败');
+    });
+
+    test('ERROR_L2_09: 评分结果 JSON 解析失败 -- 自动重试 1 次', () => {
+      const { createScoreManager } = require('@/main/services/score/manager');
+      const manager = createScoreManager();
+
+      manager.simulateInvalidJsonResponse(true);
+      const result = manager.runScoring();
+
+      expect(result.retryCount).toBeGreaterThanOrEqual(1);
+      expect(result.error?.message).toContain('格式异常');
+    });
+
+    test('ERROR_L2_10: CC 终端未运行时评分 -- 阻止', () => {
+      const { createScoreManager } = require('@/main/services/score/manager');
+      const manager = createScoreManager();
+
+      manager.setCCTerminalRunning(false);
+      const result = manager.runScoring();
+
+      expect(result.blocked).toBe(true);
+      expect(result.message).toContain('请先启动一个 Claude Code 终端');
+    });
   });
 
   // --- 发布与资源异常 ---
   describe('发布与资源异常', () => {
-    test.todo('ERROR_L2_11: 磁盘空间不足');
-    // Trigger: 尝试安装新包
-    // Pre-condition: 磁盘空间接近用完
-    // Expected: 提示"磁盘空间不足，建议清理旧的 debug 日志"
+    test('ERROR_L2_11: 磁盘空间不足', () => {
+      const { checkDiskSpace } = require('@/main/services/system/disk');
+      const result = checkDiskSpace({ requiredMB: 500, availableMB: 50 });
 
-    test.todo('ERROR_L2_13: GitHub Pages 发布超时 — 30 秒');
-    // Trigger: 发布请求 30 秒无响应
-    // Pre-condition: 发布展示页过程中
-    // Expected: 超时后提示重试，保存草稿到本地
-    // Rule: timeout = 30s → 保存草稿 + 重试提示
+      expect(result.sufficient).toBe(false);
+      expect(result.message).toContain('磁盘空间不足');
+    });
 
-    test.todo('ERROR_L2_14: GitHub API rate limit');
-    // Trigger: 频繁调用 GitHub API
-    // Pre-condition: API 配额已用完
-    // Expected: 提示"GitHub API 配额已用完，请稍后再试"，显示配额重置时间
-    // Rule: HTTP 429 → 显示重置时间
+    test('ERROR_L2_13: GitHub Pages 发布超时 -- 30 秒', () => {
+      const publishCase = boundarySpec.cases.find((c) => c.id === 'PUBLISH_L2_16');
+      expect(publishCase).toBeDefined();
+      expect((publishCase as { expectedValue: number }).expectedValue).toBe(30000);
+
+      const { getPublishConfig } = require('@/main/services/showcase/publish');
+      const config = getPublishConfig();
+      expect(config.timeout).toBe(30000);
+      expect(config.saveDraftOnTimeout).toBe(true);
+    });
+
+    test('ERROR_L2_14: GitHub API rate limit', () => {
+      const { handleGitHubError } = require('@/main/services/showcase/publish');
+      const result = handleGitHubError({ status: 429, resetTime: '2026-02-15T12:00:00Z' });
+
+      expect(result.message).toContain('配额');
+      expect(result.resetTime).toBeDefined();
+    });
+  });
+});
+
+// ============================================================
+// Boundary spec-driven tests (from boundaries.spec.json)
+// ============================================================
+describe('CROSS L2 -- Boundary Spec 边界值验证', () => {
+  // ---- APP boundaries ----
+  const appBoundaries = boundarySpec.cases.filter((c) => c.id.startsWith('APP_'));
+  test.each(appBoundaries)('$id: $description', ({ id, boundaries, type }) => {
+    if (type === 'boundary') {
+      for (const b of boundaries as Array<{ expected: unknown }>) {
+        expect(b.expected).toBeDefined();
+      }
+    }
+    if (type === 'threshold') {
+      const c = boundarySpec.cases.find((x) => x.id === id) as { expectedValue: unknown } | undefined;
+      expect(c?.expectedValue).toBeDefined();
+    }
+  });
+
+  // ---- TERM boundaries ----
+  const termBoundaries = boundarySpec.cases.filter((c) => c.id.startsWith('TERM_'));
+  test.each(termBoundaries)('$id: $description', ({ id, boundaries, type }) => {
+    if (type === 'boundary') {
+      for (const b of boundaries as Array<{ expected: unknown }>) {
+        expect(b.expected).toBeDefined();
+      }
+    }
+  });
+
+  // ---- SHOWCASE boundaries ----
+  const showcaseBoundaries = boundarySpec.cases.filter((c) => c.id.startsWith('SHOWCASE_'));
+  test.each(showcaseBoundaries)('$id: $description', ({ id, boundaries }) => {
+    for (const b of boundaries as Array<{ expected: unknown }>) {
+      expect(b.expected).toBeDefined();
+    }
+  });
+
+  // ---- INSTALL / PUBLISH thresholds ----
+  const thresholdCases = boundarySpec.cases.filter((c) => c.type === 'threshold');
+  test.each(thresholdCases)('$id: $description', ({ id, parameter, expectedValue, unit }) => {
+    expect(parameter).toBeDefined();
+    expect(expectedValue).toBeDefined();
+    expect(unit).toBeDefined();
+
+    // RED phase: attempt to read from the perf config module
+    const { getPerformanceConfig } = require('@/shared/utils/perf-config');
+    const config = getPerformanceConfig();
+    expect(config[parameter as string]).toBe(expectedValue);
+  });
+});
+
+// ============================================================
+// Performance thresholds spec-driven tests (from perf-thresholds.spec.json)
+// ============================================================
+describe('CROSS L2 -- Performance Thresholds Spec 性能阈值验证', () => {
+  test.each(perfSpec.cases)('$id: $description', (testCase) => {
+    const { id, parameter, expectedValue, unit } = testCase as {
+      id: string;
+      parameter?: string;
+      parameters?: Record<string, unknown>;
+      expectedValue?: unknown;
+      unit: string;
+    };
+
+    // RED phase: import the perf config module
+    const { getPerformanceConfig } = require('@/shared/utils/perf-config');
+    const config = getPerformanceConfig();
+
+    if (parameter && expectedValue !== undefined) {
+      expect(config[parameter]).toBe(expectedValue);
+    }
+
+    // Handle the multi-parameter case (PERF_L2_03)
+    if ((testCase as { parameters?: Record<string, unknown> }).parameters) {
+      const params = (testCase as { parameters: Record<string, unknown> }).parameters;
+      for (const [key, value] of Object.entries(params)) {
+        expect(config[key]).toBe(value);
+      }
+    }
   });
 });

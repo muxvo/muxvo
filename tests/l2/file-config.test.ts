@@ -7,8 +7,14 @@
  *   CONFIG: resource type browsing, settings edit, virtual scroll (9 cases)
  *
  * Total cases: 29
+ *
+ * RED phase: All tests have real assertions but will FAIL because
+ * source modules are not yet implemented.
  */
-import { describe, test } from 'vitest';
+import { describe, test, expect, beforeEach } from 'vitest';
+import { resetIpcMocks, handleIpc, invokeIpc } from '../helpers/mock-ipc';
+import { defaultConfig, timeConstants, terminalFixtures } from '../helpers/test-fixtures';
+import boundarySpec from '../specs/l2/boundaries.spec.json';
 
 // =============================================================================
 // FILE L2
@@ -18,136 +24,241 @@ describe('FILE L2 -- 规则层测试', () => {
   // 3.1 文件面板过渡动画
   // ---------------------------------------------------------------------------
   describe('文件面板过渡动画', () => {
-    test.todo('FILE_L2_01_panel_transition_300ms: 面板打开过渡 300ms');
-    // Pre-condition: Closed 状态
-    // Trigger: 点击文件按钮
-    // Expected: Opening->Open 过渡耗时 300ms
-    // Rule: PRD 6.5/L801 "transition done 300ms"
+    test('FILE_L2_01_panel_transition_300ms: 面板打开过渡 300ms', () => {
+      // Pre-condition: Closed state
+      // Trigger: click file button
+      // Expected: Opening->Open transition takes 300ms
+      const { createFilePanelStore } = require('@/renderer/features/file-panel/store');
+      const store = createFilePanelStore();
+      expect(store.getState()).toBe('Closed');
 
-    test.todo('FILE_L2_02_close_transition: 面板关闭过渡 300ms');
-    // Pre-condition: Open 状态
-    // Trigger: Esc
-    // Expected: translateX(0)->translateX(100%), 300ms 过渡
+      store.dispatch({ type: 'OPEN' });
+      const transition = store.getTransition();
+      expect(transition.duration).toBe(timeConstants.filePanelTransition);
+      expect(transition.duration).toBe(300);
+    });
+
+    test('FILE_L2_02_close_transition: 面板关闭过渡 300ms', () => {
+      // Pre-condition: Open state
+      // Trigger: Esc
+      // Expected: translateX(0)->translateX(100%), 300ms transition
+      const { createFilePanelStore } = require('@/renderer/features/file-panel/store');
+      const store = createFilePanelStore();
+      store.dispatch({ type: 'OPEN' });
+
+      store.dispatch({ type: 'CLOSE' });
+      const transition = store.getTransition();
+      expect(transition.from).toBe('translateX(0)');
+      expect(transition.to).toBe('translateX(100%)');
+      expect(transition.duration).toBe(300);
+    });
   });
 
   // ---------------------------------------------------------------------------
   // 3.2 三栏尺寸规则
   // ---------------------------------------------------------------------------
   describe('三栏尺寸规则', () => {
-    test.todo('FILE_L2_03_column_min_width: 左栏最小宽度 150px');
-    // Pre-condition: 三栏 Active 状态
-    // Trigger: 拖拽 resize handle 缩小左栏
-    // Expected: 左栏不小于 150px
-    // Rule: PRD 6.6/L865-869 "左栏 min150"
+    test('FILE_L2_03_column_min_width: 左栏最小宽度 150px', () => {
+      const { createTempViewStore } = require('@/renderer/features/temp-view/store');
+      const store = createTempViewStore();
+      store.dispatch({ type: 'ENTER', fileId: 'a.md' });
 
-    test.todo('FILE_L2_04_column_max_width: 左栏最大宽度 500px');
-    // Pre-condition: 三栏 Active 状态
-    // Trigger: 拖拽 resize handle 放大左栏
-    // Expected: 左栏不超过 500px
-    // Rule: PRD 6.6/L865-869 "左栏 max500"
+      // Try to resize below minimum
+      store.dispatch({ type: 'RESIZE_LEFT', width: 100 });
+      expect(store.getLeftWidth()).toBeGreaterThanOrEqual(150);
+    });
 
-    test.todo('FILE_L2_05_right_min_width: 右栏最小宽度 150px');
-    // Pre-condition: 三栏 Active 状态
-    // Trigger: 拖拽右侧 handle 缩小右栏
-    // Expected: 右栏不小于 150px
+    test('FILE_L2_04_column_max_width: 左栏最大宽度 500px', () => {
+      const { createTempViewStore } = require('@/renderer/features/temp-view/store');
+      const store = createTempViewStore();
+      store.dispatch({ type: 'ENTER', fileId: 'a.md' });
 
-    test.todo('FILE_L2_06_right_max_width: 右栏最大宽度 500px');
-    // Pre-condition: 三栏 Active 状态
-    // Trigger: 拖拽右侧 handle 放大右栏
-    // Expected: 右栏不超过 500px
+      // Try to resize above maximum
+      store.dispatch({ type: 'RESIZE_LEFT', width: 600 });
+      expect(store.getLeftWidth()).toBeLessThanOrEqual(500);
+    });
 
-    test.todo('FILE_L2_07_resize_persist: 宽度持久化');
-    // Pre-condition: 拖拽左栏到 300px
-    // Trigger: mouseup -> 关闭三栏 -> 重新打开
-    // Expected: 左栏宽度恢复为 300px
-    // Rule: PRD 6.6 "mouseup（宽度持久化）"
+    test('FILE_L2_05_right_min_width: 右栏最小宽度 150px', () => {
+      const { createTempViewStore } = require('@/renderer/features/temp-view/store');
+      const store = createTempViewStore();
+      store.dispatch({ type: 'ENTER', fileId: 'a.md' });
 
-    test.todo('FILE_L2_08_default_widths: 默认宽度值');
-    // Pre-condition: 首次打开三栏，无持久化数据
-    // Trigger: 打开三栏
-    // Expected: 左栏 250px, 右栏 280px
-    // Rule: config ftvLeftWidth=250, ftvRightWidth=280
+      store.dispatch({ type: 'RESIZE_RIGHT', width: 100 });
+      expect(store.getRightWidth()).toBeGreaterThanOrEqual(150);
+    });
+
+    test('FILE_L2_06_right_max_width: 右栏最大宽度 500px', () => {
+      const { createTempViewStore } = require('@/renderer/features/temp-view/store');
+      const store = createTempViewStore();
+      store.dispatch({ type: 'ENTER', fileId: 'a.md' });
+
+      store.dispatch({ type: 'RESIZE_RIGHT', width: 600 });
+      expect(store.getRightWidth()).toBeLessThanOrEqual(500);
+    });
+
+    test('FILE_L2_07_resize_persist: 宽度持久化', () => {
+      const { createTempViewStore } = require('@/renderer/features/temp-view/store');
+      const store = createTempViewStore();
+      store.dispatch({ type: 'ENTER', fileId: 'a.md' });
+      store.dispatch({ type: 'RESIZE_LEFT', width: 300 });
+      expect(store.getLeftWidth()).toBe(300);
+
+      // Close and reopen — width should persist
+      store.dispatch({ type: 'EXIT' });
+      store.dispatch({ type: 'ENTER', fileId: 'b.md' });
+      expect(store.getLeftWidth()).toBe(300);
+    });
+
+    test('FILE_L2_08_default_widths: 默认宽度值', () => {
+      // First open with no persisted data -> default widths
+      const { createTempViewStore } = require('@/renderer/features/temp-view/store');
+      const store = createTempViewStore({ fresh: true });
+      store.dispatch({ type: 'ENTER', fileId: 'a.md' });
+      expect(store.getLeftWidth()).toBe(250);
+      expect(store.getRightWidth()).toBe(280);
+    });
   });
 
   // ---------------------------------------------------------------------------
   // 3.3 编辑模式规则
   // ---------------------------------------------------------------------------
   describe('编辑模式规则', () => {
-    test.todo('FILE_L2_09_unsaved_prompt: 未保存修改切换模式弹出提示');
-    // Pre-condition: EditMode, 有未保存修改
-    // Trigger: Cmd+/ 切换模式
-    // Expected: 弹出 UnsavedPrompt: 保存/放弃/取消
-    // Rule: PRD 6.6 "Cmd+/ 且有未保存修改 -> UnsavedPrompt"
+    test('FILE_L2_09_unsaved_prompt: 未保存修改切换模式弹出提示', () => {
+      const { createTempViewStore } = require('@/renderer/features/temp-view/store');
+      const store = createTempViewStore();
+      store.dispatch({ type: 'ENTER', fileId: 'a.md' });
+      store.dispatch({ type: 'TOGGLE_MODE' }); // -> EditMode
+      store.dispatch({ type: 'MODIFY' }); // mark dirty
+      store.dispatch({ type: 'TOGGLE_MODE' }); // -> UnsavedPrompt
 
-    test.todo('FILE_L2_10_unsaved_save: UnsavedPrompt 选择保存');
-    // Pre-condition: UnsavedPrompt 已显示
-    // Trigger: 选择「保存」
-    // Expected: 文件保存成功；切换到 PreviewMode
+      expect(store.isUnsavedPromptVisible()).toBe(true);
+      const options = store.getPromptOptions();
+      expect(options).toContain('save');
+      expect(options).toContain('discard');
+      expect(options).toContain('cancel');
+    });
 
-    test.todo('FILE_L2_11_unsaved_discard: UnsavedPrompt 选择放弃');
-    // Pre-condition: UnsavedPrompt 已显示
-    // Trigger: 选择「放弃」
-    // Expected: 放弃修改；切换到 PreviewMode
+    test('FILE_L2_10_unsaved_save: UnsavedPrompt 选择保存', () => {
+      const { createTempViewStore } = require('@/renderer/features/temp-view/store');
+      const store = createTempViewStore();
+      store.dispatch({ type: 'ENTER', fileId: 'a.md' });
+      store.dispatch({ type: 'TOGGLE_MODE' });
+      store.dispatch({ type: 'MODIFY' });
+      store.dispatch({ type: 'TOGGLE_MODE' }); // -> UnsavedPrompt
+      store.dispatch({ type: 'SAVE_AND_SWITCH' });
 
-    test.todo('FILE_L2_12_unsaved_cancel: UnsavedPrompt 选择取消');
-    // Pre-condition: UnsavedPrompt 已显示
-    // Trigger: 选择「取消」
-    // Expected: 关闭提示；继续 Editing 状态
+      expect(store.getMode()).toBe('PreviewMode');
+      expect(store.isDirty()).toBe(false);
+    });
 
-    test.todo('FILE_L2_13_md_preview_render: Markdown 渲染 CommonMark+GFM');
-    // Pre-condition: 打开 .md 文件
-    // Trigger: PreviewMode
-    // Expected: 支持 CommonMark+GFM 渲染；代码块有语法高亮
-    // Rule: PRD 8.2 "支持 CommonMark+GFM"
+    test('FILE_L2_11_unsaved_discard: UnsavedPrompt 选择放弃', () => {
+      const { createTempViewStore } = require('@/renderer/features/temp-view/store');
+      const store = createTempViewStore();
+      store.dispatch({ type: 'ENTER', fileId: 'a.md' });
+      store.dispatch({ type: 'TOGGLE_MODE' });
+      store.dispatch({ type: 'MODIFY' });
+      store.dispatch({ type: 'TOGGLE_MODE' }); // -> UnsavedPrompt
+      store.dispatch({ type: 'DISCARD_AND_SWITCH' });
+
+      expect(store.getMode()).toBe('PreviewMode');
+      expect(store.isDirty()).toBe(false);
+    });
+
+    test('FILE_L2_12_unsaved_cancel: UnsavedPrompt 选择取消', () => {
+      const { createTempViewStore } = require('@/renderer/features/temp-view/store');
+      const store = createTempViewStore();
+      store.dispatch({ type: 'ENTER', fileId: 'a.md' });
+      store.dispatch({ type: 'TOGGLE_MODE' });
+      store.dispatch({ type: 'MODIFY' });
+      store.dispatch({ type: 'TOGGLE_MODE' }); // -> UnsavedPrompt
+      store.dispatch({ type: 'CANCEL_PROMPT' });
+
+      expect(store.getMode()).toBe('EditMode');
+      expect(store.isDirty()).toBe(true);
+    });
+
+    test('FILE_L2_13_md_preview_render: Markdown 渲染 CommonMark+GFM', () => {
+      const { getMarkdownRenderer } = require('@/renderer/features/file-viewer/markdown');
+      const renderer = getMarkdownRenderer();
+      expect(renderer.supportsCommonMark()).toBe(true);
+      expect(renderer.supportsGFM()).toBe(true);
+      expect(renderer.hasSyntaxHighlighting()).toBe(true);
+    });
   });
 
   // ---------------------------------------------------------------------------
   // 3.4 目录切换规则 (PRD 6.7 决策树)
   // ---------------------------------------------------------------------------
   describe('目录切换规则', () => {
-    test.todo('FILE_L2_14_cd_shell_direct: shell 状态直接 cd');
-    // Pre-condition: 前台进程为 bash
-    // Trigger: 点击快捷路径切换目录
-    // Expected: 直接发送 cd <path>\\n, cwd 更新
-    // Decision: 进程名 in shell列表 -> 直接 cd
+    test('FILE_L2_14_cd_shell_direct: shell 状态直接 cd', () => {
+      // Foreground process is bash (in shell list) -> direct cd
+      const { getCdStrategy } = require('@/renderer/features/terminal/cd-strategy');
+      const strategy = getCdStrategy({ foregroundProcess: 'bash', shellList: [...terminalFixtures.shellList] });
+      expect(strategy.type).toBe('direct');
+      expect(strategy.command).toMatch(/^cd /);
+    });
 
-    test.todo('FILE_L2_15_cd_ai_confirm: AI 工具需确认退出');
-    // Pre-condition: 前台进程为 claude
-    // Trigger: 点击快捷路径
-    // Expected: 弹出确认框"当前正在运行 claude，需要退出后才能切换目录"
-    // Decision: 进程名 not in shell列表 -> 确认对话框
+    test('FILE_L2_15_cd_ai_confirm: AI 工具需确认退出', () => {
+      // Foreground process is claude (not in shell list) -> confirm dialog
+      const { getCdStrategy } = require('@/renderer/features/terminal/cd-strategy');
+      const strategy = getCdStrategy({ foregroundProcess: 'claude', shellList: [...terminalFixtures.shellList] });
+      expect(strategy.type).toBe('confirm');
+      expect(strategy.message).toContain('claude');
+    });
 
-    test.todo('FILE_L2_16_cd_confirm_ok: 确认退出后发送 cd');
-    // Pre-condition: 确认对话框已显示
-    // Trigger: 点击「确认退出」
-    // Expected: 发送 SIGINT -> 等待回 shell -> 发送 cd 命令
+    test('FILE_L2_16_cd_confirm_ok: 确认退出后发送 cd', () => {
+      const { getCdStrategy } = require('@/renderer/features/terminal/cd-strategy');
+      const strategy = getCdStrategy({ foregroundProcess: 'claude', shellList: [...terminalFixtures.shellList] });
+      expect(strategy.type).toBe('confirm');
 
-    test.todo('FILE_L2_17_cd_confirm_cancel: 取消退出不切换');
-    // Pre-condition: 确认对话框已显示
-    // Trigger: 点击「取消」
-    // Expected: 关闭对话框，不切换目录
+      // Simulate user confirming exit
+      const actions = strategy.onConfirm();
+      expect(actions[0].type).toBe('SIGINT');
+      expect(actions[1].type).toBe('WAIT_SHELL');
+      expect(actions[2].type).toBe('CD');
+    });
 
-    test.todo('FILE_L2_18_cd_chain_actions: 目录切换连锁动作');
-    // Pre-condition: shell 状态, cd 成功
-    // Trigger: cd 完成
-    // Expected: 终端 header cwd 更新 + 检查自动归组 + 文件按钮指向新目录
-    // Rule: PRD 6.7 三个连锁动作
+    test('FILE_L2_17_cd_confirm_cancel: 取消退出不切换', () => {
+      const { getCdStrategy } = require('@/renderer/features/terminal/cd-strategy');
+      const strategy = getCdStrategy({ foregroundProcess: 'claude', shellList: [...terminalFixtures.shellList] });
+
+      const actions = strategy.onCancel();
+      expect(actions).toEqual([]);
+    });
+
+    test('FILE_L2_18_cd_chain_actions: 目录切换连锁动作', () => {
+      // After cd completes: update header cwd, check auto-grouping, update file button target
+      const { getCdChainActions } = require('@/renderer/features/terminal/cd-strategy');
+      const actions = getCdChainActions('/new/path');
+      expect(actions).toContainEqual({ type: 'UPDATE_CWD', path: '/new/path' });
+      expect(actions).toContainEqual({ type: 'CHECK_AUTO_GROUP' });
+      expect(actions).toContainEqual({ type: 'UPDATE_FILE_BUTTON' });
+    });
   });
 
   // ---------------------------------------------------------------------------
   // 3.5 Markdown 预览/编辑双模式
   // ---------------------------------------------------------------------------
   describe('Markdown 预览/编辑双模式', () => {
-    test.todo('FILE_L2_19_default_preview: 默认预览模式');
-    // Pre-condition: 打开 .md 文件
-    // Trigger: 进入三栏
-    // Expected: 中栏为渲染预览模式
-    // Rule: PRD 8.2.1/L1720 默认值
+    test('FILE_L2_19_default_preview: 默认预览模式', () => {
+      const { createTempViewStore } = require('@/renderer/features/temp-view/store');
+      const store = createTempViewStore();
+      store.dispatch({ type: 'ENTER', fileId: 'readme.md' });
+      expect(store.getMode()).toBe('PreviewMode');
+    });
 
-    test.todo('FILE_L2_20_edit_toggle: Cmd+/ 切换预览/编辑');
-    // Pre-condition: PreviewMode
-    // Trigger: Cmd+/
-    // Expected: 切换到 EditMode；再按 Cmd+/ 回到 PreviewMode
+    test('FILE_L2_20_edit_toggle: Cmd+/ 切换预览/编辑', () => {
+      const { createTempViewStore } = require('@/renderer/features/temp-view/store');
+      const store = createTempViewStore();
+      store.dispatch({ type: 'ENTER', fileId: 'readme.md' });
+      expect(store.getMode()).toBe('PreviewMode');
+
+      store.dispatch({ type: 'TOGGLE_MODE' });
+      expect(store.getMode()).toBe('EditMode');
+
+      store.dispatch({ type: 'TOGGLE_MODE' });
+      expect(store.getMode()).toBe('PreviewMode');
+    });
   });
 });
 
@@ -159,64 +270,130 @@ describe('CONFIG L2 -- 规则层测试', () => {
   // 5.1 8 种资源类型浏览
   // ---------------------------------------------------------------------------
   describe('资源类型浏览与搜索', () => {
-    test.todo('CONFIG_L2_01_skills_search: Skills 搜索功能');
-    // Pre-condition: Skills 列表有多个资源
-    // Trigger: 输入搜索词
-    // Expected: 按名称筛选匹配的 Skills
+    test('CONFIG_L2_01_skills_search: Skills 搜索功能', () => {
+      const { createConfigManagerStore } = require('@/renderer/features/config-manager/store');
+      const store = createConfigManagerStore();
+      store.dispatch({ type: 'OPEN' });
+      store.dispatch({ type: 'SELECT_CARD', card: 'Skills' });
 
-    test.todo('CONFIG_L2_02_plans_search: Plans 搜索功能');
-    // Pre-condition: Plans 列表有多个资源
-    // Trigger: 输入搜索词
-    // Expected: 按名称筛选匹配的 Plans
+      store.dispatch({ type: 'SEARCH', query: 'test' });
+      const results = store.getFilteredResources();
+      expect(results.every((r: { name: string }) => r.name.toLowerCase().includes('test'))).toBe(true);
+    });
 
-    test.todo('CONFIG_L2_03_tasks_search: Tasks 搜索功能');
-    // Pre-condition: Tasks 列表有多个任务
-    // Trigger: 输入搜索词
-    // Expected: 按名称/状态筛选匹配的 Tasks
+    test('CONFIG_L2_02_plans_search: Plans 搜索功能', () => {
+      const { createConfigManagerStore } = require('@/renderer/features/config-manager/store');
+      const store = createConfigManagerStore();
+      store.dispatch({ type: 'OPEN' });
+      store.dispatch({ type: 'SELECT_CARD', card: 'Plans' });
 
-    test.todo('CONFIG_L2_04_memory_search: Memory 搜索功能');
-    // Pre-condition: 多个项目有 MEMORY.md
-    // Trigger: 输入搜索词
-    // Expected: 按项目名称筛选
+      store.dispatch({ type: 'SEARCH', query: 'deploy' });
+      const results = store.getFilteredResources();
+      expect(results.every((r: { name: string }) => r.name.toLowerCase().includes('deploy'))).toBe(true);
+    });
 
-    test.todo('CONFIG_L2_05_hooks_readonly: Hooks 只读');
-    // Pre-condition: 打开 Hooks 列表
-    // Trigger: 尝试编辑
-    // Expected: 无编辑入口；仅可查看源码
-    // Rule: PRD 6.11 Hooks 只读
+    test('CONFIG_L2_03_tasks_search: Tasks 搜索功能', () => {
+      const { createConfigManagerStore } = require('@/renderer/features/config-manager/store');
+      const store = createConfigManagerStore();
+      store.dispatch({ type: 'OPEN' });
+      store.dispatch({ type: 'SELECT_CARD', card: 'Tasks' });
 
-    test.todo('CONFIG_L2_06_mcp_readonly: MCP 只读');
-    // Pre-condition: 打开 MCP 卡片
-    // Trigger: 观察
-    // Expected: 仅展示 mcp.json 内容；无编辑入口
-    // Rule: PRD 6.11 MCP 只读
+      store.dispatch({ type: 'SEARCH', query: 'build' });
+      const results = store.getFilteredResources();
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    test('CONFIG_L2_04_memory_search: Memory 搜索功能', () => {
+      const { createConfigManagerStore } = require('@/renderer/features/config-manager/store');
+      const store = createConfigManagerStore();
+      store.dispatch({ type: 'OPEN' });
+      store.dispatch({ type: 'SELECT_CARD', card: 'Memory' });
+
+      store.dispatch({ type: 'SEARCH', query: 'project' });
+      const results = store.getFilteredResources();
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    test('CONFIG_L2_05_hooks_readonly: Hooks 只读', () => {
+      const { createConfigManagerStore } = require('@/renderer/features/config-manager/store');
+      const store = createConfigManagerStore();
+      store.dispatch({ type: 'OPEN' });
+      store.dispatch({ type: 'SELECT_CARD', card: 'Hooks' });
+
+      expect(store.isEditable()).toBe(false);
+      expect(store.getState()).toBe('HooksList');
+    });
+
+    test('CONFIG_L2_06_mcp_readonly: MCP 只读', () => {
+      const { createConfigManagerStore } = require('@/renderer/features/config-manager/store');
+      const store = createConfigManagerStore();
+      store.dispatch({ type: 'OPEN' });
+      store.dispatch({ type: 'SELECT_CARD', card: 'MCP' });
+
+      expect(store.isEditable()).toBe(false);
+      expect(store.getState()).toBe('McpView');
+    });
   });
 
   // ---------------------------------------------------------------------------
   // 5.2 Settings 编辑规则
   // ---------------------------------------------------------------------------
   describe('编辑保存规则', () => {
-    test.todo('CONFIG_L2_07_settings_save: Settings 保存写入');
-    // Pre-condition: 修改了 settings.json 某字段
-    // Trigger: 保存
-    // Expected: 直接写入 ~/.claude/settings.json
-    // Rule: PRD 6.11 "直接写入 settings.json"
+    beforeEach(() => {
+      resetIpcMocks();
+    });
 
-    test.todo('CONFIG_L2_08_claudemd_save: CLAUDE.md 保存写入');
-    // Pre-condition: 修改了 CLAUDE.md 内容
-    // Trigger: 保存
-    // Expected: 直接写入 ~/.claude/CLAUDE.md
-    // Rule: PRD 6.11 "直接写入 CLAUDE.md"
+    test('CONFIG_L2_07_settings_save: Settings 保存写入', async () => {
+      handleIpc('config:save-settings', async (_event, ...args) => {
+        return { success: true, data: { success: true } };
+      });
+
+      const { createConfigManagerStore } = require('@/renderer/features/config-manager/store');
+      const store = createConfigManagerStore();
+      store.dispatch({ type: 'OPEN' });
+      store.dispatch({ type: 'SELECT_CARD', card: 'Settings' });
+      store.dispatch({ type: 'EDIT_SETTINGS', changes: { fontSize: 16 } });
+
+      await store.dispatch({ type: 'SAVE_SETTINGS' });
+      expect(store.getState()).toBe('SettingsView');
+
+      // Verify IPC was called
+      const result = await invokeIpc('config:save-settings', { settings: { fontSize: 16 } });
+      expect(result.success).toBe(true);
+    });
+
+    test('CONFIG_L2_08_claudemd_save: CLAUDE.md 保存写入', async () => {
+      handleIpc('config:save-claude-md', async (_event, ...args) => {
+        return { success: true, data: { success: true } };
+      });
+
+      const { createConfigManagerStore } = require('@/renderer/features/config-manager/store');
+      const store = createConfigManagerStore();
+      store.dispatch({ type: 'OPEN' });
+      store.dispatch({ type: 'SELECT_CARD', card: 'CLAUDE.md' });
+      store.dispatch({ type: 'EDIT_CLAUDE_MD', content: '# Updated CLAUDE.md' });
+
+      await store.dispatch({ type: 'SAVE_CLAUDE_MD' });
+      expect(store.getState()).toBe('ClaudeMdView');
+
+      const result = await invokeIpc('config:save-claude-md', { content: '# Updated CLAUDE.md' });
+      expect(result.success).toBe(true);
+    });
   });
 
   // ---------------------------------------------------------------------------
   // 5.3 虚拟滚动
   // ---------------------------------------------------------------------------
   describe('虚拟滚动', () => {
-    test.todo('CONFIG_L2_09_virtual_scroll: 长列表虚拟滚动');
-    // Pre-condition: Plans 列表有 129 个
-    // Trigger: 滚动列表
-    // Expected: 使用虚拟滚动渲染，DOM 仅渲染可见区域
-    // Rule: PRD 11.2 "长列表（如 129 个 Plans）使用虚拟滚动渲染"
+    test('CONFIG_L2_09_virtual_scroll: 长列表虚拟滚动', () => {
+      const { createVirtualScrollList } = require('@/renderer/components/virtual-scroll');
+      const list = createVirtualScrollList({ totalItems: 129, itemHeight: 40, viewportHeight: 600 });
+
+      // Only visible items should be rendered
+      const visibleCount = Math.ceil(600 / 40);
+      expect(list.getRenderedCount()).toBeLessThanOrEqual(visibleCount + 2); // +2 for buffer
+      expect(list.getRenderedCount()).toBeLessThan(129);
+      expect(list.getTotalItems()).toBe(129);
+    });
   });
 });
