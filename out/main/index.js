@@ -242,11 +242,14 @@ function isValidCwd(cwd) {
 function createRealPtyAdapter() {
   return {
     spawn(shell, cwd, cols, rows) {
+      const env = { ...process.env };
+      delete env.CLAUDECODE;
       const proc = pty__namespace.spawn(shell, [], {
         cwd,
         cols,
         rows,
-        name: "xterm-256color"
+        name: "xterm-256color",
+        env
       });
       return {
         pid: proc.pid,
