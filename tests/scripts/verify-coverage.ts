@@ -122,15 +122,12 @@ function extractTestIds(testsDir: string): Map<string, TestInfo> {
   const testMap = new Map<string, TestInfo>();
   const testFiles = findTestFiles(testsDir);
 
-  // 正则匹配 test('...') 和 test.todo('...')
-  const testPattern = /test\s*\(\s*['"`]([^'"`]+)['"`]/g;
-  const todoPattern = /test\.todo\s*\(\s*['"`]([^'"`]+)['"`]/g;
-
   for (const file of testFiles) {
     const content = fs.readFileSync(file, 'utf-8');
     const lines = content.split('\n');
     const relPath = path.relative(PROJECT_ROOT, file);
 
+    // ── Pass 1: 静态 test('ID: ...') 和 test.todo('ID: ...') ──
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
 
@@ -150,6 +147,32 @@ function extractTestIds(testsDir: string): Map<string, TestInfo> {
         const id = extractTestId(match[1]);
         if (id) {
           testMap.set(id, { id, file: relPath, line: i + 1, isTodo: false });
+        }
+      }
+    }
+
+    // ── Pass 2: test.each(...)('$id: ...') 从 JSON spec 动态注入 ──
+    // 检测 import xxxSpec from '...spec.json' + test.each(...)('$id
+    const hasTestEachWithId = /test\.each\s*\([^)]*\)\s*\(\s*['"`]\$id/.test(content);
+    if (hasTestEachWithId) {
+      const importRe = /import\s+(\w+)\s+from\s+['"]([^'"]*\.spec\.json)['"]/g;
+      let importMatch: RegExpExecArray | null;
+      while ((importMatch = importRe.exec(content)) !== null) {
+        const specRelImport = importMatch[2];
+        const resolvedSpec = path.resolve(path.dirname(file), specRelImport);
+        if (fs.existsSync(resolvedSpec)) {
+          try {
+            const specContent = JSON.parse(fs.readFileSync(resolvedSpec, 'utf-8'));
+            if (specContent.cases && Array.isArray(specContent.cases)) {
+              for (const c of specContent.cases) {
+                if (c.id && !testMap.has(c.id)) {
+                  testMap.set(c.id, { id: c.id, file: relPath, line: 0, isTodo: false });
+                }
+              }
+            }
+          } catch {
+            // skip malformed JSON
+          }
         }
       }
     }
