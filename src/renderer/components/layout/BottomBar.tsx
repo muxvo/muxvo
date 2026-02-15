@@ -1,17 +1,31 @@
 /**
  * BottomBar — Bottom control bar for terminal management
  * DEV-PLAN A1: 底部控制栏
- *
- * Will show: terminal count, active terminal indicator, new terminal button
- * Full implementation comes with A2 (node-pty) and A4 (grid layout)
+ * DEV-PLAN A4: Terminal count display + new terminal button
  */
 
 import './BottomBar.css';
 
-export function BottomBar(): JSX.Element {
+interface Props {
+  terminalCount?: number;
+  onAddTerminal?: () => void;
+}
+
+export function BottomBar({ terminalCount = 0, onAddTerminal }: Props): JSX.Element {
   return (
     <footer className="bottom-bar">
-      <span className="bottom-bar-info">No terminals</span>
+      <span className="bottom-bar-info">
+        {terminalCount === 0 ? 'No terminals' : `${terminalCount} terminal${terminalCount > 1 ? 's' : ''}`}
+      </span>
+      {onAddTerminal && (
+        <button
+          className="bottom-bar-add"
+          onClick={onAddTerminal}
+          title="New terminal"
+        >
+          +
+        </button>
+      )}
     </footer>
   );
 }

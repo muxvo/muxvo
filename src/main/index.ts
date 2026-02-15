@@ -12,6 +12,9 @@
 import { app, BrowserWindow, shell } from 'electron';
 import { join } from 'path';
 import { is } from '@electron-toolkit/utils';
+import { createTerminalManager } from './services/terminal/manager';
+import { createRealPtyAdapter } from './services/terminal/pty-adapter';
+import { registerTerminalHandlers } from './ipc/terminal-handlers';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -49,7 +52,16 @@ function createWindow(): void {
   }
 }
 
+let terminalManager: ReturnType<typeof createTerminalManager> | null = null;
+
 app.whenReady().then(() => {
+  // Initialize PTY adapter and terminal manager
+  const ptyAdapter = createRealPtyAdapter();
+  terminalManager = createTerminalManager({ pty: ptyAdapter });
+
+  // Register terminal IPC handlers
+  registerTerminalHandlers(terminalManager);
+
   createWindow();
 
   app.on('activate', () => {
@@ -60,6 +72,11 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
+  // Clean up all terminal processes
+  if (terminalManager) {
+    terminalManager.closeAll();
+  }
+
   if (process.platform !== 'darwin') {
     app.quit();
   }
