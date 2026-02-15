@@ -21,11 +21,16 @@ export interface PtyAdapter {
 export function createRealPtyAdapter(): PtyAdapter {
   return {
     spawn(shell, cwd, cols, rows) {
+      // Clean env: remove CLAUDECODE to allow running Claude Code in spawned terminals
+      const env = { ...process.env };
+      delete env.CLAUDECODE;
+
       const proc = pty.spawn(shell, [], {
         cwd,
         cols,
         rows,
         name: 'xterm-256color',
+        env,
       });
       return {
         pid: proc.pid,
