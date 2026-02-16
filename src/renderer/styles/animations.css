@@ -1,0 +1,51 @@
+/* Muxvo Shared Animations */
+/* Extracted from prototype-history-A.html */
+
+/* Background gradient ambient drift */
+@keyframes ambientDrift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  33% {
+    transform: translate(2%, -1%);
+  }
+  66% {
+    transform: translate(-1%, 2%);
+  }
+}
+
+/* Status dot breathing pulse */
+@keyframes statusPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 6px var(--success);
+  }
+  50% {
+    box-shadow: 0 0 12px var(--success), 0 0 24px rgba(74, 222, 128, 0.3);
+  }
+}
+
+/* Tile enter animation (opacity + translateY) */
+@keyframes tileEnter {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Float panel enter animation */
+@keyframes floatIn {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

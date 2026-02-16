@@ -92,7 +92,7 @@ export function ProjectList({ onSelectProject, selectedProject }: ProjectListPro
         className={`project-list__item ${selectedProject === null ? 'project-list__item--selected' : ''}`}
         onClick={() => onSelectProject(null)}
       >
-        <span className="project-list__dot" style={{ background: '#007acc' }} />
+        <span className="project-list__dot" style={{ background: 'var(--accent)' }} />
         <span className="project-list__name">全部项目</span>
         <span className="project-list__count">{totalCount}</span>
       </div>
