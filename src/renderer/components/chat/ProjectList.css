@@ -1,0 +1,54 @@
+/**
+ * ProjectList Styles
+ */
+
+.project-list {
+  padding: 8px 0;
+}
+
+.project-list__header {
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #858585;
+  letter-spacing: 0.5px;
+}
+
+.project-list__item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  gap: 8px;
+}
+
+.project-list__item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.project-list__item--selected {
+  background: rgba(74, 158, 255, 0.15);
+}
+
+.project-list__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.project-list__name {
+  flex: 1;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-list__count {
+  font-size: 11px;
+  color: #858585;
+  flex-shrink: 0;
+}
