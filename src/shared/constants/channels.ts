@@ -16,6 +16,7 @@ export const IPC_CHANNELS = {
     LIST: 'terminal:list',
     GET_STATE: 'terminal:get-state',
     GET_BUFFER: 'terminal:get-buffer',
+    UPDATE_CWD: 'terminal:update-cwd',
   },
   FS: {
     READ_DIR: 'fs:read-dir',

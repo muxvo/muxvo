@@ -65,8 +65,14 @@ export function App(): JSX.Element {
     });
 
     // Listen for restored terminal list (after app restart)
-    const unsubListUpdated = window.api.terminal.onListUpdated?.((list) => {
-      setTerminals(list);
+    const unsubListUpdated = window.api.terminal.onListUpdated?.((list: any[]) => {
+      // Map list to TerminalEntry with cwd
+      const entries = list.map((info: any) => ({
+        id: info.id,
+        state: info.state,
+        cwd: info.cwd || '/',
+      }));
+      setTerminals(entries);
     });
 
     return () => {
@@ -80,7 +86,7 @@ export function App(): JSX.Element {
     const home = typeof process !== 'undefined' && process.env?.HOME ? process.env.HOME : '/';
     const result = await window.api.terminal.create(home);
     if (result?.success && result.data) {
-      setTerminals((prev) => [...prev, { id: result.data.id, state: 'Running' }]);
+      setTerminals((prev) => [...prev, { id: result.data.id, state: 'Running', cwd: home }]);
     }
   }, []);
 
@@ -126,6 +132,12 @@ export function App(): JSX.Element {
     setSelectedId(id);
   }, []);
 
+  const handleCwdChange = useCallback((id: string, newCwd: string) => {
+    setTerminals((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, cwd: newCwd } : t))
+    );
+  }, []);
+
   // Esc key exits focused mode (only when focus is on UI, not inside terminal)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent): void {
@@ -167,6 +179,7 @@ export function App(): JSX.Element {
           onDoubleClick={handleDoubleClick}
           onSidebarClick={handleSidebarClick}
           onClick={handleTileClick}
+          onCwdChange={handleCwdChange}
         />
       </main>
       <BottomBar

@@ -33,6 +33,8 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.GET_STATE, { id }),
     getForegroundProcess: (id: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.GET_FOREGROUND_PROCESS, { id }),
+    updateCwd: (id: string, cwd: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.UPDATE_CWD, { id, cwd }),
     onOutput: (callback: (data: { id: string; data: string }) => void) => {
       const handler = (_event: Electron.IpcRendererEvent, data: { id: string; data: string }) => callback(data);
       ipcRenderer.on(IPC_CHANNELS.TERMINAL.OUTPUT, handler);
@@ -67,11 +69,18 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.APP.SAVE_PREFERENCES, prefs),
     detectCliTools: () =>
       ipcRenderer.invoke(IPC_CHANNELS.APP.DETECT_CLI_TOOLS),
+    getHomePath: () => process.env.HOME || process.env.USERPROFILE || '/',
     onMemoryWarning: (callback: (data: { usage: number }) => void) => {
       const handler = (_event: Electron.IpcRendererEvent, data: { usage: number }) => callback(data);
       ipcRenderer.on(IPC_CHANNELS.APP.MEMORY_WARNING, handler);
       return () => ipcRenderer.removeListener(IPC_CHANNELS.APP.MEMORY_WARNING, handler);
     },
+  },
+
+  // --- FS domain ---
+  fs: {
+    selectDirectory: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.FS.SELECT_DIRECTORY),
   },
 };
 

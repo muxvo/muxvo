@@ -11,7 +11,7 @@
  * - Config persistence (save on close, restore on launch)
  */
 
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron';
 import { join } from 'path';
 import { is } from '@electron-toolkit/utils';
 import { createTerminalManager } from './services/terminal/manager';
@@ -105,6 +105,15 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC_CHANNELS.APP.SAVE_CONFIG, async (_event, config) => {
     const result = configManager.saveConfig(config);
     return { success: true, data: result };
+  });
+
+  // Register fs:select-directory handler
+  ipcMain.handle(IPC_CHANNELS.FS.SELECT_DIRECTORY, async () => {
+    const result = await dialog.showOpenDialog({ properties: ['openDirectory'] });
+    if (result.canceled || result.filePaths.length === 0) {
+      return { success: false };
+    }
+    return { success: true, data: result.filePaths[0] };
   });
 
   // Create window and restore terminals from config
