@@ -1,0 +1,85 @@
+/* UnsavedPromptDialog — Modal confirmation for unsaved changes */
+
+.unsaved-prompt-dialog__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unsaved-prompt-dialog {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  width: 380px;
+  box-shadow: var(--shadow-dialog);
+}
+
+.unsaved-prompt-dialog__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.unsaved-prompt-dialog__message {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.unsaved-prompt-dialog__filename {
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+
+.unsaved-prompt-dialog__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.unsaved-prompt-dialog__btn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: all 0.15s;
+}
+
+.unsaved-prompt-dialog__btn--save {
+  background: var(--accent);
+  color: var(--bg-deep);
+  border-color: var(--accent);
+}
+.unsaved-prompt-dialog__btn--save:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.unsaved-prompt-dialog__btn--discard {
+  background: transparent;
+  color: var(--error);
+  border-color: var(--error);
+}
+.unsaved-prompt-dialog__btn--discard:hover {
+  background: var(--error);
+  color: var(--bg-deep);
+}
+
+.unsaved-prompt-dialog__btn--cancel {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+.unsaved-prompt-dialog__btn--cancel:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}

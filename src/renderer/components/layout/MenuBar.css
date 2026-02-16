@@ -2,34 +2,83 @@
   height: var(--menu-bar-height);
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary, var(--bg-primary));
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--border);
+  padding: 0 12px;
+  gap: 2px;
   position: relative;
   user-select: none;
+  z-index: 300;
+  flex-shrink: 0;
 }
 
-.menu-bar-drag-region {
+.menu-bar__drag-region {
   position: absolute;
   inset: 0;
   -webkit-app-region: drag;
 }
 
-.menu-bar-title {
+.menu-bar__title {
   font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
   pointer-events: none;
   z-index: 1;
+  margin-right: 8px;
+  /* leave space for macOS traffic lights */
+  margin-left: 72px;
 }
 
-.menu-bar-back-btn {
+.menu-bar__tabs {
+  display: flex;
+  gap: 2px;
+  z-index: 2;
+  -webkit-app-region: no-drag;
+}
+
+.menu-bar__tab {
+  padding: 5px 14px;
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-sans);
+  position: relative;
+  background: transparent;
+  border: none;
+}
+
+.menu-bar__tab:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.menu-bar__tab--active {
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+
+.menu-bar__badge {
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--accent-glow);
+  color: var(--accent);
+  padding: 0 5px;
+  border-radius: 8px;
+  margin-left: 6px;
+}
+
+.menu-bar__back-btn {
   position: absolute;
   right: 12px;
   z-index: 2;
   -webkit-app-region: no-drag;
   background: transparent;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border);
   color: var(--text-secondary);
   font-size: 11px;
   padding: 2px 8px;
@@ -38,7 +87,7 @@
   transition: background 150ms, color 150ms;
 }
 
-.menu-bar-back-btn:hover {
-  background: var(--bg-hover, rgba(255, 255, 255, 0.08));
-  color: var(--text-primary, #ccc);
+.menu-bar__back-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }

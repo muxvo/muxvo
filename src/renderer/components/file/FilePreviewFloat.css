@@ -1,0 +1,139 @@
+/* FilePreviewFloat — Floating file preview window */
+
+.file-preview-float {
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  width: 480px;
+  max-height: 80vh;
+  background: var(--bg-elevated);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  z-index: 250;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow-elevated);
+  animation: file-preview-float-in 0.2s ease;
+}
+
+@keyframes file-preview-float-in {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* === Header === */
+.file-preview-float__header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.file-preview-float__filename {
+  flex: 1;
+}
+.file-preview-float__tag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+.file-preview-float__tag--markdown {
+  background: var(--accent-glow);
+  color: var(--info);
+}
+.file-preview-float__tag--code {
+  background: var(--accent-glow);
+  color: var(--purple);
+}
+.file-preview-float__tag--text {
+  background: var(--accent-glow);
+  color: var(--text-secondary);
+}
+.file-preview-float__close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--accent);
+  background: var(--accent-muted);
+  border: 1px solid var(--accent-glow);
+  font-size: 15px;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.file-preview-float__close:hover {
+  background: var(--accent-glow);
+  color: var(--accent-hover);
+}
+
+/* === Content === */
+.file-preview-float__content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.file-preview-float__text {
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+/* === Code view === */
+.file-preview-float__code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-primary);
+}
+.file-preview-float__code-line {
+  display: flex;
+  gap: 16px;
+}
+.file-preview-float__code-num {
+  color: var(--text-muted);
+  width: 30px;
+  text-align: right;
+  flex-shrink: 0;
+  user-select: none;
+}
+.file-preview-float__code-text {
+  flex: 1;
+}
+
+/* Code syntax highlight classes */
+.code-kw {
+  color: var(--purple);
+}
+.code-str {
+  color: var(--success);
+}
+.code-fn {
+  color: var(--info);
+}
+.code-cm {
+  color: var(--text-muted);
+}
+.code-tp {
+  color: var(--cyan);
+}

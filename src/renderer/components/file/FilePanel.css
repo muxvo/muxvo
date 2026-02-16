@@ -1,0 +1,123 @@
+/* FilePanel — Right slide-out file sidebar */
+
+/* === Overlay === */
+.file-panel-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+}
+
+/* === Container === */
+.file-panel {
+  position: fixed;
+  top: var(--menu-bar-height, 36px);
+  right: 0;
+  bottom: 0;
+  width: 320px;
+  background: var(--bg-card);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-left: 1px solid var(--border);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: -8px 0 48px rgba(0, 0, 0, 0.5);
+}
+.file-panel--open {
+  transform: translateX(0);
+}
+
+/* === Header === */
+.file-panel__header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.file-panel__title {
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.file-panel__title-name {
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+.file-panel__close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--accent);
+  background: var(--accent-muted);
+  border: 1px solid var(--accent-glow);
+  font-size: 15px;
+  font-weight: 700;
+  transition: all 0.15s;
+}
+.file-panel__close:hover {
+  background: var(--accent-glow);
+  color: var(--accent-hover);
+}
+
+/* === File list === */
+.file-panel__content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+/* === FileItem shared styles === */
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.1s;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.file-item:hover {
+  background: var(--bg-hover);
+}
+.file-item--active {
+  background: var(--accent-glow);
+}
+.file-item__icon {
+  font-size: 14px;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.file-item__name {
+  color: var(--text-primary);
+  flex: 1;
+}
+.file-item__meta {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+.file-item--folder .file-item__name {
+  color: var(--accent);
+}
+.file-item--new .file-item__name {
+  color: var(--success);
+}
+.file-item__badge {
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--success);
+  background: var(--accent-glow);
+  padding: 1px 4px;
+  border-radius: 3px;
+}

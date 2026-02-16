@@ -1,0 +1,57 @@
+/* FloatingControls — Bottom floating pill bar */
+
+.floating-controls {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  background: rgba(22, 27, 34, 0.75);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  z-index: 200;
+  box-shadow: var(--shadow-elevated);
+}
+
+.floating-controls__btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-sans);
+}
+
+.floating-controls__btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.floating-controls__btn--accent {
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+
+.floating-controls__btn--accent:hover {
+  background: var(--accent);
+  color: var(--bg-deep);
+}
+
+.floating-controls__count {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+}
