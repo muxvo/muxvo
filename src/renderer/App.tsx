@@ -53,9 +53,15 @@ export function App(): JSX.Element {
       );
     });
 
+    // Listen for restored terminal list (after app restart)
+    const unsubListUpdated = window.api.terminal.onListUpdated?.((list) => {
+      setTerminals(list);
+    });
+
     return () => {
       unsubExit();
       unsubState();
+      unsubListUpdated?.();
     };
   }, []);
 

@@ -21,6 +21,7 @@ import { initConfigDir, createConfigManager } from './services/app/config';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 
 let mainWindow: BrowserWindow | null = null;
+let lastBounds: Electron.Rectangle | null = null;
 
 interface WindowConfig {
   width: number;
@@ -54,6 +55,13 @@ function createWindow(windowConfig?: WindowConfig): void {
 
   mainWindow.on('ready-to-show', () => {
     mainWindow?.show();
+  });
+
+  // Cache bounds before window is destroyed (for config persistence)
+  mainWindow.on('close', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      lastBounds = mainWindow.getBounds();
+    }
   });
 
   // Open external links in default browser
@@ -100,17 +108,26 @@ app.whenReady().then(() => {
   // Create window with restored position/size
   createWindow(savedConfig.window);
 
-  // Restore terminals from config
-  if (savedConfig.openTerminals && savedConfig.openTerminals.length > 0) {
-    for (const terminal of savedConfig.openTerminals) {
-      terminalManager.spawn({ cwd: terminal.cwd });
-    }
-    // Notify renderer about restored terminals
-    if (mainWindow) {
-      mainWindow.webContents.once('did-finish-load', () => {
-        mainWindow?.webContents.send(IPC_CHANNELS.TERMINAL.LIST);
-      });
-    }
+  // Restore terminals after renderer is ready (so output events are received)
+  if (savedConfig.openTerminals && savedConfig.openTerminals.length > 0 && mainWindow) {
+    const terminalsToRestore = savedConfig.openTerminals;
+    mainWindow.webContents.once('did-finish-load', () => {
+      // Small delay to ensure React has mounted and useEffect listeners are active
+      setTimeout(() => {
+        if (!terminalManager) return;
+        for (const terminal of terminalsToRestore) {
+          terminalManager.spawn({ cwd: terminal.cwd });
+        }
+        // Notify renderer to refresh terminal list
+        const win = BrowserWindow.getAllWindows()[0];
+        if (win) {
+          const list = terminalManager.list();
+          win.webContents.send('terminal:list-updated', list.map((t) => ({
+            id: t.id, state: t.state,
+          })));
+        }
+      }, 500);
+    });
   }
 
   app.on('activate', () => {
@@ -131,21 +148,25 @@ function saveTerminalConfig(configManager: ReturnType<typeof createConfigManager
 
 /** Save full state (window bounds + terminals) to config before closing */
 function saveCurrentConfig(): void {
-  if (!mainWindow || !terminalManager) return;
+  if (!terminalManager) return;
 
   const configManager = createConfigManager();
-  const bounds = mainWindow.getBounds();
   const terminals = terminalManager.list();
-
-  configManager.saveConfig({
-    window: {
-      width: bounds.width,
-      height: bounds.height,
-      x: bounds.x,
-      y: bounds.y,
-    },
+  const config: Record<string, unknown> = {
     openTerminals: terminals.map((t) => ({ cwd: t.cwd })),
-  });
+  };
+
+  // Use cached bounds (saved in 'close' event before window is destroyed)
+  if (lastBounds) {
+    config.window = {
+      width: lastBounds.width,
+      height: lastBounds.height,
+      x: lastBounds.x,
+      y: lastBounds.y,
+    };
+  }
+
+  configManager.saveConfig(config);
 }
 
 app.on('window-all-closed', () => {
