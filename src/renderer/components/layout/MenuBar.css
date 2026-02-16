@@ -22,3 +22,23 @@
   pointer-events: none;
   z-index: 1;
 }
+
+.menu-bar-back-btn {
+  position: absolute;
+  right: 12px;
+  z-index: 2;
+  -webkit-app-region: no-drag;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 150ms, color 150ms;
+}
+
+.menu-bar-back-btn:hover {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.08));
+  color: var(--text-primary, #ccc);
+}

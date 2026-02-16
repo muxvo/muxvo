@@ -3,6 +3,7 @@
  * DEV-PLAN A1: 主窗口布局（菜单栏 36px + 内容区 + 底部控制栏）
  * DEV-PLAN A4: Terminal grid integration
  * DEV-PLAN A5: Terminal lifecycle (max 20, close confirm)
+ * DEV-PLAN B1/B2: Focus mode with Esc exit + sidebar switching
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -27,6 +28,9 @@ interface CloseConfirmState {
 
 export function App(): JSX.Element {
   const [terminals, setTerminals] = useState<TerminalEntry[]>([]);
+  const [viewMode, setViewMode] = useState<'Tiling' | 'Focused'>('Tiling');
+  const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [closeConfirm, setCloseConfirm] = useState<CloseConfirmState>({
     open: false,
     terminalId: '',
@@ -97,13 +101,66 @@ export function App(): JSX.Element {
     setCloseConfirm({ open: false, terminalId: '', processName: '' });
   }, []);
 
+  const handleDoubleClick = useCallback((id: string) => {
+    setViewMode('Focused');
+    setFocusedId(id);
+  }, []);
+
+  const handleBackToTiling = useCallback(() => {
+    setViewMode('Tiling');
+    setFocusedId(null);
+  }, []);
+
+  const handleSidebarClick = useCallback((id: string) => {
+    setFocusedId(id);
+  }, []);
+
+  const handleTileClick = useCallback((id: string) => {
+    setSelectedId(id);
+  }, []);
+
+  // Esc key exits focused mode (only when focus is on UI, not inside terminal)
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent): void {
+      if (e.key === 'Escape' && viewMode === 'Focused') {
+        // Only handle Esc if focus is NOT inside a terminal xterm element
+        const active = document.activeElement;
+        const isInTerminal = active?.closest('.xterm') !== null;
+        if (!isInTerminal) {
+          handleBackToTiling();
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [viewMode, handleBackToTiling]);
+
+  // Clear focused state if the focused terminal is removed
+  useEffect(() => {
+    if (focusedId && !terminals.find((t) => t.id === focusedId)) {
+      setViewMode('Tiling');
+      setFocusedId(null);
+    }
+    if (selectedId && !terminals.find((t) => t.id === selectedId)) {
+      setSelectedId(null);
+    }
+  }, [terminals, focusedId, selectedId]);
+
   const maxReached = terminals.length >= MAX_TERMINALS;
 
   return (
     <div className="app">
-      <MenuBar />
+      <MenuBar viewMode={viewMode} onBackToTiling={handleBackToTiling} />
       <main className="app-content">
-        <TerminalGrid terminals={terminals} />
+        <TerminalGrid
+          terminals={terminals}
+          viewMode={viewMode}
+          focusedId={focusedId}
+          selectedId={selectedId}
+          onDoubleClick={handleDoubleClick}
+          onSidebarClick={handleSidebarClick}
+          onClick={handleTileClick}
+        />
       </main>
       <BottomBar
         terminalCount={terminals.length}
