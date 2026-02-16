@@ -35,7 +35,8 @@ const IPC_CHANNELS = {
     EXIT: "terminal:exit",
     GET_FOREGROUND_PROCESS: "terminal:get-foreground-process",
     LIST: "terminal:list",
-    GET_STATE: "terminal:get-state"
+    GET_STATE: "terminal:get-state",
+    GET_BUFFER: "terminal:get-buffer"
   },
   FS: {
     READ_DIR: "fs:read-dir",
@@ -186,6 +187,8 @@ const MAX_TERMINALS = 20;
 const GRACEFUL_CLOSE_TIMEOUT = 5e3;
 function createTerminalManager(deps) {
   const terminals = /* @__PURE__ */ new Map();
+  const OUTPUT_BUFFER_MAX_BYTES = 64 * 1024;
+  const outputBuffers = /* @__PURE__ */ new Map();
   const ptyAdapter = deps?.pty;
   function pushStateChange(id, state, processName) {
     const win = electron.BrowserWindow.getAllWindows()[0];
@@ -219,6 +222,10 @@ function createTerminalManager(deps) {
         terminals.set(id, { id, process: proc, cwd: options.cwd, machine });
         pushStateChange(id, machine.state);
         proc.onData((data) => {
+          const existing = outputBuffers.get(id) ?? "";
+          const updated = existing + data;
+          outputBuffers.set(id, updated.length > OUTPUT_BUFFER_MAX_BYTES ? updated.slice(updated.length - OUTPUT_BUFFER_MAX_BYTES) : updated);
+          console.log(`[MUXVO:restore] buffer append id=${id} bytes=${data.length} total=${outputBuffers.get(id).length}`);
           const win = electron.BrowserWindow.getAllWindows()[0];
           if (win) {
             win.webContents.send(IPC_CHANNELS.TERMINAL.OUTPUT, { id, data });
@@ -237,6 +244,7 @@ function createTerminalManager(deps) {
           }
           pushStateChange(id, machine.state);
           terminals.delete(id);
+          outputBuffers.delete(id);
         });
         return { success: true, state: machine.state, id, pid: proc.pid };
       } catch {
@@ -279,6 +287,7 @@ function createTerminalManager(deps) {
       pushStateChange(id, terminal.machine.state);
       terminal.process.kill();
       terminals.delete(id);
+      outputBuffers.delete(id);
       return { success: true };
     }
     terminal.machine.send("CLOSE");
@@ -288,11 +297,13 @@ function createTerminalManager(deps) {
       const timeout = setTimeout(() => {
         terminal.process.kill();
         terminals.delete(id);
+        outputBuffers.delete(id);
         resolve({ success: true });
       }, GRACEFUL_CLOSE_TIMEOUT);
       terminal.process.onExit(() => {
         clearTimeout(timeout);
         terminals.delete(id);
+        outputBuffers.delete(id);
         resolve({ success: true });
       });
     });
@@ -320,9 +331,14 @@ function createTerminalManager(deps) {
     for (const [id, terminal] of terminals) {
       terminal.process.kill();
       terminals.delete(id);
+      outputBuffers.delete(id);
     }
   }
-  return { spawn, write, resize, close, list, getState, getForegroundProcess, closeAll };
+  function getBuffer(id) {
+    console.log(`[MUXVO:restore] getBuffer id=${id} bytes=${(outputBuffers.get(id) ?? "").length}`);
+    return outputBuffers.get(id) ?? "";
+  }
+  return { spawn, write, resize, close, list, getState, getForegroundProcess, closeAll, getBuffer };
 }
 function isValidCwd(cwd) {
   return !cwd.includes("nonexistent");
@@ -393,6 +409,10 @@ function registerTerminalHandlers(manager, onTerminalChange) {
       return { success: false, error: "Terminal not found" };
     }
     return { success: true, data: info };
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.TERMINAL.GET_BUFFER, async (_event, req) => {
+    const data = manager.getBuffer(req.id);
+    return { success: true, data };
   });
 }
 const DEFAULT_CONFIG = {
@@ -524,12 +544,14 @@ electron.app.whenReady().then(() => {
   if (savedConfig.openTerminals && savedConfig.openTerminals.length > 0 && mainWindow) {
     const terminalsToRestore = savedConfig.openTerminals;
     mainWindow.webContents.once("did-finish-load", () => {
+      console.log("[MUXVO:restore] did-finish-load, scheduling restore in 500ms");
       setTimeout(() => {
         if (!terminalManager) return;
         const restoredIds = [];
         for (const terminal of terminalsToRestore) {
           const result = terminalManager.spawn({ cwd: terminal.cwd });
           if (result.success && result.id) {
+            console.log("[MUXVO:restore] spawned id=" + result.id + " cwd=" + terminal.cwd);
             restoredIds.push(result.id);
           }
         }
@@ -540,12 +562,8 @@ electron.app.whenReady().then(() => {
             id: t.id,
             state: t.state
           })));
+          console.log("[MUXVO:restore] sent list-updated, count=" + restoredIds.length);
         }
-        setTimeout(() => {
-          for (const id of restoredIds) {
-            terminalManager.write(id, "\n");
-          }
-        }, 1e3);
       }, 500);
     });
   }

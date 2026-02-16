@@ -11,7 +11,8 @@ const IPC_CHANNELS = {
     EXIT: "terminal:exit",
     GET_FOREGROUND_PROCESS: "terminal:get-foreground-process",
     LIST: "terminal:list",
-    GET_STATE: "terminal:get-state"
+    GET_STATE: "terminal:get-state",
+    GET_BUFFER: "terminal:get-buffer"
   },
   APP: {
     GET_CONFIG: "app:get-config",
@@ -30,6 +31,7 @@ const api = {
     resize: (id, cols, rows) => electron.ipcRenderer.send(IPC_CHANNELS.TERMINAL.RESIZE, { id, cols, rows }),
     close: (id, force) => electron.ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.CLOSE, { id, force }),
     list: () => electron.ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.LIST),
+    getBuffer: (id) => electron.ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.GET_BUFFER, { id }),
     getState: (id) => electron.ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.GET_STATE, { id }),
     getForegroundProcess: (id) => electron.ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.GET_FOREGROUND_PROCESS, { id }),
     onOutput: (callback) => {

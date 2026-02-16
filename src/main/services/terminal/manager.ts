@@ -45,6 +45,8 @@ interface TerminalManagerDeps {
 
 export function createTerminalManager(deps?: TerminalManagerDeps) {
   const terminals = new Map<string, ManagedTerminal>();
+  const OUTPUT_BUFFER_MAX_BYTES = 64 * 1024;
+  const outputBuffers = new Map<string, string>();
   const ptyAdapter = deps?.pty;
 
   function pushStateChange(id: string, state: string, processName?: string): void {
@@ -91,6 +93,11 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
 
         // Push terminal output to renderer
         proc.onData((data) => {
+          const existing = outputBuffers.get(id) ?? '';
+          const updated = existing + data;
+          outputBuffers.set(id, updated.length > OUTPUT_BUFFER_MAX_BYTES ? updated.slice(updated.length - OUTPUT_BUFFER_MAX_BYTES) : updated);
+          console.log(`[MUXVO:restore] buffer append id=${id} bytes=${data.length} total=${outputBuffers.get(id)!.length}`);
+
           const win = BrowserWindow.getAllWindows()[0];
           if (win) {
             win.webContents.send(IPC_CHANNELS.TERMINAL.OUTPUT, { id, data });
@@ -115,6 +122,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
 
           pushStateChange(id, machine.state);
           terminals.delete(id);
+          outputBuffers.delete(id);
         });
 
         return { success: true, state: machine.state, id, pid: proc.pid };
@@ -165,6 +173,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
       pushStateChange(id, terminal.machine.state);
       terminal.process.kill();
       terminals.delete(id);
+      outputBuffers.delete(id);
       return { success: true };
     }
 
@@ -178,12 +187,14 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
         // Timeout — force kill
         terminal.process.kill();
         terminals.delete(id);
+        outputBuffers.delete(id);
         resolve({ success: true });
       }, GRACEFUL_CLOSE_TIMEOUT);
 
       terminal.process.onExit(() => {
         clearTimeout(timeout);
         terminals.delete(id);
+        outputBuffers.delete(id);
         resolve({ success: true });
       });
     });
@@ -215,10 +226,16 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
     for (const [id, terminal] of terminals) {
       terminal.process.kill();
       terminals.delete(id);
+      outputBuffers.delete(id);
     }
   }
 
-  return { spawn, write, resize, close, list, getState, getForegroundProcess, closeAll };
+  function getBuffer(id: string): string {
+    console.log(`[MUXVO:restore] getBuffer id=${id} bytes=${(outputBuffers.get(id) ?? '').length}`);
+    return outputBuffers.get(id) ?? '';
+  }
+
+  return { spawn, write, resize, close, list, getState, getForegroundProcess, closeAll, getBuffer };
 }
 
 function isValidCwd(cwd: string): boolean {

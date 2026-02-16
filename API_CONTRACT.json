@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-16T06:42:16.792Z",
+  "generatedAt": "2026-02-16T07:48:23.882Z",
   "projectPath": "/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo",
   "totalApis": 7,
   "scannedFiles": 202,
@@ -27,20 +27,20 @@
       },
       {
         "path": "{变量:id}",
-        "method": "DELETE",
+        "method": "GET",
         "file": "main/services/terminal/manager.ts",
-        "line": 117,
-        "functionName": "terminals.delete",
+        "line": 96,
+        "functionName": "outputBuffers.get",
         "params": [],
         "responseFields": [],
         "category": "API 服务"
       },
       {
         "path": "{变量:id}",
-        "method": "GET",
+        "method": "DELETE",
         "file": "main/services/terminal/manager.ts",
-        "line": 139,
-        "functionName": "terminals.get",
+        "line": 124,
+        "functionName": "terminals.delete",
         "params": [],
         "responseFields": [],
         "category": "API 服务"
@@ -102,20 +102,20 @@
     },
     {
       "path": "{变量:id}",
-      "method": "DELETE",
+      "method": "GET",
       "file": "main/services/terminal/manager.ts",
-      "line": 117,
-      "functionName": "terminals.delete",
+      "line": 96,
+      "functionName": "outputBuffers.get",
       "params": [],
       "responseFields": [],
       "category": "API 服务"
     },
     {
       "path": "{变量:id}",
-      "method": "GET",
+      "method": "DELETE",
       "file": "main/services/terminal/manager.ts",
-      "line": 139,
-      "functionName": "terminals.get",
+      "line": 124,
+      "functionName": "terminals.delete",
       "params": [],
       "responseFields": [],
       "category": "API 服务"
