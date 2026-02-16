@@ -12,7 +12,11 @@ const IPC_CHANNELS = {
     GET_FOREGROUND_PROCESS: "terminal:get-foreground-process",
     LIST: "terminal:list",
     GET_STATE: "terminal:get-state",
-    GET_BUFFER: "terminal:get-buffer"
+    GET_BUFFER: "terminal:get-buffer",
+    UPDATE_CWD: "terminal:update-cwd"
+  },
+  FS: {
+    SELECT_DIRECTORY: "fs:select-directory"
   },
   APP: {
     GET_CONFIG: "app:get-config",
@@ -34,6 +38,7 @@ const api = {
     getBuffer: (id) => electron.ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.GET_BUFFER, { id }),
     getState: (id) => electron.ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.GET_STATE, { id }),
     getForegroundProcess: (id) => electron.ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.GET_FOREGROUND_PROCESS, { id }),
+    updateCwd: (id, cwd) => electron.ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.UPDATE_CWD, { id, cwd }),
     onOutput: (callback) => {
       const handler = (_event, data) => callback(data);
       electron.ipcRenderer.on(IPC_CHANNELS.TERMINAL.OUTPUT, handler);
@@ -62,11 +67,16 @@ const api = {
     getPreferences: () => electron.ipcRenderer.invoke(IPC_CHANNELS.APP.GET_PREFERENCES),
     savePreferences: (prefs) => electron.ipcRenderer.invoke(IPC_CHANNELS.APP.SAVE_PREFERENCES, prefs),
     detectCliTools: () => electron.ipcRenderer.invoke(IPC_CHANNELS.APP.DETECT_CLI_TOOLS),
+    getHomePath: () => process.env.HOME || process.env.USERPROFILE || "/",
     onMemoryWarning: (callback) => {
       const handler = (_event, data) => callback(data);
       electron.ipcRenderer.on(IPC_CHANNELS.APP.MEMORY_WARNING, handler);
       return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.APP.MEMORY_WARNING, handler);
     }
+  },
+  // --- FS domain ---
+  fs: {
+    selectDirectory: () => electron.ipcRenderer.invoke(IPC_CHANNELS.FS.SELECT_DIRECTORY)
   }
 };
 electron.contextBridge.exposeInMainWorld("api", api);

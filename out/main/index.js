@@ -36,7 +36,8 @@ const IPC_CHANNELS = {
     GET_FOREGROUND_PROCESS: "terminal:get-foreground-process",
     LIST: "terminal:list",
     GET_STATE: "terminal:get-state",
-    GET_BUFFER: "terminal:get-buffer"
+    GET_BUFFER: "terminal:get-buffer",
+    UPDATE_CWD: "terminal:update-cwd"
   },
   FS: {
     READ_DIR: "fs:read-dir",
@@ -338,7 +339,13 @@ function createTerminalManager(deps) {
     console.log(`[MUXVO:restore] getBuffer id=${id} bytes=${(outputBuffers.get(id) ?? "").length}`);
     return outputBuffers.get(id) ?? "";
   }
-  return { spawn, write, resize, close, list, getState, getForegroundProcess, closeAll, getBuffer };
+  function updateCwd(id, newCwd) {
+    const terminal = terminals.get(id);
+    if (!terminal) return false;
+    terminal.cwd = newCwd;
+    return true;
+  }
+  return { spawn, write, resize, close, list, getState, getForegroundProcess, closeAll, getBuffer, updateCwd };
 }
 function isValidCwd(cwd) {
   return !cwd.includes("nonexistent");
@@ -413,6 +420,11 @@ function registerTerminalHandlers(manager, onTerminalChange) {
   electron.ipcMain.handle(IPC_CHANNELS.TERMINAL.GET_BUFFER, async (_event, req) => {
     const data = manager.getBuffer(req.id);
     return { success: true, data };
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.TERMINAL.UPDATE_CWD, async (_event, req) => {
+    const ok = manager.updateCwd(req.id, req.cwd);
+    onTerminalChange?.();
+    return { success: ok };
   });
 }
 const DEFAULT_CONFIG = {
@@ -539,6 +551,13 @@ electron.app.whenReady().then(() => {
   electron.ipcMain.handle(IPC_CHANNELS.APP.SAVE_CONFIG, async (_event, config) => {
     const result = configManager.saveConfig(config);
     return { success: true, data: result };
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.FS.SELECT_DIRECTORY, async () => {
+    const result = await electron.dialog.showOpenDialog({ properties: ["openDirectory"] });
+    if (result.canceled || result.filePaths.length === 0) {
+      return { success: false };
+    }
+    return { success: true, data: result.filePaths[0] };
   });
   function launchWindowWithTerminals() {
     const config = configManager.loadConfig();
