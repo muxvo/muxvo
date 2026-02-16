@@ -373,7 +373,7 @@ function registerTerminalHandlers(manager, onTerminalChange) {
     manager.resize(req.id, req.cols, req.rows);
   });
   electron.ipcMain.handle(IPC_CHANNELS.TERMINAL.CLOSE, async (_event, req) => {
-    const result = manager.close(req.id, req.force);
+    const result = await manager.close(req.id, req.force);
     onTerminalChange?.();
     return result;
   });
@@ -491,7 +491,7 @@ function createWindow(windowConfig) {
     if (mainWindow && !mainWindow.isDestroyed()) {
       lastBounds = mainWindow.getBounds();
     }
-    saveCurrentConfig();
+    saveWindowBounds();
   });
   mainWindow.webContents.setWindowOpenHandler((details) => {
     electron.shell.openExternal(details.url);
@@ -553,22 +553,19 @@ function saveTerminalConfig(configManager) {
     openTerminals: terminals.map((t) => ({ cwd: t.cwd }))
   });
 }
-function saveCurrentConfig() {
-  if (!terminalManager) return;
+function saveWindowBounds() {
+  if (!lastBounds) return;
   const configManager = createConfigManager();
-  const terminals = terminalManager.list();
-  const config = {
-    openTerminals: terminals.map((t) => ({ cwd: t.cwd }))
-  };
-  if (lastBounds) {
-    config.window = {
+  const existing = configManager.loadConfig();
+  configManager.saveConfig({
+    ...existing,
+    window: {
       width: lastBounds.width,
       height: lastBounds.height,
       x: lastBounds.x,
       y: lastBounds.y
-    };
-  }
-  configManager.saveConfig(config);
+    }
+  });
 }
 electron.app.on("window-all-closed", () => {
   if (terminalManager) {
