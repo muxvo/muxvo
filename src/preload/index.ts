@@ -81,6 +81,10 @@ const api = {
   fs: {
     selectDirectory: () =>
       ipcRenderer.invoke(IPC_CHANNELS.FS.SELECT_DIRECTORY),
+    readFile: (filePath: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.FS.READ_FILE, { path: filePath }),
+    writeFile: (filePath: string, content: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.FS.WRITE_FILE, { path: filePath, content }),
   },
 };
 
