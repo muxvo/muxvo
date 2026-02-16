@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-02-16T17:09:31.907Z",
+  "generatedAt": "2026-02-16T17:19:15.086Z",
   "projectPath": "/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo",
-  "totalApis": 7,
-  "scannedFiles": 214,
+  "totalApis": 8,
+  "scannedFiles": 222,
   "categories": {
     "API 服务": [
       {
@@ -77,6 +77,18 @@
         "responseFields": [],
         "category": "modules"
       }
+    ],
+    "组件": [
+      {
+        "path": "{变量:folderName}",
+        "method": "DELETE",
+        "file": "renderer/components/file/FilePanel.tsx",
+        "line": 82,
+        "functionName": "next.delete",
+        "params": [],
+        "responseFields": [],
+        "category": "组件"
+      }
     ]
   },
   "apis": [
@@ -149,6 +161,16 @@
       "params": [],
       "responseFields": [],
       "category": "modules"
+    },
+    {
+      "path": "{变量:folderName}",
+      "method": "DELETE",
+      "file": "renderer/components/file/FilePanel.tsx",
+      "line": 82,
+      "functionName": "next.delete",
+      "params": [],
+      "responseFields": [],
+      "category": "组件"
     }
   ]
 }
