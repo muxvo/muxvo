@@ -11,6 +11,7 @@ import { MenuBar } from './components/layout/MenuBar';
 import { BottomBar } from './components/layout/BottomBar';
 import { TerminalGrid } from './components/terminal/TerminalGrid';
 import { CloseConfirmDialog } from './components/terminal/CloseConfirmDialog';
+import { PanelProvider } from './contexts/PanelContext';
 import './App.css';
 
 const MAX_TERMINALS = 20;
@@ -168,32 +169,34 @@ export function App(): JSX.Element {
   const maxReached = terminals.length >= MAX_TERMINALS;
 
   return (
-    <div className="app">
-      <MenuBar viewMode={viewMode} onBackToTiling={handleBackToTiling} />
-      <main className="app-content">
-        <TerminalGrid
-          terminals={terminals}
-          viewMode={viewMode}
-          focusedId={focusedId}
-          selectedId={selectedId}
-          onDoubleClick={handleDoubleClick}
-          onSidebarClick={handleSidebarClick}
-          onClick={handleTileClick}
-          onCwdChange={handleCwdChange}
+    <PanelProvider>
+      <div className="app">
+        <MenuBar viewMode={viewMode} onBackToTiling={handleBackToTiling} />
+        <main className="app-content">
+          <TerminalGrid
+            terminals={terminals}
+            viewMode={viewMode}
+            focusedId={focusedId}
+            selectedId={selectedId}
+            onDoubleClick={handleDoubleClick}
+            onSidebarClick={handleSidebarClick}
+            onClick={handleTileClick}
+            onCwdChange={handleCwdChange}
+          />
+        </main>
+        <BottomBar
+          terminalCount={terminals.length}
+          onAddTerminal={addTerminal}
+          maxReached={maxReached}
         />
-      </main>
-      <BottomBar
-        terminalCount={terminals.length}
-        onAddTerminal={addTerminal}
-        maxReached={maxReached}
-      />
-      <CloseConfirmDialog
-        open={closeConfirm.open}
-        terminalId={closeConfirm.terminalId}
-        processName={closeConfirm.processName}
-        onConfirm={handleCloseConfirm}
-        onCancel={handleCloseCancel}
-      />
-    </div>
+        <CloseConfirmDialog
+          open={closeConfirm.open}
+          terminalId={closeConfirm.terminalId}
+          processName={closeConfirm.processName}
+          onConfirm={handleCloseConfirm}
+          onCancel={handleCloseCancel}
+        />
+      </div>
+    </PanelProvider>
   );
 }

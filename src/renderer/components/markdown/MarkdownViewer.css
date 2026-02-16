@@ -7,7 +7,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #1e1e1e;
+  background: var(--bg-primary);
   position: relative;
 }
 
@@ -17,16 +17,16 @@
   align-items: center;
   gap: 12px;
   padding: 4px 12px;
-  background: #252526;
-  border-bottom: 1px solid #3c3c3c;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 
 /* 模式切换按钮 */
 .markdown-viewer-mode-btn {
   background: transparent;
-  border: 1px solid #3c3c3c;
-  color: #858585;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
   font-size: 11px;
   padding: 2px 8px;
   border-radius: 4px;
@@ -35,14 +35,14 @@
 }
 
 .markdown-viewer-mode-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ccc;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 /* 文件路径显示 */
 .markdown-viewer-path {
   font-size: 11px;
-  color: #555;
+  color: var(--text-muted);
   font-family: monospace;
 }
 
@@ -59,11 +59,11 @@
 
 /* 未保存修改对话框 */
 .markdown-unsaved-dialog {
-  background: #2d2d2d;
-  border: 1px solid #3c3c3c;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 20px 24px;
-  color: #e5e5e5;
+  color: var(--text-primary);
   font-size: 14px;
   min-width: 300px;
 }
@@ -80,9 +80,9 @@
 }
 
 .markdown-unsaved-actions button {
-  background: #3c3c3c;
+  background: var(--bg-hover);
   border: none;
-  color: #e5e5e5;
+  color: var(--text-primary);
   padding: 6px 16px;
   border-radius: 4px;
   cursor: pointer;
@@ -91,7 +91,7 @@
 }
 
 .markdown-unsaved-actions button:first-child {
-  background: #007acc;
+  background: var(--accent);
 }
 
 .markdown-unsaved-actions button:hover {

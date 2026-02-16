@@ -11,7 +11,7 @@
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  color: #858585;
+  color: var(--text-secondary);
   letter-spacing: 0.5px;
 }
 
@@ -25,11 +25,11 @@
 }
 
 .project-list__item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-hover);
 }
 
 .project-list__item--selected {
-  background: rgba(74, 158, 255, 0.15);
+  background: var(--accent-muted);
 }
 
 .project-list__dot {
@@ -49,6 +49,6 @@
 
 .project-list__count {
   font-size: 11px;
-  color: #858585;
+  color: var(--text-secondary);
   flex-shrink: 0;
 }

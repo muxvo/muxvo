@@ -33,7 +33,7 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
         justifyContent: 'center',
         width: '100%',
         height: '100%',
-        color: '#858585',
+        color: 'var(--text-secondary)',
         fontSize: '13px',
       }}>
         No terminals. Click + to create one.
@@ -62,7 +62,7 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
           width: '25%',
           height: '100%',
           overflowY: 'auto',
-          borderLeft: '1px solid #333',
+          borderLeft: '1px solid var(--border)',
         }}>
           {sidebarTerminals.map((t) => (
             <div
@@ -102,7 +102,7 @@ function renderTilingGrid(
     gap: '2px',
     width: '100%',
     height: '100%',
-    background: '#000',
+    background: 'var(--bg-grid-gap)',
   };
 
   return (

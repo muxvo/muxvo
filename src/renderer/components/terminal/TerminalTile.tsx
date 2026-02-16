@@ -113,6 +113,11 @@ export function TerminalTile({
     onDoubleClick?.();
   };
 
+  const handleFileClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // TODO: open file panel
+  };
+
   return (
     <div
       ref={containerRef}
@@ -121,7 +126,7 @@ export function TerminalTile({
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        background: '#1e1e1e',
+        background: 'var(--bg-primary)',
         height: '100%',
         '--stagger-index': staggerIndex ?? 0,
       } as React.CSSProperties}
@@ -130,16 +135,16 @@ export function TerminalTile({
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Header: [status-dot] [cwd] [· name-area] [⤢] */}
+      {/* Header: [status-dot] [cwd] [· name-area] [file] [focus] */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         gap: '6px',
         padding: '2px 8px',
-        background: '#252526',
-        borderBottom: '1px solid #3c3c3c',
+        background: 'var(--bg-card)',
+        borderBottom: '1px solid var(--border)',
         fontSize: '11px',
-        color: '#858585',
+        color: 'var(--text-secondary)',
         flexShrink: 0,
       }}>
         {/* Status dot */}
@@ -155,7 +160,7 @@ export function TerminalTile({
         />
 
         {/* Cwd path (clickable) */}
-        <span style={{ cursor: 'pointer', color: '#858585' }} onClick={handleCwdClick}>
+        <span style={{ cursor: 'pointer', color: 'var(--text-secondary)' }} onClick={handleCwdClick}>
           {shortenPath(cwd)}
         </span>
 
@@ -174,23 +179,23 @@ export function TerminalTile({
                   background: 'transparent',
                   border: 'none',
                   outline: 'none',
-                  color: '#ccc',
+                  color: 'var(--text-primary)',
                   fontSize: '11px',
                   padding: '0',
                   width: '100px',
-                  borderBottom: '1px solid #007acc',
+                  borderBottom: '1px solid var(--accent)',
                 }}
               />
             ) : namingState === 'DisplayNamed' ? (
               <>
-                <span style={{ color: '#555' }}> · </span>
-                <span style={{ cursor: 'pointer', color: '#ccc' }} onClick={handleNameClick}>
+                <span style={{ color: 'var(--text-muted)' }}> · </span>
+                <span style={{ cursor: 'pointer', color: 'var(--text-primary)' }} onClick={handleNameClick}>
                   {namingContext.displayText}
                 </span>
               </>
             ) : (
               <span
-                style={{ cursor: 'pointer', color: '#555', fontStyle: 'italic' }}
+                style={{ cursor: 'pointer', color: 'var(--text-muted)', fontStyle: 'italic' }}
                 onClick={handlePlaceholderClick}
               >
                 命名...
@@ -200,9 +205,18 @@ export function TerminalTile({
             {/* Spacer */}
             <span style={{ flex: 1 }} />
 
+            {/* File button */}
+            <span
+              className="tile-header__file-btn"
+              style={{ cursor: 'pointer', fontSize: '12px', color: 'var(--text-secondary)' }}
+              onClick={handleFileClick}
+            >
+              📄
+            </span>
+
             {/* Focus button */}
             <span
-              style={{ cursor: 'pointer', fontSize: '12px', color: '#858585' }}
+              style={{ cursor: 'pointer', fontSize: '12px', color: 'var(--text-secondary)' }}
               onClick={handleFocusClick}
             >
               ⤢

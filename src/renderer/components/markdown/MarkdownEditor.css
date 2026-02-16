@@ -6,8 +6,8 @@
 .markdown-editor {
   width: 100%;
   height: 100%;
-  background: #1e1e1e;
-  color: #e5e5e5;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   font-family: 'SF Mono', Monaco, 'Courier New', monospace;
   font-size: 14px;
   line-height: 1.6;
@@ -19,6 +19,6 @@
 }
 
 .markdown-editor:focus {
-  background: #1e1e1e;
+  background: var(--bg-primary);
   outline: none;
 }

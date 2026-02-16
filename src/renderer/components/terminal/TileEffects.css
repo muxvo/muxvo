@@ -73,6 +73,6 @@
 
 /* Selected highlight border */
 .tile-selected {
-  outline: 2px solid #4a9eff;
+  outline: 2px solid var(--info);
   outline-offset: -2px;
 }

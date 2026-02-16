@@ -58,16 +58,16 @@ function extractTags(display: string): Array<{ label: string; color: string }> {
   const lowerDisplay = display.toLowerCase();
 
   if (lowerDisplay.includes('feat') || lowerDisplay.includes('feature')) {
-    tags.push({ label: 'feat', color: '#4caf50' });
+    tags.push({ label: 'feat', color: 'var(--success)' });
   }
   if (lowerDisplay.includes('fix') || lowerDisplay.includes('bug')) {
-    tags.push({ label: 'fix', color: '#f44336' });
+    tags.push({ label: 'fix', color: 'var(--error)' });
   }
   if (lowerDisplay.includes('refactor')) {
-    tags.push({ label: 'refactor', color: '#2196f3' });
+    tags.push({ label: 'refactor', color: 'var(--info)' });
   }
   if (lowerDisplay.includes('plan')) {
-    tags.push({ label: 'plan', color: '#9c27b0' });
+    tags.push({ label: 'plan', color: 'var(--purple)' });
   }
 
   return tags;

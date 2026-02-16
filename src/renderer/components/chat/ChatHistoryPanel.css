@@ -5,21 +5,21 @@
 .chat-history-panel {
   display: flex;
   height: 100%;
-  background: #1e1e1e;
-  color: #e5e5e5;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .chat-history-panel__left {
   width: 220px;
   min-width: 180px;
-  border-right: 1px solid #3c3c3c;
+  border-right: 1px solid var(--border);
   overflow-y: auto;
 }
 
 .chat-history-panel__middle {
   width: 340px;
   min-width: 280px;
-  border-right: 1px solid #3c3c3c;
+  border-right: 1px solid var(--border);
   overflow-y: auto;
 }
 

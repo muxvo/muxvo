@@ -1,0 +1,81 @@
+/* Muxvo Design System — Amber-themed dark terminal workbench */
+/* Extracted from prototype-history-A.html */
+
+:root {
+  /* Layout dimensions */
+  --menu-bar-height: 36px;
+  --bottom-bar-height: 32px;
+
+  /* Background layers (deep → elevated) */
+  --bg-deep: #06080c;
+  --bg-primary: #0a0e14;
+  --bg-card: #0d1117;
+  --bg-elevated: #161b22;
+  --bg-hover: #1c2333;
+  --bg-input: #0d1117;
+  --bg-grid-gap: #06080c;
+
+  /* Text */
+  --text-primary: #d4d4d8;
+  --text-secondary: #71717a;
+  --text-muted: #3f3f46;
+
+  /* Accent (amber) */
+  --accent: #e8a748;
+  --accent-hover: #f0c060;
+  --accent-muted: #e8a74830;
+  --accent-glow: #e8a74820;
+
+  /* Semantic colors */
+  --success: #4ade80;
+  --error: #f87171;
+  --warning: #fbbf24;
+  --info: #60a5fa;
+  --purple: #a78bfa;
+  --cyan: #22d3ee;
+
+  /* Borders & shadows */
+  --border: #1e2530;
+  --border-focus: #e8a74855;
+  --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-dialog: 0 16px 48px rgba(0, 0, 0, 0.6);
+
+  /* Typography */
+  --font-mono: 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    sans-serif;
+}
+
+/* === Global Reset === */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  user-select: none;
+}
+
+/* === Scrollbar === */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
