@@ -526,8 +526,12 @@ electron.app.whenReady().then(() => {
     mainWindow.webContents.once("did-finish-load", () => {
       setTimeout(() => {
         if (!terminalManager) return;
+        const restoredIds = [];
         for (const terminal of terminalsToRestore) {
-          terminalManager.spawn({ cwd: terminal.cwd });
+          const result = terminalManager.spawn({ cwd: terminal.cwd });
+          if (result.success && result.id) {
+            restoredIds.push(result.id);
+          }
         }
         const win = electron.BrowserWindow.getAllWindows()[0];
         if (win) {
@@ -537,6 +541,11 @@ electron.app.whenReady().then(() => {
             state: t.state
           })));
         }
+        setTimeout(() => {
+          for (const id of restoredIds) {
+            terminalManager.write(id, "\n");
+          }
+        }, 1e3);
       }, 500);
     });
   }
