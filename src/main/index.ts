@@ -114,11 +114,15 @@ app.whenReady().then(() => {
   if (savedConfig.openTerminals && savedConfig.openTerminals.length > 0 && mainWindow) {
     const terminalsToRestore = savedConfig.openTerminals;
     mainWindow.webContents.once('did-finish-load', () => {
-      // Small delay to ensure React has mounted and useEffect listeners are active
+      // Delay to ensure React has mounted and xterm useEffect listeners are active
       setTimeout(() => {
         if (!terminalManager) return;
+        const restoredIds: string[] = [];
         for (const terminal of terminalsToRestore) {
-          terminalManager.spawn({ cwd: terminal.cwd });
+          const result = terminalManager.spawn({ cwd: terminal.cwd });
+          if (result.success && result.id) {
+            restoredIds.push(result.id);
+          }
         }
         // Notify renderer to refresh terminal list
         const win = BrowserWindow.getAllWindows()[0];
@@ -128,6 +132,12 @@ app.whenReady().then(() => {
             id: t.id, state: t.state,
           })));
         }
+        // After xterm components mount, send Enter to trigger fresh shell prompt
+        setTimeout(() => {
+          for (const id of restoredIds) {
+            terminalManager!.write(id, '\n');
+          }
+        }, 1000);
       }, 500);
     });
   }
