@@ -18,6 +18,7 @@ const MAX_TERMINALS = 20;
 interface TerminalEntry {
   id: string;
   state: string;
+  cwd: string;
 }
 
 interface CloseConfirmState {
@@ -39,9 +40,15 @@ export function App(): JSX.Element {
 
   useEffect(() => {
     // Load existing terminals on mount
-    window.api.terminal.list().then((result: { success: boolean; data?: TerminalEntry[] }) => {
+    window.api.terminal.list().then((result: { success: boolean; data?: any[] }) => {
       if (result?.success && result.data) {
-        setTerminals(result.data);
+        // Map TerminalInfo to TerminalEntry with cwd
+        const entries = result.data.map((info: any) => ({
+          id: info.id,
+          state: info.state,
+          cwd: info.cwd || '/',
+        }));
+        setTerminals(entries);
       }
     });
 
