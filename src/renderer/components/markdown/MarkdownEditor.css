@@ -1,0 +1,24 @@
+/**
+ * MarkdownEditor Styles
+ * G3: 编辑模式样式
+ */
+
+.markdown-editor {
+  width: 100%;
+  height: 100%;
+  background: #1e1e1e;
+  color: #e5e5e5;
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 24px 32px;
+  border: none;
+  outline: none;
+  resize: none;
+  overflow-y: auto;
+}
+
+.markdown-editor:focus {
+  background: #1e1e1e;
+  outline: none;
+}
