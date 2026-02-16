@@ -1,0 +1,78 @@
+/* TileEffects.css — 3D visual effects for terminal tiles (Module B3) */
+
+/* 3D tilt container */
+.tile-3d {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.tile-3d-inner {
+  transition: transform 200ms ease-out;
+  transform: perspective(1000px) rotateX(var(--rotateX, 0deg)) rotateY(var(--rotateY, 0deg));
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Gloss reflection layer */
+.tile-3d-inner::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.03) 50%,
+    transparent 70%
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+  z-index: 10;
+}
+
+.tile-3d-inner:hover::after {
+  opacity: 1;
+}
+
+/* Status dot breathing pulse */
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.2); }
+}
+
+.status-dot-pulse {
+  animation: statusPulse 2s infinite ease-in-out;
+}
+
+/* Entrance animation */
+@keyframes tileSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tile-enter {
+  animation: tileSlideIn 300ms ease-out both;
+  animation-delay: calc(var(--stagger-index, 0) * 50ms);
+}
+
+/* Focus mode depth shift */
+.tile-focused {
+  transform: translateZ(20px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Selected highlight border */
+.tile-selected {
+  outline: 2px solid #4a9eff;
+  outline-offset: -2px;
+}
