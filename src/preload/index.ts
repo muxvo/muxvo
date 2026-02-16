@@ -27,6 +27,8 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.CLOSE, { id, force }),
     list: () =>
       ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.LIST),
+    getBuffer: (id: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.GET_BUFFER, { id }),
     getState: (id: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.GET_STATE, { id }),
     getForegroundProcess: (id: string) =>

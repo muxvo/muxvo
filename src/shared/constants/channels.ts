@@ -15,6 +15,7 @@ export const IPC_CHANNELS = {
     GET_FOREGROUND_PROCESS: 'terminal:get-foreground-process',
     LIST: 'terminal:list',
     GET_STATE: 'terminal:get-state',
+    GET_BUFFER: 'terminal:get-buffer',
   },
   FS: {
     READ_DIR: 'fs:read-dir',

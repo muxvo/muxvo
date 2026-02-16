@@ -40,10 +40,39 @@ export function XTermRenderer({ terminalId }: Props): JSX.Element {
       window.api.terminal.write(terminalId, data);
     });
 
-    // Receive terminal output
+    // Queue/flush pattern: subscribe first, fetch buffer, replay, then go live
+    let bufferedDataWritten = false;
+    const pendingLiveData: string[] = [];
+
     const unsubOutput = window.api.terminal.onOutput((event) => {
       if (event.id === terminalId) {
-        term.write(event.data);
+        if (!bufferedDataWritten) {
+          pendingLiveData.push(event.data);
+        } else {
+          term.write(event.data);
+        }
+      }
+    });
+
+    // Fetch buffered output (captures anything from before subscription)
+    console.log(`[MUXVO:restore] XTermRenderer mounted for id=${terminalId}`);
+    window.api.terminal.getBuffer(terminalId).then((result: { success: boolean; data?: string }) => {
+      if (result?.success && result.data) {
+        console.log(`[MUXVO:restore] buffer received for id=${terminalId} bytes=${result.data.length}`);
+        term.write(result.data);
+      }
+      // Flush any live data that arrived during getBuffer round-trip
+      for (const data of pendingLiveData) {
+        term.write(data);
+      }
+      pendingLiveData.length = 0;
+      bufferedDataWritten = true;
+
+      // Self-verification
+      const lines = term.buffer.active.length;
+      console.log(`[MUXVO:restore] xterm lines after buffer replay: ${lines} for id=${terminalId}`);
+      if (lines <= 1) {
+        console.warn(`[MUXVO:restore] WARNING: terminal ${terminalId} may still be blank after buffer replay`);
       }
     });
 

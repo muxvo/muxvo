@@ -69,6 +69,12 @@ export function registerTerminalHandlers(
     }
     return { success: true, data: info };
   });
+
+  // terminal:get-buffer — invoke
+  ipcMain.handle(IPC_CHANNELS.TERMINAL.GET_BUFFER, async (_event, req: { id: string }) => {
+    const data = manager.getBuffer(req.id);
+    return { success: true, data };
+  });
 }
 
 /**

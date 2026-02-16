@@ -114,6 +114,7 @@ app.whenReady().then(() => {
   if (savedConfig.openTerminals && savedConfig.openTerminals.length > 0 && mainWindow) {
     const terminalsToRestore = savedConfig.openTerminals;
     mainWindow.webContents.once('did-finish-load', () => {
+      console.log('[MUXVO:restore] did-finish-load, scheduling restore in 500ms');
       // Delay to ensure React has mounted and xterm useEffect listeners are active
       setTimeout(() => {
         if (!terminalManager) return;
@@ -121,6 +122,7 @@ app.whenReady().then(() => {
         for (const terminal of terminalsToRestore) {
           const result = terminalManager.spawn({ cwd: terminal.cwd });
           if (result.success && result.id) {
+            console.log('[MUXVO:restore] spawned id=' + result.id + ' cwd=' + terminal.cwd);
             restoredIds.push(result.id);
           }
         }
@@ -131,13 +133,8 @@ app.whenReady().then(() => {
           win.webContents.send('terminal:list-updated', list.map((t) => ({
             id: t.id, state: t.state,
           })));
+          console.log('[MUXVO:restore] sent list-updated, count=' + restoredIds.length);
         }
-        // After xterm components mount, send Enter to trigger fresh shell prompt
-        setTimeout(() => {
-          for (const id of restoredIds) {
-            terminalManager!.write(id, '\n');
-          }
-        }, 1000);
       }, 500);
     });
   }
