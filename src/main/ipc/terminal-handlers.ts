@@ -75,6 +75,13 @@ export function registerTerminalHandlers(
     const data = manager.getBuffer(req.id);
     return { success: true, data };
   });
+
+  // terminal:update-cwd — invoke
+  ipcMain.handle(IPC_CHANNELS.TERMINAL.UPDATE_CWD, async (_event, req: { id: string; cwd: string }) => {
+    const ok = manager.updateCwd(req.id, req.cwd);
+    onTerminalChange?.();
+    return { success: ok };
+  });
 }
 
 /**

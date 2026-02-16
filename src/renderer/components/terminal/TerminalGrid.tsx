@@ -10,6 +10,7 @@ import { TerminalTile } from './TerminalTile';
 interface TerminalInfo {
   id: string;
   state: string;
+  cwd: string;
 }
 
 interface Props {
@@ -20,9 +21,10 @@ interface Props {
   onDoubleClick?: (id: string) => void;
   onSidebarClick?: (id: string) => void;
   onClick?: (id: string) => void;
+  onCwdChange?: (id: string, newCwd: string) => void;
 }
 
-export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, selectedId, onDoubleClick, onSidebarClick, onClick }: Props): JSX.Element {
+export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, selectedId, onDoubleClick, onSidebarClick, onClick, onCwdChange }: Props): JSX.Element {
   if (terminals.length === 0) {
     return (
       <div style={{
@@ -46,14 +48,14 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
 
     if (!focusedTerminal) {
       // Fallback to tiling if focused terminal not found
-      return renderTilingGrid(terminals, selectedId, onDoubleClick, onClick);
+      return renderTilingGrid(terminals, selectedId, onDoubleClick, onClick, onCwdChange);
     }
 
     return (
       <div style={{ display: 'flex', width: '100%', height: '100%' }}>
         {/* Left: focused terminal 75% */}
         <div style={{ width: '75%', height: '100%' }}>
-          <TerminalTile key={focusedId} id={focusedId} state={focusedTerminal.state} focused />
+          <TerminalTile key={focusedId} id={focusedId} state={focusedTerminal.state} cwd={focusedTerminal.cwd} focused onCwdChange={onCwdChange} />
         </div>
         {/* Right: sidebar 25% */}
         <div style={{
@@ -72,7 +74,7 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
               }}
               onClick={() => onSidebarClick?.(t.id)}
             >
-              <TerminalTile id={t.id} state={t.state} compact />
+              <TerminalTile id={t.id} state={t.state} cwd={t.cwd} compact />
             </div>
           ))}
         </div>
@@ -81,7 +83,7 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
   }
 
   // Tiling mode (default)
-  return renderTilingGrid(terminals, selectedId, onDoubleClick, onClick);
+  return renderTilingGrid(terminals, selectedId, onDoubleClick, onClick, onCwdChange);
 }
 
 function renderTilingGrid(
@@ -89,6 +91,7 @@ function renderTilingGrid(
   selectedId?: string | null,
   onDoubleClick?: (id: string) => void,
   onClick?: (id: string) => void,
+  onCwdChange?: (id: string, newCwd: string) => void,
 ): JSX.Element {
   const { cols, rows } = calculateGridLayout(terminals.length);
 
@@ -109,10 +112,12 @@ function renderTilingGrid(
           key={t.id}
           id={t.id}
           state={t.state}
+          cwd={t.cwd}
           selected={t.id === selectedId}
           staggerIndex={i}
           onDoubleClick={() => onDoubleClick?.(t.id)}
           onClick={() => onClick?.(t.id)}
+          onCwdChange={onCwdChange}
         />
       ))}
     </div>

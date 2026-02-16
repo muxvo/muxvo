@@ -235,7 +235,14 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
     return outputBuffers.get(id) ?? '';
   }
 
-  return { spawn, write, resize, close, list, getState, getForegroundProcess, closeAll, getBuffer };
+  function updateCwd(id: string, newCwd: string): boolean {
+    const terminal = terminals.get(id);
+    if (!terminal) return false;
+    terminal.cwd = newCwd;
+    return true;
+  }
+
+  return { spawn, write, resize, close, list, getState, getForegroundProcess, closeAll, getBuffer, updateCwd };
 }
 
 function isValidCwd(cwd: string): boolean {
