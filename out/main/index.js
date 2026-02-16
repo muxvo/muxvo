@@ -491,6 +491,7 @@ function createWindow(windowConfig) {
     if (mainWindow && !mainWindow.isDestroyed()) {
       lastBounds = mainWindow.getBounds();
     }
+    saveCurrentConfig();
   });
   mainWindow.webContents.setWindowOpenHandler((details) => {
     electron.shell.openExternal(details.url);
@@ -570,7 +571,6 @@ function saveCurrentConfig() {
   configManager.saveConfig(config);
 }
 electron.app.on("window-all-closed", () => {
-  saveCurrentConfig();
   if (terminalManager) {
     terminalManager.closeAll();
   }

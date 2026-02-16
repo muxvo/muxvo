@@ -57,11 +57,13 @@ function createWindow(windowConfig?: WindowConfig): void {
     mainWindow?.show();
   });
 
-  // Cache bounds before window is destroyed (for config persistence)
+  // Save full config before window is destroyed (terminals still alive at this point)
   mainWindow.on('close', () => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       lastBounds = mainWindow.getBounds();
     }
+    // Save config now — terminals are still in the Map before PTY processes exit
+    saveCurrentConfig();
   });
 
   // Open external links in default browser
@@ -170,9 +172,7 @@ function saveCurrentConfig(): void {
 }
 
 app.on('window-all-closed', () => {
-  // Save config before cleanup
-  saveCurrentConfig();
-
+  // Config already saved in mainWindow 'close' event
   // Clean up all terminal processes
   if (terminalManager) {
     terminalManager.closeAll();
