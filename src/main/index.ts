@@ -107,41 +107,46 @@ app.whenReady().then(() => {
     return { success: true, data: result };
   });
 
-  // Create window with restored position/size
-  createWindow(savedConfig.window);
+  // Create window and restore terminals from config
+  function launchWindowWithTerminals(): void {
+    const config = configManager.loadConfig();
+    createWindow(config.window);
 
-  // Restore terminals after renderer is ready (so output events are received)
-  if (savedConfig.openTerminals && savedConfig.openTerminals.length > 0 && mainWindow) {
-    const terminalsToRestore = savedConfig.openTerminals;
-    mainWindow.webContents.once('did-finish-load', () => {
-      console.log('[MUXVO:restore] did-finish-load, scheduling restore in 500ms');
-      // Delay to ensure React has mounted and xterm useEffect listeners are active
-      setTimeout(() => {
-        if (!terminalManager) return;
-        const restoredIds: string[] = [];
-        for (const terminal of terminalsToRestore) {
-          const result = terminalManager.spawn({ cwd: terminal.cwd });
-          if (result.success && result.id) {
-            console.log('[MUXVO:restore] spawned id=' + result.id + ' cwd=' + terminal.cwd);
-            restoredIds.push(result.id);
+    // Restore terminals after renderer is ready (so output events are received)
+    if (config.openTerminals && config.openTerminals.length > 0 && mainWindow) {
+      const terminalsToRestore = config.openTerminals;
+      mainWindow.webContents.once('did-finish-load', () => {
+        console.log('[MUXVO:restore] did-finish-load, scheduling restore in 500ms');
+        // Delay to ensure React has mounted and xterm useEffect listeners are active
+        setTimeout(() => {
+          if (!terminalManager) return;
+          const restoredIds: string[] = [];
+          for (const terminal of terminalsToRestore) {
+            const result = terminalManager.spawn({ cwd: terminal.cwd });
+            if (result.success && result.id) {
+              console.log('[MUXVO:restore] spawned id=' + result.id + ' cwd=' + terminal.cwd);
+              restoredIds.push(result.id);
+            }
           }
-        }
-        // Notify renderer to refresh terminal list
-        const win = BrowserWindow.getAllWindows()[0];
-        if (win) {
-          const list = terminalManager.list();
-          win.webContents.send('terminal:list-updated', list.map((t) => ({
-            id: t.id, state: t.state,
-          })));
-          console.log('[MUXVO:restore] sent list-updated, count=' + restoredIds.length);
-        }
-      }, 500);
-    });
+          // Notify renderer to refresh terminal list
+          const win = BrowserWindow.getAllWindows()[0];
+          if (win) {
+            const list = terminalManager.list();
+            win.webContents.send('terminal:list-updated', list.map((t) => ({
+              id: t.id, state: t.state,
+            })));
+            console.log('[MUXVO:restore] sent list-updated, count=' + restoredIds.length);
+          }
+        }, 500);
+      });
+    }
   }
+
+  launchWindowWithTerminals();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+      launchWindowWithTerminals();
     }
   });
 });
@@ -149,8 +154,10 @@ app.whenReady().then(() => {
 /** Save terminal list to config (called on terminal create/close) */
 function saveTerminalConfig(configManager: ReturnType<typeof createConfigManager>): void {
   if (!terminalManager) return;
+  const existing = configManager.loadConfig();
   const terminals = terminalManager.list();
   configManager.saveConfig({
+    ...existing,
     openTerminals: terminals.map((t) => ({ cwd: t.cwd })),
   });
 }

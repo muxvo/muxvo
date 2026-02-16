@@ -527,7 +527,7 @@ let terminalManager = null;
 electron.app.whenReady().then(() => {
   initConfigDir(electron.app.getPath("userData"));
   const configManager = createConfigManager();
-  const savedConfig = configManager.loadConfig();
+  configManager.loadConfig();
   const ptyAdapter = createRealPtyAdapter();
   terminalManager = createTerminalManager({ pty: ptyAdapter });
   registerTerminalHandlers(terminalManager, () => {
@@ -540,43 +540,49 @@ electron.app.whenReady().then(() => {
     const result = configManager.saveConfig(config);
     return { success: true, data: result };
   });
-  createWindow(savedConfig.window);
-  if (savedConfig.openTerminals && savedConfig.openTerminals.length > 0 && mainWindow) {
-    const terminalsToRestore = savedConfig.openTerminals;
-    mainWindow.webContents.once("did-finish-load", () => {
-      console.log("[MUXVO:restore] did-finish-load, scheduling restore in 500ms");
-      setTimeout(() => {
-        if (!terminalManager) return;
-        const restoredIds = [];
-        for (const terminal of terminalsToRestore) {
-          const result = terminalManager.spawn({ cwd: terminal.cwd });
-          if (result.success && result.id) {
-            console.log("[MUXVO:restore] spawned id=" + result.id + " cwd=" + terminal.cwd);
-            restoredIds.push(result.id);
+  function launchWindowWithTerminals() {
+    const config = configManager.loadConfig();
+    createWindow(config.window);
+    if (config.openTerminals && config.openTerminals.length > 0 && mainWindow) {
+      const terminalsToRestore = config.openTerminals;
+      mainWindow.webContents.once("did-finish-load", () => {
+        console.log("[MUXVO:restore] did-finish-load, scheduling restore in 500ms");
+        setTimeout(() => {
+          if (!terminalManager) return;
+          const restoredIds = [];
+          for (const terminal of terminalsToRestore) {
+            const result = terminalManager.spawn({ cwd: terminal.cwd });
+            if (result.success && result.id) {
+              console.log("[MUXVO:restore] spawned id=" + result.id + " cwd=" + terminal.cwd);
+              restoredIds.push(result.id);
+            }
           }
-        }
-        const win = electron.BrowserWindow.getAllWindows()[0];
-        if (win) {
-          const list = terminalManager.list();
-          win.webContents.send("terminal:list-updated", list.map((t) => ({
-            id: t.id,
-            state: t.state
-          })));
-          console.log("[MUXVO:restore] sent list-updated, count=" + restoredIds.length);
-        }
-      }, 500);
-    });
+          const win = electron.BrowserWindow.getAllWindows()[0];
+          if (win) {
+            const list = terminalManager.list();
+            win.webContents.send("terminal:list-updated", list.map((t) => ({
+              id: t.id,
+              state: t.state
+            })));
+            console.log("[MUXVO:restore] sent list-updated, count=" + restoredIds.length);
+          }
+        }, 500);
+      });
+    }
   }
+  launchWindowWithTerminals();
   electron.app.on("activate", () => {
     if (electron.BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+      launchWindowWithTerminals();
     }
   });
 });
 function saveTerminalConfig(configManager) {
   if (!terminalManager) return;
+  const existing = configManager.loadConfig();
   const terminals = terminalManager.list();
   configManager.saveConfig({
+    ...existing,
     openTerminals: terminals.map((t) => ({ cwd: t.cwd }))
   });
 }
