@@ -19,8 +19,8 @@ export interface HistoryEntry {
   timestamp: number;
   /** 项目路径 */
   project: string;
-  /** Session ID */
-  sessionId: string;
+  /** Session ID (optional for backward compatibility with older entries) */
+  sessionId?: string;
 }
 
 /** Session JSONL 中的每行消息 */

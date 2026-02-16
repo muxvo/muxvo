@@ -17,6 +17,7 @@ import { is } from '@electron-toolkit/utils';
 import { createTerminalManager } from './services/terminal/manager';
 import { createRealPtyAdapter } from './services/terminal/pty-adapter';
 import { registerTerminalHandlers } from './ipc/terminal-handlers';
+import { registerChatHandlers } from './ipc/chat-handlers';
 import { initConfigDir, createConfigManager } from './services/app/config';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 
@@ -96,6 +97,9 @@ app.whenReady().then(() => {
   registerTerminalHandlers(terminalManager, () => {
     saveTerminalConfig(configManager);
   });
+
+  // Register chat IPC handlers
+  registerChatHandlers();
 
   // Register app config IPC handlers
   ipcMain.handle(IPC_CHANNELS.APP.GET_CONFIG, async () => {

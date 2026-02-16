@@ -1,0 +1,30 @@
+/**
+ * ChatHistoryPanel Styles
+ */
+
+.chat-history-panel {
+  display: flex;
+  height: 100%;
+  background: #1e1e1e;
+  color: #e5e5e5;
+}
+
+.chat-history-panel__left {
+  width: 220px;
+  min-width: 180px;
+  border-right: 1px solid #3c3c3c;
+  overflow-y: auto;
+}
+
+.chat-history-panel__middle {
+  width: 340px;
+  min-width: 280px;
+  border-right: 1px solid #3c3c3c;
+  overflow-y: auto;
+}
+
+.chat-history-panel__right {
+  flex: 1;
+  min-width: 400px;
+  overflow-y: auto;
+}

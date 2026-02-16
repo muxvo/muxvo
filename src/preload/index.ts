@@ -86,6 +86,24 @@ const api = {
     writeFile: (filePath: string, content: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.FS.WRITE_FILE, { path: filePath, content }),
   },
+
+  // --- Chat domain ---
+  chat: {
+    getHistory: (params?: any) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_HISTORY, params),
+    getSession: (sessionId: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_SESSION, { sessionId }),
+    onSessionUpdate: (callback: (data: any) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: any) => callback(data);
+      ipcRenderer.on(IPC_CHANNELS.CHAT.SESSION_UPDATE, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.CHAT.SESSION_UPDATE, handler);
+    },
+    onSyncStatus: (callback: (data: any) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: any) => callback(data);
+      ipcRenderer.on(IPC_CHANNELS.CHAT.SYNC_STATUS, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.CHAT.SYNC_STATUS, handler);
+    },
+  },
 };
 
 contextBridge.exposeInMainWorld('api', api);

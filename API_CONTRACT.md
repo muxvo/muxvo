@@ -1,9 +1,9 @@
 # API 接口契约文档
 
 > 此文档由 Claude Code Hook 自动生成（AST 解析版）
-> 生成时间: 2026-02-16T15:08:16.165Z
+> 生成时间: 2026-02-16T15:24:37.073Z
 > 项目路径: /Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo
-> 扫描文件数: 209
+> 扫描文件数: 213
 > 接口总数: 7
 
 ## 基础信息
@@ -17,7 +17,7 @@
 
 #### `GET {成员访问}`
 
-- **位置**: `main/services/chat-sync.ts:48`
+- **位置**: `main/services/chat-sync.ts:51`
 - **调用函数**: `mirrorMap.get()`
 - **请求参数**: 无额外参数
 
@@ -65,7 +65,7 @@
 
 | 方法 | 接口路径 | 所属模块 | 文件位置 |
 |-----|---------|---------|---------|
-| GET | `{成员访问}` | API 服务 | main/services/chat-sync.ts:48 |
+| GET | `{成员访问}` | API 服务 | main/services/chat-sync.ts:51 |
 | GET | `{变量:path}` | API 服务 | main/services/data-sync/sync-manager.ts:99 |
 | GET | `{变量:id}` | API 服务 | main/services/terminal/manager.ts:96 |
 | DELETE | `{变量:id}` | API 服务 | main/services/terminal/manager.ts:124 |

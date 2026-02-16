@@ -1,0 +1,148 @@
+/**
+ * SessionList Styles
+ */
+
+.session-list {
+  padding: 8px 0;
+}
+
+.session-list__header {
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #858585;
+  letter-spacing: 0.5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.session-list__sort {
+  display: flex;
+  gap: 2px;
+}
+
+.session-list__sort-btn {
+  background: none;
+  border: 1px solid #3c3c3c;
+  color: #858585;
+  font-size: 10px;
+  padding: 2px 8px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s ease;
+}
+
+.session-list__sort-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e5e5e5;
+}
+
+.session-list__sort-btn--active {
+  background: #007acc;
+  border-color: #007acc;
+  color: white;
+}
+
+.session-list__load-more {
+  display: block;
+  width: calc(100% - 32px);
+  margin: 8px 16px;
+  padding: 8px;
+  background: none;
+  border: 1px dashed #3c3c3c;
+  color: #858585;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.session-list__load-more:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: #007acc;
+  color: #e5e5e5;
+}
+
+.session-list__empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: #555;
+  font-size: 13px;
+}
+
+/* Session Card */
+.session-card {
+  padding: 12px 16px;
+  border-bottom: 1px solid #3c3c3c;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.session-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.session-card--selected {
+  background: rgba(74, 158, 255, 0.15);
+}
+
+.session-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+
+.session-card__title {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: #e5e5e5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-card__time {
+  font-size: 11px;
+  color: #858585;
+  flex-shrink: 0;
+}
+
+.session-card__preview {
+  font-size: 12px;
+  color: #858585;
+  line-height: 1.4;
+  margin-bottom: 8px;
+
+  /* 2 line truncation */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.session-card__tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.session-card__tag {
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 500;
+  color: white;
+  text-transform: uppercase;
+}

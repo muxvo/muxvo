@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-02-16T15:08:16.165Z",
+  "generatedAt": "2026-02-16T15:24:37.073Z",
   "projectPath": "/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo",
   "totalApis": 7,
-  "scannedFiles": 209,
+  "scannedFiles": 213,
   "categories": {
     "API 服务": [
       {
         "path": "{成员访问}",
         "method": "GET",
         "file": "main/services/chat-sync.ts",
-        "line": 48,
+        "line": 51,
         "functionName": "mirrorMap.get",
         "params": [],
         "responseFields": [],
@@ -84,7 +84,7 @@
       "path": "{成员访问}",
       "method": "GET",
       "file": "main/services/chat-sync.ts",
-      "line": 48,
+      "line": 51,
       "functionName": "mirrorMap.get",
       "params": [],
       "responseFields": [],

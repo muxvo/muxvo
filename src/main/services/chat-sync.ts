@@ -4,6 +4,9 @@
  * Manages mtime comparison, sync planning, and throttling for chat mirror sync.
  */
 
+import { readdir, stat, copyFile, mkdir } from 'fs/promises';
+import { join, dirname } from 'path';
+
 interface MtimeResult {
   needsSync: boolean;
 }
@@ -31,9 +34,9 @@ export function compareMtime(ccMtime: number, mirrorMtime: number): MtimeResult 
 }
 
 /**
- * Sync Manager -- calculates sync plans based on sessionId deduplication.
+ * Sync Manager -- calculates sync plans and performs file sync.
  */
-export function createSyncManager() {
+export function createSyncManager(ccBasePath: string, mirrorBasePath: string) {
   return {
     calculateSyncPlan(ccSessions: SessionRef[], mirrorSessions: SessionRef[]): SyncPlan {
       const mirrorMap = new Map<string, SessionRef>();
@@ -55,29 +58,124 @@ export function createSyncManager() {
 
       return { toSync, skipped };
     },
+
+    /**
+     * Full scan: walk CC directory tree, compare mtime, copy changed files to mirror.
+     */
+    async fullScan(): Promise<{ synced: number; skipped: number }> {
+      let synced = 0;
+      let skipped = 0;
+
+      async function scanDir(ccDir: string, mirrorDir: string): Promise<void> {
+        try {
+          const entries = await readdir(ccDir, { withFileTypes: true });
+
+          for (const entry of entries) {
+            const ccPath = join(ccDir, entry.name);
+            const mirrorPath = join(mirrorDir, entry.name);
+
+            if (entry.isDirectory()) {
+              await scanDir(ccPath, mirrorPath);
+            } else if (entry.isFile() && entry.name.endsWith('.jsonl')) {
+              try {
+                const ccStats = await stat(ccPath);
+                let mirrorStats;
+                try {
+                  mirrorStats = await stat(mirrorPath);
+                } catch {
+                  mirrorStats = null;
+                }
+
+                const ccMtimeSeconds = Math.floor(ccStats.mtimeMs / 1000);
+                const mirrorMtimeSeconds = mirrorStats ? Math.floor(mirrorStats.mtimeMs / 1000) : 0;
+
+                if (ccMtimeSeconds !== mirrorMtimeSeconds) {
+                  // Copy file to mirror
+                  await mkdir(dirname(mirrorPath), { recursive: true });
+                  await copyFile(ccPath, mirrorPath);
+                  synced++;
+                } else {
+                  skipped++;
+                }
+              } catch {
+                // Skip files that fail to stat or copy
+              }
+            }
+          }
+        } catch {
+          // Skip directories that fail to read
+        }
+      }
+
+      await scanDir(ccBasePath, mirrorBasePath);
+      return { synced, skipped };
+    },
+
+    /**
+     * Incremental sync: sync a single changed file.
+     */
+    async incrementalSync(ccPath: string): Promise<boolean> {
+      try {
+        // Calculate mirror path by replacing ccBasePath with mirrorBasePath
+        const relativePath = ccPath.replace(ccBasePath, '');
+        const mirrorPath = join(mirrorBasePath, relativePath);
+
+        const ccStats = await stat(ccPath);
+        let mirrorStats;
+        try {
+          mirrorStats = await stat(mirrorPath);
+        } catch {
+          mirrorStats = null;
+        }
+
+        const ccMtimeSeconds = Math.floor(ccStats.mtimeMs / 1000);
+        const mirrorMtimeSeconds = mirrorStats ? Math.floor(mirrorStats.mtimeMs / 1000) : 0;
+
+        if (ccMtimeSeconds !== mirrorMtimeSeconds) {
+          await mkdir(dirname(mirrorPath), { recursive: true });
+          await copyFile(ccPath, mirrorPath);
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    },
   };
 }
 
 /**
  * Sync Throttler -- batches rapid sync triggers into a single operation.
  */
-export function createSyncThrottler() {
-  let syncHandler: (() => void) | null = null;
-  let pending = false;
+export function createSyncThrottler(fn?: () => void, delayMs = 300) {
+  let timeoutId: NodeJS.Timeout | null = null;
+  let syncHandler: (() => void) | null = fn || null;
 
   return {
-    onSync(fn: () => void) {
-      syncHandler = fn;
+    // Test-friendly API
+    onSync(handler: () => void) {
+      syncHandler = handler;
     },
 
     triggerSync() {
-      pending = true;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      timeoutId = setTimeout(() => {
+        if (syncHandler) {
+          syncHandler();
+        }
+        timeoutId = null;
+      }, delayMs);
     },
 
-    async flush() {
-      if (pending && syncHandler) {
-        syncHandler();
-        pending = false;
+    flush() {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        if (syncHandler) {
+          syncHandler();
+        }
+        timeoutId = null;
       }
     },
   };
