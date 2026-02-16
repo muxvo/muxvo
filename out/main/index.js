@@ -463,6 +463,7 @@ function createConfigManager(deps) {
   return { loadConfig, saveConfig };
 }
 let mainWindow = null;
+let lastBounds = null;
 function createWindow(windowConfig) {
   const opts = {
     width: windowConfig?.width ?? 1280,
@@ -485,6 +486,11 @@ function createWindow(windowConfig) {
   mainWindow = new electron.BrowserWindow(opts);
   mainWindow.on("ready-to-show", () => {
     mainWindow?.show();
+  });
+  mainWindow.on("close", () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      lastBounds = mainWindow.getBounds();
+    }
   });
   mainWindow.webContents.setWindowOpenHandler((details) => {
     electron.shell.openExternal(details.url);
@@ -514,15 +520,24 @@ electron.app.whenReady().then(() => {
     return { success: true, data: result };
   });
   createWindow(savedConfig.window);
-  if (savedConfig.openTerminals && savedConfig.openTerminals.length > 0) {
-    for (const terminal of savedConfig.openTerminals) {
-      terminalManager.spawn({ cwd: terminal.cwd });
-    }
-    if (mainWindow) {
-      mainWindow.webContents.once("did-finish-load", () => {
-        mainWindow?.webContents.send(IPC_CHANNELS.TERMINAL.LIST);
-      });
-    }
+  if (savedConfig.openTerminals && savedConfig.openTerminals.length > 0 && mainWindow) {
+    const terminalsToRestore = savedConfig.openTerminals;
+    mainWindow.webContents.once("did-finish-load", () => {
+      setTimeout(() => {
+        if (!terminalManager) return;
+        for (const terminal of terminalsToRestore) {
+          terminalManager.spawn({ cwd: terminal.cwd });
+        }
+        const win = electron.BrowserWindow.getAllWindows()[0];
+        if (win) {
+          const list = terminalManager.list();
+          win.webContents.send("terminal:list-updated", list.map((t) => ({
+            id: t.id,
+            state: t.state
+          })));
+        }
+      }, 500);
+    });
   }
   electron.app.on("activate", () => {
     if (electron.BrowserWindow.getAllWindows().length === 0) {
@@ -538,19 +553,21 @@ function saveTerminalConfig(configManager) {
   });
 }
 function saveCurrentConfig() {
-  if (!mainWindow || !terminalManager) return;
+  if (!terminalManager) return;
   const configManager = createConfigManager();
-  const bounds = mainWindow.getBounds();
   const terminals = terminalManager.list();
-  configManager.saveConfig({
-    window: {
-      width: bounds.width,
-      height: bounds.height,
-      x: bounds.x,
-      y: bounds.y
-    },
+  const config = {
     openTerminals: terminals.map((t) => ({ cwd: t.cwd }))
-  });
+  };
+  if (lastBounds) {
+    config.window = {
+      width: lastBounds.width,
+      height: lastBounds.height,
+      x: lastBounds.x,
+      y: lastBounds.y
+    };
+  }
+  configManager.saveConfig(config);
 }
 electron.app.on("window-all-closed", () => {
   saveCurrentConfig();

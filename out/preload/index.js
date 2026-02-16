@@ -46,6 +46,11 @@ const api = {
       const handler = (_event, data) => callback(data);
       electron.ipcRenderer.on(IPC_CHANNELS.TERMINAL.EXIT, handler);
       return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.TERMINAL.EXIT, handler);
+    },
+    onListUpdated: (callback) => {
+      const handler = (_event, data) => callback(data);
+      electron.ipcRenderer.on("terminal:list-updated", handler);
+      return () => electron.ipcRenderer.removeListener("terminal:list-updated", handler);
     }
   },
   // --- App domain ---
