@@ -62,8 +62,8 @@ function createWindow(windowConfig?: WindowConfig): void {
     if (mainWindow && !mainWindow.isDestroyed()) {
       lastBounds = mainWindow.getBounds();
     }
-    // Save config now — terminals are still in the Map before PTY processes exit
-    saveCurrentConfig();
+    // Save window bounds only — terminal list already saved in real-time
+    saveWindowBounds();
   });
 
   // Open external links in default browser
@@ -148,27 +148,23 @@ function saveTerminalConfig(configManager: ReturnType<typeof createConfigManager
   });
 }
 
-/** Save full state (window bounds + terminals) to config before closing */
-function saveCurrentConfig(): void {
-  if (!terminalManager) return;
+/** Save window bounds to config before closing (terminals saved in real-time via onTerminalChange) */
+function saveWindowBounds(): void {
+  if (!lastBounds) return;
 
   const configManager = createConfigManager();
-  const terminals = terminalManager.list();
-  const config: Record<string, unknown> = {
-    openTerminals: terminals.map((t) => ({ cwd: t.cwd })),
-  };
-
-  // Use cached bounds (saved in 'close' event before window is destroyed)
-  if (lastBounds) {
-    config.window = {
+  // Only save window bounds — terminal list is already saved in real-time
+  // by onTerminalChange callback whenever terminals are created/closed
+  const existing = configManager.loadConfig();
+  configManager.saveConfig({
+    ...existing,
+    window: {
       width: lastBounds.width,
       height: lastBounds.height,
       x: lastBounds.x,
       y: lastBounds.y,
-    };
-  }
-
-  configManager.saveConfig(config);
+    },
+  });
 }
 
 app.on('window-all-closed', () => {

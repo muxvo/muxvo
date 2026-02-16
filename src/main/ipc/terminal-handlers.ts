@@ -42,7 +42,7 @@ export function registerTerminalHandlers(
 
   // terminal:close — invoke
   ipcMain.handle(IPC_CHANNELS.TERMINAL.CLOSE, async (_event, req: { id: string; force?: boolean }) => {
-    const result = manager.close(req.id, req.force);
+    const result = await manager.close(req.id, req.force);
     onTerminalChange?.();
     return result;
   });
