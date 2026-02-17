@@ -35,6 +35,14 @@ import { createSyncStatusPusher } from './services/chat-sync-push';
 import { initConfigDir, createConfigManager } from './services/app/config';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 
+// Prevent EPIPE crash when stdout/stderr pipe is broken (e.g. launched via .app double-click)
+for (const stream of [process.stdout, process.stderr]) {
+  stream?.on('error', (err: NodeJS.ErrnoException) => {
+    if (err.code === 'EPIPE') return;
+    throw err;
+  });
+}
+
 let mainWindow: BrowserWindow | null = null;
 let lastBounds: Electron.Rectangle | null = null;
 
