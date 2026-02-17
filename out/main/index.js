@@ -1971,8 +1971,8 @@ electron.app.whenReady().then(() => {
     const result = configManager.saveConfig(config);
     return { success: true, data: result };
   });
-  electron.ipcMain.handle(IPC_CHANNELS.FS.SELECT_DIRECTORY, async () => {
-    const result = await electron.dialog.showOpenDialog({ properties: ["openDirectory"] });
+  electron.ipcMain.handle(IPC_CHANNELS.FS.SELECT_DIRECTORY, async (_event, req) => {
+    const result = await electron.dialog.showOpenDialog({ properties: ["openDirectory"], defaultPath: req?.defaultPath });
     if (result.canceled || result.filePaths.length === 0) {
       return { success: false };
     }

@@ -4,7 +4,7 @@
  * Handles fs:read-dir, fs:read-file, fs:write-file IPC channels.
  */
 
-import { ipcMain } from 'electron';
+import { ipcMain, dialog } from 'electron';
 import { promises as fsp } from 'fs';
 import { join, resolve, normalize } from 'path';
 import { homedir, tmpdir } from 'os';
@@ -83,6 +83,17 @@ export function createFsHandlers() {
         return { success: false, error: { code, message } };
       }
     },
+
+    async selectDirectory(params?: { defaultPath?: string }): Promise<Record<string, unknown>> {
+      const result = await dialog.showOpenDialog({
+        properties: ['openDirectory'],
+        defaultPath: params?.defaultPath,
+      });
+      if (result.canceled || result.filePaths.length === 0) {
+        return { success: false };
+      }
+      return { success: true, data: result.filePaths[0] };
+    },
   };
 }
 
@@ -105,5 +116,9 @@ export function registerFsHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.FS.WRITE_FILE, async (_event, params: WriteFileRequest) => {
     return handlers.writeFile(params);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.FS.SELECT_DIRECTORY, async (_event, params?: { defaultPath?: string }) => {
+    return handlers.selectDirectory(params);
   });
 }

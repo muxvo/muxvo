@@ -142,7 +142,7 @@ const api = {
   // --- Config domain ---
   config: {
     getResources: (type?: string) =>
-      ipcRenderer.invoke(IPC_CHANNELS.CONFIG.GET_RESOURCES, { type }),
+      ipcRenderer.invoke(IPC_CHANNELS.CONFIG.GET_RESOURCES, type ? { types: [type] } : undefined),
     getResourceContent: (resourcePath: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.CONFIG.GET_RESOURCE_CONTENT, { path: resourcePath }),
     getSettings: () =>
@@ -168,7 +168,7 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.MARKETPLACE.FETCH_SOURCES),
     search: (query: string, filters?: Record<string, unknown>) =>
       ipcRenderer.invoke(IPC_CHANNELS.MARKETPLACE.SEARCH, { query, filters }),
-    install: (params: { name: string; source: string; type: string; version?: string }) =>
+    install: (params: { name: string; source: string; type: 'skill' | 'hook'; version?: string }) =>
       ipcRenderer.invoke(IPC_CHANNELS.MARKETPLACE.INSTALL, params),
     uninstall: (name: string, type?: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.MARKETPLACE.UNINSTALL, { name, type }),

@@ -21,7 +21,6 @@ interface Props {
   open: boolean;
   anchorRect: { top: number; left: number } | null;
   onClose: () => void;
-  onCwdChange: (newCwd: string) => void;
   onConfirmExit?: (processName: string, targetCwd: string) => void;
 }
 
@@ -36,7 +35,6 @@ export function CwdPicker({
   open,
   anchorRect,
   onClose,
-  onCwdChange,
   onConfirmExit,
 }: Props) {
   const popupRef = useRef<HTMLDivElement>(null);
@@ -88,7 +86,6 @@ export function CwdPicker({
       const cdCmd = `cd ${escapeShellPath(path)}\n`;
       window.api.terminal.write(terminalId, cdCmd);
       await window.api.terminal.updateCwd(terminalId, path);
-      onCwdChange(path);
       onClose();
     } else {
       // Non-shell → call onConfirmExit callback

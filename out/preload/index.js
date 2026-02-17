@@ -143,7 +143,7 @@ const api = {
   },
   // --- FS domain ---
   fs: {
-    selectDirectory: () => electron.ipcRenderer.invoke(IPC_CHANNELS.FS.SELECT_DIRECTORY),
+    selectDirectory: (defaultPath) => electron.ipcRenderer.invoke(IPC_CHANNELS.FS.SELECT_DIRECTORY, defaultPath ? { defaultPath } : void 0),
     readDir: (dirPath) => electron.ipcRenderer.invoke(IPC_CHANNELS.FS.READ_DIR, { path: dirPath }),
     readFile: (filePath) => electron.ipcRenderer.invoke(IPC_CHANNELS.FS.READ_FILE, { path: filePath }),
     writeFile: (filePath, content) => electron.ipcRenderer.invoke(IPC_CHANNELS.FS.WRITE_FILE, { path: filePath, content }),
