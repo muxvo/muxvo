@@ -187,7 +187,7 @@
   height: 12px;
 }
 
-/* Close button (subtle gray) */
+/* Close button (subtle) */
 .tile-close-btn {
   display: flex;
   align-items: center;
@@ -195,7 +195,7 @@
   border-radius: 4px;
   background: transparent;
   border: 1px solid transparent;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: 11px;
   transition: all 0.15s;
   flex-shrink: 0;
@@ -204,9 +204,9 @@
 }
 
 .tile-close-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.1);
   border-color: var(--border);
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .tile-close-btn svg {

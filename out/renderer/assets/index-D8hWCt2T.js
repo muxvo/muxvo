@@ -21314,6 +21314,7 @@ function CwdPicker({
   terminalId,
   currentCwd,
   open,
+  anchorRect,
   onClose,
   onCwdChange,
   onConfirmExit
@@ -21372,29 +21373,53 @@ function CwdPicker({
       await handleSelectPath(result.data);
     }
   };
-  if (!open) return null;
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "cwd-picker-overlay", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "cwd-picker", ref: popupRef, children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "cwd-picker-header", children: "切换工作目录" }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "cwd-picker-current", children: [
-      "当前: ",
-      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "cwd-picker-current-path", children: currentCwd })
-    ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "cwd-picker-quick", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "cwd-picker-section-title", children: "快捷路径" }),
-      quickPaths.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "button",
-        {
-          className: "cwd-picker-item",
-          onClick: () => handleSelectPath(item.path),
-          children: item.label
-        },
-        item.path
-      ))
-    ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "cwd-picker-browse", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "cwd-picker-browse-btn", onClick: handleBrowse, children: "浏览..." }) })
-  ] }) });
+  if (!open || !anchorRect) return null;
+  const pickerWidth = 320;
+  const pickerHeight = 280;
+  let top = anchorRect.top;
+  let left = anchorRect.left;
+  if (left + pickerWidth > window.innerWidth) {
+    left = window.innerWidth - pickerWidth - 8;
+  }
+  if (left < 8) {
+    left = 8;
+  }
+  if (top + pickerHeight > window.innerHeight) {
+    top = anchorRect.top - pickerHeight - 8;
+  }
+  return reactDomExports.createPortal(
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "cwd-picker-portal-overlay", onClick: onClose, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      "div",
+      {
+        className: "cwd-picker",
+        ref: popupRef,
+        style: { top, left },
+        onClick: (e) => e.stopPropagation(),
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "cwd-picker-header", children: "切换工作目录" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "cwd-picker-current", children: [
+            "当前: ",
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "cwd-picker-current-path", children: currentCwd })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "cwd-picker-quick", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "cwd-picker-section-title", children: "快捷路径" }),
+            quickPaths.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
+              {
+                className: "cwd-picker-item",
+                onClick: () => handleSelectPath(item.path),
+                children: item.label
+              },
+              item.path
+            ))
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "cwd-picker-browse", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "cwd-picker-browse-btn", onClick: handleBrowse, children: "浏览..." }) })
+        ]
+      }
+    ) }),
+    document.body
+  );
 }
-var define_process_env_default$1 = {};
 function FileIcon() {
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("svg", { width: "13", height: "13", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("path", { d: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" }),
@@ -21452,16 +21477,22 @@ function TerminalTile({
     selected ? "tile-selected" : ""
   ].filter(Boolean).join(" ");
   function shortenPath(path) {
-    const home = typeof process !== "undefined" && define_process_env_default$1?.HOME ? define_process_env_default$1.HOME : "";
-    if (home && path.startsWith(home)) {
+    const home = window.api.app.getHomePath();
+    if (home && home !== "/" && path.startsWith(home)) {
       return "~" + path.slice(home.length);
     }
     return path;
   }
   const [cwdPickerOpen, setCwdPickerOpen] = reactExports.useState(false);
+  const cwdRef = reactExports.useRef(null);
+  const [cwdAnchorRect, setCwdAnchorRect] = reactExports.useState(null);
   const handleCwdClick = (e) => {
     e.stopPropagation();
-    if (!compact) setCwdPickerOpen(true);
+    if (!compact && cwdRef.current) {
+      const rect = cwdRef.current.getBoundingClientRect();
+      setCwdAnchorRect({ top: rect.bottom + 4, left: rect.left });
+      setCwdPickerOpen(true);
+    }
   };
   const handlePlaceholderClick = (e) => {
     e.stopPropagation();
@@ -21514,7 +21545,7 @@ function TerminalTile({
             }
           ),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "tile-name", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "tile-cwd", onClick: handleCwdClick, children: shortenPath(cwd) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "tile-cwd", ref: cwdRef, onClick: handleCwdClick, children: shortenPath(cwd) }),
             !compact && /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: namingState === "Editing" ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "tile-separator", children: "·" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -21562,7 +21593,11 @@ function TerminalTile({
             terminalId: id,
             currentCwd: cwd,
             open: cwdPickerOpen,
-            onClose: () => setCwdPickerOpen(false),
+            anchorRect: cwdAnchorRect,
+            onClose: () => {
+              setCwdPickerOpen(false);
+              setCwdAnchorRect(null);
+            },
             onCwdChange: (newCwd) => onCwdChange?.(id, newCwd)
           }
         ),
@@ -21647,7 +21682,7 @@ function CloseConfirmDialog({ open, processName, onConfirm, onCancel }) {
     /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "close-confirm-message", children: "确定关闭此终端？" }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "close-confirm-actions", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "close-confirm-cancel", onClick: onCancel, children: "取消" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "close-confirm-ok", onClick: onConfirm, children: "关闭" })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "close-confirm-ok", onClick: onConfirm, children: "确定" })
     ] })
   ] }) });
 }
@@ -79339,7 +79374,6 @@ function FilePanel({ projectCwd, onClose, onOpenFile }) {
     ] })
   ] });
 }
-var define_process_env_default = {};
 const MAX_TERMINALS = 20;
 function App() {
   const [terminals, setTerminals] = reactExports.useState([]);
@@ -79385,7 +79419,7 @@ function App() {
     };
   }, []);
   const addTerminal = reactExports.useCallback(async () => {
-    const home = typeof process !== "undefined" && define_process_env_default?.HOME ? define_process_env_default.HOME : "/";
+    const home = window.api.app.getHomePath();
     const result = await window.api.terminal.create(home);
     if (result?.success && result.data) {
       setTerminals((prev) => [...prev, { id: result.data.id, state: "Running", cwd: home }]);

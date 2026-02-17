@@ -567,20 +567,17 @@
  * CwdPicker styles
  */
 
-.cwd-picker-overlay {
-  position: absolute;
+.cwd-picker-portal-overlay {
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 1000;
-  pointer-events: none;
 }
 
 .cwd-picker {
-  position: absolute;
-  top: 40px; /* Below tile header */
-  left: 12px;
+  position: fixed;
   width: 320px;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
@@ -853,7 +850,7 @@
   height: 12px;
 }
 
-/* Close button (subtle gray) */
+/* Close button (subtle) */
 .tile-close-btn {
   display: flex;
   align-items: center;
@@ -861,7 +858,7 @@
   border-radius: 4px;
   background: transparent;
   border: 1px solid transparent;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: 11px;
   transition: all 0.15s;
   flex-shrink: 0;
@@ -870,9 +867,9 @@
 }
 
 .tile-close-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.1);
   border-color: var(--border);
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .tile-close-btn svg {
@@ -962,7 +959,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -970,38 +967,37 @@
 }
 
 .close-confirm-dialog {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 20px 24px;
-  min-width: 320px;
-  max-width: 420px;
+  background: var(--bg-card, #1e2430);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 32px 40px;
+  min-width: 400px;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
 .close-confirm-message {
-  margin: 0 0 16px;
-  font-size: 13px;
+  margin: 0 0 24px;
+  font-size: 15px;
   color: var(--text-primary);
   line-height: 1.5;
-}
-
-.close-confirm-message {
   text-align: center;
 }
 
 .close-confirm-actions {
   display: flex;
   justify-content: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .close-confirm-cancel,
 .close-confirm-ok {
-  padding: 6px 14px;
-  border-radius: 4px;
-  font-size: 12px;
+  padding: 8px 24px;
+  border-radius: 6px;
+  font-size: 13px;
   cursor: pointer;
   border: 1px solid var(--border-color);
+  font-weight: 500;
 }
 
 .close-confirm-cancel {
@@ -1010,12 +1006,12 @@
 }
 
 .close-confirm-cancel:hover {
-  background: var(--bg-tertiary);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .close-confirm-ok {
-  background: var(--accent-color, #e74c3c);
-  color: #fff;
+  background: var(--accent, #e8a748);
+  color: var(--bg-deep, #0d1117);
   border-color: transparent;
 }
 
