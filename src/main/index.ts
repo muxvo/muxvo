@@ -159,15 +159,6 @@ app.whenReady().then(() => {
     return { success: true, data: result };
   });
 
-  // Register fs:select-directory handler
-  ipcMain.handle(IPC_CHANNELS.FS.SELECT_DIRECTORY, async (_event, req?: { defaultPath?: string }) => {
-    const result = await dialog.showOpenDialog({ properties: ['openDirectory'], defaultPath: req?.defaultPath });
-    if (result.canceled || result.filePaths.length === 0) {
-      return { success: false };
-    }
-    return { success: true, data: result.filePaths[0] };
-  });
-
   // Create window and restore terminals from config
   function launchWindowWithTerminals(): void {
     const config = configManager.loadConfig();

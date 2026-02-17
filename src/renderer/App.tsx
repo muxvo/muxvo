@@ -143,12 +143,6 @@ export function App(): JSX.Element {
     setSelectedId(id);
   }, []);
 
-  const handleCwdChange = useCallback((id: string, newCwd: string) => {
-    setTerminals((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, cwd: newCwd } : t))
-    );
-  }, []);
-
   // Esc key exits focused mode (only when focus is on UI, not inside terminal)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent): void {
@@ -190,7 +184,6 @@ export function App(): JSX.Element {
         onDoubleClick={handleDoubleClick}
         onSidebarClick={handleSidebarClick}
         onClick={handleTileClick}
-        onCwdChange={handleCwdChange}
         onBackToTiling={handleBackToTiling}
         onAddTerminal={addTerminal}
         onClose={removeTerminal}
@@ -212,7 +205,6 @@ function AppContent({
   onDoubleClick,
   onSidebarClick,
   onClick,
-  onCwdChange,
   onBackToTiling,
   onAddTerminal,
   onClose,
@@ -228,7 +220,6 @@ function AppContent({
   onDoubleClick: (id: string) => void;
   onSidebarClick: (id: string) => void;
   onClick: (id: string) => void;
-  onCwdChange: (id: string, newCwd: string) => void;
   onBackToTiling: () => void;
   onAddTerminal: () => void;
   onClose: (id: string) => void;
@@ -255,7 +246,6 @@ function AppContent({
           onSidebarClick={onSidebarClick}
           onClick={onClick}
           onClose={onClose}
-          onCwdChange={onCwdChange}
         />
       </main>
 

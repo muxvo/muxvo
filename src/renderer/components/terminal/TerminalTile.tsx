@@ -21,7 +21,6 @@ interface Props {
   onDoubleClick?: () => void;
   onClick?: () => void;
   onClose?: (id: string) => void;
-  onCwdChange?: (id: string, newCwd: string) => void;
   compact?: boolean;
   focused?: boolean;
   selected?: boolean;
@@ -57,7 +56,6 @@ export function TerminalTile({
   onDoubleClick,
   onClick,
   onClose,
-  onCwdChange,
   compact,
   focused,
   selected,
@@ -265,7 +263,6 @@ export function TerminalTile({
           open={cwdPickerOpen}
           anchorRect={cwdAnchorRect}
           onClose={() => { setCwdPickerOpen(false); setCwdAnchorRect(null); }}
-          onCwdChange={(newCwd) => onCwdChange?.(id, newCwd)}
         />
       )}
 

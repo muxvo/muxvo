@@ -10,6 +10,14 @@ import { IPC_CHANNELS } from '@/shared/constants/channels';
 import type { WatchStartRequest, WatchStopRequest } from '@/shared/types/fs.types';
 import { createFileWatcherStore } from '../services/file-watcher/store';
 
+function pushToAllWindows(channel: string, payload: unknown): void {
+  BrowserWindow.getAllWindows().forEach((win) => {
+    if (!win.isDestroyed()) {
+      win.webContents.send(channel, payload);
+    }
+  });
+}
+
 // Internal watcher map
 const watchers = new Map<string, FSWatcher[]>();
 
@@ -32,12 +40,10 @@ export function createFsWatcherHandlers() {
             if (!filename) return;
             const type = eventType === 'rename' ? 'add' : 'change';
             // Push fs:change event to all windows
-            BrowserWindow.getAllWindows().forEach(win => {
-              win.webContents.send(IPC_CHANNELS.FS.CHANGE, {
-                watchId: params.id,
-                type,
-                path: filename,
-              });
+            pushToAllWindows(IPC_CHANNELS.FS.CHANGE, {
+              watchId: params.id,
+              type,
+              path: filename,
             });
           });
 
