@@ -5,7 +5,7 @@
  * Vite's ESM interop handles this transparently for import() calls.
  */
 
-function createMemoryMonitor(opts: { thresholdMB: number }) {
+export function createMemoryMonitor(opts: { thresholdMB: number }) {
   const threshold = opts.thresholdMB;
 
   return {
@@ -23,5 +23,3 @@ function createMemoryMonitor(opts: { thresholdMB: number }) {
     },
   };
 }
-
-module.exports = { createMemoryMonitor };

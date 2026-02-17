@@ -17,9 +17,10 @@ type TabId = 'terminals' | 'skills' | 'mcp' | 'chat';
 interface Props {
   viewMode?: 'Tiling' | 'Focused';
   onBackToTiling?: () => void;
+  terminalCount?: number;
 }
 
-export function MenuBar({ viewMode = 'Tiling', onBackToTiling }: Props): JSX.Element {
+export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0 }: Props): JSX.Element {
   const { state, dispatch } = usePanelContext();
 
   const activeDropdown = state.menuDropdown.open ? state.menuDropdown.type : null;
@@ -76,7 +77,7 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling }: Props): JSX.Ele
             className={`menu-bar__tab${activeTab === 'terminals' ? ' menu-bar__tab--active' : ''}`}
             onClick={() => handleTabClick('terminals')}
           >
-            Terminals
+            终端{terminalCount > 0 && <span className="menu-bar__badge">{terminalCount}</span>}
           </button>
           <button
             className={`menu-bar__tab${activeTab === 'skills' ? ' menu-bar__tab--active' : ''}`}
@@ -94,13 +95,13 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling }: Props): JSX.Ele
             className={`menu-bar__tab${activeTab === 'chat' ? ' menu-bar__tab--active' : ''}`}
             onClick={() => handleTabClick('chat')}
           >
-            Chat
+            历史聊天
           </button>
         </nav>
 
         {viewMode === 'Focused' && onBackToTiling && (
           <button className="menu-bar__back-btn" onClick={onBackToTiling}>
-            ← Tiling
+            ← 回到平铺
           </button>
         )}
       </header>

@@ -1,78 +1,265 @@
-/* TileEffects.css — 3D visual effects for terminal tiles (Module B3) */
+/* TileEffects.css — Terminal tile visual styles (aligned with prototype-history-A.html) */
 
-/* 3D tilt container */
-.tile-3d {
-  perspective: 1000px;
-  transform-style: preserve-3d;
-}
-
-.tile-3d-inner {
-  transition: transform 200ms ease-out;
-  transform: perspective(1000px) rotateX(var(--rotateX, 0deg)) rotateY(var(--rotateY, 0deg));
+/* === Base tile === */
+.tile {
+  background: var(--bg-card);
+  border-radius: 10px;
+  overflow: hidden;
   position: relative;
-  width: 100%;
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, filter 0.3s ease;
+  border: 1px solid var(--border);
+  min-width: 0;
+  min-height: 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
-/* Gloss reflection layer */
-.tile-3d-inner::after {
+.tile:hover {
+  border-color: rgba(232, 167, 72, 0.25);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 60px rgba(232, 167, 72, 0.05);
+}
+
+/* Gloss overlay on hover (radial gradient following cursor) */
+.tile::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    45deg,
-    transparent 30%,
-    rgba(255, 255, 255, 0.03) 50%,
-    transparent 70%
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 255, 255, 0.15) 0%,
+    transparent 50%
   );
   pointer-events: none;
   opacity: 0;
-  transition: opacity 200ms ease-out;
-  z-index: 10;
+  transition: opacity 0.3s;
+  z-index: 5;
 }
 
-.tile-3d-inner:hover::after {
+.tile:hover::after {
   opacity: 1;
 }
 
-/* Status dot breathing pulse */
+/* === Tile header === */
+.tile-header {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+/* Status dot */
+.tile-status {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tile-status--running {
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success);
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+.tile-status--idle {
+  background: var(--text-muted);
+}
+
+/* Cwd path (clickable, cyan) */
+.tile-cwd {
+  font-size: 11px;
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+  flex-shrink: 1;
+}
+
+.tile-cwd:hover {
+  text-decoration: underline;
+  color: var(--accent);
+}
+
+/* Separator between cwd and name */
+.tile-separator {
+  color: var(--text-muted);
+  font-size: 10px;
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+/* Custom name */
+.tile-custom-name {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+}
+
+.tile-custom-name--placeholder {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Name editing input */
+.tile-custom-name-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--accent);
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  width: 100px;
+  caret-color: var(--accent);
+  padding: 0 2px;
+}
+
+/* File button (amber pill) */
+.tile-file-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  background: rgba(232, 167, 72, 0.15);
+  border: 1px solid rgba(232, 167, 72, 0.3);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  transition: all 0.15s;
+  flex-shrink: 0;
+  z-index: 10;
+  cursor: pointer;
+}
+
+.tile-file-btn:hover {
+  background: rgba(232, 167, 72, 0.25);
+  border-color: var(--accent);
+}
+
+.tile-file-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* Maximize / focus button (blue pill) */
+.tile-max-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(96, 165, 250, 0.15);
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  color: var(--info);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  transition: all 0.15s;
+  flex-shrink: 0;
+  z-index: 10;
+  cursor: pointer;
+}
+
+.tile-max-btn:hover {
+  background: rgba(96, 165, 250, 0.3);
+  border-color: var(--info);
+}
+
+.tile-max-btn svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Tile name area */
+.tile-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  flex: 1;
+  font-family: var(--font-mono);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* === Tile terminal content === */
+.tile-terminal {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* === Active / Selected / Focused states === */
+.tile.active-tile {
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(232, 167, 72, 0.3);
+}
+
+.tile.active-tile .tile-name {
+  color: var(--accent);
+}
+
+.tile-focused {
+  z-index: 100;
+  border-color: var(--border-focus);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 80px rgba(232, 167, 72, 0.06);
+}
+
+.tile-focused .tile-name {
+  color: var(--accent);
+}
+
+.tile-selected {
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(232, 167, 72, 0.3);
+}
+
+/* === Status dot breathing pulse === */
 @keyframes statusPulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.2); }
+  0%,
+  100% {
+    box-shadow: 0 0 6px var(--success);
+  }
+  50% {
+    box-shadow: 0 0 12px var(--success), 0 0 24px rgba(74, 222, 128, 0.3);
+  }
 }
 
 .status-dot-pulse {
   animation: statusPulse 2s infinite ease-in-out;
 }
 
-/* Entrance animation */
-@keyframes tileSlideIn {
+/* === Entrance animation === */
+@keyframes tileEnter {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(40px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
 .tile-enter {
-  animation: tileSlideIn 300ms ease-out both;
+  animation: tileEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: calc(var(--stagger-index, 0) * 50ms);
-}
-
-/* Focus mode depth shift */
-.tile-focused {
-  transform: translateZ(20px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-/* Selected highlight border */
-.tile-selected {
-  outline: 2px solid var(--info);
-  outline-offset: -2px;
 }

@@ -7,9 +7,7 @@
 
 import { BrowserWindow } from 'electron';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
-
-// Import CJS module
-const { createMemoryMonitor } = require('../perf/memory-monitor');
+import { createMemoryMonitor } from './memory-monitor';
 
 interface MemoryPushOptions {
   intervalMs: number;

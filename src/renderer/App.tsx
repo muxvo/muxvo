@@ -8,10 +8,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { MenuBar } from './components/layout/MenuBar';
-import { BottomBar } from './components/layout/BottomBar';
+import { FloatingControls } from './components/layout/FloatingControls';
 import { TerminalGrid } from './components/terminal/TerminalGrid';
 import { CloseConfirmDialog } from './components/terminal/CloseConfirmDialog';
-import { PanelProvider } from './contexts/PanelContext';
+import { ChatHistoryPanel } from './components/chat/ChatHistoryPanel';
+import { FilePanel } from './components/file/FilePanel';
+import { PanelProvider, usePanelContext } from './contexts/PanelContext';
 import './App.css';
 
 const MAX_TERMINALS = 20;
@@ -168,35 +170,143 @@ export function App(): JSX.Element {
 
   const maxReached = terminals.length >= MAX_TERMINALS;
 
+  // Remove currently selected terminal (for floating controls "- 移除" button)
+  const removeSelectedTerminal = useCallback(() => {
+    if (selectedId) {
+      removeTerminal(selectedId);
+    } else if (terminals.length > 0) {
+      // If none selected, remove the last one
+      removeTerminal(terminals[terminals.length - 1].id);
+    }
+  }, [selectedId, terminals, removeTerminal]);
+
   return (
     <PanelProvider>
-      <div className="app">
-        <MenuBar viewMode={viewMode} onBackToTiling={handleBackToTiling} />
-        <main className="app-content">
-          <TerminalGrid
-            terminals={terminals}
-            viewMode={viewMode}
-            focusedId={focusedId}
-            selectedId={selectedId}
-            onDoubleClick={handleDoubleClick}
-            onSidebarClick={handleSidebarClick}
-            onClick={handleTileClick}
-            onCwdChange={handleCwdChange}
-          />
-        </main>
-        <BottomBar
-          terminalCount={terminals.length}
-          onAddTerminal={addTerminal}
-          maxReached={maxReached}
-        />
-        <CloseConfirmDialog
-          open={closeConfirm.open}
-          terminalId={closeConfirm.terminalId}
-          processName={closeConfirm.processName}
-          onConfirm={handleCloseConfirm}
-          onCancel={handleCloseCancel}
-        />
-      </div>
+      <AppContent
+        terminals={terminals}
+        viewMode={viewMode}
+        focusedId={focusedId}
+        selectedId={selectedId}
+        maxReached={maxReached}
+        closeConfirm={closeConfirm}
+        onDoubleClick={handleDoubleClick}
+        onSidebarClick={handleSidebarClick}
+        onClick={handleTileClick}
+        onCwdChange={handleCwdChange}
+        onBackToTiling={handleBackToTiling}
+        onAddTerminal={addTerminal}
+        onRemoveTerminal={removeSelectedTerminal}
+        onCloseConfirm={handleCloseConfirm}
+        onCloseCancel={handleCloseCancel}
+      />
     </PanelProvider>
+  );
+}
+
+/** Inner component to access PanelContext (must be child of PanelProvider) */
+function AppContent({
+  terminals,
+  viewMode,
+  focusedId,
+  selectedId,
+  maxReached,
+  closeConfirm,
+  onDoubleClick,
+  onSidebarClick,
+  onClick,
+  onCwdChange,
+  onBackToTiling,
+  onAddTerminal,
+  onRemoveTerminal,
+  onCloseConfirm,
+  onCloseCancel,
+}: {
+  terminals: TerminalEntry[];
+  viewMode: 'Tiling' | 'Focused';
+  focusedId: string | null;
+  selectedId: string | null;
+  maxReached: boolean;
+  closeConfirm: CloseConfirmState;
+  onDoubleClick: (id: string) => void;
+  onSidebarClick: (id: string) => void;
+  onClick: (id: string) => void;
+  onCwdChange: (id: string, newCwd: string) => void;
+  onBackToTiling: () => void;
+  onAddTerminal: () => void;
+  onRemoveTerminal: () => void;
+  onCloseConfirm: () => void;
+  onCloseCancel: () => void;
+}): JSX.Element {
+  const { state, dispatch } = usePanelContext();
+
+  // Compute FilePanel projectCwd from filePanel.projectIndex
+  const filePanelCwd = state.filePanel.projectIndex !== null
+    ? terminals[state.filePanel.projectIndex]?.cwd || '/'
+    : '/';
+
+  return (
+    <div className="app">
+      <MenuBar viewMode={viewMode} onBackToTiling={onBackToTiling} terminalCount={terminals.length} />
+      <main className="app-content">
+        <TerminalGrid
+          terminals={terminals}
+          viewMode={viewMode}
+          focusedId={focusedId}
+          selectedId={selectedId}
+          onDoubleClick={onDoubleClick}
+          onSidebarClick={onSidebarClick}
+          onClick={onClick}
+          onCwdChange={onCwdChange}
+        />
+      </main>
+
+      {/* "回到平铺" centered floating button (visible in Focused mode) */}
+      {viewMode === 'Focused' && (
+        <button className="grid-return-btn" onClick={onBackToTiling}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>
+          回到平铺
+        </button>
+      )}
+
+      {/* Floating controls (prototype bottom pill bar) */}
+      <FloatingControls
+        terminalCount={terminals.length}
+        onAddTerminal={onAddTerminal}
+        onRemoveTerminal={onRemoveTerminal}
+        maxReached={maxReached}
+      />
+
+      {/* Chat history overlay (mail-client 3-column view) */}
+      {state.chatHistory.open && (
+        <div className="chat-history-overlay">
+          <ChatHistoryPanel />
+        </div>
+      )}
+
+      {/* File panel (right slide-out) */}
+      {state.filePanel.open && (
+        <FilePanel
+          projectCwd={filePanelCwd}
+          onClose={() => dispatch({ type: 'CLOSE_FILE_PANEL' })}
+          onOpenFile={(filePath, ext) => {
+            // Open temp view with file (to be wired when tempView state is expanded)
+            dispatch({ type: 'OPEN_TEMP_VIEW', contentKey: filePath });
+          }}
+        />
+      )}
+
+      <CloseConfirmDialog
+        open={closeConfirm.open}
+        terminalId={closeConfirm.terminalId}
+        processName={closeConfirm.processName}
+        onConfirm={onCloseConfirm}
+        onCancel={onCloseCancel}
+      />
+    </div>
   );
 }
