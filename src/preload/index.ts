@@ -156,6 +156,57 @@ const api = {
       return () => ipcRenderer.removeListener(IPC_CHANNELS.CONFIG.RESOURCE_CHANGE, handler);
     },
   },
+
+  // --- Marketplace domain ---
+  marketplace: {
+    fetchSources: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.MARKETPLACE.FETCH_SOURCES),
+    search: (query: string, filters?: Record<string, unknown>) =>
+      ipcRenderer.invoke(IPC_CHANNELS.MARKETPLACE.SEARCH, { query, filters }),
+    install: (params: { name: string; source: string; type: string; version?: string }) =>
+      ipcRenderer.invoke(IPC_CHANNELS.MARKETPLACE.INSTALL, params),
+    uninstall: (name: string, type?: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.MARKETPLACE.UNINSTALL, { name, type }),
+    getInstalled: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.MARKETPLACE.GET_INSTALLED),
+    checkUpdates: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.MARKETPLACE.CHECK_UPDATES),
+    onInstallProgress: (callback: (data: { name: string; progress: number; status: string }) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: { name: string; progress: number; status: string }) => callback(data);
+      ipcRenderer.on(IPC_CHANNELS.MARKETPLACE.INSTALL_PROGRESS, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.MARKETPLACE.INSTALL_PROGRESS, handler);
+    },
+    onPackagesLoaded: (callback: (data: { packages: unknown[]; source: string }) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: { packages: unknown[]; source: string }) => callback(data);
+      ipcRenderer.on(IPC_CHANNELS.MARKETPLACE.PACKAGES_LOADED, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.MARKETPLACE.PACKAGES_LOADED, handler);
+    },
+    onUpdateAvailable: (callback: (data: { packages: unknown[] }) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: { packages: unknown[] }) => callback(data);
+      ipcRenderer.on(IPC_CHANNELS.MARKETPLACE.UPDATE_AVAILABLE, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.MARKETPLACE.UPDATE_AVAILABLE, handler);
+    },
+  },
+
+  // --- Score domain ---
+  score: {
+    checkScorer: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.SCORE.CHECK_SCORER),
+    run: (skillDirName: string, includeAnalytics?: boolean) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SCORE.RUN, { skillDirName, includeAnalytics }),
+    getCached: (skillDirName: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SCORE.GET_CACHED, { skillDirName }),
+    onProgress: (callback: (data: { skillDirName: string; status: string }) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: { skillDirName: string; status: string }) => callback(data);
+      ipcRenderer.on(IPC_CHANNELS.SCORE.PROGRESS, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.SCORE.PROGRESS, handler);
+    },
+    onResult: (callback: (data: { skillDirName: string; score: unknown }) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: { skillDirName: string; score: unknown }) => callback(data);
+      ipcRenderer.on(IPC_CHANNELS.SCORE.RESULT, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.SCORE.RESULT, handler);
+    },
+  },
 };
 
 contextBridge.exposeInMainWorld('api', api);
