@@ -160,8 +160,8 @@ app.whenReady().then(() => {
   });
 
   // Register fs:select-directory handler
-  ipcMain.handle(IPC_CHANNELS.FS.SELECT_DIRECTORY, async () => {
-    const result = await dialog.showOpenDialog({ properties: ['openDirectory'] });
+  ipcMain.handle(IPC_CHANNELS.FS.SELECT_DIRECTORY, async (_event, req?: { defaultPath?: string }) => {
+    const result = await dialog.showOpenDialog({ properties: ['openDirectory'], defaultPath: req?.defaultPath });
     if (result.canceled || result.filePaths.length === 0) {
       return { success: false };
     }

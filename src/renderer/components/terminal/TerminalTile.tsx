@@ -110,7 +110,7 @@ export function TerminalTile({
     }
     if (truncate) {
       const parts = short.split('/');
-      if (parts.length > 4) {
+      if (parts.length > 3) {
         return parts[0] + '/\u2026/' + parts.slice(-2).join('/');
       }
     }

@@ -84,8 +84,8 @@ const api = {
 
   // --- FS domain ---
   fs: {
-    selectDirectory: () =>
-      ipcRenderer.invoke(IPC_CHANNELS.FS.SELECT_DIRECTORY),
+    selectDirectory: (defaultPath?: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.FS.SELECT_DIRECTORY, defaultPath ? { defaultPath } : undefined),
     readDir: (dirPath: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.FS.READ_DIR, { path: dirPath }),
     readFile: (filePath: string) =>
