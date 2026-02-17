@@ -11,6 +11,7 @@
  */
 
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { isShellProcess } from '@/shared/utils/shell-detect';
 import './CwdPicker.css';
 
@@ -18,6 +19,7 @@ interface Props {
   terminalId: string;
   currentCwd: string;
   open: boolean;
+  anchorRect: { top: number; left: number } | null;
   onClose: () => void;
   onCwdChange: (newCwd: string) => void;
   onConfirmExit?: (processName: string, targetCwd: string) => void;
@@ -32,6 +34,7 @@ export function CwdPicker({
   terminalId,
   currentCwd,
   open,
+  anchorRect,
   onClose,
   onCwdChange,
   onConfirmExit,

@@ -20,14 +20,14 @@ export function CloseConfirmDialog({ open, processName, onConfirm, onCancel }: P
     <div className="close-confirm-overlay" onClick={onCancel}>
       <div className="close-confirm-dialog" onClick={(e) => e.stopPropagation()}>
         <p className="close-confirm-message">
-          当前终端有进程正在运行（{processName}），确定关闭？
+          确定关闭此终端？
         </p>
         <div className="close-confirm-actions">
           <button className="close-confirm-cancel" onClick={onCancel}>
             取消
           </button>
           <button className="close-confirm-ok" onClick={onConfirm}>
-            确定关闭
+            关闭
           </button>
         </div>
       </div>

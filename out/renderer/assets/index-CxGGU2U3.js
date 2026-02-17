@@ -21644,14 +21644,10 @@ function renderTilingGrid(terminals, selectedId, onDoubleClick, onClick, onClose
 function CloseConfirmDialog({ open, processName, onConfirm, onCancel }) {
   if (!open) return null;
   return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "close-confirm-overlay", onClick: onCancel, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "close-confirm-dialog", onClick: (e) => e.stopPropagation(), children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "close-confirm-message", children: [
-      "当前终端有进程正在运行（",
-      processName,
-      "），确定关闭？"
-    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "close-confirm-message", children: "确定关闭此终端？" }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "close-confirm-actions", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "close-confirm-cancel", onClick: onCancel, children: "取消" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "close-confirm-ok", onClick: onConfirm, children: "确定关闭" })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "close-confirm-ok", onClick: onConfirm, children: "关闭" })
     ] })
   ] }) });
 }
@@ -79470,7 +79466,7 @@ function App() {
       onCwdChange: handleCwdChange,
       onBackToTiling: handleBackToTiling,
       onAddTerminal: addTerminal,
-      onRemoveTerminal: removeTerminal,
+      onClose: removeTerminal,
       onCloseConfirm: handleCloseConfirm,
       onCloseCancel: handleCloseCancel
     }
@@ -79489,7 +79485,7 @@ function AppContent({
   onCwdChange,
   onBackToTiling,
   onAddTerminal,
-  onRemoveTerminal,
+  onClose,
   onCloseConfirm,
   onCloseCancel
 }) {
@@ -79507,7 +79503,7 @@ function AppContent({
         onDoubleClick,
         onSidebarClick,
         onClick,
-        onClose: onRemoveTerminal,
+        onClose,
         onCwdChange
       }
     ) }),

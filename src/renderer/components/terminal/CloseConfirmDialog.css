@@ -27,9 +27,13 @@
   line-height: 1.5;
 }
 
+.close-confirm-message {
+  text-align: center;
+}
+
 .close-confirm-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 8px;
 }
 
