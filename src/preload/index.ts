@@ -207,6 +207,31 @@ const api = {
       return () => ipcRenderer.removeListener(IPC_CHANNELS.SCORE.RESULT, handler);
     },
   },
+
+  // --- Showcase domain ---
+  showcase: {
+    generate: (skillDirName: string, template: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SHOWCASE.GENERATE, { skillDirName, template }),
+    publish: (params: { skillDirName: string; details?: unknown; securityChecked: boolean }) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SHOWCASE.PUBLISH, params),
+    unpublish: (skillDirName: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SHOWCASE.UNPUBLISH, { skillDirName }),
+    onPublishResult: (callback: (data: { skillDirName: string; success: boolean; url?: string; error?: string }) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: { skillDirName: string; success: boolean; url?: string; error?: string }) => callback(data);
+      ipcRenderer.on(IPC_CHANNELS.SHOWCASE.PUBLISH_RESULT, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.SHOWCASE.PUBLISH_RESULT, handler);
+    },
+  },
+
+  // --- Analytics domain ---
+  analytics: {
+    track: (event: string, params?: Record<string, unknown>) =>
+      ipcRenderer.invoke(IPC_CHANNELS.ANALYTICS.TRACK, { event, params }),
+    getSummary: (startDate: string, endDate: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.ANALYTICS.GET_SUMMARY, { startDate, endDate }),
+    clear: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.ANALYTICS.CLEAR),
+  },
 };
 
 contextBridge.exposeInMainWorld('api', api);
