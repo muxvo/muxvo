@@ -52,8 +52,8 @@ const api = {
     },
     onListUpdated: (callback: (data: Array<{ id: string; state: string }>) => void) => {
       const handler = (_event: Electron.IpcRendererEvent, data: Array<{ id: string; state: string }>) => callback(data);
-      ipcRenderer.on('terminal:list-updated', handler);
-      return () => ipcRenderer.removeListener('terminal:list-updated', handler);
+      ipcRenderer.on(IPC_CHANNELS.TERMINAL.LIST_UPDATED, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.TERMINAL.LIST_UPDATED, handler);
     },
   },
 
@@ -81,6 +81,8 @@ const api = {
   fs: {
     selectDirectory: () =>
       ipcRenderer.invoke(IPC_CHANNELS.FS.SELECT_DIRECTORY),
+    readDir: (dirPath: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.FS.READ_DIR, { path: dirPath }),
     readFile: (filePath: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.FS.READ_FILE, { path: filePath }),
     writeFile: (filePath: string, content: string) =>
@@ -93,6 +95,8 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_HISTORY, params),
     getSession: (sessionId: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_SESSION, { sessionId }),
+    search: (query: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.SEARCH, { query }),
     onSessionUpdate: (callback: (data: any) => void) => {
       const handler = (_event: Electron.IpcRendererEvent, data: any) => callback(data);
       ipcRenderer.on(IPC_CHANNELS.CHAT.SESSION_UPDATE, handler);
@@ -103,6 +107,22 @@ const api = {
       ipcRenderer.on(IPC_CHANNELS.CHAT.SYNC_STATUS, handler);
       return () => ipcRenderer.removeListener(IPC_CHANNELS.CHAT.SYNC_STATUS, handler);
     },
+  },
+
+  // --- Config domain ---
+  config: {
+    getResources: (type?: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CONFIG.GET_RESOURCES, { type }),
+    getResourceContent: (resourcePath: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CONFIG.GET_RESOURCE_CONTENT, { path: resourcePath }),
+    getSettings: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.CONFIG.GET_SETTINGS),
+    saveSettings: (settings: Record<string, unknown>) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CONFIG.SAVE_SETTINGS, { settings }),
+    getClaudeMd: (scope?: string, projectPath?: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CONFIG.GET_CLAUDE_MD, { scope, projectPath }),
+    saveClaudeMd: (content: string, scope?: string, projectPath?: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CONFIG.SAVE_CLAUDE_MD, { content, scope, projectPath }),
   },
 };
 
