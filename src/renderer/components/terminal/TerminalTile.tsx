@@ -102,12 +102,19 @@ export function TerminalTile({
     selected ? 'tile-selected' : '',
   ].filter(Boolean).join(' ');
 
-  function shortenPath(path: string): string {
+  function shortenPath(path: string, truncate = true): string {
     const home = window.api.app.getHomePath();
+    let short = path;
     if (home && home !== '/' && path.startsWith(home)) {
-      return '~' + path.slice(home.length);
+      short = '~' + path.slice(home.length);
     }
-    return path;
+    if (truncate) {
+      const parts = short.split('/');
+      if (parts.length > 4) {
+        return parts[0] + '/\u2026/' + parts.slice(-2).join('/');
+      }
+    }
+    return short;
   }
 
   const [cwdPickerOpen, setCwdPickerOpen] = useState(false);
@@ -183,7 +190,7 @@ export function TerminalTile({
         {/* Tile name area */}
         <div className="tile-name">
           {/* Cwd path (clickable, cyan) */}
-          <span className="tile-cwd" ref={cwdRef} onClick={handleCwdClick}>
+          <span className="tile-cwd" ref={cwdRef} onClick={handleCwdClick} title={shortenPath(cwd, false)}>
             {shortenPath(cwd)}
           </span>
 
