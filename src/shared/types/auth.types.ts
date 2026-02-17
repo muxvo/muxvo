@@ -5,12 +5,19 @@
 
 /** auth:login-github 返回值 */
 export interface AuthLoginResponse {
-  username: string;
-  loggedIn: boolean;
+  success: boolean;
+  user?: {
+    username: string;
+    avatarUrl: string;
+  };
 }
 
 /** auth:get-status 返回值 */
 export interface AuthStatus {
   loggedIn: boolean;
-  username?: string;
+  user?: {
+    username: string;
+    avatarUrl: string;
+  };
+  tokenExpiry?: string;
 }

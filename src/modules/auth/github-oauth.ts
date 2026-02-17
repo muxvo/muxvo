@@ -2,30 +2,15 @@
  * GitHub OAuth - handles GitHub login/logout/status
  */
 
-export interface LoginResult {
-  success: boolean;
-  user?: {
-    username: string;
-    avatarUrl: string;
-  };
-}
+import type { AuthLoginResponse, AuthStatus } from '@/shared/types/auth.types';
 
 export interface LogoutResult {
   success: boolean;
 }
 
-export interface AuthStatus {
-  loggedIn: boolean;
-  user?: {
-    username: string;
-    avatarUrl: string;
-  };
-  tokenExpiry?: string;
-}
-
 let currentUser: { username: string; avatarUrl: string } | undefined;
 
-export async function loginGithub(): Promise<LoginResult> {
+export async function loginGithub(): Promise<AuthLoginResponse> {
   // Default: not connected, returns structure with success=false
   return {
     success: false,

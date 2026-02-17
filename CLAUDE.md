@@ -48,7 +48,7 @@ Main Process (src/main/)          Renderer Process (src/renderer/)
                                   └── utils/        ← UI utilities
 ```
 
-Communication is exclusively through IPC channels organized by domain: `terminal:*`, `chat:*`, `fs:*`, `config:*`, `marketplace:*`, `score:*`, `showcase:*`.
+Communication is exclusively through IPC channels organized by domain: `terminal:*`, `chat:*`, `fs:*`, `config:*`, `app:*`, `marketplace:*`, `score:*`, `showcase:*`, `auth:*`, `analytics:*`.
 
 ### Source Code Layout
 
@@ -77,11 +77,52 @@ Configured in both `tsconfig.json` and `vitest.config.ts`. The `tests/setup.ts` 
 
 **Test helpers** (`tests/helpers/`): `mock-ipc.ts` (IPC channel mocking), `mock-electron.ts` (Electron API stubs), `test-fixtures.ts` (shared test data).
 
+### IPC Handler Pattern
+
+All IPC handlers live in `src/main/ipc/*-handlers.ts` and follow a two-function pattern:
+
+```typescript
+// Factory returns handler methods
+export function createXxxHandlers() {
+  return { async method1(params), async method2(params), ... };
+}
+// Registration wires to ipcMain.handle
+export function registerXxxHandlers(): void {
+  const h = createXxxHandlers();
+  ipcMain.handle(IPC_CHANNELS.XXX.METHOD, (_e, p) => h.method(p));
+}
+```
+
+Currently implemented handler files:
+- `terminal-handlers.ts` — accepts manager instance + optional persistence callback
+- `chat-handlers.ts` — uses dual-source reader for history/session access
+- `config-handlers.ts` — resource scanning, settings/CLAUDE.md read/write with atomic writes
+- `fs-handlers.ts` — readDir/readFile/writeFile with writable path restrictions
+- `app-handlers.ts` — preferences + CLI tool detection with format conversion
+
+All registered in `src/main/index.ts` at app startup. Legacy stub exports (e.g., `configHandlers`) maintained for L1 test compatibility.
+
+### Preload API Surface
+
+`window.api` exposes 6 domains to the renderer (type: `MuxvoAPI`):
+
+| Domain | Methods | Pattern |
+|--------|---------|---------|
+| terminal | create, write, close, list, getState, getBuffer, onOutput, onStateChange, onExit, onListUpdated | invoke + on |
+| app | getConfig, saveConfig, getPreferences, savePreferences, detectCliTools, onMemoryWarning | invoke + on |
+| fs | selectDirectory, readDir, readFile, writeFile | invoke only |
+| chat | getHistory, getSession, search, onSessionUpdate, onSyncStatus | invoke + on |
+| config | getResources, getResourceContent, getSettings, saveSettings, getClaudeMd, saveClaudeMd | invoke only |
+
+All `on*` event listeners return an unsubscribe cleanup function.
+
 ### Key Design Patterns
 
 - **State machines**: All use `createXxxMachine()` → `{ get state, get context, send(event, payload?) }`. States are string literals, transitions are switch-case. See `src/shared/machines/terminal-process.ts` as reference.
 - **Stores**: Factory functions like `createXxxStore()` returning objects with `dispatch(action)`, `getState()`, and domain-specific getters.
 - **Services**: Factory functions like `createXxxManager()` returning async method objects.
+- **Atomic writes**: Config/settings files use tmp + rename pattern to prevent corruption.
+- **Path security**: File access handlers validate paths against allowed directories (e.g., `~/.claude/`, `~/.muxvo/`).
 
 ## Key Documents
 

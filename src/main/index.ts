@@ -18,6 +18,10 @@ import { createTerminalManager } from './services/terminal/manager';
 import { createRealPtyAdapter } from './services/terminal/pty-adapter';
 import { registerTerminalHandlers } from './ipc/terminal-handlers';
 import { registerChatHandlers } from './ipc/chat-handlers';
+import { registerConfigHandlers } from './ipc/config-handlers';
+import { registerFsHandlers } from './ipc/fs-handlers';
+import { registerAppHandlers } from './ipc/app-handlers';
+import { createChatWatcher } from './services/chat-watcher';
 import { initConfigDir, createConfigManager } from './services/app/config';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 
@@ -82,6 +86,7 @@ function createWindow(windowConfig?: WindowConfig): void {
 }
 
 let terminalManager: ReturnType<typeof createTerminalManager> | null = null;
+let chatWatcher: ReturnType<typeof createChatWatcher> | null = null;
 
 app.whenReady().then(() => {
   // Initialize config persistence
@@ -100,6 +105,12 @@ app.whenReady().then(() => {
 
   // Register chat IPC handlers
   registerChatHandlers();
+  registerConfigHandlers();
+  registerFsHandlers();
+  registerAppHandlers();
+
+  chatWatcher = createChatWatcher();
+  chatWatcher.start();
 
   // Register app config IPC handlers
   ipcMain.handle(IPC_CHANNELS.APP.GET_CONFIG, async () => {
@@ -145,7 +156,7 @@ app.whenReady().then(() => {
           const win = BrowserWindow.getAllWindows()[0];
           if (win) {
             const list = terminalManager.list();
-            win.webContents.send('terminal:list-updated', list.map((t) => ({
+            win.webContents.send(IPC_CHANNELS.TERMINAL.LIST_UPDATED, list.map((t) => ({
               id: t.id, state: t.state,
             })));
             console.log('[MUXVO:restore] sent list-updated, count=' + restoredIds.length);
@@ -199,6 +210,9 @@ app.on('window-all-closed', () => {
   // Clean up all terminal processes
   if (terminalManager) {
     terminalManager.closeAll();
+  }
+  if (chatWatcher) {
+    chatWatcher.stop();
   }
 
   if (process.platform !== 'darwin') {

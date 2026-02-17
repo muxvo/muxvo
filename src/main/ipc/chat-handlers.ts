@@ -68,11 +68,19 @@ export function createChatHandlers() {
       };
     },
 
-    async search(_params: { query: string }): Promise<Record<string, unknown>> {
-      // Search not implemented yet
-      return {
-        results: [],
-      };
+    async search(params: { query: string }): Promise<Record<string, unknown>> {
+      const history = await reader.readHistory();
+      if (history.source === null) return { results: [] };
+      const q = params.query.toLowerCase();
+      const results = history.entries
+        .filter((e: any) => e.display.toLowerCase().includes(q))
+        .map((e: any) => ({
+          project: e.project,
+          sessionId: e.sessionId || '',
+          snippet: e.display.slice(0, 100),
+          timestamp: e.timestamp,
+        }));
+      return { results };
     },
 
     async export(_params: { sessionId: string; format: string }): Promise<Record<string, unknown>> {
