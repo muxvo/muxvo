@@ -1,14 +1,15 @@
 /**
  * TerminalTile — Single terminal tile with status indicator + xterm rendering area
  * DEV-PLAN A4: Terminal tile component
- * DEV-PLAN B2/B3: Focus mode interactions + 3D visual effects
+ * DEV-PLAN B2/B3: Focus mode interactions + visual effects
  * Module I: I1 Tile Header改造 + I4 自定义名称编辑
+ *
+ * Aligned with prototype-history-A.html tile design.
  */
 
 import { useState, useRef, useEffect } from 'react';
 import { XTermRenderer } from './XTermRenderer';
 import { getTerminalProcessUI } from '@/renderer/stores/terminal-process-ui-map';
-import { useTileEffects } from './useTileEffects';
 import { createNamingMachine } from '@/shared/machines/terminal-naming';
 import { CwdPicker } from './CwdPicker';
 import './TileEffects.css';
@@ -26,6 +27,28 @@ interface Props {
   staggerIndex?: number;
 }
 
+/** File icon SVG (inline) */
+function FileIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+    </svg>
+  );
+}
+
+/** Maximize icon SVG (inline) */
+function MaximizeIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="15 3 21 3 21 9" />
+      <polyline points="9 21 3 21 3 15" />
+      <line x1="21" y1="3" x2="14" y2="10" />
+      <line x1="3" y1="21" x2="10" y2="14" />
+    </svg>
+  );
+}
+
 export function TerminalTile({
   id,
   state,
@@ -39,9 +62,17 @@ export function TerminalTile({
   staggerIndex
 }: Props): JSX.Element {
   const ui = getTerminalProcessUI(state);
-  const { containerRef, handleMouseMove, handleMouseLeave } = useTileEffects({
-    enabled: !compact,
-  });
+  const tileRef = useRef<HTMLDivElement>(null);
+
+  // Mouse tracking for gloss effect
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!tileRef.current || compact) return;
+    const rect = tileRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    tileRef.current.style.setProperty('--mx', `${x}%`);
+    tileRef.current.style.setProperty('--my', `${y}%`);
+  };
 
   // Naming machine state
   const namingRef = useRef(createNamingMachine());
@@ -63,7 +94,7 @@ export function TerminalTile({
   }, [namingState, namingContext.editValue]);
 
   const classNames = [
-    'tile-3d',
+    'tile',
     !compact ? 'tile-enter' : '',
     focused ? 'tile-focused' : '',
     selected ? 'tile-selected' : '',
@@ -120,107 +151,80 @@ export function TerminalTile({
 
   return (
     <div
-      ref={containerRef}
+      ref={tileRef}
       className={classNames}
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        background: 'var(--bg-primary)',
-        height: '100%',
         '--stagger-index': staggerIndex ?? 0,
       } as React.CSSProperties}
       onDoubleClick={onDoubleClick}
       onClick={onClick}
       onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
     >
-      {/* Header: [status-dot] [cwd] [· name-area] [file] [focus] */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '6px',
-        padding: '2px 8px',
-        background: 'var(--bg-card)',
-        borderBottom: '1px solid var(--border)',
-        fontSize: '11px',
-        color: 'var(--text-secondary)',
-        flexShrink: 0,
-      }}>
+      {/* Header: [status-dot] [cwd · name-area] [spacer] [file-btn] [max-btn] */}
+      <div className="tile-header">
         {/* Status dot */}
         <span
-          className={state === 'Running' ? 'status-dot-pulse' : ''}
-          style={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            backgroundColor: ui.statusDotColor,
-            display: 'inline-block',
-          }}
+          className={`tile-status ${state === 'Running' ? 'tile-status--running' : 'tile-status--idle'}`}
         />
 
-        {/* Cwd path (clickable) */}
-        <span style={{ cursor: 'pointer', color: 'var(--text-secondary)' }} onClick={handleCwdClick}>
-          {shortenPath(cwd)}
-        </span>
+        {/* Tile name area */}
+        <div className="tile-name">
+          {/* Cwd path (clickable, cyan) */}
+          <span className="tile-cwd" onClick={handleCwdClick}>
+            {shortenPath(cwd)}
+          </span>
 
-        {/* Name area (only in non-compact mode) */}
+          {/* Name area (only in non-compact mode) */}
+          {!compact && (
+            <>
+              {namingState === 'Editing' ? (
+                <>
+                  <span className="tile-separator">·</span>
+                  <input
+                    type="text"
+                    className="tile-custom-name-input"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleInputKeyDown}
+                    onBlur={handleInputBlur}
+                    autoFocus
+                  />
+                </>
+              ) : namingState === 'DisplayNamed' ? (
+                <>
+                  <span className="tile-separator">·</span>
+                  <span className="tile-custom-name" onClick={handleNameClick}>
+                    {namingContext.displayText}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="tile-separator">·</span>
+                  <span
+                    className="tile-custom-name tile-custom-name--placeholder"
+                    onClick={handlePlaceholderClick}
+                  >
+                    命名...
+                  </span>
+                </>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Header action buttons (non-compact only) */}
         {!compact && (
           <>
-            {namingState === 'Editing' ? (
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleInputKeyDown}
-                onBlur={handleInputBlur}
-                autoFocus
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  color: 'var(--text-primary)',
-                  fontSize: '11px',
-                  padding: '0',
-                  width: '100px',
-                  borderBottom: '1px solid var(--accent)',
-                }}
-              />
-            ) : namingState === 'DisplayNamed' ? (
-              <>
-                <span style={{ color: 'var(--text-muted)' }}> · </span>
-                <span style={{ cursor: 'pointer', color: 'var(--text-primary)' }} onClick={handleNameClick}>
-                  {namingContext.displayText}
-                </span>
-              </>
-            ) : (
-              <span
-                style={{ cursor: 'pointer', color: 'var(--text-muted)', fontStyle: 'italic' }}
-                onClick={handlePlaceholderClick}
-              >
-                命名...
-              </span>
-            )}
+            {/* File button (amber pill) */}
+            <button className="tile-file-btn" onClick={handleFileClick}>
+              <FileIcon />
+              文件
+            </button>
 
-            {/* Spacer */}
-            <span style={{ flex: 1 }} />
-
-            {/* File button */}
-            <span
-              className="tile-header__file-btn"
-              style={{ cursor: 'pointer', fontSize: '12px', color: 'var(--text-secondary)' }}
-              onClick={handleFileClick}
-            >
-              📄
-            </span>
-
-            {/* Focus button */}
-            <span
-              style={{ cursor: 'pointer', fontSize: '12px', color: 'var(--text-secondary)' }}
-              onClick={handleFocusClick}
-            >
-              ⤢
-            </span>
+            {/* Maximize button (blue pill) */}
+            <button className="tile-max-btn" onClick={handleFocusClick}>
+              <MaximizeIcon />
+            </button>
           </>
         )}
       </div>
@@ -237,7 +241,7 @@ export function TerminalTile({
       )}
 
       {/* Terminal content */}
-      <div className="tile-3d-inner" style={{ flex: 1, overflow: 'hidden' }}>
+      <div className="tile-terminal">
         <XTermRenderer terminalId={id} />
       </div>
     </div>

@@ -2,7 +2,7 @@
   height: var(--menu-bar-height);
   display: flex;
   align-items: center;
-  background: var(--bg-secondary, var(--bg-primary));
+  background: rgba(10, 14, 20, 0.7);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-bottom: 1px solid var(--border);

@@ -99,10 +99,11 @@ function renderTilingGrid(
     display: 'grid',
     gridTemplateColumns: `repeat(${cols}, 1fr)`,
     gridTemplateRows: `repeat(${rows}, 1fr)`,
-    gap: '2px',
+    gap: '6px',
+    padding: '6px',
     width: '100%',
     height: '100%',
-    background: 'var(--bg-grid-gap)',
+    perspective: '1200px',
   };
 
   return (

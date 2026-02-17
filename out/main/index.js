@@ -1753,7 +1753,22 @@ function createConfigWatcher() {
     }
   };
 }
-const { createMemoryMonitor } = require("../perf/memory-monitor");
+function createMemoryMonitor(opts) {
+  const threshold = opts.thresholdMB;
+  return {
+    getThreshold() {
+      return threshold;
+    },
+    checkMemory() {
+      const memUsage = process.memoryUsage();
+      const currentMB = Math.round(memUsage.heapUsed / (1024 * 1024));
+      return {
+        exceeded: currentMB > threshold,
+        currentMB
+      };
+    }
+  };
+}
 function createMemoryPushTimer(opts) {
   const monitor = createMemoryMonitor({ thresholdMB: opts.thresholdMB });
   let intervalId = null;
