@@ -182,7 +182,7 @@ const api = {
   },
   // --- Config domain ---
   config: {
-    getResources: (type) => electron.ipcRenderer.invoke(IPC_CHANNELS.CONFIG.GET_RESOURCES, { type }),
+    getResources: (type) => electron.ipcRenderer.invoke(IPC_CHANNELS.CONFIG.GET_RESOURCES, type ? { types: [type] } : void 0),
     getResourceContent: (resourcePath) => electron.ipcRenderer.invoke(IPC_CHANNELS.CONFIG.GET_RESOURCE_CONTENT, { path: resourcePath }),
     getSettings: () => electron.ipcRenderer.invoke(IPC_CHANNELS.CONFIG.GET_SETTINGS),
     saveSettings: (settings) => electron.ipcRenderer.invoke(IPC_CHANNELS.CONFIG.SAVE_SETTINGS, { settings }),

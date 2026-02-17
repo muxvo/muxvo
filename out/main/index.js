@@ -991,6 +991,16 @@ function createFsHandlers() {
         const code = err.code ?? "FS_ERROR";
         return { success: false, error: { code, message } };
       }
+    },
+    async selectDirectory(params) {
+      const result = await electron.dialog.showOpenDialog({
+        properties: ["openDirectory"],
+        defaultPath: params?.defaultPath
+      });
+      if (result.canceled || result.filePaths.length === 0) {
+        return { success: false };
+      }
+      return { success: true, data: result.filePaths[0] };
     }
   };
 }
@@ -1004,6 +1014,9 @@ function registerFsHandlers() {
   });
   electron.ipcMain.handle(IPC_CHANNELS.FS.WRITE_FILE, async (_event, params) => {
     return handlers.writeFile(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.FS.SELECT_DIRECTORY, async (_event, params) => {
+    return handlers.selectDirectory(params);
   });
 }
 async function getPreferences() {
@@ -1100,6 +1113,13 @@ function createFileWatcherStore() {
     getRetryCount
   };
 }
+function pushToAllWindows$3(channel, payload) {
+  electron.BrowserWindow.getAllWindows().forEach((win) => {
+    if (!win.isDestroyed()) {
+      win.webContents.send(channel, payload);
+    }
+  });
+}
 const watchers = /* @__PURE__ */ new Map();
 function createFsWatcherHandlers() {
   const store = createFileWatcherStore();
@@ -1115,12 +1135,10 @@ function createFsWatcherHandlers() {
           const watcher = fs.watch(watchPath, { recursive: true }, (eventType, filename) => {
             if (!filename) return;
             const type = eventType === "rename" ? "add" : "change";
-            electron.BrowserWindow.getAllWindows().forEach((win) => {
-              win.webContents.send(IPC_CHANNELS.FS.CHANGE, {
-                watchId: params.id,
-                type,
-                path: filename
-              });
+            pushToAllWindows$3(IPC_CHANNELS.FS.CHANGE, {
+              watchId: params.id,
+              type,
+              path: filename
             });
           });
           watcher.on("error", () => {
@@ -1970,13 +1988,6 @@ electron.app.whenReady().then(() => {
   electron.ipcMain.handle(IPC_CHANNELS.APP.SAVE_CONFIG, async (_event, config) => {
     const result = configManager.saveConfig(config);
     return { success: true, data: result };
-  });
-  electron.ipcMain.handle(IPC_CHANNELS.FS.SELECT_DIRECTORY, async (_event, req) => {
-    const result = await electron.dialog.showOpenDialog({ properties: ["openDirectory"], defaultPath: req?.defaultPath });
-    if (result.canceled || result.filePaths.length === 0) {
-      return { success: false };
-    }
-    return { success: true, data: result.filePaths[0] };
   });
   function launchWindowWithTerminals() {
     const config = configManager.loadConfig();

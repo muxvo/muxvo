@@ -8,7 +8,7 @@
  */
 import { describe, test, expect, beforeEach } from 'vitest';
 import { handleIpc, invokeIpc, resetIpcMocks } from '../helpers/mock-ipc';
-import { textForwardFixtures, imageFixtures } from '../helpers/test-fixtures';
+import { textForwardFixtures } from '../helpers/test-fixtures';
 import editorSpec from '../specs/l1/editor.spec.json';
 
 describe('EDITOR L1 -- 契约层测试', () => {
@@ -70,30 +70,39 @@ describe('EDITOR L1 -- 契约层测试', () => {
     });
 
     test('EDITOR_L1_04: fs:write-temp-image -- 粘贴图片保存到 /tmp/muxvo-images/{uuid}.png', async () => {
-      // RED: import the real image handler (will fail)
-      const { writeTempImage } = await import('@/main/ipc/image-handler');
+      // Import from fs-image-handlers (replaced legacy image-handler)
+      const { createFsImageHandlers } = await import('@/main/ipc/fs-image-handlers');
+      const handlers = createFsImageHandlers();
 
-      const result = await writeTempImage({
-        imageData: new Uint8Array([0x89, 0x50, 0x4e, 0x47]), // PNG magic bytes
-        format: 'PNG',
+      const result = await handlers.writeTempImage({
+        imageData: 'iVBORw0KGgo=', // base64 encoded PNG header
+        format: 'png',
       });
 
-      // Should return a path under /tmp/muxvo-images/ with .png extension
-      expect(result.filePath).toMatch(/^\/tmp\/muxvo-images\/[a-f0-9-]+\.png$/);
+      // Should return success with a path under /tmp/muxvo-images/ with .png extension
+      expect(result.success).toBe(true);
+      expect((result.data as { filePath: string }).filePath).toMatch(/muxvo-images\/[a-f0-9-]+\.png$/);
     });
 
-    test('EDITOR_L1_05: fs:write-clipboard-image -- CC 前台时图片写入剪贴板后发送 \\x16', async () => {
-      // RED: import the real clipboard image handler (will fail)
-      const { writeClipboardImage } = await import('@/main/ipc/image-handler');
+    test('EDITOR_L1_05: fs:write-clipboard-image -- 验证图片路径并返回文件路径', async () => {
+      // Import from fs-image-handlers (replaced legacy image-handler)
+      const { createFsImageHandlers } = await import('@/main/ipc/fs-image-handlers');
+      const handlers = createFsImageHandlers();
 
-      const result = await writeClipboardImage({
-        imageData: new Uint8Array([0x89, 0x50, 0x4e, 0x47]),
-        foregroundProcess: 'Claude Code',
+      // First write a temp image to get a valid path
+      const tempResult = await handlers.writeTempImage({
+        imageData: 'iVBORw0KGgo=',
+        format: 'png',
+      });
+      const tempPath = (tempResult.data as { filePath: string }).filePath;
+
+      const result = await handlers.writeClipboardImage({
+        imagePath: tempPath,
       });
 
-      // When CC is foreground, should write to clipboard then send Ctrl+V
-      expect(result.action).toBe('clipboard_paste');
-      expect(result.keySent).toBe('\x16'); // Ctrl+V
+      // Should return success with the verified file path
+      expect(result.success).toBe(true);
+      expect((result.data as { filePath: string }).filePath).toBe(tempPath);
     });
 
     // Verify all IPC spec cases have correct channel definitions

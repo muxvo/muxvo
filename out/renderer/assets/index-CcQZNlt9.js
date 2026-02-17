@@ -21316,7 +21316,6 @@ function CwdPicker({
   open,
   anchorRect,
   onClose,
-  onCwdChange,
   onConfirmExit
 }) {
   const popupRef = reactExports.useRef(null);
@@ -21358,7 +21357,6 @@ function CwdPicker({
 `;
       window.api.terminal.write(terminalId, cdCmd);
       await window.api.terminal.updateCwd(terminalId, path);
-      onCwdChange(path);
       onClose();
     } else {
       if (onConfirmExit) {
@@ -21368,7 +21366,7 @@ function CwdPicker({
     }
   };
   const handleBrowse = async () => {
-    const result = await window.api.fs.selectDirectory();
+    const result = await window.api.fs.selectDirectory(currentCwd);
     if (result.success && result.data) {
       await handleSelectPath(result.data);
     }
@@ -21441,7 +21439,6 @@ function TerminalTile({
   onDoubleClick,
   onClick,
   onClose,
-  onCwdChange,
   compact,
   focused,
   selected,
@@ -21476,12 +21473,19 @@ function TerminalTile({
     focused ? "tile-focused" : "",
     selected ? "tile-selected" : ""
   ].filter(Boolean).join(" ");
-  function shortenPath(path) {
+  function shortenPath(path, truncate = true) {
     const home = window.api.app.getHomePath();
+    let short = path;
     if (home && home !== "/" && path.startsWith(home)) {
-      return "~" + path.slice(home.length);
+      short = "~" + path.slice(home.length);
     }
-    return path;
+    if (truncate) {
+      const parts = short.split("/");
+      if (parts.length > 3) {
+        return parts[0] + "/…/" + parts.slice(-2).join("/");
+      }
+    }
+    return short;
   }
   const [cwdPickerOpen, setCwdPickerOpen] = reactExports.useState(false);
   const cwdRef = reactExports.useRef(null);
@@ -21545,7 +21549,7 @@ function TerminalTile({
             }
           ),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "tile-name", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "tile-cwd", ref: cwdRef, onClick: handleCwdClick, children: shortenPath(cwd) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "tile-cwd", ref: cwdRef, onClick: handleCwdClick, title: shortenPath(cwd, false), children: shortenPath(cwd) }),
             !compact && /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: namingState === "Editing" ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "tile-separator", children: "·" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -21597,8 +21601,7 @@ function TerminalTile({
             onClose: () => {
               setCwdPickerOpen(false);
               setCwdAnchorRect(null);
-            },
-            onCwdChange: (newCwd) => onCwdChange?.(id, newCwd)
+            }
           }
         ),
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tile-terminal", children: /* @__PURE__ */ jsxRuntimeExports.jsx(XTermRenderer, { terminalId: id }) })
@@ -21606,7 +21609,7 @@ function TerminalTile({
     }
   );
 }
-function TerminalGrid({ terminals, viewMode = "Tiling", focusedId, selectedId, onDoubleClick, onSidebarClick, onClick, onClose, onCwdChange }) {
+function TerminalGrid({ terminals, viewMode = "Tiling", focusedId, selectedId, onDoubleClick, onSidebarClick, onClick, onClose }) {
   if (terminals.length === 0) {
     return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: {
       display: "flex",
@@ -21622,10 +21625,10 @@ function TerminalGrid({ terminals, viewMode = "Tiling", focusedId, selectedId, o
     const focusedTerminal = terminals.find((t) => t.id === focusedId);
     const sidebarTerminals = terminals.filter((t) => t.id !== focusedId);
     if (!focusedTerminal) {
-      return renderTilingGrid(terminals, selectedId, onDoubleClick, onClick, onClose, onCwdChange);
+      return renderTilingGrid(terminals, selectedId, onDoubleClick, onClick, onClose);
     }
     return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", width: "100%", height: "100%" }, children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { width: "75%", height: "100%" }, children: /* @__PURE__ */ jsxRuntimeExports.jsx(TerminalTile, { id: focusedId, state: focusedTerminal.state, cwd: focusedTerminal.cwd, focused: true, onClose, onCwdChange }, focusedId) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { width: "75%", height: "100%" }, children: /* @__PURE__ */ jsxRuntimeExports.jsx(TerminalTile, { id: focusedId, state: focusedTerminal.state, cwd: focusedTerminal.cwd, focused: true, onClose }, focusedId) }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: {
         width: "25%",
         height: "100%",
@@ -21646,9 +21649,9 @@ function TerminalGrid({ terminals, viewMode = "Tiling", focusedId, selectedId, o
       )) })
     ] });
   }
-  return renderTilingGrid(terminals, selectedId, onDoubleClick, onClick, onClose, onCwdChange);
+  return renderTilingGrid(terminals, selectedId, onDoubleClick, onClick, onClose);
 }
-function renderTilingGrid(terminals, selectedId, onDoubleClick, onClick, onClose, onCwdChange) {
+function renderTilingGrid(terminals, selectedId, onDoubleClick, onClick, onClose) {
   const { cols, rows } = calculateGridLayout(terminals.length);
   const gridStyle = {
     display: "grid",
@@ -21670,8 +21673,7 @@ function renderTilingGrid(terminals, selectedId, onDoubleClick, onClick, onClose
       staggerIndex: i,
       onDoubleClick: () => onDoubleClick?.(t.id),
       onClick: () => onClick?.(t.id),
-      onClose,
-      onCwdChange
+      onClose
     },
     t.id
   )) });
@@ -79412,10 +79414,16 @@ function App() {
       }));
       setTerminals(entries);
     });
+    const unsubCwd = window.api.terminal.onCwdChange?.((event) => {
+      setTerminals(
+        (prev) => prev.map((t) => t.id === event.id ? { ...t, cwd: event.cwd } : t)
+      );
+    });
     return () => {
       unsubExit();
       unsubState();
       unsubListUpdated?.();
+      unsubCwd?.();
     };
   }, []);
   const addTerminal = reactExports.useCallback(async () => {
@@ -79457,11 +79465,6 @@ function App() {
   const handleTileClick = reactExports.useCallback((id) => {
     setSelectedId(id);
   }, []);
-  const handleCwdChange = reactExports.useCallback((id, newCwd) => {
-    setTerminals(
-      (prev) => prev.map((t) => t.id === id ? { ...t, cwd: newCwd } : t)
-    );
-  }, []);
   reactExports.useEffect(() => {
     function handleKeyDown(e) {
       if (e.key === "Escape" && viewMode === "Focused") {
@@ -79497,7 +79500,6 @@ function App() {
       onDoubleClick: handleDoubleClick,
       onSidebarClick: handleSidebarClick,
       onClick: handleTileClick,
-      onCwdChange: handleCwdChange,
       onBackToTiling: handleBackToTiling,
       onAddTerminal: addTerminal,
       onClose: removeTerminal,
@@ -79516,7 +79518,6 @@ function AppContent({
   onDoubleClick,
   onSidebarClick,
   onClick,
-  onCwdChange,
   onBackToTiling,
   onAddTerminal,
   onClose,
@@ -79537,8 +79538,7 @@ function AppContent({
         onDoubleClick,
         onSidebarClick,
         onClick,
-        onClose,
-        onCwdChange
+        onClose
       }
     ) }),
     viewMode === "Focused" && /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { className: "grid-return-btn", onClick: onBackToTiling, children: [
