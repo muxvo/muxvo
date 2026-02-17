@@ -2,20 +2,17 @@
  * CwdPicker styles
  */
 
-.cwd-picker-overlay {
-  position: absolute;
+.cwd-picker-portal-overlay {
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 1000;
-  pointer-events: none;
 }
 
 .cwd-picker {
-  position: absolute;
-  top: 40px; /* Below tile header */
-  left: 12px;
+  position: fixed;
   width: 320px;
   background: var(--bg-elevated);
   border: 1px solid var(--border);

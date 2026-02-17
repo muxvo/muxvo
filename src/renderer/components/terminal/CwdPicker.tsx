@@ -106,11 +106,32 @@ export function CwdPicker({
     }
   };
 
-  if (!open) return null;
+  if (!open || !anchorRect) return null;
 
-  return (
-    <div className="cwd-picker-overlay">
-      <div className="cwd-picker" ref={popupRef}>
+  // Viewport boundary detection
+  const pickerWidth = 320;
+  const pickerHeight = 280; // approximate height
+  let top = anchorRect.top;
+  let left = anchorRect.left;
+
+  if (left + pickerWidth > window.innerWidth) {
+    left = window.innerWidth - pickerWidth - 8;
+  }
+  if (left < 8) {
+    left = 8;
+  }
+  if (top + pickerHeight > window.innerHeight) {
+    top = anchorRect.top - pickerHeight - 8;
+  }
+
+  return createPortal(
+    <div className="cwd-picker-portal-overlay" onClick={onClose}>
+      <div
+        className="cwd-picker"
+        ref={popupRef}
+        style={{ top, left }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="cwd-picker-header">切换工作目录</div>
         <div className="cwd-picker-current">
           当前: <span className="cwd-picker-current-path">{currentCwd}</span>
@@ -133,6 +154,7 @@ export function CwdPicker({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

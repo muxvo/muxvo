@@ -27,7 +27,7 @@ export function CloseConfirmDialog({ open, processName, onConfirm, onCancel }: P
             取消
           </button>
           <button className="close-confirm-ok" onClick={onConfirm}>
-            关闭
+            确定
           </button>
         </div>
       </div>
