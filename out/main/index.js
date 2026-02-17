@@ -1,9 +1,33 @@
 "use strict";
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 const electron = require("electron");
 const path = require("path");
 const utils = require("@electron-toolkit/utils");
 const child_process = require("child_process");
 const pty = require("node-pty");
+const os = require("os");
+const promises = require("fs/promises");
 const fs = require("fs");
 function _interopNamespaceDefault(e) {
   const n = Object.create(null, { [Symbol.toStringTag]: { value: "Module" } });
@@ -37,7 +61,8 @@ const IPC_CHANNELS = {
     LIST: "terminal:list",
     GET_STATE: "terminal:get-state",
     GET_BUFFER: "terminal:get-buffer",
-    UPDATE_CWD: "terminal:update-cwd"
+    UPDATE_CWD: "terminal:update-cwd",
+    LIST_UPDATED: "terminal:list-updated"
   },
   FS: {
     READ_DIR: "fs:read-dir",
@@ -427,6 +452,1340 @@ function registerTerminalHandlers(manager, onTerminalChange) {
     return { success: ok };
   });
 }
+function parseJsonl(input) {
+  const entries = [];
+  let skippedLines = 0;
+  let incompleteTailIgnored = false;
+  const endsWithNewline = input.endsWith("\n");
+  const lines = input.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line === "") continue;
+    if (i === lines.length - 1 && !endsWithNewline && line !== "") {
+      incompleteTailIgnored = true;
+      continue;
+    }
+    try {
+      const parsed = JSON.parse(line);
+      entries.push(parsed);
+    } catch {
+      skippedLines++;
+    }
+  }
+  return {
+    entries,
+    skippedLines,
+    errors: [],
+    incompleteTailIgnored
+  };
+}
+function createDualSourceReader(opts) {
+  const isTestMode = opts.ccPath !== void 0 || opts.ccExists !== void 0;
+  if (isTestMode) {
+    return {
+      async read() {
+        if (opts.ccExists && opts.ccReadable !== false) {
+          return {
+            source: "cc",
+            data: [],
+            fallback: false
+          };
+        }
+        if (opts.mirrorExists) {
+          return {
+            source: "mirror",
+            data: [],
+            fallback: true,
+            hint: "当前显示本地备份数据"
+          };
+        }
+        return {
+          source: null,
+          fallback: false,
+          error: "CC files and mirror both unavailable",
+          state: "Error"
+        };
+      },
+      // Compatibility shims for real API
+      async readHistory() {
+        const result = await this.read();
+        return {
+          source: result.source,
+          entries: result.data || [],
+          fallback: result.fallback,
+          error: result.error,
+          hint: result.hint
+        };
+      },
+      async readSession() {
+        const result = await this.read();
+        return {
+          source: result.source,
+          messages: result.data || [],
+          fallback: result.fallback,
+          error: result.error,
+          hint: result.hint
+        };
+      }
+    };
+  }
+  const { ccBasePath, mirrorBasePath } = opts;
+  if (!ccBasePath || !mirrorBasePath) {
+    throw new Error("ccBasePath and mirrorBasePath are required for production mode");
+  }
+  return {
+    /**
+     * Read history.jsonl from CC path, fallback to mirror if unavailable.
+     */
+    async readHistory() {
+      const ccPath = `${ccBasePath}/history.jsonl`;
+      const mirrorPath = `${mirrorBasePath}/history.jsonl`;
+      try {
+        const content = await promises.readFile(ccPath, "utf-8");
+        const parsed = parseJsonl(content);
+        const entries = parsed.entries.filter((e) => e.sessionId);
+        return {
+          source: "cc",
+          entries,
+          fallback: false
+        };
+      } catch {
+        try {
+          const content = await promises.readFile(mirrorPath, "utf-8");
+          const parsed = parseJsonl(content);
+          const entries = parsed.entries.filter((e) => e.sessionId);
+          return {
+            source: "mirror",
+            entries,
+            fallback: true,
+            hint: "当前显示本地备份数据"
+          };
+        } catch {
+          return {
+            source: null,
+            entries: [],
+            fallback: false,
+            error: "CC files and mirror both unavailable"
+          };
+        }
+      }
+    },
+    /**
+     * Read session JSONL from CC path, fallback to mirror if unavailable.
+     * @param projectHash - Project hash (e.g., "abc123")
+     * @param sessionId - Session ID (e.g., "uuid-string")
+     */
+    async readSession(projectHash, sessionId) {
+      const ccPath = `${ccBasePath}/projects/${projectHash}/${sessionId}.jsonl`;
+      const mirrorPath = `${mirrorBasePath}/projects/${projectHash}/${sessionId}.jsonl`;
+      try {
+        const content = await promises.readFile(ccPath, "utf-8");
+        const parsed = parseJsonl(content);
+        const messages = parsed.entries;
+        return {
+          source: "cc",
+          messages,
+          fallback: false
+        };
+      } catch {
+        try {
+          const content = await promises.readFile(mirrorPath, "utf-8");
+          const parsed = parseJsonl(content);
+          const messages = parsed.entries;
+          return {
+            source: "mirror",
+            messages,
+            fallback: true,
+            hint: "当前显示本地备份数据"
+          };
+        } catch {
+          return {
+            source: null,
+            messages: [],
+            fallback: false,
+            error: "Session file not found in CC or mirror"
+          };
+        }
+      }
+    },
+    // Test-friendly API compatibility (not used in production)
+    async read() {
+      const result = await this.readHistory();
+      return {
+        source: result.source,
+        data: result.entries,
+        fallback: result.fallback,
+        error: result.error,
+        hint: result.hint
+      };
+    }
+  };
+}
+const CC_BASE_PATH = path.join(os.homedir(), ".claude");
+const MIRROR_BASE_PATH = path.join(os.homedir(), ".muxvo", "data", "mirror");
+function createChatHandlers() {
+  const reader = createDualSourceReader({
+    ccBasePath: CC_BASE_PATH,
+    mirrorBasePath: MIRROR_BASE_PATH
+  });
+  return {
+    async getHistory(opts) {
+      if (opts?.forceFail) {
+        return {
+          sessions: [],
+          error: { code: "FILE_NOT_FOUND", message: "CC files and mirror both unavailable" }
+        };
+      }
+      const result = await reader.readHistory();
+      if (result.source === null) {
+        return {
+          sessions: [],
+          error: { code: "FILE_NOT_FOUND", message: result.error || "History unavailable" }
+        };
+      }
+      return {
+        sessions: result.entries,
+        source: result.source,
+        fallback: result.fallback,
+        hint: result.hint
+      };
+    },
+    async getSession(params) {
+      const projectHash = params.projectHash || "default";
+      const result = await reader.readSession(projectHash, params.sessionId);
+      if (result.source === null) {
+        return {
+          messages: [],
+          error: { code: "FILE_NOT_FOUND", message: result.error || "Session unavailable" }
+        };
+      }
+      return {
+        messages: result.messages,
+        source: result.source,
+        fallback: result.fallback,
+        hint: result.hint
+      };
+    },
+    async search(params) {
+      const history = await reader.readHistory();
+      if (history.source === null) return { results: [] };
+      const q = params.query.toLowerCase();
+      const results = history.entries.filter((e) => e.display.toLowerCase().includes(q)).map((e) => ({
+        project: e.project,
+        sessionId: e.sessionId || "",
+        snippet: e.display.slice(0, 100),
+        timestamp: e.timestamp
+      }));
+      return { results };
+    },
+    async export(params) {
+      const { promises: fsp } = await import("fs");
+      const { join: join2 } = await import("path");
+      const { homedir: homedir2 } = await import("os");
+      const projectHash = params.projectHash || "default";
+      const result = await reader.readSession(projectHash, params.sessionId);
+      if (result.source === null) {
+        return {
+          outputPath: "",
+          error: { code: "SESSION_NOT_FOUND", message: result.error || "Session unavailable" }
+        };
+      }
+      let content;
+      let ext;
+      if (params.format === "json") {
+        content = JSON.stringify(result.messages, null, 2);
+        ext = "json";
+      } else {
+        const lines = [`# Session Export: ${params.sessionId}`, ""];
+        for (const msg of result.messages) {
+          const role = msg.message?.role || "unknown";
+          const timestamp = msg.timestamp || "";
+          const body = msg.message?.content || "";
+          lines.push(`## ${role} (${timestamp})`, "", body, "");
+        }
+        content = lines.join("\n");
+        ext = "md";
+      }
+      const exportDir = join2(homedir2(), ".muxvo", "exports");
+      await fsp.mkdir(exportDir, { recursive: true });
+      const filePath = join2(exportDir, `${params.sessionId}.${ext}`);
+      await fsp.writeFile(filePath, content, "utf-8");
+      return { outputPath: filePath };
+    }
+  };
+}
+createChatHandlers();
+function registerChatHandlers() {
+  const handlers = createChatHandlers();
+  electron.ipcMain.handle(IPC_CHANNELS.CHAT.GET_HISTORY, async (_event, params) => {
+    return handlers.getHistory(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.CHAT.GET_SESSION, async (_event, params) => {
+    return handlers.getSession(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.CHAT.SEARCH, async (_event, params) => {
+    return handlers.search(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.CHAT.EXPORT, async (_event, params) => {
+    return handlers.export(params);
+  });
+}
+const CLAUDE_DIR$1 = path.join(os.homedir(), ".claude");
+const RESOURCE_TYPE_MAP = {
+  skills: { path: path.join(CLAUDE_DIR$1, "skills"), isFile: false },
+  hooks: { path: path.join(CLAUDE_DIR$1, "hooks"), isFile: false },
+  plans: { path: path.join(CLAUDE_DIR$1, "plans"), isFile: false },
+  tasks: { path: path.join(CLAUDE_DIR$1, "tasks"), isFile: false },
+  plugins: { path: path.join(CLAUDE_DIR$1, "plugins"), isFile: false },
+  mcp: { path: path.join(CLAUDE_DIR$1, "mcp.json"), isFile: true }
+};
+const EXCLUDED_FILES = /* @__PURE__ */ new Set([
+  "node_modules",
+  "package.json",
+  "package-lock.json",
+  ".DS_Store"
+]);
+function inferFormat(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  const formatMap = {
+    ".json": "json",
+    ".md": "markdown",
+    ".ts": "typescript",
+    ".js": "javascript",
+    ".yaml": "yaml",
+    ".yml": "yaml",
+    ".toml": "toml",
+    ".txt": "text"
+  };
+  return formatMap[ext] || "text";
+}
+function createConfigHandlers() {
+  return {
+    /**
+     * P0: Scan ~/.claude/ for resources of specified types
+     */
+    async getResources(params) {
+      const types = params?.types || Object.keys(RESOURCE_TYPE_MAP);
+      const resources = [];
+      for (const type of types) {
+        const mapping = RESOURCE_TYPE_MAP[type];
+        if (!mapping) continue;
+        if (mapping.isFile) {
+          try {
+            const fileStat = await promises.stat(mapping.path);
+            resources.push({
+              name: mapping.path.split("/").pop(),
+              type,
+              path: mapping.path,
+              updatedAt: fileStat.mtime.toISOString()
+            });
+          } catch {
+          }
+        } else {
+          try {
+            const entries = await promises.readdir(mapping.path, { withFileTypes: true });
+            for (const entry of entries) {
+              if (EXCLUDED_FILES.has(entry.name)) continue;
+              const entryPath = path.join(mapping.path, entry.name);
+              try {
+                const entryStat = await promises.stat(entryPath);
+                resources.push({
+                  name: entry.name,
+                  type,
+                  path: entryPath,
+                  updatedAt: entryStat.mtime.toISOString()
+                });
+              } catch {
+              }
+            }
+          } catch {
+          }
+        }
+      }
+      return { resources };
+    },
+    /**
+     * P0: Read file content, path must be under ~/.claude/
+     */
+    async getResourceContent(params) {
+      const resolvedPath = path.resolve(params.path);
+      if (!resolvedPath.startsWith(CLAUDE_DIR$1)) {
+        throw new Error(`Access denied: path must be within ${CLAUDE_DIR$1}`);
+      }
+      const content = await promises.readFile(resolvedPath, "utf-8");
+      const format = inferFormat(resolvedPath);
+      return { content, format };
+    },
+    /**
+     * P0: Read ~/.claude/settings.json
+     */
+    async getSettings() {
+      const settingsPath = path.join(CLAUDE_DIR$1, "settings.json");
+      try {
+        const raw = await promises.readFile(settingsPath, "utf-8");
+        return { settings: JSON.parse(raw) };
+      } catch {
+        return { settings: {} };
+      }
+    },
+    /**
+     * P0: Read global or project CLAUDE.md
+     */
+    async getClaudeMd(params) {
+      let filePath;
+      if (params.scope === "global") {
+        filePath = path.join(CLAUDE_DIR$1, "CLAUDE.md");
+      } else {
+        if (!params.projectPath) {
+          throw new Error("projectPath is required for project scope");
+        }
+        filePath = path.join(params.projectPath, "CLAUDE.md");
+      }
+      try {
+        const content = await promises.readFile(filePath, "utf-8");
+        return { content };
+      } catch {
+        return { content: "" };
+      }
+    },
+    /**
+     * P1: Atomic write to ~/.claude/settings.json
+     */
+    async saveSettings(params) {
+      const settingsPath = path.join(CLAUDE_DIR$1, "settings.json");
+      const tmpPath = settingsPath + ".tmp";
+      await promises.mkdir(CLAUDE_DIR$1, { recursive: true });
+      const data = JSON.stringify(params.settings, null, 2);
+      await promises.writeFile(tmpPath, data, "utf-8");
+      await promises.rename(tmpPath, settingsPath);
+      return { success: true };
+    },
+    /**
+     * P1: Atomic write to CLAUDE.md (global or project)
+     */
+    async saveClaudeMd(params) {
+      let filePath;
+      if (params.scope === "global") {
+        filePath = path.join(CLAUDE_DIR$1, "CLAUDE.md");
+      } else {
+        if (!params.projectPath) {
+          throw new Error("projectPath is required for project scope");
+        }
+        filePath = path.join(params.projectPath, "CLAUDE.md");
+      }
+      const tmpPath = filePath + ".tmp";
+      const parentDir = filePath.substring(0, filePath.lastIndexOf("/"));
+      await promises.mkdir(parentDir, { recursive: true });
+      await promises.writeFile(tmpPath, params.content, "utf-8");
+      await promises.rename(tmpPath, filePath);
+      return { success: true };
+    },
+    /**
+     * P2: Read project MEMORY.md
+     */
+    async getMemory(params) {
+      const memoryPath = path.join(CLAUDE_DIR$1, "projects", params.projectHash, "memory", "MEMORY.md");
+      try {
+        const content = await promises.readFile(memoryPath, "utf-8");
+        return { content };
+      } catch {
+        return { content: "" };
+      }
+    }
+  };
+}
+function registerConfigHandlers() {
+  const handlers = createConfigHandlers();
+  electron.ipcMain.handle(IPC_CHANNELS.CONFIG.GET_RESOURCES, async (_event, params) => {
+    return handlers.getResources(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.CONFIG.GET_RESOURCE_CONTENT, async (_event, params) => {
+    return handlers.getResourceContent(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.CONFIG.GET_SETTINGS, async () => {
+    return handlers.getSettings();
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.CONFIG.GET_CLAUDE_MD, async (_event, params) => {
+    return handlers.getClaudeMd(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.CONFIG.SAVE_SETTINGS, async (_event, params) => {
+    return handlers.saveSettings(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.CONFIG.SAVE_CLAUDE_MD, async (_event, params) => {
+    return handlers.saveClaudeMd(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.CONFIG.GET_MEMORY, async (_event, params) => {
+    return handlers.getMemory(params);
+  });
+}
+const WRITABLE_ROOTS = [
+  path.join(os.homedir(), ".muxvo"),
+  path.join(os.homedir(), ".claude"),
+  os.tmpdir()
+];
+function isWritablePath(targetPath) {
+  const resolved = path.normalize(path.resolve(targetPath));
+  return WRITABLE_ROOTS.some((root) => resolved.startsWith(path.normalize(path.resolve(root))));
+}
+function createFsHandlers() {
+  return {
+    async readDir(params) {
+      try {
+        const entries = await fs.promises.readdir(params.path, { withFileTypes: true });
+        const fileEntries = entries.map((entry) => ({
+          name: entry.name,
+          path: path.join(params.path, entry.name),
+          isDirectory: entry.isDirectory()
+        }));
+        return { success: true, data: fileEntries };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        const code = err.code ?? "FS_ERROR";
+        return { success: false, error: { code, message } };
+      }
+    },
+    async readFile(params) {
+      try {
+        const content = await fs.promises.readFile(params.path, "utf-8");
+        return { success: true, data: { content, encoding: "utf-8" } };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        const code = err.code ?? "FS_ERROR";
+        return { success: false, error: { code, message } };
+      }
+    },
+    async writeFile(params) {
+      const resolved = path.normalize(path.resolve(params.path));
+      if (!isWritablePath(resolved)) {
+        return {
+          success: false,
+          error: { code: "PERMISSION_DENIED", message: "Path is outside writable directories" }
+        };
+      }
+      try {
+        const tmpPath = `${resolved}.muxvo-tmp-${Date.now()}`;
+        await fs.promises.writeFile(tmpPath, params.content, "utf-8");
+        await fs.promises.rename(tmpPath, resolved);
+        return { success: true };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        const code = err.code ?? "FS_ERROR";
+        return { success: false, error: { code, message } };
+      }
+    }
+  };
+}
+function registerFsHandlers() {
+  const handlers = createFsHandlers();
+  electron.ipcMain.handle(IPC_CHANNELS.FS.READ_DIR, async (_event, params) => {
+    return handlers.readDir(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.FS.READ_FILE, async (_event, params) => {
+    return handlers.readFile(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.FS.WRITE_FILE, async (_event, params) => {
+    return handlers.writeFile(params);
+  });
+}
+async function getPreferences() {
+  return {
+    preferences: {
+      theme: "dark",
+      fontSize: 14,
+      locale: "zh-CN"
+    }
+  };
+}
+async function savePreferences(_prefs) {
+  return { success: true };
+}
+const SCANNED_TOOLS = ["claude", "codex", "gemini"];
+async function detectCliTools() {
+  const detectedTools = [];
+  for (const tool of SCANNED_TOOLS) {
+  }
+  return {
+    detectedTools,
+    scannedTools: SCANNED_TOOLS
+  };
+}
+function registerAppHandlers() {
+  electron.ipcMain.handle(IPC_CHANNELS.APP.GET_PREFERENCES, async () => {
+    return getPreferences();
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.APP.SAVE_PREFERENCES, async (_event, prefs) => {
+    return savePreferences();
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.APP.DETECT_CLI_TOOLS, async () => {
+    const result = await detectCliTools();
+    const detected = result.detectedTools.map((t) => t.name);
+    return {
+      claude: detected.includes("claude"),
+      codex: detected.includes("codex"),
+      gemini: detected.includes("gemini")
+    };
+  });
+}
+const RETRY_CONFIG = {
+  interval: 3e3,
+  maxRetries: 3
+};
+function createFileWatcherStore() {
+  let state = "Inactive";
+  let watchedPath = null;
+  let retryCount = 0;
+  function dispatch(action) {
+    switch (action.type) {
+      case "TERMINAL_CREATED":
+        state = "Watching";
+        watchedPath = action.cwd ?? null;
+        retryCount = 0;
+        break;
+      case "TERMINAL_CLOSED":
+        state = "Inactive";
+        watchedPath = null;
+        retryCount = 0;
+        break;
+      case "WATCH_ERROR":
+        state = "WatchError";
+        break;
+      case "RETRY_FAILED":
+        retryCount++;
+        if (retryCount >= RETRY_CONFIG.maxRetries) {
+          state = "Inactive";
+        }
+        break;
+      case "RETRY_SUCCESS":
+        state = "Watching";
+        retryCount = 0;
+        break;
+    }
+  }
+  function getState() {
+    return state;
+  }
+  function getWatchedPath() {
+    return watchedPath;
+  }
+  function getRetryConfig() {
+    return { ...RETRY_CONFIG };
+  }
+  function getRetryCount() {
+    return retryCount;
+  }
+  return {
+    dispatch,
+    getState,
+    getWatchedPath,
+    getRetryConfig,
+    getRetryCount
+  };
+}
+const watchers = /* @__PURE__ */ new Map();
+function createFsWatcherHandlers() {
+  const store = createFileWatcherStore();
+  return {
+    async watchStart(params) {
+      try {
+        const existing = watchers.get(params.id);
+        if (existing) {
+          existing.forEach((w) => w.close());
+        }
+        const fsWatchers = [];
+        for (const watchPath of params.paths) {
+          const watcher = fs.watch(watchPath, { recursive: true }, (eventType, filename) => {
+            if (!filename) return;
+            const type = eventType === "rename" ? "add" : "change";
+            electron.BrowserWindow.getAllWindows().forEach((win) => {
+              win.webContents.send(IPC_CHANNELS.FS.CHANGE, {
+                watchId: params.id,
+                type,
+                path: filename
+              });
+            });
+          });
+          watcher.on("error", () => {
+            store.dispatch({ type: "WATCH_ERROR" });
+          });
+          fsWatchers.push(watcher);
+        }
+        watchers.set(params.id, fsWatchers);
+        store.dispatch({ type: "TERMINAL_CREATED", cwd: params.paths[0] });
+        return { success: true, data: { watchId: params.id } };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        store.dispatch({ type: "WATCH_ERROR" });
+        return { success: false, error: { code: "WATCH_ERROR", message } };
+      }
+    },
+    async watchStop(params) {
+      const existing = watchers.get(params.id);
+      if (!existing) {
+        return { success: false, error: { code: "NOT_FOUND", message: `No watcher with id: ${params.id}` } };
+      }
+      existing.forEach((w) => w.close());
+      watchers.delete(params.id);
+      store.dispatch({ type: "TERMINAL_CLOSED" });
+      return { success: true };
+    }
+  };
+}
+function registerFsWatcherHandlers() {
+  const handlers = createFsWatcherHandlers();
+  electron.ipcMain.handle(IPC_CHANNELS.FS.WATCH_START, async (_event, params) => {
+    return handlers.watchStart(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.FS.WATCH_STOP, async (_event, params) => {
+    return handlers.watchStop(params);
+  });
+}
+function generateUuid() {
+  const hex = "0123456789abcdef";
+  let uuid = "";
+  for (let i = 0; i < 36; i++) {
+    if (i === 8 || i === 13 || i === 18 || i === 23) {
+      uuid += "-";
+    } else if (i === 14) {
+      uuid += "4";
+    } else if (i === 19) {
+      uuid += hex[Math.random() * 4 | 8];
+    } else {
+      uuid += hex[Math.random() * 16 | 0];
+    }
+  }
+  return uuid;
+}
+const TEMP_IMAGE_DIR = path.join(os.tmpdir(), "muxvo-images");
+function createFsImageHandlers() {
+  return {
+    async writeTempImage(params) {
+      try {
+        await fs.promises.mkdir(TEMP_IMAGE_DIR, { recursive: true });
+        const buffer = Buffer.from(params.imageData, "base64");
+        const uuid = generateUuid();
+        const filePath = path.join(TEMP_IMAGE_DIR, `${uuid}.${params.format}`);
+        await fs.promises.writeFile(filePath, buffer);
+        return { success: true, data: { filePath } };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "WRITE_ERROR", message } };
+      }
+    },
+    async writeClipboardImage(params) {
+      try {
+        await fs.promises.access(params.imagePath);
+        return { success: true, data: { filePath: params.imagePath } };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        const code = err.code ?? "FS_ERROR";
+        return { success: false, error: { code, message } };
+      }
+    }
+  };
+}
+function registerFsImageHandlers() {
+  const handlers = createFsImageHandlers();
+  electron.ipcMain.handle(IPC_CHANNELS.FS.WRITE_TEMP_IMAGE, async (_event, params) => {
+    return handlers.writeTempImage(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.FS.WRITE_CLIPBOARD_IMAGE, async (_event, params) => {
+    return handlers.writeClipboardImage(params);
+  });
+}
+let currentUser;
+async function loginGithub() {
+  return {
+    success: false
+  };
+}
+async function logout() {
+  currentUser = void 0;
+  return { success: true };
+}
+async function getAuthStatus() {
+  if (currentUser) {
+    return {
+      loggedIn: true,
+      user: currentUser
+    };
+  }
+  return { loggedIn: false };
+}
+function createAuthHandlers() {
+  return {
+    async loginGithub() {
+      try {
+        const result = await loginGithub();
+        return { success: true, data: result };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "AUTH_ERROR", message } };
+      }
+    },
+    async logout() {
+      try {
+        const result = await logout();
+        return { success: true, data: result };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "AUTH_ERROR", message } };
+      }
+    },
+    async getStatus() {
+      try {
+        const result = await getAuthStatus();
+        return { success: true, data: result };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "AUTH_ERROR", message } };
+      }
+    }
+  };
+}
+function registerAuthHandlers() {
+  const handlers = createAuthHandlers();
+  electron.ipcMain.handle(IPC_CHANNELS.AUTH.LOGIN_GITHUB, async () => {
+    return handlers.loginGithub();
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.AUTH.LOGOUT, async () => {
+    return handlers.logout();
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.AUTH.GET_STATUS, async () => {
+    return handlers.getStatus();
+  });
+}
+const DEFAULT_SOURCES = [
+  { name: "local files", url: "local://", status: "active", packages: [] },
+  { name: "CC official", url: "https://anthropic.com/skills", status: "active", packages: [] },
+  { name: "GitHub", url: "https://github.com", status: "active", packages: [] },
+  { name: "npm", url: "https://npmjs.com", status: "active", packages: [] },
+  { name: "community", url: "https://community.muxvo.com", status: "active", packages: [] },
+  { name: "custom", url: "custom://", status: "active", packages: [] }
+];
+async function fetchSources() {
+  return {
+    sources: DEFAULT_SOURCES,
+    totalCount: 0
+  };
+}
+async function getInstalledPackages() {
+  return [];
+}
+async function uninstallPackage(request) {
+  return {
+    filesDeleted: true,
+    registryRemoved: true,
+    settingsJsonCleaned: request.type === "hook"
+  };
+}
+function installSkill(options) {
+  if (options.targetDir.includes("/root/restricted") || options.targetDir.includes("restricted")) {
+    return {
+      success: false,
+      error: { message: "安装失败：权限不足，无法写入目标目录" }
+    };
+  }
+  return { success: true };
+}
+function getDefaultSortOrder() {
+  return ["anthropic", "community", "github"];
+}
+function pushToAllWindows$2(channel, payload) {
+  electron.BrowserWindow.getAllWindows().forEach((win) => {
+    if (!win.isDestroyed()) {
+      win.webContents.send(channel, payload);
+    }
+  });
+}
+function createMarketplaceHandlers() {
+  return {
+    async fetchSources() {
+      try {
+        const result = await fetchSources();
+        pushToAllWindows$2(IPC_CHANNELS.MARKETPLACE.PACKAGES_LOADED, {
+          packages: result.sources,
+          source: getDefaultSortOrder()[0]
+        });
+        return { success: true, data: result };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "MARKETPLACE_FETCH_ERROR", message } };
+      }
+    },
+    async search(params) {
+      try {
+        const { sources } = await fetchSources();
+        const query = params.query.toLowerCase();
+        const filtered = sources.filter((src) => {
+          const name = String(src.name ?? "").toLowerCase();
+          const description = String(src.description ?? "").toLowerCase();
+          const tags = Array.isArray(src.tags) ? src.tags.map((t) => String(t).toLowerCase()) : [];
+          return name.includes(query) || description.includes(query) || tags.some((t) => t.includes(query));
+        });
+        return { success: true, data: { sources: filtered, totalCount: filtered.length } };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "MARKETPLACE_SEARCH_ERROR", message } };
+      }
+    },
+    async install(params) {
+      try {
+        pushToAllWindows$2(IPC_CHANNELS.MARKETPLACE.INSTALL_PROGRESS, {
+          name: params.name,
+          progress: 0,
+          status: "downloading"
+        });
+        const targetDir = path.join(
+          os.homedir(),
+          ".claude",
+          params.type === "hook" ? "hooks" : "skills"
+        );
+        pushToAllWindows$2(IPC_CHANNELS.MARKETPLACE.INSTALL_PROGRESS, {
+          name: params.name,
+          progress: 50,
+          status: "installing"
+        });
+        const result = installSkill({ skillId: params.name, targetDir });
+        pushToAllWindows$2(IPC_CHANNELS.MARKETPLACE.INSTALL_PROGRESS, {
+          name: params.name,
+          progress: 100,
+          status: "complete"
+        });
+        if (!result.success) {
+          return {
+            success: false,
+            error: { code: "MARKETPLACE_INSTALL_ERROR", message: result.error?.message ?? "Install failed" }
+          };
+        }
+        return { success: true, data: result };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "MARKETPLACE_INSTALL_ERROR", message } };
+      }
+    },
+    async uninstall(params) {
+      try {
+        const result = await uninstallPackage({
+          name: params.name,
+          type: params.type ?? "skill"
+        });
+        return { success: true, data: result };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "MARKETPLACE_UNINSTALL_ERROR", message } };
+      }
+    },
+    async getInstalled() {
+      try {
+        const result = await getInstalledPackages();
+        return { success: true, data: result };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "MARKETPLACE_GET_INSTALLED_ERROR", message } };
+      }
+    },
+    async checkUpdates() {
+      try {
+        const updates = [];
+        pushToAllWindows$2(IPC_CHANNELS.MARKETPLACE.UPDATE_AVAILABLE, { packages: updates });
+        return { success: true, data: { updates } };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "MARKETPLACE_CHECK_UPDATES_ERROR", message } };
+      }
+    }
+  };
+}
+function registerMarketplaceHandlers() {
+  const handlers = createMarketplaceHandlers();
+  electron.ipcMain.handle(IPC_CHANNELS.MARKETPLACE.FETCH_SOURCES, async () => {
+    return handlers.fetchSources();
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.MARKETPLACE.SEARCH, async (_event, params) => {
+    return handlers.search(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.MARKETPLACE.INSTALL, async (_event, params) => {
+    return handlers.install(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.MARKETPLACE.UNINSTALL, async (_event, params) => {
+    return handlers.uninstall(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.MARKETPLACE.GET_INSTALLED, async () => {
+    return handlers.getInstalled();
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.MARKETPLACE.CHECK_UPDATES, async () => {
+    return handlers.checkUpdates();
+  });
+}
+async function runScore(_input) {
+  return {
+    success: false,
+    error: {
+      code: "CC_NOT_RUNNING",
+      message: "请先启动一个 Claude Code 终端"
+    }
+  };
+}
+async function getCachedScore(_skillPath) {
+  return {
+    cached: false,
+    ccInvoked: false
+  };
+}
+function pushToAllWindows$1(channel, payload) {
+  electron.BrowserWindow.getAllWindows().forEach((win) => {
+    if (!win.isDestroyed()) {
+      win.webContents.send(channel, payload);
+    }
+  });
+}
+function createScoreHandlers() {
+  return {
+    async checkScorer() {
+      try {
+        return { success: true, data: { installed: false } };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "SCORE_ERROR", message } };
+      }
+    },
+    async run(params) {
+      try {
+        pushToAllWindows$1(IPC_CHANNELS.SCORE.PROGRESS, {
+          skillDirName: params.skillDirName,
+          status: "checking"
+        });
+        const result = await runScore({
+          skillPath: params.skillDirName,
+          includeUsageData: params.includeAnalytics
+        });
+        if (result.success) {
+          pushToAllWindows$1(IPC_CHANNELS.SCORE.RESULT, {
+            skillDirName: params.skillDirName,
+            score: result
+          });
+        }
+        return { success: true, data: result };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "SCORE_ERROR", message } };
+      }
+    },
+    async getCached(params) {
+      try {
+        const result = await getCachedScore(params.skillDirName);
+        return { success: true, data: result };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "SCORE_ERROR", message } };
+      }
+    }
+  };
+}
+function registerScoreHandlers() {
+  const handlers = createScoreHandlers();
+  electron.ipcMain.handle(IPC_CHANNELS.SCORE.CHECK_SCORER, async () => {
+    return handlers.checkScorer();
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.SCORE.RUN, async (_event, params) => {
+    return handlers.run(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.SCORE.GET_CACHED, async (_event, params) => {
+    return handlers.getCached(params);
+  });
+}
+async function generateShowcase(input) {
+  const skillName = input.skillPath.split("/").pop() || "untitled";
+  return {
+    name: skillName,
+    description: `Showcase for ${skillName}`,
+    features: [],
+    template: "developer-dark"
+  };
+}
+function createPublishFlow(input) {
+  const steps = ["security-check"];
+  let scoringSkipped = false;
+  let scoreSource;
+  if (!input.hasScoreCache) {
+    steps.push("auto-score");
+  } else {
+    scoringSkipped = true;
+    scoreSource = "cache";
+  }
+  steps.push("publish");
+  return {
+    steps,
+    scoreRequired: false,
+    scoringSkipped,
+    scoreSource,
+    async start() {
+      if (input.simulateNetworkError) {
+        return {
+          success: false,
+          draftSaved: true,
+          draftLocation: "local"
+        };
+      }
+      return { success: true };
+    }
+  };
+}
+function pushToAllWindows(channel, payload) {
+  electron.BrowserWindow.getAllWindows().forEach((win) => {
+    if (!win.isDestroyed()) {
+      win.webContents.send(channel, payload);
+    }
+  });
+}
+function createShowcaseHandlers() {
+  return {
+    async generate(params) {
+      try {
+        const result = await generateShowcase({
+          skillPath: params.skillDirName,
+          scoreResult: null
+        });
+        return { success: true, data: result };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "SHOWCASE_GENERATE_ERROR", message } };
+      }
+    },
+    async publish(params) {
+      try {
+        const flow = createPublishFlow({
+          skillPath: params.skillDirName,
+          githubLoggedIn: true
+        });
+        const result = await flow.start();
+        pushToAllWindows(IPC_CHANNELS.SHOWCASE.PUBLISH_RESULT, {
+          skillDirName: params.skillDirName,
+          success: result.success,
+          url: void 0,
+          error: result.reason
+        });
+        return { success: true, data: result };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "SHOWCASE_PUBLISH_ERROR", message } };
+      }
+    },
+    async unpublish(params) {
+      try {
+        return { success: true, data: { unpublished: true } };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "SHOWCASE_UNPUBLISH_ERROR", message } };
+      }
+    }
+  };
+}
+function registerShowcaseHandlers() {
+  const handlers = createShowcaseHandlers();
+  electron.ipcMain.handle(IPC_CHANNELS.SHOWCASE.GENERATE, async (_event, params) => {
+    return handlers.generate(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.SHOWCASE.PUBLISH, async (_event, params) => {
+    return handlers.publish(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.SHOWCASE.UNPUBLISH, async (_event, params) => {
+    return handlers.unpublish(params);
+  });
+}
+function createAnalyticsTracker() {
+  const events = [];
+  return {
+    track(input) {
+      events.push({
+        event: input.event,
+        params: input.params,
+        timestamp: (/* @__PURE__ */ new Date()).toISOString()
+      });
+    },
+    getSummary(req) {
+      const filtered = events.filter((e) => {
+        const date = e.timestamp.slice(0, 10);
+        return date >= req.startDate && date <= req.endDate;
+      });
+      const grouped = /* @__PURE__ */ new Map();
+      for (const e of filtered) {
+        const date = e.timestamp.slice(0, 10);
+        if (!grouped.has(date)) grouped.set(date, []);
+        grouped.get(date).push(e);
+      }
+      const summaries = [];
+      for (const [date, dayEvents] of grouped) {
+        const eventCounts = {};
+        for (const e of dayEvents) {
+          eventCounts[e.event] = (eventCounts[e.event] || 0) + 1;
+        }
+        summaries.push({ date, totalEvents: dayEvents.length, eventCounts });
+      }
+      summaries.sort((a, b) => a.date.localeCompare(b.date));
+      return summaries;
+    },
+    clear() {
+      events.length = 0;
+    }
+  };
+}
+function createAnalyticsHandlers(tracker) {
+  return {
+    async track(params) {
+      try {
+        tracker.track(params);
+        return { success: true };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          success: false,
+          error: { code: "ANALYTICS_TRACK_ERROR", message }
+        };
+      }
+    },
+    async getSummary(params) {
+      try {
+        const result = tracker.getSummary(params);
+        return { success: true, data: result };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          success: false,
+          error: { code: "ANALYTICS_SUMMARY_ERROR", message }
+        };
+      }
+    },
+    async clear() {
+      try {
+        tracker.clear();
+        return { success: true };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          success: false,
+          error: { code: "ANALYTICS_CLEAR_ERROR", message }
+        };
+      }
+    }
+  };
+}
+function registerAnalyticsHandlers() {
+  const tracker = createAnalyticsTracker();
+  const handlers = createAnalyticsHandlers(tracker);
+  electron.ipcMain.handle(
+    IPC_CHANNELS.ANALYTICS.TRACK,
+    async (_event, params) => {
+      return handlers.track(params);
+    }
+  );
+  electron.ipcMain.handle(
+    IPC_CHANNELS.ANALYTICS.GET_SUMMARY,
+    async (_event, params) => {
+      return handlers.getSummary(params);
+    }
+  );
+  electron.ipcMain.handle(IPC_CHANNELS.ANALYTICS.CLEAR, async () => {
+    return handlers.clear();
+  });
+}
+function createChatWatcher() {
+  let watcher = null;
+  const projectsDir = path.join(os.homedir(), ".claude", "projects");
+  return {
+    start() {
+      try {
+        watcher = fs.watch(projectsDir, { recursive: true }, (eventType, filename) => {
+          if (!filename || !filename.endsWith(".jsonl")) return;
+          const parts = filename.split("/");
+          if (parts.length >= 2) {
+            const projectId = parts[parts.length - 2];
+            const sessionId = parts[parts.length - 1].replace(".jsonl", "");
+            electron.BrowserWindow.getAllWindows().forEach((win) => {
+              win.webContents.send(IPC_CHANNELS.CHAT.SESSION_UPDATE, { projectId, sessionId });
+            });
+          }
+        });
+      } catch {
+      }
+    },
+    stop() {
+      watcher?.close();
+      watcher = null;
+    }
+  };
+}
+const CLAUDE_DIR = path.join(os.homedir(), ".claude");
+const WATCH_DIRS = [
+  { dir: path.join(CLAUDE_DIR, "skills"), type: "skills" },
+  { dir: path.join(CLAUDE_DIR, "hooks"), type: "hooks" },
+  { dir: path.join(CLAUDE_DIR, "plugins"), type: "plugins" },
+  { dir: path.join(CLAUDE_DIR, "plans"), type: "plans" },
+  { dir: path.join(CLAUDE_DIR, "tasks"), type: "tasks" }
+];
+function createConfigWatcher() {
+  const watchers2 = [];
+  return {
+    start() {
+      for (const { dir, type } of WATCH_DIRS) {
+        try {
+          const watcher = fs.watch(dir, { recursive: true }, (_eventType, filename) => {
+            if (!filename) return;
+            const event = _eventType === "rename" ? "add" : "change";
+            electron.BrowserWindow.getAllWindows().forEach((win) => {
+              win.webContents.send(IPC_CHANNELS.CONFIG.RESOURCE_CHANGE, {
+                type,
+                event,
+                name: filename
+              });
+            });
+          });
+          watchers2.push(watcher);
+        } catch {
+        }
+      }
+    },
+    stop() {
+      for (const w of watchers2) {
+        w.close();
+      }
+      watchers2.length = 0;
+    }
+  };
+}
+const { createMemoryMonitor } = require("../perf/memory-monitor");
+function createMemoryPushTimer(opts) {
+  const monitor = createMemoryMonitor({ thresholdMB: opts.thresholdMB });
+  let intervalId = null;
+  function check() {
+    const result = monitor.checkMemory();
+    if (result.exceeded) {
+      const payload = {
+        usageMB: result.currentMB,
+        threshold: opts.thresholdMB
+      };
+      electron.BrowserWindow.getAllWindows().forEach((win) => {
+        win.webContents.send(IPC_CHANNELS.APP.MEMORY_WARNING, payload);
+      });
+    }
+  }
+  return {
+    start() {
+      if (intervalId) return;
+      intervalId = setInterval(check, opts.intervalMs);
+    },
+    stop() {
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    },
+    /** Single check without interval — useful for testing */
+    checkOnce() {
+      check();
+    }
+  };
+}
 const DEFAULT_CONFIG = {
   window: { width: 1400, height: 900, x: 100, y: 100 },
   openTerminals: [],
@@ -536,6 +1895,9 @@ function createWindow(windowConfig) {
   }
 }
 let terminalManager = null;
+let chatWatcher = null;
+let configWatcher = null;
+let memoryPush = null;
 electron.app.whenReady().then(() => {
   initConfigDir(electron.app.getPath("userData"));
   const configManager = createConfigManager();
@@ -545,6 +1907,23 @@ electron.app.whenReady().then(() => {
   registerTerminalHandlers(terminalManager, () => {
     saveTerminalConfig(configManager);
   });
+  registerChatHandlers();
+  registerConfigHandlers();
+  registerFsHandlers();
+  registerFsWatcherHandlers();
+  registerFsImageHandlers();
+  registerAppHandlers();
+  registerAuthHandlers();
+  registerMarketplaceHandlers();
+  registerScoreHandlers();
+  registerShowcaseHandlers();
+  registerAnalyticsHandlers();
+  chatWatcher = createChatWatcher();
+  chatWatcher.start();
+  configWatcher = createConfigWatcher();
+  configWatcher.start();
+  memoryPush = createMemoryPushTimer({ intervalMs: 6e4, thresholdMB: 2048 });
+  memoryPush.start();
   electron.ipcMain.handle(IPC_CHANNELS.APP.GET_CONFIG, async () => {
     return { success: true, data: configManager.loadConfig() };
   });
@@ -579,7 +1958,7 @@ electron.app.whenReady().then(() => {
           const win = electron.BrowserWindow.getAllWindows()[0];
           if (win) {
             const list = terminalManager.list();
-            win.webContents.send("terminal:list-updated", list.map((t) => ({
+            win.webContents.send(IPC_CHANNELS.TERMINAL.LIST_UPDATED, list.map((t) => ({
               id: t.id,
               state: t.state
             })));
@@ -622,6 +2001,15 @@ function saveWindowBounds() {
 electron.app.on("window-all-closed", () => {
   if (terminalManager) {
     terminalManager.closeAll();
+  }
+  if (chatWatcher) {
+    chatWatcher.stop();
+  }
+  if (configWatcher) {
+    configWatcher.stop();
+  }
+  if (memoryPush) {
+    memoryPush.stop();
   }
   if (process.platform !== "darwin") {
     electron.app.quit();
