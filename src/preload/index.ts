@@ -124,6 +124,16 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.EXPORT, { sessionId, format }),
   },
 
+  // --- Auth domain ---
+  auth: {
+    loginGithub: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH.LOGIN_GITHUB),
+    logout: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH.LOGOUT),
+    getStatus: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH.GET_STATUS),
+  },
+
   // --- Config domain ---
   config: {
     getResources: (type?: string) =>
@@ -138,6 +148,13 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.CONFIG.GET_CLAUDE_MD, { scope, projectPath }),
     saveClaudeMd: (content: string, scope?: string, projectPath?: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.CONFIG.SAVE_CLAUDE_MD, { content, scope, projectPath }),
+    getMemory: (projectHash: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CONFIG.GET_MEMORY, { projectHash }),
+    onResourceChange: (callback: (data: { type: string; event: string; name: string }) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: { type: string; event: string; name: string }) => callback(data);
+      ipcRenderer.on(IPC_CHANNELS.CONFIG.RESOURCE_CHANGE, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.CONFIG.RESOURCE_CHANGE, handler);
+    },
   },
 };
 
