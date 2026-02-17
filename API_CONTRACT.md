@@ -1,10 +1,10 @@
 # API 接口契约文档
 
 > 此文档由 Claude Code Hook 自动生成（AST 解析版）
-> 生成时间: 2026-02-17T07:51:32.813Z
+> 生成时间: 2026-02-17T07:52:40.813Z
 > 项目路径: /Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo
-> 扫描文件数: 234
-> 接口总数: 9
+> 扫描文件数: 237
+> 接口总数: 10
 
 ## 基础信息
 
@@ -28,6 +28,12 @@
 - **请求参数**: 无额外参数
 
 ### API 服务
+
+#### `GET {变量:date}`
+
+- **位置**: `main/services/analytics/tracker.ts:39`
+- **调用函数**: `grouped.get()`
+- **请求参数**: 无额外参数
 
 #### `GET {变量:path}`
 
@@ -83,6 +89,7 @@
 |-----|---------|---------|---------|
 | GET | `{成员访问}` | main | main/ipc/fs-watcher-handlers.ts:24 |
 | DELETE | `{成员访问}` | main | main/ipc/fs-watcher-handlers.ts:70 |
+| GET | `{变量:date}` | API 服务 | main/services/analytics/tracker.ts:39 |
 | GET | `{变量:path}` | API 服务 | main/services/data-sync/sync-manager.ts:99 |
 | GET | `{变量:id}` | API 服务 | main/services/terminal/manager.ts:96 |
 | DELETE | `{变量:id}` | API 服务 | main/services/terminal/manager.ts:124 |

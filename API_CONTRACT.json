@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-02-17T07:51:32.813Z",
+  "generatedAt": "2026-02-17T07:52:40.813Z",
   "projectPath": "/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo",
-  "totalApis": 9,
-  "scannedFiles": 234,
+  "totalApis": 10,
+  "scannedFiles": 237,
   "categories": {
     "main": [
       {
@@ -27,6 +27,16 @@
       }
     ],
     "API 服务": [
+      {
+        "path": "{变量:date}",
+        "method": "GET",
+        "file": "main/services/analytics/tracker.ts",
+        "line": 39,
+        "functionName": "grouped.get",
+        "params": [],
+        "responseFields": [],
+        "category": "API 服务"
+      },
       {
         "path": "{变量:path}",
         "method": "GET",
@@ -123,6 +133,16 @@
       "params": [],
       "responseFields": [],
       "category": "main"
+    },
+    {
+      "path": "{变量:date}",
+      "method": "GET",
+      "file": "main/services/analytics/tracker.ts",
+      "line": 39,
+      "functionName": "grouped.get",
+      "params": [],
+      "responseFields": [],
+      "category": "API 服务"
     },
     {
       "path": "{变量:path}",
