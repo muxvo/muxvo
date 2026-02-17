@@ -100,7 +100,7 @@ export function CwdPicker({
   };
 
   const handleBrowse = async () => {
-    const result = await window.api.fs.selectDirectory();
+    const result = await window.api.fs.selectDirectory(currentCwd);
     if (result.success && result.data) {
       await handleSelectPath(result.data as string);
     }
