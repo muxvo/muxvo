@@ -94,7 +94,7 @@
 .tile-separator {
   color: var(--text-muted);
   font-size: 10px;
-  margin: 0 2px;
+  margin: 0 6px;
   flex-shrink: 0;
 }
 
