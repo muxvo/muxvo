@@ -103,6 +103,20 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
             win.webContents.send(IPC_CHANNELS.TERMINAL.OUTPUT, { id, data });
           }
 
+          // Detect OSC 7 cwd change: \x1b]7;file://hostname/path\x07 or \x1b]7;file://hostname/path\x1b\\
+          const osc7Match = data.match(/\x1b\]7;file:\/\/[^/]*([^\x07\x1b]+)[\x07\x1b]/);
+          if (osc7Match) {
+            const newCwd = decodeURIComponent(osc7Match[1]);
+            const terminal = terminals.get(id);
+            if (terminal && terminal.cwd !== newCwd) {
+              terminal.cwd = newCwd;
+              const cwdWin = BrowserWindow.getAllWindows()[0];
+              if (cwdWin && !cwdWin.isDestroyed()) {
+                cwdWin.webContents.send(IPC_CHANNELS.TERMINAL.CWD_CHANGED, { id, cwd: newCwd });
+              }
+            }
+          }
+
           // Detect interactive prompts → transition to WaitingInput
           if (machine.state === 'Running' && detectWaitingInput(data)) {
             machine.send('WAIT_INPUT');

@@ -78,10 +78,18 @@ export function App(): JSX.Element {
       setTerminals(entries);
     });
 
+    // Listen for cwd changes (OSC 7 detection from main process)
+    const unsubCwd = window.api.terminal.onCwdChange?.((event) => {
+      setTerminals((prev) =>
+        prev.map((t) => (t.id === event.id ? { ...t, cwd: event.cwd } : t))
+      );
+    });
+
     return () => {
       unsubExit();
       unsubState();
       unsubListUpdated?.();
+      unsubCwd?.();
     };
   }, []);
 

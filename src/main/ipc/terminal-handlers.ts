@@ -5,7 +5,7 @@
  * Delegates all operations to the terminal manager instance.
  */
 
-import { ipcMain } from 'electron';
+import { ipcMain, BrowserWindow } from 'electron';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 import type { createTerminalManager } from '@/main/services/terminal/manager';
 
@@ -80,6 +80,12 @@ export function registerTerminalHandlers(
   ipcMain.handle(IPC_CHANNELS.TERMINAL.UPDATE_CWD, async (_event, req: { id: string; cwd: string }) => {
     const ok = manager.updateCwd(req.id, req.cwd);
     onTerminalChange?.();
+    if (ok) {
+      const win = BrowserWindow.getAllWindows()[0];
+      if (win && !win.isDestroyed()) {
+        win.webContents.send(IPC_CHANNELS.TERMINAL.CWD_CHANGED, { id: req.id, cwd: req.cwd });
+      }
+    }
     return { success: ok };
   });
 }
