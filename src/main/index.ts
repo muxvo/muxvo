@@ -23,7 +23,9 @@ import { registerFsHandlers } from './ipc/fs-handlers';
 import { registerAppHandlers } from './ipc/app-handlers';
 import { registerFsWatcherHandlers } from './ipc/fs-watcher-handlers';
 import { registerFsImageHandlers } from './ipc/fs-image-handlers';
+import { registerAuthHandlers } from './ipc/auth-handlers';
 import { createChatWatcher } from './services/chat-watcher';
+import { createConfigWatcher } from './services/config-watcher';
 import { createMemoryPushTimer } from './services/perf/memory-push';
 import { createSyncStatusPusher } from './services/chat-sync-push';
 import { initConfigDir, createConfigManager } from './services/app/config';
@@ -91,6 +93,7 @@ function createWindow(windowConfig?: WindowConfig): void {
 
 let terminalManager: ReturnType<typeof createTerminalManager> | null = null;
 let chatWatcher: ReturnType<typeof createChatWatcher> | null = null;
+let configWatcher: ReturnType<typeof createConfigWatcher> | null = null;
 let memoryPush: ReturnType<typeof createMemoryPushTimer> | null = null;
 
 app.whenReady().then(() => {
@@ -115,9 +118,13 @@ app.whenReady().then(() => {
   registerFsWatcherHandlers();
   registerFsImageHandlers();
   registerAppHandlers();
+  registerAuthHandlers();
 
   chatWatcher = createChatWatcher();
   chatWatcher.start();
+
+  configWatcher = createConfigWatcher();
+  configWatcher.start();
 
   // Memory warning push (60s interval, 2GB threshold)
   memoryPush = createMemoryPushTimer({ intervalMs: 60000, thresholdMB: 2048 });
@@ -227,6 +234,9 @@ app.on('window-all-closed', () => {
   }
   if (chatWatcher) {
     chatWatcher.stop();
+  }
+  if (configWatcher) {
+    configWatcher.stop();
   }
   if (memoryPush) {
     memoryPush.stop();

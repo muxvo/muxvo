@@ -195,6 +195,19 @@ export function createConfigHandlers() {
 
       return { success: true };
     },
+
+    /**
+     * P2: Read project MEMORY.md
+     */
+    async getMemory(params: { projectHash: string }): Promise<{ content: string }> {
+      const memoryPath = join(CLAUDE_DIR, 'projects', params.projectHash, 'memory', 'MEMORY.md');
+      try {
+        const content = await readFile(memoryPath, 'utf-8');
+        return { content };
+      } catch {
+        return { content: '' };
+      }
+    },
   };
 }
 
@@ -229,5 +242,9 @@ export function registerConfigHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.CONFIG.SAVE_CLAUDE_MD, async (_event, params: { scope: ClaudeMdScope; projectPath?: string; content: string }) => {
     return handlers.saveClaudeMd(params);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.CONFIG.GET_MEMORY, async (_event, params: { projectHash: string }) => {
+    return handlers.getMemory(params);
   });
 }
