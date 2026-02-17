@@ -48,7 +48,7 @@ Main Process (src/main/)          Renderer Process (src/renderer/)
                                   └── utils/        ← UI utilities
 ```
 
-Communication is exclusively through IPC channels organized by domain: `terminal:*`, `chat:*`, `fs:*`, `config:*`, `app:*`, `marketplace:*`, `score:*`, `showcase:*`, `auth:*`, `analytics:*`.
+Communication is exclusively through IPC channels organized by 10 domains (`src/shared/constants/channels.ts`): `terminal:*`, `fs:*`, `chat:*`, `config:*`, `app:*`, `auth:*`, `marketplace:*`, `score:*`, `showcase:*`, `analytics:*`. All 60 channels are fully wired (handler + preload + renderer).
 
 ### Source Code Layout
 
@@ -93,26 +93,36 @@ export function registerXxxHandlers(): void {
 }
 ```
 
-Currently implemented handler files:
-- `terminal-handlers.ts` — accepts manager instance + optional persistence callback
-- `chat-handlers.ts` — uses dual-source reader for history/session access
-- `config-handlers.ts` — resource scanning, settings/CLAUDE.md read/write with atomic writes
-- `fs-handlers.ts` — readDir/readFile/writeFile with writable path restrictions
-- `app-handlers.ts` — preferences + CLI tool detection with format conversion
+All 12 handler files in `src/main/ipc/`:
+- `terminal-handlers.ts` — accepts manager instance + persistence callback
+- `chat-handlers.ts` — dual-source reader for history/session
+- `config-handlers.ts` — resource scanning, settings/CLAUDE.md with atomic writes
+- `fs-handlers.ts`, `fs-watcher-handlers.ts`, `fs-image-handlers.ts` — file ops, watch, temp images
+- `app-handlers.ts` — preferences + CLI detection with format conversion
+- `auth-handlers.ts` — GitHub OAuth (login/logout/status)
+- `marketplace-handlers.ts` — fetch sources, search, install/uninstall, updates + 3 push events
+- `score-handlers.ts` — run scorer, check/get-cached + 2 push events
+- `showcase-handlers.ts` — generate/publish/unpublish + publish-result push
+- `analytics-handlers.ts` — track/getSummary/clear with DI tracker (`createAnalyticsHandlers(tracker)`)
 
 All registered in `src/main/index.ts` at app startup. Legacy stub exports (e.g., `configHandlers`) maintained for L1 test compatibility.
 
 ### Preload API Surface
 
-`window.api` exposes 6 domains to the renderer (type: `MuxvoAPI`):
+`window.api` exposes 10 domains to the renderer (type: `MuxvoAPI`):
 
-| Domain | Methods | Pattern |
-|--------|---------|---------|
-| terminal | create, write, close, list, getState, getBuffer, onOutput, onStateChange, onExit, onListUpdated | invoke + on |
-| app | getConfig, saveConfig, getPreferences, savePreferences, detectCliTools, onMemoryWarning | invoke + on |
-| fs | selectDirectory, readDir, readFile, writeFile | invoke only |
-| chat | getHistory, getSession, search, onSessionUpdate, onSyncStatus | invoke + on |
-| config | getResources, getResourceContent, getSettings, saveSettings, getClaudeMd, saveClaudeMd | invoke only |
+| Domain | Methods | Push events (on*) |
+|--------|---------|-------------------|
+| terminal | create, write, resize, close, list, getState, getBuffer, getForegroundProcess, updateCwd | onOutput, onStateChange, onExit, onListUpdated |
+| app | getConfig, saveConfig, getPreferences, savePreferences, detectCliTools, getHomePath | onMemoryWarning |
+| fs | selectDirectory, readDir, readFile, writeFile, watchStart, watchStop, writeTempImage, writeClipboardImage | onFileChange |
+| chat | getHistory, getSession, search, export | onSessionUpdate, onSyncStatus |
+| config | getResources, getResourceContent, getSettings, saveSettings, getClaudeMd, saveClaudeMd, getMemory | onResourceChange |
+| auth | loginGithub, logout, getStatus | — |
+| marketplace | fetchSources, search, install, uninstall, getInstalled, checkUpdates | onInstallProgress, onPackagesLoaded, onUpdateAvailable |
+| score | checkScorer, run, getCached | onProgress, onResult |
+| showcase | generate, publish, unpublish | onPublishResult |
+| analytics | track, getSummary, clear | — |
 
 All `on*` event listeners return an unsubscribe cleanup function.
 
@@ -121,6 +131,8 @@ All `on*` event listeners return an unsubscribe cleanup function.
 - **State machines**: All use `createXxxMachine()` → `{ get state, get context, send(event, payload?) }`. States are string literals, transitions are switch-case. See `src/shared/machines/terminal-process.ts` as reference.
 - **Stores**: Factory functions like `createXxxStore()` returning objects with `dispatch(action)`, `getState()`, and domain-specific getters.
 - **Services**: Factory functions like `createXxxManager()` returning async method objects.
+- **Push events (M→R)**: Handlers use `pushToAllWindows(channel, payload)` helper with `!win.isDestroyed()` guard to broadcast events to renderer.
+- **Dependency injection**: `analytics-handlers.ts` uses DI (`createAnalyticsHandlers(tracker)`); `registerAnalyticsHandlers()` creates the tracker internally.
 - **Atomic writes**: Config/settings files use tmp + rename pattern to prevent corruption.
 - **Path security**: File access handlers validate paths against allowed directories (e.g., `~/.claude/`, `~/.muxvo/`).
 
