@@ -20,6 +20,7 @@ interface Props {
   cwd: string;
   onDoubleClick?: () => void;
   onClick?: () => void;
+  onClose?: (id: string) => void;
   onCwdChange?: (id: string, newCwd: string) => void;
   compact?: boolean;
   focused?: boolean;
@@ -55,6 +56,7 @@ export function TerminalTile({
   cwd,
   onDoubleClick,
   onClick,
+  onClose,
   onCwdChange,
   compact,
   focused,
@@ -149,6 +151,11 @@ export function TerminalTile({
     // TODO: open file panel
   };
 
+  const handleCloseClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onClose?.(id);
+  };
+
   return (
     <div
       ref={tileRef}
@@ -224,6 +231,14 @@ export function TerminalTile({
             {/* Maximize button (blue pill) */}
             <button className="tile-max-btn" onClick={handleFocusClick}>
               <MaximizeIcon />
+            </button>
+
+            {/* Close button (red pill) */}
+            <button className="tile-close-btn" onClick={handleCloseClick}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
           </>
         )}
