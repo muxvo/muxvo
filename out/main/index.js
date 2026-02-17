@@ -1868,6 +1868,12 @@ function createConfigManager(deps) {
   }
   return { loadConfig, saveConfig };
 }
+for (const stream of [process.stdout, process.stderr]) {
+  stream?.on("error", (err) => {
+    if (err.code === "EPIPE") return;
+    throw err;
+  });
+}
 let mainWindow = null;
 let lastBounds = null;
 function createWindow(windowConfig) {
