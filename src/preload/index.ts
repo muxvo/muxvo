@@ -55,6 +55,11 @@ const api = {
       ipcRenderer.on(IPC_CHANNELS.TERMINAL.LIST_UPDATED, handler);
       return () => ipcRenderer.removeListener(IPC_CHANNELS.TERMINAL.LIST_UPDATED, handler);
     },
+    onCwdChange: (callback: (data: { id: string; cwd: string }) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: { id: string; cwd: string }) => callback(data);
+      ipcRenderer.on(IPC_CHANNELS.TERMINAL.CWD_CHANGED, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.TERMINAL.CWD_CHANGED, handler);
+    },
   },
 
   // --- App domain ---

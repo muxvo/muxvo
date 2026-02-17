@@ -14,6 +14,7 @@ const IPC_CHANNELS = {
     GET_STATE: "terminal:get-state",
     GET_BUFFER: "terminal:get-buffer",
     UPDATE_CWD: "terminal:update-cwd",
+    CWD_CHANGED: "terminal:cwd-changed",
     LIST_UPDATED: "terminal:list-updated"
   },
   FS: {
@@ -119,6 +120,11 @@ const api = {
       const handler = (_event, data) => callback(data);
       electron.ipcRenderer.on(IPC_CHANNELS.TERMINAL.LIST_UPDATED, handler);
       return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.TERMINAL.LIST_UPDATED, handler);
+    },
+    onCwdChange: (callback) => {
+      const handler = (_event, data) => callback(data);
+      electron.ipcRenderer.on(IPC_CHANNELS.TERMINAL.CWD_CHANGED, handler);
+      return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.TERMINAL.CWD_CHANGED, handler);
     }
   },
   // --- App domain ---

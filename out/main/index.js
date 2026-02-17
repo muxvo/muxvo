@@ -62,6 +62,7 @@ const IPC_CHANNELS = {
     GET_STATE: "terminal:get-state",
     GET_BUFFER: "terminal:get-buffer",
     UPDATE_CWD: "terminal:update-cwd",
+    CWD_CHANGED: "terminal:cwd-changed",
     LIST_UPDATED: "terminal:list-updated"
   },
   FS: {
@@ -256,6 +257,18 @@ function createTerminalManager(deps) {
           if (win) {
             win.webContents.send(IPC_CHANNELS.TERMINAL.OUTPUT, { id, data });
           }
+          const osc7Match = data.match(/\x1b\]7;file:\/\/[^/]*([^\x07\x1b]+)[\x07\x1b]/);
+          if (osc7Match) {
+            const newCwd = decodeURIComponent(osc7Match[1]);
+            const terminal = terminals.get(id);
+            if (terminal && terminal.cwd !== newCwd) {
+              terminal.cwd = newCwd;
+              const cwdWin = electron.BrowserWindow.getAllWindows()[0];
+              if (cwdWin && !cwdWin.isDestroyed()) {
+                cwdWin.webContents.send(IPC_CHANNELS.TERMINAL.CWD_CHANGED, { id, cwd: newCwd });
+              }
+            }
+          }
           if (machine.state === "Running" && detectWaitingInput(data)) {
             machine.send("WAIT_INPUT");
             pushStateChange(id, machine.state);
@@ -449,6 +462,12 @@ function registerTerminalHandlers(manager, onTerminalChange) {
   electron.ipcMain.handle(IPC_CHANNELS.TERMINAL.UPDATE_CWD, async (_event, req) => {
     const ok = manager.updateCwd(req.id, req.cwd);
     onTerminalChange?.();
+    if (ok) {
+      const win = electron.BrowserWindow.getAllWindows()[0];
+      if (win && !win.isDestroyed()) {
+        win.webContents.send(IPC_CHANNELS.TERMINAL.CWD_CHANGED, { id: req.id, cwd: req.cwd });
+      }
+    }
     return { success: ok };
   });
 }
