@@ -12,7 +12,7 @@
       "channel": "config:get-resources",
       "direction": "invoke",
       "input": {
-        "type": "skills"
+        "types": ["skills"]
       },
       "expectedResponse": {
         "resources": "Array<{name: string, path: string, type: string}>"
