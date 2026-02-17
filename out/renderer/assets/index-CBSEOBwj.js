@@ -12678,7 +12678,6 @@ function MenuBar({ viewMode = "Tiling", onBackToTiling, terminalCount = 0 }) {
 function FloatingControls({
   terminalCount,
   onAddTerminal,
-  onRemoveTerminal,
   maxReached
 }) {
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "floating-controls", children: [
@@ -12691,7 +12690,6 @@ function FloatingControls({
         children: "+ 新建终端"
       }
     ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "floating-controls__btn", onClick: onRemoveTerminal, children: "- 移除" }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "floating-controls__count", children: [
       terminalCount,
       " 个终端"
@@ -21417,6 +21415,7 @@ function TerminalTile({
   cwd,
   onDoubleClick,
   onClick,
+  onClose,
   onCwdChange,
   compact,
   focused,
@@ -21491,6 +21490,10 @@ function TerminalTile({
   const handleFileClick = (e) => {
     e.stopPropagation();
   };
+  const handleCloseClick = (e) => {
+    e.stopPropagation();
+    onClose?.(id);
+  };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(
     "div",
     {
@@ -21546,7 +21549,11 @@ function TerminalTile({
               /* @__PURE__ */ jsxRuntimeExports.jsx(FileIcon, {}),
               "文件"
             ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "tile-max-btn", onClick: handleFocusClick, children: /* @__PURE__ */ jsxRuntimeExports.jsx(MaximizeIcon, {}) })
+            /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "tile-max-btn", onClick: handleFocusClick, children: /* @__PURE__ */ jsxRuntimeExports.jsx(MaximizeIcon, {}) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "tile-close-btn", onClick: handleCloseClick, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("svg", { width: "12", height: "12", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("line", { x1: "18", y1: "6", x2: "6", y2: "18" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("line", { x1: "6", y1: "6", x2: "18", y2: "18" })
+            ] }) })
           ] })
         ] }),
         !compact && /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -21564,7 +21571,7 @@ function TerminalTile({
     }
   );
 }
-function TerminalGrid({ terminals, viewMode = "Tiling", focusedId, selectedId, onDoubleClick, onSidebarClick, onClick, onCwdChange }) {
+function TerminalGrid({ terminals, viewMode = "Tiling", focusedId, selectedId, onDoubleClick, onSidebarClick, onClick, onClose, onCwdChange }) {
   if (terminals.length === 0) {
     return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: {
       display: "flex",
@@ -21580,10 +21587,10 @@ function TerminalGrid({ terminals, viewMode = "Tiling", focusedId, selectedId, o
     const focusedTerminal = terminals.find((t) => t.id === focusedId);
     const sidebarTerminals = terminals.filter((t) => t.id !== focusedId);
     if (!focusedTerminal) {
-      return renderTilingGrid(terminals, selectedId, onDoubleClick, onClick, onCwdChange);
+      return renderTilingGrid(terminals, selectedId, onDoubleClick, onClick, onClose, onCwdChange);
     }
     return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", width: "100%", height: "100%" }, children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { width: "75%", height: "100%" }, children: /* @__PURE__ */ jsxRuntimeExports.jsx(TerminalTile, { id: focusedId, state: focusedTerminal.state, cwd: focusedTerminal.cwd, focused: true, onCwdChange }, focusedId) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { width: "75%", height: "100%" }, children: /* @__PURE__ */ jsxRuntimeExports.jsx(TerminalTile, { id: focusedId, state: focusedTerminal.state, cwd: focusedTerminal.cwd, focused: true, onClose, onCwdChange }, focusedId) }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: {
         width: "25%",
         height: "100%",
@@ -21604,9 +21611,9 @@ function TerminalGrid({ terminals, viewMode = "Tiling", focusedId, selectedId, o
       )) })
     ] });
   }
-  return renderTilingGrid(terminals, selectedId, onDoubleClick, onClick, onCwdChange);
+  return renderTilingGrid(terminals, selectedId, onDoubleClick, onClick, onClose, onCwdChange);
 }
-function renderTilingGrid(terminals, selectedId, onDoubleClick, onClick, onCwdChange) {
+function renderTilingGrid(terminals, selectedId, onDoubleClick, onClick, onClose, onCwdChange) {
   const { cols, rows } = calculateGridLayout(terminals.length);
   const gridStyle = {
     display: "grid",
@@ -21628,6 +21635,7 @@ function renderTilingGrid(terminals, selectedId, onDoubleClick, onClick, onCwdCh
       staggerIndex: i,
       onDoubleClick: () => onDoubleClick?.(t.id),
       onClick: () => onClick?.(t.id),
+      onClose,
       onCwdChange
     },
     t.id
@@ -79447,13 +79455,6 @@ function App() {
     }
   }, [terminals, focusedId, selectedId]);
   const maxReached = terminals.length >= MAX_TERMINALS;
-  const removeSelectedTerminal = reactExports.useCallback(() => {
-    if (selectedId) {
-      removeTerminal(selectedId);
-    } else if (terminals.length > 0) {
-      removeTerminal(terminals[terminals.length - 1].id);
-    }
-  }, [selectedId, terminals, removeTerminal]);
   return /* @__PURE__ */ jsxRuntimeExports.jsx(PanelProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(
     AppContent,
     {
@@ -79469,7 +79470,7 @@ function App() {
       onCwdChange: handleCwdChange,
       onBackToTiling: handleBackToTiling,
       onAddTerminal: addTerminal,
-      onRemoveTerminal: removeSelectedTerminal,
+      onRemoveTerminal: removeTerminal,
       onCloseConfirm: handleCloseConfirm,
       onCloseCancel: handleCloseCancel
     }
@@ -79506,6 +79507,7 @@ function AppContent({
         onDoubleClick,
         onSidebarClick,
         onClick,
+        onClose: onRemoveTerminal,
         onCwdChange
       }
     ) }),
@@ -79523,7 +79525,6 @@ function AppContent({
       {
         terminalCount: terminals.length,
         onAddTerminal,
-        onRemoveTerminal,
         maxReached
       }
     ),

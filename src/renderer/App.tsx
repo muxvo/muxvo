@@ -170,16 +170,6 @@ export function App(): JSX.Element {
 
   const maxReached = terminals.length >= MAX_TERMINALS;
 
-  // Remove currently selected terminal (for floating controls "- 移除" button)
-  const removeSelectedTerminal = useCallback(() => {
-    if (selectedId) {
-      removeTerminal(selectedId);
-    } else if (terminals.length > 0) {
-      // If none selected, remove the last one
-      removeTerminal(terminals[terminals.length - 1].id);
-    }
-  }, [selectedId, terminals, removeTerminal]);
-
   return (
     <PanelProvider>
       <AppContent
@@ -195,7 +185,7 @@ export function App(): JSX.Element {
         onCwdChange={handleCwdChange}
         onBackToTiling={handleBackToTiling}
         onAddTerminal={addTerminal}
-        onRemoveTerminal={removeSelectedTerminal}
+        onRemoveTerminal={removeTerminal}
         onCloseConfirm={handleCloseConfirm}
         onCloseCancel={handleCloseCancel}
       />
@@ -233,7 +223,7 @@ function AppContent({
   onCwdChange: (id: string, newCwd: string) => void;
   onBackToTiling: () => void;
   onAddTerminal: () => void;
-  onRemoveTerminal: () => void;
+  onRemoveTerminal: (id: string) => void;
   onCloseConfirm: () => void;
   onCloseCancel: () => void;
 }): JSX.Element {
@@ -256,6 +246,7 @@ function AppContent({
           onDoubleClick={onDoubleClick}
           onSidebarClick={onSidebarClick}
           onClick={onClick}
+          onClose={onRemoveTerminal}
           onCwdChange={onCwdChange}
         />
       </main>
@@ -277,7 +268,6 @@ function AppContent({
       <FloatingControls
         terminalCount={terminals.length}
         onAddTerminal={onAddTerminal}
-        onRemoveTerminal={onRemoveTerminal}
         maxReached={maxReached}
       />
 
