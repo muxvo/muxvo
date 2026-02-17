@@ -86,7 +86,7 @@ export function App(): JSX.Element {
   }, []);
 
   const addTerminal = useCallback(async () => {
-    const home = typeof process !== 'undefined' && process.env?.HOME ? process.env.HOME : '/';
+    const home = window.api.app.getHomePath();
     const result = await window.api.terminal.create(home);
     if (result?.success && result.data) {
       setTerminals((prev) => [...prev, { id: result.data.id, state: 'Running', cwd: home }]);
@@ -185,7 +185,7 @@ export function App(): JSX.Element {
         onCwdChange={handleCwdChange}
         onBackToTiling={handleBackToTiling}
         onAddTerminal={addTerminal}
-        onRemoveTerminal={removeTerminal}
+        onClose={removeTerminal}
         onCloseConfirm={handleCloseConfirm}
         onCloseCancel={handleCloseCancel}
       />
@@ -207,7 +207,7 @@ function AppContent({
   onCwdChange,
   onBackToTiling,
   onAddTerminal,
-  onRemoveTerminal,
+  onClose,
   onCloseConfirm,
   onCloseCancel,
 }: {
@@ -223,7 +223,7 @@ function AppContent({
   onCwdChange: (id: string, newCwd: string) => void;
   onBackToTiling: () => void;
   onAddTerminal: () => void;
-  onRemoveTerminal: (id: string) => void;
+  onClose: (id: string) => void;
   onCloseConfirm: () => void;
   onCloseCancel: () => void;
 }): JSX.Element {
@@ -246,7 +246,7 @@ function AppContent({
           onDoubleClick={onDoubleClick}
           onSidebarClick={onSidebarClick}
           onClick={onClick}
-          onClose={onRemoveTerminal}
+          onClose={onClose}
           onCwdChange={onCwdChange}
         />
       </main>

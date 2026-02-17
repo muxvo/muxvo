@@ -103,18 +103,24 @@ export function TerminalTile({
   ].filter(Boolean).join(' ');
 
   function shortenPath(path: string): string {
-    const home = typeof process !== 'undefined' && process.env?.HOME ? process.env.HOME : '';
-    if (home && path.startsWith(home)) {
+    const home = window.api.app.getHomePath();
+    if (home && home !== '/' && path.startsWith(home)) {
       return '~' + path.slice(home.length);
     }
     return path;
   }
 
   const [cwdPickerOpen, setCwdPickerOpen] = useState(false);
+  const cwdRef = useRef<HTMLSpanElement>(null);
+  const [cwdAnchorRect, setCwdAnchorRect] = useState<{ top: number; left: number } | null>(null);
 
   const handleCwdClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!compact) setCwdPickerOpen(true);
+    if (!compact && cwdRef.current) {
+      const rect = cwdRef.current.getBoundingClientRect();
+      setCwdAnchorRect({ top: rect.bottom + 4, left: rect.left });
+      setCwdPickerOpen(true);
+    }
   };
 
   const handlePlaceholderClick = (e: React.MouseEvent) => {
@@ -177,7 +183,7 @@ export function TerminalTile({
         {/* Tile name area */}
         <div className="tile-name">
           {/* Cwd path (clickable, cyan) */}
-          <span className="tile-cwd" onClick={handleCwdClick}>
+          <span className="tile-cwd" ref={cwdRef} onClick={handleCwdClick}>
             {shortenPath(cwd)}
           </span>
 
@@ -250,7 +256,8 @@ export function TerminalTile({
           terminalId={id}
           currentCwd={cwd}
           open={cwdPickerOpen}
-          onClose={() => setCwdPickerOpen(false)}
+          anchorRect={cwdAnchorRect}
+          onClose={() => { setCwdPickerOpen(false); setCwdAnchorRect(null); }}
           onCwdChange={(newCwd) => onCwdChange?.(id, newCwd)}
         />
       )}
