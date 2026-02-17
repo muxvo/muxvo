@@ -70,8 +70,8 @@ const api = {
     detectCliTools: () =>
       ipcRenderer.invoke(IPC_CHANNELS.APP.DETECT_CLI_TOOLS),
     getHomePath: () => process.env.HOME || process.env.USERPROFILE || '/',
-    onMemoryWarning: (callback: (data: { usage: number }) => void) => {
-      const handler = (_event: Electron.IpcRendererEvent, data: { usage: number }) => callback(data);
+    onMemoryWarning: (callback: (data: { usageMB: number; threshold: number }) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: { usageMB: number; threshold: number }) => callback(data);
       ipcRenderer.on(IPC_CHANNELS.APP.MEMORY_WARNING, handler);
       return () => ipcRenderer.removeListener(IPC_CHANNELS.APP.MEMORY_WARNING, handler);
     },
@@ -87,6 +87,19 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.FS.READ_FILE, { path: filePath }),
     writeFile: (filePath: string, content: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.FS.WRITE_FILE, { path: filePath, content }),
+    watchStart: (id: string, paths: string[]) =>
+      ipcRenderer.invoke(IPC_CHANNELS.FS.WATCH_START, { id, paths }),
+    watchStop: (id: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.FS.WATCH_STOP, { id }),
+    onFileChange: (callback: (data: { watchId: string; type: string; path: string }) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: { watchId: string; type: string; path: string }) => callback(data);
+      ipcRenderer.on(IPC_CHANNELS.FS.CHANGE, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.FS.CHANGE, handler);
+    },
+    writeTempImage: (imageData: string, format: 'png' | 'jpg') =>
+      ipcRenderer.invoke(IPC_CHANNELS.FS.WRITE_TEMP_IMAGE, { imageData, format }),
+    writeClipboardImage: (imagePath: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.FS.WRITE_CLIPBOARD_IMAGE, { imagePath }),
   },
 
   // --- Chat domain ---
@@ -107,6 +120,8 @@ const api = {
       ipcRenderer.on(IPC_CHANNELS.CHAT.SYNC_STATUS, handler);
       return () => ipcRenderer.removeListener(IPC_CHANNELS.CHAT.SYNC_STATUS, handler);
     },
+    export: (sessionId: string, format: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.EXPORT, { sessionId, format }),
   },
 
   // --- Config domain ---

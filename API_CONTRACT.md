@@ -1,10 +1,10 @@
 # API 接口契约文档
 
 > 此文档由 Claude Code Hook 自动生成（AST 解析版）
-> 生成时间: 2026-02-17T04:16:11.585Z
+> 生成时间: 2026-02-17T04:34:40.821Z
 > 项目路径: /Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo
-> 扫描文件数: 226
-> 接口总数: 8
+> 扫描文件数: 230
+> 接口总数: 9
 
 ## 基础信息
 
@@ -13,13 +13,21 @@
 
 ## 接口列表
 
-### API 服务
+### main
 
 #### `GET {成员访问}`
 
-- **位置**: `main/services/chat-sync.ts:51`
-- **调用函数**: `mirrorMap.get()`
+- **位置**: `main/ipc/fs-watcher-handlers.ts:24`
+- **调用函数**: `watchers.get()`
 - **请求参数**: 无额外参数
+
+#### `DELETE {成员访问}`
+
+- **位置**: `main/ipc/fs-watcher-handlers.ts:70`
+- **调用函数**: `watchers.delete()`
+- **请求参数**: 无额外参数
+
+### API 服务
 
 #### `GET {变量:path}`
 
@@ -73,7 +81,8 @@
 
 | 方法 | 接口路径 | 所属模块 | 文件位置 |
 |-----|---------|---------|---------|
-| GET | `{成员访问}` | API 服务 | main/services/chat-sync.ts:51 |
+| GET | `{成员访问}` | main | main/ipc/fs-watcher-handlers.ts:24 |
+| DELETE | `{成员访问}` | main | main/ipc/fs-watcher-handlers.ts:70 |
 | GET | `{变量:path}` | API 服务 | main/services/data-sync/sync-manager.ts:99 |
 | GET | `{变量:id}` | API 服务 | main/services/terminal/manager.ts:96 |
 | DELETE | `{变量:id}` | API 服务 | main/services/terminal/manager.ts:124 |

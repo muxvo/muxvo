@@ -1,20 +1,32 @@
 {
-  "generatedAt": "2026-02-17T04:16:11.585Z",
+  "generatedAt": "2026-02-17T04:34:40.821Z",
   "projectPath": "/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo",
-  "totalApis": 8,
-  "scannedFiles": 226,
+  "totalApis": 9,
+  "scannedFiles": 230,
   "categories": {
-    "API 服务": [
+    "main": [
       {
         "path": "{成员访问}",
         "method": "GET",
-        "file": "main/services/chat-sync.ts",
-        "line": 51,
-        "functionName": "mirrorMap.get",
+        "file": "main/ipc/fs-watcher-handlers.ts",
+        "line": 24,
+        "functionName": "watchers.get",
         "params": [],
         "responseFields": [],
-        "category": "API 服务"
+        "category": "main"
       },
+      {
+        "path": "{成员访问}",
+        "method": "DELETE",
+        "file": "main/ipc/fs-watcher-handlers.ts",
+        "line": 70,
+        "functionName": "watchers.delete",
+        "params": [],
+        "responseFields": [],
+        "category": "main"
+      }
+    ],
+    "API 服务": [
       {
         "path": "{变量:path}",
         "method": "GET",
@@ -95,12 +107,22 @@
     {
       "path": "{成员访问}",
       "method": "GET",
-      "file": "main/services/chat-sync.ts",
-      "line": 51,
-      "functionName": "mirrorMap.get",
+      "file": "main/ipc/fs-watcher-handlers.ts",
+      "line": 24,
+      "functionName": "watchers.get",
       "params": [],
       "responseFields": [],
-      "category": "API 服务"
+      "category": "main"
+    },
+    {
+      "path": "{成员访问}",
+      "method": "DELETE",
+      "file": "main/ipc/fs-watcher-handlers.ts",
+      "line": 70,
+      "functionName": "watchers.delete",
+      "params": [],
+      "responseFields": [],
+      "category": "main"
     },
     {
       "path": "{变量:path}",

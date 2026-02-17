@@ -83,11 +83,48 @@ export function createChatHandlers() {
       return { results };
     },
 
-    async export(_params: { sessionId: string; format: string }): Promise<Record<string, unknown>> {
-      // Export not implemented yet
-      return {
-        outputPath: '/tmp/export/session.md',
-      };
+    async export(params: { sessionId: string; format: string; projectHash?: string }): Promise<Record<string, unknown>> {
+      const { promises: fsp } = await import('fs');
+      const { join } = await import('path');
+      const { homedir } = await import('os');
+
+      const projectHash = params.projectHash || 'default';
+      const result = await reader.readSession(projectHash, params.sessionId);
+
+      if (result.source === null) {
+        return {
+          outputPath: '',
+          error: { code: 'SESSION_NOT_FOUND', message: result.error || 'Session unavailable' },
+        };
+      }
+
+      // Format messages
+      let content: string;
+      let ext: string;
+
+      if (params.format === 'json') {
+        content = JSON.stringify(result.messages, null, 2);
+        ext = 'json';
+      } else {
+        // Default to markdown
+        const lines: string[] = [`# Session Export: ${params.sessionId}`, ''];
+        for (const msg of result.messages as Array<{ message?: { role?: string; content?: string }; timestamp?: string }>) {
+          const role = msg.message?.role || 'unknown';
+          const timestamp = msg.timestamp || '';
+          const body = msg.message?.content || '';
+          lines.push(`## ${role} (${timestamp})`, '', body, '');
+        }
+        content = lines.join('\n');
+        ext = 'md';
+      }
+
+      // Write to ~/.muxvo/exports/
+      const exportDir = join(homedir(), '.muxvo', 'exports');
+      await fsp.mkdir(exportDir, { recursive: true });
+      const filePath = join(exportDir, `${params.sessionId}.${ext}`);
+      await fsp.writeFile(filePath, content, 'utf-8');
+
+      return { outputPath: filePath };
     },
   };
 }

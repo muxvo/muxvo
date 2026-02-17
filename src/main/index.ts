@@ -21,7 +21,11 @@ import { registerChatHandlers } from './ipc/chat-handlers';
 import { registerConfigHandlers } from './ipc/config-handlers';
 import { registerFsHandlers } from './ipc/fs-handlers';
 import { registerAppHandlers } from './ipc/app-handlers';
+import { registerFsWatcherHandlers } from './ipc/fs-watcher-handlers';
+import { registerFsImageHandlers } from './ipc/fs-image-handlers';
 import { createChatWatcher } from './services/chat-watcher';
+import { createMemoryPushTimer } from './services/perf/memory-push';
+import { createSyncStatusPusher } from './services/chat-sync-push';
 import { initConfigDir, createConfigManager } from './services/app/config';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 
@@ -87,6 +91,7 @@ function createWindow(windowConfig?: WindowConfig): void {
 
 let terminalManager: ReturnType<typeof createTerminalManager> | null = null;
 let chatWatcher: ReturnType<typeof createChatWatcher> | null = null;
+let memoryPush: ReturnType<typeof createMemoryPushTimer> | null = null;
 
 app.whenReady().then(() => {
   // Initialize config persistence
@@ -107,10 +112,19 @@ app.whenReady().then(() => {
   registerChatHandlers();
   registerConfigHandlers();
   registerFsHandlers();
+  registerFsWatcherHandlers();
+  registerFsImageHandlers();
   registerAppHandlers();
 
   chatWatcher = createChatWatcher();
   chatWatcher.start();
+
+  // Memory warning push (60s interval, 2GB threshold)
+  memoryPush = createMemoryPushTimer({ intervalMs: 60000, thresholdMB: 2048 });
+  memoryPush.start();
+
+  // Sync status pusher (available for sync operations to report progress)
+  const _syncPusher = createSyncStatusPusher();
 
   // Register app config IPC handlers
   ipcMain.handle(IPC_CHANNELS.APP.GET_CONFIG, async () => {
@@ -213,6 +227,9 @@ app.on('window-all-closed', () => {
   }
   if (chatWatcher) {
     chatWatcher.stop();
+  }
+  if (memoryPush) {
+    memoryPush.stop();
   }
 
   if (process.platform !== 'darwin') {
