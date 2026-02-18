@@ -2011,7 +2011,8 @@ electron.app.whenReady().then(() => {
             const list = terminalManager.list();
             win.webContents.send(IPC_CHANNELS.TERMINAL.LIST_UPDATED, list.map((t) => ({
               id: t.id,
-              state: t.state
+              state: t.state,
+              cwd: t.cwd
             })));
             console.log("[MUXVO:restore] sent list-updated, count=" + restoredIds.length);
           }
