@@ -91,3 +91,33 @@
   background: var(--bg-hover);
   color: var(--text-primary);
 }
+
+.menu-bar__add-btn {
+  margin-left: auto;
+  z-index: 2;
+  -webkit-app-region: no-drag;
+  background: var(--accent-glow);
+  color: var(--accent);
+  border: none;
+  font-size: 16px;
+  font-weight: 700;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms, color 150ms;
+  line-height: 1;
+}
+
+.menu-bar__add-btn:hover {
+  background: var(--accent);
+  color: var(--bg-deep);
+}
+
+.menu-bar__add-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

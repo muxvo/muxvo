@@ -235,7 +235,7 @@ function AppContent({
 
   return (
     <div className="app">
-      <MenuBar viewMode={viewMode} onBackToTiling={onBackToTiling} terminalCount={terminals.length} />
+      <MenuBar viewMode={viewMode} onBackToTiling={onBackToTiling} terminalCount={terminals.length} onAddTerminal={onAddTerminal} maxReached={maxReached} />
       <main className="app-content">
         <TerminalGrid
           terminals={terminals}
@@ -262,12 +262,7 @@ function AppContent({
         </button>
       )}
 
-      {/* Floating controls (prototype bottom pill bar) */}
-      <FloatingControls
-        terminalCount={terminals.length}
-        onAddTerminal={onAddTerminal}
-        maxReached={maxReached}
-      />
+      {/* FloatingControls removed — add button moved to MenuBar */}
 
       {/* Chat history overlay (mail-client 3-column view) */}
       {state.chatHistory.open && (
