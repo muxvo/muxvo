@@ -108,8 +108,9 @@ export function TerminalTile({
     }
     if (truncate) {
       const parts = short.split('/');
-      if (parts.length > 4) {
-        return parts[0] + '/\u2026/' + parts.slice(-3).join('/');
+      if (parts.length > 3) {
+        // 空间有限，优先保证最后的文件夹名完整可见
+        return parts[0] + '/\u2026/' + parts[parts.length - 1];
       }
     }
     return short;
