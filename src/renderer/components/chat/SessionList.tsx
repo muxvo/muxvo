@@ -2,21 +2,21 @@
  * D6: SessionList — 中栏会话卡片列表
  *
  * 功能:
- * - 每张卡片: 标题 + 时间 + 预览(2行截断) + 标签 + 工具调用计数
+ * - 每张卡片: 标题 + 时间 + 预览(2行截断) + 标签 + 消息数
  * - 时间格式: "HH:MM" / "yesterday" / "MM-DD"
- * - 标签: 关键词匹配 display 字段 → feat/fix/refactor/plan
- * - 按 timestamp 倒序
+ * - 标签: 关键词匹配 title 字段 → feat/fix/refactor/plan
+ * - 按 lastModified 倒序
  */
 
 import React, { useState, useMemo } from 'react';
-import type { HistoryEntry } from '@/shared/types/chat.types';
+import type { SessionSummary } from '@/shared/types/chat.types';
 import type { SortMode } from './ChatHistoryPanel';
 import './SessionList.css';
 
 const PAGE_SIZE = 50;
 
 interface SessionListProps {
-  sessions: HistoryEntry[];
+  sessions: SessionSummary[];
   selectedId: string | null;
   onSelect: (sessionId: string) => void;
   sortMode?: SortMode;
@@ -36,14 +36,12 @@ function formatTime(timestamp: number): string {
   const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
   if (dateOnly.getTime() === today.getTime()) {
-    // Today: show time
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
     return `${hours}:${minutes}`;
   } else if (dateOnly.getTime() === yesterday.getTime()) {
     return 'yesterday';
   } else {
-    // Other: show MM-DD
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${month}-${day}`;
@@ -51,22 +49,22 @@ function formatTime(timestamp: number): string {
 }
 
 /**
- * Extract tags from display text based on keywords
+ * Extract tags from title text based on keywords
  */
-function extractTags(display: string): Array<{ label: string; color: string }> {
+function extractTags(title: string): Array<{ label: string; color: string }> {
   const tags: Array<{ label: string; color: string }> = [];
-  const lowerDisplay = display.toLowerCase();
+  const lowerTitle = title.toLowerCase();
 
-  if (lowerDisplay.includes('feat') || lowerDisplay.includes('feature')) {
+  if (lowerTitle.includes('feat') || lowerTitle.includes('feature')) {
     tags.push({ label: 'feat', color: 'var(--success)' });
   }
-  if (lowerDisplay.includes('fix') || lowerDisplay.includes('bug')) {
+  if (lowerTitle.includes('fix') || lowerTitle.includes('bug')) {
     tags.push({ label: 'fix', color: 'var(--error)' });
   }
-  if (lowerDisplay.includes('refactor')) {
+  if (lowerTitle.includes('refactor')) {
     tags.push({ label: 'refactor', color: 'var(--info)' });
   }
-  if (lowerDisplay.includes('plan')) {
+  if (lowerTitle.includes('plan')) {
     tags.push({ label: 'plan', color: 'var(--purple)' });
   }
 
@@ -80,9 +78,9 @@ export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time',
   const sessionKey = useMemo(() => sessions.map(s => s.sessionId).join(','), [sessions]);
   useMemo(() => { setVisibleCount(PAGE_SIZE); }, [sessionKey]);
 
-  // Sort by timestamp descending (default)
+  // Sort by lastModified descending (default)
   const sortedSessions = useMemo(() => {
-    return [...sessions].sort((a, b) => b.timestamp - a.timestamp);
+    return [...sessions].sort((a, b) => b.lastModified - a.lastModified);
   }, [sessions]);
 
   const visibleSessions = sortedSessions.slice(0, visibleCount);
@@ -130,10 +128,10 @@ export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time',
       </div>
 
       {visibleSessions.map((session) => {
-        const title = session.display.slice(0, 50);
-        const preview = session.display.slice(0, 100);
-        const time = formatTime(session.timestamp);
-        const tags = extractTags(session.display);
+        const title = session.title.slice(0, 50);
+        const preview = session.title.slice(0, 100);
+        const time = formatTime(session.lastModified);
+        const tags = extractTags(session.title);
         const isSelected = session.sessionId === selectedId;
 
         return (
@@ -143,7 +141,7 @@ export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time',
             onClick={() => onSelect(session.sessionId)}
           >
             <div className="session-card__header">
-              <span className="session-card__title" title={session.display}>
+              <span className="session-card__title" title={session.title}>
                 {title}
               </span>
               <span className="session-card__time">{time}</span>
@@ -163,6 +161,7 @@ export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time',
                   </span>
                 ))}
               </div>
+              <span className="session-card__count">{session.messageCount} 条</span>
             </div>
           </div>
         );

@@ -1,57 +1,92 @@
 /**
  * 聊天历史域类型定义
- * 来源: DEV-PLAN.md §2.3 chat:*
+ *
+ * 基于文件系统扫描 ~/.claude/projects/ 目录
+ * 数据层次: Project → Session → Message
  */
 
-/** chat:get-history 请求参数 */
-export interface ChatHistoryRequest {
-  limit?: number;
-  offset?: number;
+/** 从 ~/.claude/projects/ 扫描得到的项目信息 */
+export interface ProjectInfo {
+  /** 目录名（projectHash），如 "-Users-rl-Nutstore-Files-my-nutstore-520-program-muxvo" */
+  projectHash: string;
+  /** 完整项目路径，从 session 的 cwd 字段获取 */
+  displayPath: string;
+  /** 短名称（displayPath 最后一段） */
+  displayName: string;
+  /** 该项目下 .jsonl session 文件数量 */
+  sessionCount: number;
+  /** 最近活跃时间（ms，取最新 session 文件的 mtime） */
+  lastActivity: number;
 }
 
-/** history.jsonl 中的每行条目 */
-export interface HistoryEntry {
-  /** 用户输入的文本 */
-  display: string;
-  /** 粘贴内容 */
-  pastedContents?: Record<string, unknown>;
-  /** 时间戳（毫秒） */
-  timestamp: number;
-  /** 项目路径 */
-  project: string;
-  /** Session ID (optional for backward compatibility with older entries) */
-  sessionId?: string;
-}
-
-/** Session JSONL 中的每行消息 */
-export interface SessionMessage {
-  type: 'user' | 'assistant';
-  messageId: string;
+/** 单个 session 的摘要信息（从 .jsonl 文件头部提取） */
+export interface SessionSummary {
+  /** Session UUID（文件名去掉 .jsonl） */
   sessionId: string;
-  timestamp: string;
+  /** 所属项目的 hash */
+  projectHash: string;
+  /** 第一条用户消息文本（截断 ~100 字符），作为标题 */
+  title: string;
+  /** Session 开始时间（ISO 字符串） */
+  startedAt: string;
+  /** 文件修改时间（ms），用于排序 */
+  lastModified: number;
+  /** 消息数量（user + assistant，不含 file-history-snapshot） */
+  messageCount: number;
+}
+
+/** Assistant 消息中的内容块 */
+export interface AssistantContentBlock {
+  type: 'text' | 'tool_use' | 'tool_result';
+  /** type='text' 时的文本内容 */
+  text?: string;
+  /** type='tool_use' 时的工具名称 */
+  name?: string;
+  /** type='tool_use' 时的工具输入 */
+  input?: unknown;
+  /** type='tool_result' 时的结果内容 */
+  content?: unknown;
+  /** type='tool_result' 时关联的 tool_use_id */
+  tool_use_id?: string;
+}
+
+/** 规范化后的 session 消息，用于 UI 渲染 */
+export interface SessionMessage {
+  /** 消息 UUID */
+  uuid: string;
+  /** 消息类型（跳过 file-history-snapshot） */
+  type: 'user' | 'assistant';
+  /** Session ID */
+  sessionId: string;
+  /** 工作目录 */
   cwd: string;
+  /** Git 分支 */
   gitBranch?: string;
-  message: {
-    role: 'user' | 'assistant';
-    content: string;
-  };
+  /** ISO 时间戳 */
+  timestamp: string;
+  /**
+   * 消息内容
+   * - user: 纯字符串
+   * - assistant: AssistantContentBlock 数组
+   */
+  content: string | AssistantContentBlock[];
 }
 
 /** chat:search 返回的搜索结果 */
 export interface SearchResult {
-  /** 匹配的项目路径 */
-  project: string;
-  /** 匹配的 Session ID */
+  /** 项目 hash */
+  projectHash: string;
+  /** Session ID */
   sessionId: string;
-  /** 匹配的文本片段 */
+  /** 匹配文本片段 */
   snippet: string;
-  /** 匹配时间戳 */
-  timestamp: number;
+  /** ISO 时间戳 */
+  timestamp: string;
 }
 
-/** chat:session-update 事件数据（M->R 推送） */
+/** chat:session-update 推送事件（M→R） */
 export interface ChatSessionUpdateEvent {
-  projectId: string;
+  projectHash: string;
   sessionId: string;
 }
 
@@ -60,12 +95,9 @@ export type ChatSyncStatus = 'syncing' | 'idle' | 'error';
 
 /** chat:export 请求参数 */
 export interface ChatExportRequest {
-  projectIds?: string[];
+  projectHash: string;
+  sessionId: string;
   format: 'markdown' | 'json';
-  dateRange?: {
-    start: string;
-    end: string;
-  };
 }
 
 /** chat:export 响应 */

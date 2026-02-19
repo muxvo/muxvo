@@ -109,14 +109,18 @@ const api = {
 
   // --- Chat domain ---
   chat: {
-    getHistory: (params?: any) =>
-      ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_HISTORY, params),
-    getSession: (sessionId: string) =>
-      ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_SESSION, { sessionId }),
+    getProjects: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_PROJECTS),
+    getSessions: (projectHash: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_SESSIONS, { projectHash }),
+    getSession: (projectHash: string, sessionId: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_SESSION, { projectHash, sessionId }),
     search: (query: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.SEARCH, { query }),
-    onSessionUpdate: (callback: (data: any) => void) => {
-      const handler = (_event: Electron.IpcRendererEvent, data: any) => callback(data);
+    export: (projectHash: string, sessionId: string, format: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.EXPORT, { projectHash, sessionId, format }),
+    onSessionUpdate: (callback: (data: { projectHash: string; sessionId: string }) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: { projectHash: string; sessionId: string }) => callback(data);
       ipcRenderer.on(IPC_CHANNELS.CHAT.SESSION_UPDATE, handler);
       return () => ipcRenderer.removeListener(IPC_CHANNELS.CHAT.SESSION_UPDATE, handler);
     },
@@ -125,8 +129,6 @@ const api = {
       ipcRenderer.on(IPC_CHANNELS.CHAT.SYNC_STATUS, handler);
       return () => ipcRenderer.removeListener(IPC_CHANNELS.CHAT.SYNC_STATUS, handler);
     },
-    export: (sessionId: string, format: string) =>
-      ipcRenderer.invoke(IPC_CHANNELS.CHAT.EXPORT, { sessionId, format }),
   },
 
   // --- Auth domain ---

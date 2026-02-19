@@ -11,7 +11,7 @@
 
 import React, { useState } from 'react';
 import { MarkdownPreview } from '@/renderer/components/markdown/MarkdownPreview';
-import type { SessionMessage } from '@/shared/types/chat.types';
+import type { SessionMessage, AssistantContentBlock } from '@/shared/types/chat.types';
 import './SessionDetail.css';
 
 interface SessionDetailProps {
@@ -20,10 +20,11 @@ interface SessionDetailProps {
 }
 
 interface ToolCallBlockProps {
-  content: string;
+  name?: string;
+  input?: unknown;
 }
 
-function ToolCallBlock({ content }: ToolCallBlockProps) {
+function ToolCallBlock({ name, input }: ToolCallBlockProps) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -33,11 +34,11 @@ function ToolCallBlock({ content }: ToolCallBlockProps) {
     >
       <div className="tool-call-block__header">
         <span className="tool-call-block__icon">{expanded ? '▼' : '▶'}</span>
-        <span className="tool-call-block__label">Tool Call</span>
+        <span className="tool-call-block__label">Tool Call{name ? `: ${name}` : ''}</span>
       </div>
       {expanded && (
         <pre className="tool-call-block__content">
-          {content}
+          {typeof input === 'string' ? input : JSON.stringify(input, null, 2)}
         </pre>
       )}
     </div>
@@ -45,7 +46,7 @@ function ToolCallBlock({ content }: ToolCallBlockProps) {
 }
 
 interface ToolResultBlockProps {
-  content: string;
+  content?: unknown;
 }
 
 function ToolResultBlock({ content }: ToolResultBlockProps) {
@@ -62,11 +63,24 @@ function ToolResultBlock({ content }: ToolResultBlockProps) {
       </div>
       {expanded && (
         <pre className="tool-result-block__content">
-          {content}
+          {typeof content === 'string' ? content : JSON.stringify(content, null, 2)}
         </pre>
       )}
     </div>
   );
+}
+
+function renderContentBlock(block: AssistantContentBlock, index: number) {
+  switch (block.type) {
+    case 'text':
+      return <MarkdownPreview key={index} content={block.text || ''} />;
+    case 'tool_use':
+      return <ToolCallBlock key={index} name={block.name} input={block.input} />;
+    case 'tool_result':
+      return <ToolResultBlock key={index} content={block.content} />;
+    default:
+      return null;
+  }
 }
 
 interface MessageBubbleProps {
@@ -75,11 +89,6 @@ interface MessageBubbleProps {
 
 function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.type === 'user';
-  const isAssistant = message.type === 'assistant';
-
-  // Simple detection for tool calls/results (placeholder for now)
-  const hasToolCall = message.message.content.includes('[Tool Call]');
-  const hasToolResult = message.message.content.includes('[Tool Result]');
 
   return (
     <div className={`message-bubble ${isUser ? 'message-bubble--user' : 'message-bubble--assistant'}`}>
@@ -88,22 +97,14 @@ function MessageBubble({ message }: MessageBubbleProps) {
       </div>
 
       <div className="message-bubble__content">
-        {hasToolCall && (
-          <ToolCallBlock content={message.message.content} />
-        )}
-        {hasToolResult && (
-          <ToolResultBlock content={message.message.content} />
-        )}
-        {!hasToolCall && !hasToolResult && (
-          <>
-            {isAssistant ? (
-              <MarkdownPreview content={message.message.content} />
-            ) : (
-              <div className="message-bubble__text">
-                {message.message.content}
-              </div>
-            )}
-          </>
+        {isUser ? (
+          <div className="message-bubble__text">
+            {message.content as string}
+          </div>
+        ) : (
+          Array.isArray(message.content)
+            ? (message.content as AssistantContentBlock[]).map((block, i) => renderContentBlock(block, i))
+            : <MarkdownPreview content={String(message.content)} />
         )}
       </div>
 
@@ -120,7 +121,7 @@ export function SessionDetail({ messages, loading }: SessionDetailProps) {
   const [visibleCount, setVisibleCount] = useState(MESSAGE_PAGE_SIZE);
 
   // Reset visible count when messages change (new session selected)
-  const messageKey = messages.length > 0 ? messages[0].messageId : '';
+  const messageKey = messages.length > 0 ? messages[0].uuid : '';
   React.useEffect(() => { setVisibleCount(MESSAGE_PAGE_SIZE); }, [messageKey]);
 
   if (loading) {
@@ -146,7 +147,7 @@ export function SessionDetail({ messages, loading }: SessionDetailProps) {
     <div className="session-detail">
       <div className="session-detail__messages">
         {visibleMessages.map((message) => (
-          <MessageBubble key={message.messageId} message={message} />
+          <MessageBubble key={message.uuid} message={message} />
         ))}
         {hasMore && (
           <button
