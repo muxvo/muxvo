@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muxvo — Amber Signal Maximalist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --amber:#e8a748;--amber-light:#f5c563;--amber-deep:#b8860b;--amber-muted:#c4943c;
+  --bg-primary:#06080c;--bg-card:#0d1117;--bg-surface:#161b22;--border:#1e2530;
+  --text-primary:#f5f5f5;--text-secondary:#9ca3af;--text-on-amber:#06080c;--text-on-amber-sec:#1e2530;
+  --font-display:'DM Sans',system-ui,sans-serif;--font-mono:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-display);background:var(--bg-primary);color:var(--text-primary);line-height:1.6;overflow-x:hidden}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+a{color:inherit;text-decoration:none}
+
+/* Nav */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:64px;display:flex;align-items:center;background:rgba(6,8,12,.85);backdrop-filter:blur(12px);border-bottom:1px solid transparent;transition:border-color .3s}
+nav.scrolled{border-bottom-color:var(--border)}
+nav .inner{max-width:1200px;margin:0 auto;padding:0 24px;width:100%;display:flex;align-items:center;justify-content:space-between}
+.logo{font-weight:700;font-size:18px;color:var(--amber)}
+.nav-links{display:flex;gap:32px;align-items:center}
+.nav-links a{font-size:14px;color:var(--text-secondary);transition:color .15s}
+.nav-links a:hover{color:var(--amber)}
+.btn-amber{background:linear-gradient(135deg,var(--amber),var(--amber-muted));color:var(--text-on-amber);padding:8px 20px;border-radius:8px;font-weight:600;font-size:14px;border:none;cursor:pointer;transition:opacity .2s}
+.btn-amber:hover{opacity:.9}
+.hamburger{display:none;background:none;border:none;color:var(--text-primary);font-size:24px;cursor:pointer}
+
+/* Hero */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 24px 80px;position:relative;background:var(--bg-primary)}
+.hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 800px 600px at 50% 35%,rgba(232,167,72,.18),transparent);pointer-events:none;animation:glow-breathe 6s ease-in-out infinite}
+@keyframes glow-breathe{0%,100%{opacity:.85}50%{opacity:1}}
+.hero h1{font-size:72px;font-weight:700;line-height:1.1;letter-spacing:-.02em;position:relative;z-index:1}
+.hero h1 .amber{color:var(--amber)}
+.hero .subtitle{font-size:20px;color:var(--text-secondary);margin-top:20px;max-width:560px;position:relative;z-index:1}
+.hero .cta-group{display:flex;gap:16px;margin-top:40px;position:relative;z-index:1;flex-wrap:wrap;justify-content:center}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-primary);padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;cursor:pointer;transition:border-color .2s,color .2s}
+.btn-ghost:hover{border-color:var(--amber);color:var(--amber)}
+.btn-hero{padding:14px 32px;font-size:15px;border-radius:8px}
+.hero .screenshot{margin-top:56px;max-width:1000px;width:90vw;border-radius:12px;border:1px solid rgba(232,167,72,.25);box-shadow:0 0 80px rgba(232,167,72,.12);position:relative;z-index:1;background:var(--bg-card);aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-size:14px;overflow:hidden}
+.screenshot-inner{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;width:100%;height:100%;background:var(--border)}
+.screenshot-inner .pane{background:var(--bg-card);padding:16px;font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);line-height:1.5}
+.screenshot-inner .pane .prompt{color:var(--amber)}
+.fade-up{opacity:0;transform:translateY(24px);transition:opacity .8s ease-out,transform .8s ease-out}
+.fade-up.visible{opacity:1;transform:translateY(0)}
+
+/* Amber Band (shared) */
+.amber-band{background:var(--amber);padding:40px 24px}
+.amber-band-gradient{background:linear-gradient(135deg,var(--amber-deep),var(--amber) 50%,var(--amber-deep));padding:64px 24px}
+.amber-band .inner,.amber-band-gradient .inner{max-width:1200px;margin:0 auto}
+.amber-band h3,.amber-band-gradient h3{color:var(--text-on-amber);font-size:36px;font-weight:700}
+.amber-band p,.amber-band-gradient p{color:var(--text-on-amber-sec)}
+.band-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:48px}
+.band-item h4{font-size:36px;font-weight:700;color:var(--text-on-amber);font-family:var(--font-mono)}
+.band-item p{font-size:15px;color:var(--text-on-amber-sec);margin-top:4px}
+
+/* Features */
+.features{background:var(--bg-primary);padding:100px 24px}
+.section-title{font-size:48px;font-weight:700;color:var(--amber);text-align:center;letter-spacing:-.02em}
+.section-subtitle{text-align:center;color:var(--text-secondary);margin-top:12px;font-size:17px}
+.feature-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;margin-top:56px;max-width:1200px;margin-left:auto;margin-right:auto}
+.feature-card{background:var(--bg-card);border:1px solid var(--border);border-top:2px solid var(--amber);border-radius:8px;overflow:hidden;transition:border-color .3s,box-shadow .3s}
+.feature-card:hover{border-color:rgba(232,167,72,.4);box-shadow:0 0 24px rgba(232,167,72,.08)}
+.feature-card .thumb{aspect-ratio:16/10;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:12px;color:var(--text-secondary);padding:16px}
+.feature-card .thumb .term-line{white-space:nowrap;overflow:hidden}
+.feature-card .thumb .term-line .p{color:var(--amber)}
+.feature-card .body{padding:24px}
+.feature-card .body h3{font-size:20px;font-weight:600;color:var(--text-primary)}
+.feature-card .body p{font-size:16px;color:var(--text-secondary);margin-top:8px}
+
+/* CLI Tools */
+.cli-section{background:#0a0e14;padding:80px 24px}
+.cli-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:48px;max-width:900px;margin-left:auto;margin-right:auto}
+.cli-item{text-align:center;padding:24px;border-right:1px solid var(--border)}
+.cli-item:last-child{border-right:none}
+.cli-icon{width:48px;height:48px;border-radius:50%;background:var(--bg-card);display:inline-flex;align-items:center;justify-content:center;box-shadow:0 0 0 1px rgba(232,167,72,.2);font-size:20px}
+.cli-item h4{font-size:18px;font-weight:600;margin-top:12px;color:var(--text-primary)}
+.cli-item p{font-size:14px;color:var(--text-secondary);margin-top:4px}
+
+/* Skill Market amber band */
+.skill-section .inner{display:grid;grid-template-columns:5fr 7fr;gap:48px;align-items:center}
+.skill-text h3{font-size:48px}
+.skill-text p{font-size:18px;margin-top:16px}
+.btn-dark{background:var(--text-on-amber);color:var(--text-primary);padding:12px 28px;border-radius:8px;font-weight:600;font-size:15px;border:none;cursor:pointer;margin-top:24px;transition:background .2s}
+.btn-dark:hover{background:var(--bg-card)}
+.skill-cards{display:flex;flex-direction:column;gap:16px}
+.skill-card{background:#f5eedd;border-radius:12px;padding:20px;box-shadow:0 8px 32px rgba(6,8,12,.2);transform:translateX(var(--offset,0));color:var(--text-on-amber)}
+.skill-card h4{font-size:16px;font-weight:600;color:#06080c}
+.skill-card .stars{color:var(--amber);font-size:14px;margin-top:4px}
+.skill-card p{font-size:13px;color:#3a3a3a;margin-top:4px}
+
+/* CTA */
+.cta-section{padding:100px 24px;text-align:center;background:var(--amber);background:linear-gradient(180deg,var(--bg-primary) 0%,var(--amber-deep) 15%,var(--amber) 50%,var(--amber-deep) 85%,var(--bg-primary) 100%)}
+.cta-section h2{font-size:48px;font-weight:700;color:var(--text-on-amber);letter-spacing:-.02em}
+.cta-section .sub{font-size:20px;color:var(--text-on-amber-sec);margin-top:12px}
+.cta-section .cta-group{display:flex;gap:16px;justify-content:center;margin-top:40px;flex-wrap:wrap}
+.btn-cta-dark{background:var(--text-on-amber);color:var(--text-primary);padding:16px 40px;border-radius:8px;font-weight:600;font-size:16px;border:none;cursor:pointer;transition:background .2s,box-shadow .2s}
+.btn-cta-dark:hover{background:var(--bg-card);box-shadow:0 0 24px rgba(6,8,12,.3)}
+.cta-links{margin-top:20px;display:flex;gap:24px;justify-content:center}
+.cta-links a{color:var(--text-on-amber-sec);font-size:14px;text-decoration:underline}
+
+/* Footer */
+footer{background:var(--bg-primary);border-top:1px solid var(--border);padding:48px 24px}
+.footer-grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:32px}
+.footer-col h5{font-size:13px;font-weight:600;color:var(--text-primary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px}
+.footer-col a{display:block;font-size:13px;color:var(--text-secondary);padding:4px 0;transition:color .15s}
+.footer-col a:hover{color:var(--amber)}
+.footer-bottom{max-width:1200px;margin:24px auto 0;padding-top:24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--text-secondary)}
+
+/* Responsive */
+@media(max-width:1024px){
+  .hero h1{font-size:56px}
+  .section-title,.skill-text h3,.cta-section h2{font-size:40px}
+  .band-item h4{font-size:28px}
+}
+@media(max-width:767px){
+  .nav-links{display:none}
+  .nav-links.open{display:flex;flex-direction:column;position:fixed;top:64px;left:0;right:0;background:rgba(6,8,12,.97);padding:24px;gap:20px;border-bottom:1px solid var(--border)}
+  .hamburger{display:block}
+  .hero{min-height:auto;padding:120px 24px 60px}
+  .hero h1{font-size:40px}
+  .hero .subtitle{font-size:17px}
+  .hero .screenshot{width:calc(100vw - 32px)}
+  .band-grid{grid-template-columns:1fr;gap:24px}
+  .band-item+.band-item{border-top:1px solid rgba(6,8,12,.15);padding-top:24px}
+  .feature-grid{grid-template-columns:1fr}
+  .cli-grid{grid-template-columns:1fr;gap:0}
+  .cli-item{border-right:none;border-bottom:1px solid var(--border)}
+  .cli-item:last-child{border-bottom:none}
+  .skill-section .inner{grid-template-columns:1fr}
+  .section-title,.skill-text h3,.cta-section h2{font-size:32px}
+  .cta-section{padding:64px 24px}
+  .footer-grid{grid-template-columns:repeat(2,1fr)}
+  .btn-hero{width:100%;text-align:center}
+  .hero .cta-group{flex-direction:column;align-items:stretch}
+}
+@media(prefers-reduced-motion:reduce){
+  .hero::before{animation:none}
+  .fade-up{opacity:1;transform:none;transition:none}
+}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="inner">
+    <div class="logo">Muxvo</div>
+    <button class="hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">&#9776;</button>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#skills">Skill Market</a>
+      <a href="#cta">Download</a>
+      <button class="btn-amber">Download</button>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero" id="hero">
+  <h1 class="fade-up">Your AI CLI <span class="amber">Mission Control</span></h1>
+  <p class="subtitle fade-up">平铺终端 / 聊天历史搜索 / Skill 市场<br>Claude Code、Codex、Gemini CLI 的统一工作台</p>
+  <div class="cta-group fade-up">
+    <button class="btn-amber btn-hero">Download for macOS</button>
+    <button class="btn-ghost">View on GitHub</button>
+  </div>
+  <div class="screenshot fade-up">
+    <div class="screenshot-inner">
+      <div class="pane"><span class="prompt">$</span> claude-code<br>Analyzing codebase...<br><span style="color:#4ade80">Ready.</span></div>
+      <div class="pane"><span class="prompt">$</span> codex --task "refactor"<br>Processing 12 files...<br><span style="color:#4ade80">Done.</span></div>
+      <div class="pane"><span class="prompt">$</span> gemini-cli chat<br>Starting session...<br>How can I help?</div>
+      <div class="pane" style="font-family:var(--font-display);font-size:13px;color:var(--text-secondary)">Chat History<br><br><span style="color:var(--amber)">Search:</span> architecture pattern<br><span style="color:#71717a">3 results found</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- Amber Band 1: Core Value -->
+<section class="amber-band">
+  <div class="inner">
+    <div class="band-grid">
+      <div class="band-item"><h4>3 AI CLIs</h4><p>Claude Code / Codex / Gemini CLI 统一管理</p></div>
+      <div class="band-item"><h4>Tiling</h4><p>全屏平铺终端，不再互相遮挡</p></div>
+      <div class="band-item"><h4>AI Score</h4><p>Skill 市场 + AI 自动评分系统</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features" id="features">
+  <div class="container">
+    <h2 class="section-title fade-up">核心功能</h2>
+    <p class="section-subtitle fade-up">为 AI CLI 重度用户打造的完整工作台</p>
+    <div class="feature-grid">
+      <div class="feature-card fade-up">
+        <div class="thumb">
+          <div style="width:100%">
+            <div class="term-line"><span class="p">$</span> muxvo terminal --layout 2x2</div>
+            <div class="term-line" style="color:#4ade80;margin-top:8px">4 panels active</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px">
+              <div style="background:var(--bg-card);padding:6px;border-radius:4px;font-size:10px"><span class="p">$</span> claude</div>
+              <div style="background:var(--bg-card);padding:6px;border-radius:4px;font-size:10px"><span class="p">$</span> codex</div>
+              <div style="background:var(--bg-card);padding:6px;border-radius:4px;font-size:10px"><span class="p">$</span> gemini</div>
+              <div style="background:var(--bg-card);padding:6px;border-radius:4px;font-size:10px"><span class="p">$</span> npm run</div>
+            </div>
+          </div>
+        </div>
+        <div class="body"><h3>平铺终端管理</h3><p>全屏网格布局，多终端并行运行，不再 Cmd+Tab 切换窗口</p></div>
+      </div>
+      <div class="feature-card fade-up">
+        <div class="thumb">
+          <div style="width:100%">
+            <div class="term-line"><span class="p">$</span> muxvo chat --search "架构"</div>
+            <div style="margin-top:8px;background:var(--bg-card);padding:8px;border-radius:4px;font-family:var(--font-display);font-size:11px;color:var(--text-secondary)">
+              <div style="color:var(--amber);font-size:10px">2024-02-15 Session #42</div>
+              <div style="margin-top:2px">Claude: 建议使用六边形架构...</div>
+            </div>
+          </div>
+        </div>
+        <div class="body"><h3>聊天历史搜索</h3><p>跨 session 全文搜索所有 AI CLI 对话，秒级返回结果</p></div>
+      </div>
+      <div class="feature-card fade-up">
+        <div class="thumb">
+          <div style="width:100%;font-family:var(--font-display);font-size:12px">
+            <div style="color:var(--amber);font-size:10px;margin-bottom:6px">CLAUDE.MD</div>
+            <div style="background:var(--bg-card);padding:8px;border-radius:4px">
+              <div style="color:var(--text-primary)">model: <span style="color:var(--amber)">opus</span></div>
+              <div style="color:var(--text-primary)">context: <span style="color:var(--amber)">200k</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="body"><h3>配置可视化编辑</h3><p>可视化管理 Claude/Codex/Gemini 配置文件，告别手动编辑 JSON</p></div>
+      </div>
+      <div class="feature-card fade-up">
+        <div class="thumb">
+          <div style="width:100%;font-family:var(--font-display);font-size:12px">
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+              <span style="background:var(--amber);color:var(--text-on-amber);padding:2px 6px;border-radius:3px;font-size:10px">Popular</span>
+            </div>
+            <div style="background:var(--bg-card);padding:8px;border-radius:4px">
+              <div style="color:var(--text-primary)">code-review-pro</div>
+              <div style="color:var(--amber);font-size:11px;margin-top:2px">&#9733;&#9733;&#9733;&#9733;&#9734; 4.2</div>
+            </div>
+          </div>
+        </div>
+        <div class="body"><h3>Skill 市场 + AI 评分</h3><p>社区驱动的 Skill 包生态，每个 Skill 经 AI 自动评分</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CLI Tools -->
+<section class="cli-section">
+  <div class="container" style="text-align:center">
+    <h2 class="section-title fade-up" style="font-size:36px">One Workbench, Three AI CLIs</h2>
+    <div class="cli-grid fade-up">
+      <div class="cli-item">
+        <div class="cli-icon">C</div>
+        <h4>Claude Code</h4>
+        <p>Anthropic</p>
+      </div>
+      <div class="cli-item">
+        <div class="cli-icon">X</div>
+        <h4>Codex</h4>
+        <p>OpenAI</p>
+      </div>
+      <div class="cli-item">
+        <div class="cli-icon">G</div>
+        <h4>Gemini CLI</h4>
+        <p>Google</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Skill Market Amber Band 2 -->
+<section class="amber-band-gradient" id="skills">
+  <div class="inner skill-section">
+    <div class="inner" style="display:grid;grid-template-columns:5fr 7fr;gap:48px;align-items:center;max-width:1200px">
+      <div class="skill-text">
+        <h3>Skill Marketplace</h3>
+        <p>社区驱动的 Skill 包生态。每个 Skill 经 AI 自动评分，质量一目了然。</p>
+        <button class="btn-dark">Explore Skills</button>
+      </div>
+      <div class="skill-cards">
+        <div class="skill-card" style="--offset:12px"><h4>code-review-pro</h4><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733; 4.8</div><p>深度代码审查，自动发现潜在问题</p></div>
+        <div class="skill-card" style="--offset:-8px"><h4>doc-generator</h4><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9734; 4.2</div><p>从代码自动生成技术文档</p></div>
+        <div class="skill-card" style="--offset:4px"><h4>test-writer</h4><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9734; 4.0</div><p>智能测试用例生成</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="cta">
+  <h2>Ready to take control?</h2>
+  <p class="sub">Download Muxvo. Launch your workbench.</p>
+  <div class="cta-group">
+    <button class="btn-cta-dark">Download for macOS</button>
+  </div>
+  <div class="cta-links">
+    <a href="#">View on GitHub</a>
+    <a href="#">Read the docs</a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-col"><h5>Product</h5><a href="#">Features</a><a href="#">Download</a><a href="#">Changelog</a></div>
+    <div class="footer-col"><h5>Resources</h5><a href="#">Documentation</a><a href="#">Skill Market</a></div>
+    <div class="footer-col"><h5>Community</h5><a href="#">GitHub</a><a href="#">Discord</a><a href="#">Twitter</a></div>
+    <div class="footer-col"><h5>Legal</h5><a href="#">MIT License</a><a href="#">Privacy</a></div>
+  </div>
+  <div class="footer-bottom">
+    <span style="color:var(--amber)">Muxvo</span>
+    <span>&copy; 2026 Muxvo. AI CLI Workbench.</span>
+  </div>
+</footer>
+
+<script>
+// Nav scroll effect
+window.addEventListener('scroll',()=>{document.getElementById('nav').classList.toggle('scrolled',window.scrollY>80)});
+// Scroll reveal
+const obs=new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:.15});
+document.querySelectorAll('.fade-up').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>

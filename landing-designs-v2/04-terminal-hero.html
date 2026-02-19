@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muxvo — 方案 04 Terminal Hero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-deep:#06080c;--bg-primary:#0a0e14;--bg-card:#0d1117;--bg-elevated:#161b22;--bg-hover:#1c2333;
+  --amber:#e8a748;--amber-hover:#f0c060;--amber-glow:#e8a74820;--amber-border:#e8a74840;--amber-muted:#e8a74812;
+  --text-hero:#fff;--text-primary:#d4d4d8;--text-secondary:#71717a;--text-muted:#3f3f46;
+  --term-success:#4ade80;--border:#1e2530;--border-focus:#e8a74855;
+  --sans:'DM Sans',system-ui,sans-serif;--mono:'JetBrains Mono','Menlo',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg-deep);color:var(--text-primary);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.container{max-width:1200px;margin:0 auto;padding:0 64px}
+.container--narrow{max-width:800px;margin:0 auto;padding:0 64px}
+@media(max-width:768px){.container,.container--narrow{padding:0 24px}}
+
+/* ===== HERO ===== */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:60px 24px 40px}
+.hero-glow{position:absolute;top:50%;left:50%;width:800px;height:600px;transform:translate(-50%,-50%) scale(0.5);background:radial-gradient(ellipse,#e8a74812 0%,transparent 70%);pointer-events:none;transition:transform 1.3s ease-out,opacity 1.3s ease-out;opacity:0.5}
+.hero-glow.expanded{transform:translate(-50%,-50%) scale(1);opacity:1}
+.hero-text{text-align:center;position:relative;z-index:1;margin-bottom:32px}
+.hero-text h1{font:700 48px/1.1 var(--sans);color:var(--text-hero);letter-spacing:-0.02em}
+.hero-text p{font:400 20px/1.5 var(--sans);color:var(--text-secondary);margin-top:12px}
+
+/* Terminal */
+.terminal{position:relative;z-index:1;width:100%;max-width:800px;background:var(--bg-primary);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,0.4)}
+.terminal-bar{height:36px;background:var(--bg-elevated);display:flex;align-items:center;padding:0 16px;font:500 13px/1 var(--mono);color:var(--text-muted)}
+.terminal-body{padding:20px 24px;font:400 16px/1.7 var(--mono);min-height:60px}
+.prompt{color:var(--amber)}
+.cmd{color:var(--text-primary)}
+.cursor{display:inline-block;width:2px;height:1.1em;background:var(--amber);vertical-align:text-bottom;animation:blink 1.06s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.feedback{color:var(--term-success);opacity:0;transition:opacity .3s ease}
+.feedback.show{opacity:1}
+.terminal-screenshot{transform:scaleY(0);transform-origin:top;opacity:0;transition:transform .8s ease-out,opacity .6s ease-out;overflow:hidden}
+.terminal-screenshot.show{transform:scaleY(1);opacity:1}
+.terminal-screenshot-inner{background:var(--bg-card);border-top:1px solid var(--border);aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font:400 14px/1.5 var(--sans);position:relative}
+.mock-ui{width:100%;height:100%;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;padding:8px;background:var(--bg-deep)}
+.mock-panel{background:var(--bg-primary);border-radius:4px;padding:12px;font:400 12px/1.5 var(--mono);color:var(--text-muted);overflow:hidden}
+.mock-panel .mp-title{font-size:10px;color:var(--amber);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+
+/* CTA */
+.cta-group{display:flex;gap:16px;margin-top:40px;position:relative;z-index:1;opacity:0;transition:opacity .3s ease}
+.cta-group.show{opacity:1}
+.btn-primary{display:inline-flex;align-items:center;padding:14px 32px;background:var(--amber);color:var(--bg-deep);font:600 15px/1 var(--sans);border:none;border-radius:6px;cursor:pointer;text-decoration:none;transition:background .2s,box-shadow .2s}
+.btn-primary:hover{background:var(--amber-hover);box-shadow:0 0 20px var(--amber-border)}
+.btn-secondary{display:inline-flex;align-items:center;padding:14px 32px;background:transparent;color:var(--text-primary);font:600 15px/1 var(--sans);border:1px solid var(--border);border-radius:6px;cursor:pointer;text-decoration:none;transition:border-color .2s,color .2s}
+.btn-secondary:hover{border-color:var(--border-focus);color:var(--amber)}
+
+/* ===== VALUE PROPS ===== */
+.section{padding:120px 0}
+.section--value{background:var(--bg-primary)}
+.value-heading{text-align:center;margin-bottom:48px}
+.value-heading .gray{font:700 36px/1.2 var(--sans);color:var(--text-secondary)}
+.value-heading .highlight{font:700 36px/1.2 var(--sans);color:var(--amber)}
+.value-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.value-card{background:var(--bg-card);border:1px solid var(--border);border-top:2px solid var(--amber-border);border-radius:8px;padding:24px}
+.value-card .icon{width:32px;height:32px;color:var(--amber);margin-bottom:16px}
+.value-card h3{font:600 18px/1.3 var(--sans);color:var(--text-primary)}
+.value-card p{font:400 14px/1.6 var(--sans);color:var(--text-secondary);margin-top:8px}
+
+/* ===== FEATURES GRID ===== */
+.section--features{background:linear-gradient(var(--bg-deep),var(--bg-primary))}
+.section-header{text-align:center;margin-bottom:56px}
+.section-header h2{font:700 36px/1.2 var(--sans);color:var(--text-hero);letter-spacing:-0.01em}
+.section-header p{font:400 16px/1.6 var(--sans);color:var(--text-secondary);margin-top:12px}
+.features-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.feature-card{background:var(--bg-card);border:1px solid var(--border);border-top:2px solid var(--amber-border);border-radius:8px;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.feature-card:hover{border-color:var(--border-focus);box-shadow:0 0 24px #e8a74810}
+.feature-card-img{width:100%;height:200px;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;font:400 13px/1 var(--sans);color:var(--text-muted);border-bottom:1px solid var(--border)}
+.feature-card-body{padding:20px 24px 24px}
+.feature-card-body h3{font:600 18px/1.3 var(--sans);color:var(--text-primary)}
+.feature-card-body p{font:400 14px/1.6 var(--sans);color:var(--text-secondary);margin-top:8px}
+
+/* ===== CLI SUPPORT ===== */
+.section--cli{background:var(--bg-primary)}
+.cli-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.cli-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:32px 24px;text-align:center;transition:border-color .2s}
+.cli-card:hover{border-color:var(--border-focus)}
+.cli-icon{width:48px;height:48px;margin:0 auto 16px;border-radius:10px;display:flex;align-items:center;justify-content:center;font:700 20px/1 var(--sans)}
+.cli-icon--claude{background:#e8a74820;color:#e8a748}
+.cli-icon--codex{background:#4ade8020;color:#4ade80}
+.cli-icon--gemini{background:#60a5fa20;color:#60a5fa}
+.cli-card h3{font:600 16px/1.3 var(--sans);color:var(--text-primary)}
+.cli-card p{font:400 13px/1.4 var(--sans);color:var(--text-secondary);margin-top:4px}
+.cli-note{text-align:center;margin-top:24px;font:400 14px/1.5 var(--sans);color:var(--text-muted)}
+
+/* ===== FINAL CTA ===== */
+.section--cta{background:linear-gradient(var(--bg-primary),var(--bg-deep));text-align:center;position:relative}
+.cta-glow{position:absolute;bottom:20%;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(ellipse,#e8a74815 0%,transparent 70%);pointer-events:none}
+.section--cta h2{font:700 36px/1.2 var(--sans);color:var(--text-hero);position:relative}
+.section--cta p{font:400 16px/1.6 var(--sans);color:var(--text-secondary);margin-top:12px;position:relative}
+.section--cta .cta-group{justify-content:center;opacity:1;margin-top:32px;position:relative}
+.section--cta .meta{font:400 13px/1.5 var(--sans);color:var(--text-muted);margin-top:24px;position:relative}
+
+/* ===== SCROLL REVEAL ===== */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s ease-out,transform .6s ease-out}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.stagger>*{opacity:0;transform:translateY(16px);transition:opacity .5s ease-out,transform .5s ease-out}
+.stagger.visible>*{opacity:1;transform:translateY(0)}
+.stagger.visible>*:nth-child(1){transition-delay:0ms}
+.stagger.visible>*:nth-child(2){transition-delay:80ms}
+.stagger.visible>*:nth-child(3){transition-delay:160ms}
+.stagger.visible>*:nth-child(4){transition-delay:240ms}
+.stagger.visible>*:nth-child(5){transition-delay:320ms}
+.stagger.visible>*:nth-child(6){transition-delay:400ms}
+
+@media(prefers-reduced-motion:reduce){
+  .reveal,.stagger>*{opacity:1;transform:none;transition:none}
+  .cursor{animation:none;opacity:1}
+  .terminal-screenshot{transform:scaleY(1);opacity:1;transition:none}
+}
+@media(max-width:768px){
+  .hero-text h1{font-size:32px}
+  .hero-text p{font-size:16px}
+  .terminal-body{font-size:14px;padding:16px}
+  .section{padding:80px 0}
+  .value-heading .gray,.value-heading .highlight,.section-header h2,.section--cta h2{font-size:28px}
+  .value-cards,.features-grid{grid-template-columns:1fr}
+  .cta-group{flex-direction:column;align-items:center}
+  .feature-card-img{height:160px}
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-glow" id="heroGlow"></div>
+  <div class="hero-text">
+    <h1>AI CLI 工具的指挥中心</h1>
+    <p>在一个工作台中管理 Claude Code、Codex 和 Gemini CLI</p>
+  </div>
+  <div class="terminal" id="terminal" role="img" aria-label="Muxvo 启动动画：终端命令展开为产品界面">
+    <div class="terminal-bar">muxvo &mdash; zsh</div>
+    <div class="terminal-body">
+      <div id="typeLine"><span class="prompt">$ </span><span class="cmd" id="cmdText"></span><span class="cursor" id="cursor"></span></div>
+      <div class="feedback" id="feedback">&#10003; Workbench ready</div>
+    </div>
+    <div class="terminal-screenshot" id="screenshot">
+      <div class="terminal-screenshot-inner">
+        <div class="mock-ui">
+          <div class="mock-panel"><div class="mp-title">Terminal 1 &mdash; claude</div><span style="color:#4ade80">$</span> claude<br><span style="color:#71717a">Claude Code v1.2 &mdash; ready</span></div>
+          <div class="mock-panel"><div class="mp-title">Terminal 2 &mdash; codex</div><span style="color:#4ade80">$</span> codex<br><span style="color:#71717a">Codex CLI &mdash; connected</span></div>
+          <div class="mock-panel"><div class="mp-title">Chat History</div><span style="color:#71717a">148 conversations</span><br><span style="color:#e8a748">Search...</span></div>
+          <div class="mock-panel"><div class="mp-title">Skill Market</div><span style="color:#71717a">24 skills installed</span><br><span style="color:#4ade80">3 updates available</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="cta-group" id="heroCta">
+    <a href="#" class="btn-primary">Download for macOS</a>
+    <a href="#" class="btn-secondary">View on GitHub</a>
+  </div>
+</section>
+
+<!-- VALUE PROPS -->
+<section class="section section--value">
+  <div class="container--narrow">
+    <div class="value-heading reveal">
+      <div class="gray">Not a terminal. Not an IDE.</div>
+      <div class="highlight">A workbench.</div>
+    </div>
+    <div class="value-cards stagger">
+      <div class="value-card">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <h3>平铺终端网格</h3>
+        <p>全屏平铺多个终端 session，拖拽调整布局，每个面板独立运行。</p>
+      </div>
+      <div class="value-card">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        <h3>聊天历史搜索</h3>
+        <p>跨 session 搜索所有 AI 对话记录，再也不会丢失重要的对话上下文。</p>
+      </div>
+      <div class="value-card">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        <h3>Skill 市场</h3>
+        <p>发现、安装和管理社区 Skill 包，每个 Skill 都有 AI 质量评分。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES GRID -->
+<section class="section section--features">
+  <div class="container">
+    <div class="section-header reveal">
+      <h2>你需要的一切，仅此而已</h2>
+      <p>为终端重度用户而生</p>
+    </div>
+    <div class="features-grid stagger">
+      <div class="feature-card"><div class="feature-card-img">Tiling Terminal Grid</div><div class="feature-card-body"><h3>平铺终端网格</h3><p>全屏平铺管理多终端，拖拽调整布局</p></div></div>
+      <div class="feature-card"><div class="feature-card-img">Chat History Search</div><div class="feature-card-body"><h3>聊天历史搜索</h3><p>跨 session 搜索所有 AI 对话记录</p></div></div>
+      <div class="feature-card"><div class="feature-card-img">File Browser</div><div class="feature-card-body"><h3>文件浏览器</h3><p>在终端旁直接浏览和管理项目文件</p></div></div>
+      <div class="feature-card"><div class="feature-card-img">Config Editor</div><div class="feature-card-body"><h3>配置可视化编辑</h3><p>可视化编辑 CLAUDE.md 和项目设置</p></div></div>
+      <div class="feature-card"><div class="feature-card-img">Skill Marketplace</div><div class="feature-card-body"><h3>Skill 市场</h3><p>发现、安装和管理社区 Skill 包</p></div></div>
+      <div class="feature-card"><div class="feature-card-img">AI Scoring</div><div class="feature-card-body"><h3>AI 质量评分</h3><p>每个 Skill 包的 AI 自动质量评估</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CLI SUPPORT -->
+<section class="section section--cli">
+  <div class="container--narrow">
+    <div class="section-header reveal">
+      <h2>支持你最爱的 AI CLI</h2>
+    </div>
+    <div class="cli-grid stagger">
+      <div class="cli-card"><div class="cli-icon cli-icon--claude">C</div><h3>Claude Code</h3><p>Anthropic</p></div>
+      <div class="cli-card"><div class="cli-icon cli-icon--codex">X</div><h3>Codex</h3><p>OpenAI</p></div>
+      <div class="cli-card"><div class="cli-icon cli-icon--gemini">G</div><h3>Gemini CLI</h3><p>Google</p></div>
+    </div>
+    <p class="cli-note">更多 CLI 工具即将支持</p>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="section section--cta">
+  <div class="cta-glow"></div>
+  <div class="container--narrow reveal">
+    <h2>准备好接管控制台了吗？</h2>
+    <p>下载 Muxvo，在几分钟内统一你的 AI CLI 工作流</p>
+    <div class="cta-group">
+      <a href="#" class="btn-primary">Download for macOS</a>
+      <a href="#" class="btn-secondary">View on GitHub</a>
+    </div>
+    <div class="meta">v0.1.0 &middot; macOS &middot; MIT License</div>
+  </div>
+</section>
+
+<script>
+(function(){
+  // === Terminal typing animation ===
+  const CMD = 'muxvo launch';
+  const cmdEl = document.getElementById('cmdText');
+  const cursorEl = document.getElementById('cursor');
+  const feedbackEl = document.getElementById('feedback');
+  const screenshotEl = document.getElementById('screenshot');
+  const heroGlow = document.getElementById('heroGlow');
+  const heroCta = document.getElementById('heroCta');
+  let done = false;
+
+  function skipToEnd(){
+    if(done) return; done = true;
+    cmdEl.textContent = CMD;
+    cursorEl.style.display = 'none';
+    feedbackEl.classList.add('show');
+    screenshotEl.classList.add('show');
+    heroGlow.classList.add('expanded');
+    heroCta.classList.add('show');
+    localStorage.setItem('muxvo-04-visited','1');
+  }
+
+  // Skip listeners: scroll, click, keydown (D1 feedback)
+  function onSkip(){skipToEnd(); window.removeEventListener('scroll',onSkip); document.removeEventListener('keydown',onSkip); document.getElementById('terminal').removeEventListener('click',onSkip)}
+  window.addEventListener('scroll',onSkip,{once:true});
+  document.addEventListener('keydown',onSkip,{once:true});
+  document.getElementById('terminal').addEventListener('click',onSkip,{once:true});
+
+  // Returning visitor: skip animation
+  if(localStorage.getItem('muxvo-04-visited') || window.matchMedia('(prefers-reduced-motion:reduce)').matches){
+    skipToEnd(); return;
+  }
+
+  // Phase 1: Typing
+  let i = 0;
+  setTimeout(function type(){
+    if(done) return;
+    if(i < CMD.length){cmdEl.textContent += CMD[i]; i++; setTimeout(type, 50);}
+    else{
+      // Phase 2: Pause
+      cursorEl.style.animation = 'none'; cursorEl.style.opacity = '1';
+      setTimeout(function(){
+        if(done) return;
+        // Phase 3: Feedback
+        feedbackEl.classList.add('show');
+        setTimeout(function(){
+          if(done) return;
+          // Phase 4: Expand (scaleY via CSS class)
+          cursorEl.style.display = 'none';
+          screenshotEl.classList.add('show');
+          heroGlow.classList.add('expanded');
+          setTimeout(function(){heroCta.classList.add('show');done=true;localStorage.setItem('muxvo-04-visited','1');},800);
+        },300);
+      },300);
+    }
+  },300);
+
+  // === Scroll reveal ===
+  const obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);}});
+  },{threshold:0.2});
+  document.querySelectorAll('.reveal,.stagger').forEach(function(el){obs.observe(el);});
+})();
+</script>
+</body>
+</html>

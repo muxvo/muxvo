@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muxvo — Terminal Native</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --amber:#e8a748;--amber-dim:rgba(232,167,72,.5);
+  --bg:#0a0e14;--bg-panel:#0d1117;--bg-surface:#161b22;--border:#1e2530;
+  --text-out:#d4d4d8;--text-dim:#71717a;--text-bright:#f5f5f5;--success:#4ade80;
+  --font-mono:'JetBrains Mono',monospace;--font-gui:'DM Sans',system-ui,sans-serif;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-mono);background:var(--bg);color:var(--text-out);line-height:1.6;overflow-x:hidden}
+
+/* Terminal Chrome Bar */
+.chrome{position:fixed;top:0;left:0;right:0;z-index:100;height:36px;background:var(--bg-surface);display:flex;align-items:center;padding:0 16px;border-bottom:1px solid var(--border);user-select:none}
+.chrome-dots{display:flex;gap:6px}
+.chrome-dots span{width:12px;height:12px;border-radius:50%}
+.chrome-dots .r{background:#ff5f57}.chrome-dots .y{background:#febc2e}.chrome-dots .g{background:#28c840}
+.chrome-title{flex:1;text-align:center;font-size:12px;color:var(--text-dim);cursor:pointer;position:relative}
+.chrome-nav{display:none;position:absolute;top:100%;left:50%;transform:translateX(-50%);background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;padding:8px 0;min-width:200px;margin-top:8px;z-index:200}
+.chrome-nav.open{display:block}
+.chrome-nav a{display:block;padding:6px 20px;font-size:14px;color:var(--text-dim);transition:color .15s,background .15s}
+.chrome-nav a:hover{color:var(--amber);background:rgba(232,167,72,.08)}
+.chrome-nav a::before{content:'> ';color:var(--text-dim);transition:color .15s}
+.chrome-nav a:hover::before{color:var(--amber)}
+a{color:inherit;text-decoration:none}
+
+/* Content */
+.term-content{max-width:900px;margin:0 auto;padding:0 24px}
+.prompt{color:var(--amber);font-weight:700}
+.cmd{color:var(--text-bright)}
+.comment{color:var(--text-dim)}
+.success-text{color:var(--success)}
+.cursor{display:inline-block;width:10px;height:1.2em;background:var(--amber);animation:blink 1s step-end infinite;vertical-align:text-bottom}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* Section command header */
+.section-cmd{padding:16px 0 24px;font-size:18px}
+.output-line{border-left:2px solid var(--border);padding-left:20px;margin-left:8px}
+
+/* GUI Cards (DM Sans) */
+.gui-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.gui-card{background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;padding:24px;font-family:var(--font-gui);transition:border-color .2s}
+.gui-card:hover{border-color:rgba(232,167,72,.25)}
+.gui-card .tag{font-family:var(--font-mono);font-size:13px;color:var(--amber);margin-bottom:8px}
+.gui-card h3{font-size:20px;font-weight:600;color:var(--text-bright);font-family:var(--font-gui);line-height:1.3}
+.gui-card p{font-size:15px;color:var(--text-dim);margin-top:8px;font-family:var(--font-gui);line-height:1.8}
+
+/* Tree */
+.tree{font-size:16px;line-height:1.8}
+.tree .tool-name{color:var(--amber)}
+.tree .dots{color:var(--text-dim)}
+.tree .desc{color:var(--text-out)}
+.tree .branch{color:var(--text-dim)}
+.tree .sub{color:var(--text-out);padding-left:0}
+
+/* Skill cards */
+.skill-header{font-size:14px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:16px}
+.skill-gui-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.skill-gui-card{background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;padding:16px;font-family:var(--font-gui)}
+.skill-gui-card h4{font-size:15px;font-weight:600;color:var(--text-bright);font-family:var(--font-gui)}
+.skill-gui-card .stars{color:var(--amber);font-size:13px;margin-top:4px}
+.skill-gui-card p{font-size:13px;color:var(--text-dim);margin-top:4px;line-height:1.8}
+
+/* Progress bar */
+.progress-wrap{font-size:16px;margin-top:8px}
+.progress-bar-text{display:inline-block;overflow:hidden;white-space:nowrap;color:var(--amber)}
+.progress-bar-text.animate{animation:fill-progress 1.5s ease-out forwards;width:0}
+@keyframes fill-progress{from{width:0}to{width:40ch}}
+.install-complete{opacity:0;transition:opacity .3s}
+.install-complete.show{opacity:1}
+
+/* Install CTA button */
+.install-btn{display:inline-block;background:var(--amber);color:#06080c;font-family:var(--font-mono);font-size:15px;font-weight:700;padding:12px 32px;border-radius:4px;border:none;cursor:pointer;margin-top:24px;transition:opacity .2s}
+.install-btn:hover{opacity:.9}
+.link-cmd{display:block;padding:4px 0;transition:color .15s}
+.link-cmd:hover .comment{color:var(--text-out)}
+
+/* Footer */
+.footer-sep{color:var(--border);overflow:hidden;white-space:nowrap;margin:0;padding:0}
+
+/* Fade in */
+.fade-in{opacity:0;transform:translateY(16px);transition:opacity .5s ease-out,transform .5s ease-out}
+.fade-in.visible{opacity:1;transform:none}
+
+/* Tooltip for nav */
+.chrome-tooltip{display:none;position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);background:var(--bg-panel);border:1px solid var(--border);border-radius:4px;padding:4px 10px;font-size:11px;color:var(--text-dim);white-space:nowrap;pointer-events:none}
+.chrome-title:hover .chrome-tooltip{display:block}
+
+/* Responsive */
+@media(max-width:767px){
+  .chrome-dots span{width:8px;height:8px}
+  .chrome .size-info{display:none}
+  .ascii-art{display:none}
+  .ascii-fallback{display:block!important}
+  .gui-grid,.skill-gui-grid{grid-template-columns:1fr}
+  .tree{font-size:14px}
+  .section-cmd{font-size:15px}
+  .skill-header{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .cursor{animation:none}
+  .fade-in{opacity:1;transform:none;transition:none}
+  .progress-bar-text.animate{animation:none;width:40ch}
+}
+</style>
+</head>
+<body>
+
+<!-- Terminal Chrome Bar -->
+<div class="chrome">
+  <div class="chrome-dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+  <div class="chrome-title" onclick="document.querySelector('.chrome-nav').classList.toggle('open')">
+    muxvo — zsh <span class="size-info">— 120&times;40</span>
+    <span class="chrome-tooltip">Click to navigate</span>
+    <div class="chrome-nav" id="chrome-nav">
+      <a href="#features">features</a>
+      <a href="#tools">tools</a>
+      <a href="#skills">skills</a>
+      <a href="#install">install</a>
+      <a href="https://github.com" target="_blank">github</a>
+    </div>
+  </div>
+</div>
+
+<!-- Hero -->
+<section style="min-height:100vh;padding:72px 24px 60px;display:flex;align-items:center">
+  <div class="term-content" id="hero-content">
+    <pre class="ascii-art" style="color:var(--amber);font-size:13px;line-height:1.15;margin-bottom:24px;overflow-x:auto"> ███╗   ███╗██╗   ██╗██╗  ██╗██╗   ██╗ ██████╗
+ ████╗ ████║██║   ██║╚██╗██╔╝██║   ██║██╔═══██╗
+ ██╔████╔██║██║   ██║ ╚███╔╝ ██║   ██║██║   ██║
+ ██║╚██╔╝██║██║   ██║ ██╔██╗ ╚██╗ ██╔╝██║   ██║
+ ██║ ╚═╝ ██║╚██████╔╝██╔╝ ██╗ ╚████╔╝ ╚██████╔╝
+ ╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═╝  ╚═══╝   ╚═════╝</pre>
+    <div class="ascii-fallback" style="display:none;color:var(--amber);font-size:36px;font-weight:700;margin-bottom:24px">MUXVO</div>
+
+    <div class="hero-lines">
+      <div class="hero-line"><span class="prompt">$</span> <span class="cmd">muxvo --version</span></div>
+      <div class="hero-line" style="margin-top:4px">v1.0.0</div>
+      <div class="hero-line" style="margin-top:16px"><span class="prompt">$</span> <span class="cmd">muxvo --what</span></div>
+      <div class="hero-line" style="margin-top:4px">AI CLI 工具的桌面工作台。</div>
+      <div class="hero-line">平铺终端 / 聊天历史搜索 / Skill 市场。</div>
+      <div class="hero-line" style="margin-top:16px"><span class="prompt">$</span> <span class="cmd">muxvo --supports</span></div>
+      <div class="hero-line" style="margin-top:4px"><span style="color:var(--amber)">claude-code</span>  <span style="color:var(--amber)">codex</span>  <span style="color:var(--amber)">gemini-cli</span></div>
+      <div class="hero-line" style="margin-top:16px"><span class="prompt">$</span> <span class="cursor"></span></div>
+    </div>
+    <a href="#install" class="install-btn" style="margin-top:32px">$ muxvo install</a>
+  </div>
+</section>
+
+<!-- Features -->
+<section style="padding:40px 24px 80px" id="features">
+  <div class="term-content">
+    <div class="section-cmd fade-in"><span class="prompt">$</span> <span class="cmd">muxvo --features</span></div>
+    <div class="output-line fade-in">
+      <div class="gui-grid">
+        <div class="gui-card">
+          <div class="tag">[01]</div>
+          <h3>Tiling Terminals</h3>
+          <p>全屏网格布局，多终端并行运行。拖拽调整大小，每个面板独立运行不同的 CLI 工具。</p>
+        </div>
+        <div class="gui-card">
+          <div class="tag">[02]</div>
+          <h3>Chat History Search</h3>
+          <p>跨 session 全文搜索所有 AI CLI 对话记录。输入关键词，跨工具秒级返回。</p>
+        </div>
+        <div class="gui-card">
+          <div class="tag">[03]</div>
+          <h3>Config Editor</h3>
+          <p>可视化管理所有 AI CLI 配置文件。告别手动编辑 JSON/YAML，所见即所得。</p>
+        </div>
+        <div class="gui-card">
+          <div class="tag">[04]</div>
+          <h3>Skill Marketplace</h3>
+          <p>社区驱动的 Skill 包生态。每个 Skill 经 AI 自动评分，质量一目了然。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Tools (tree) -->
+<section style="padding:40px 24px 80px" id="tools">
+  <div class="term-content">
+    <div class="section-cmd fade-in"><span class="prompt">$</span> <span class="cmd">muxvo --tools</span></div>
+    <div class="output-line fade-in">
+      <div class="tree">
+        <div>Supported AI CLI tools:</div>
+        <div><span class="branch">├──</span> <span class="tool-name">claude-code</span> <span class="dots">..........</span> <span class="desc">Anthropic Claude Code</span></div>
+        <div><span class="branch">│   ├──</span> <span class="sub">terminal management</span></div>
+        <div><span class="branch">│   ├──</span> <span class="sub">chat history sync</span></div>
+        <div><span class="branch">│   └──</span> <span class="sub">config editing</span></div>
+        <div><span class="branch">├──</span> <span class="tool-name">codex</span> <span class="dots">................</span> <span class="desc">OpenAI Codex CLI</span></div>
+        <div><span class="branch">│   ├──</span> <span class="sub">terminal management</span></div>
+        <div><span class="branch">│   ├──</span> <span class="sub">chat history sync</span></div>
+        <div><span class="branch">│   └──</span> <span class="sub">config editing</span></div>
+        <div><span class="branch">└──</span> <span class="tool-name">gemini-cli</span> <span class="dots">..........</span> <span class="desc">Google Gemini CLI</span></div>
+        <div><span class="branch">    ├──</span> <span class="sub">terminal management</span></div>
+        <div><span class="branch">    ├──</span> <span class="sub">chat history sync</span></div>
+        <div><span class="branch">    └──</span> <span class="sub">config editing</span></div>
+        <div style="margin-top:12px"><span class="success-text">3 tools, 9 integrations</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Skills -->
+<section style="padding:40px 24px 80px" id="skills">
+  <div class="term-content">
+    <div class="section-cmd fade-in"><span class="prompt">$</span> <span class="cmd">muxvo skills --list --sort=score</span></div>
+    <div class="output-line fade-in">
+      <div class="skill-header">SKILL &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SCORE &nbsp;&nbsp; AUTHOR &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; STATUS</div>
+      <div class="skill-gui-grid">
+        <div class="skill-gui-card">
+          <h4>code-review-pro</h4>
+          <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733; 4.8</div>
+          <p>深度代码审查，自动发现潜在问题和安全隐患</p>
+        </div>
+        <div class="skill-gui-card">
+          <h4>doc-generator</h4>
+          <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9734; 4.2</div>
+          <p>从代码自动生成结构化技术文档</p>
+        </div>
+        <div class="skill-gui-card">
+          <h4>test-writer</h4>
+          <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9734; 4.0</div>
+          <p>智能测试用例生成和边界条件覆盖</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Install CTA -->
+<section style="padding:60px 24px 80px" id="install">
+  <div class="term-content" style="max-width:700px">
+    <div class="section-cmd"><span class="prompt">$</span> <span class="cmd">muxvo install</span></div>
+    <div style="margin-top:8px">Downloading Muxvo v1.0.0 for macOS...</div>
+    <div class="progress-wrap" id="progress-section">
+      <span class="progress-bar-text" id="progress-bar">&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;</span> <span style="color:var(--text-dim)">100%</span>
+    </div>
+    <div class="install-complete" id="install-complete" style="margin-top:12px">
+      <span class="success-text">&#10003; Installation complete.</span>
+    </div>
+    <button class="install-btn" style="margin-top:32px">Download for macOS</button>
+    <div style="margin-top:24px">
+      <a href="#" class="link-cmd"><span class="prompt">$</span> <span class="cmd">open</span> https://github.com/user/muxvo &nbsp;<span class="comment"># View source</span></a>
+      <a href="#" class="link-cmd"><span class="prompt">$</span> <span class="cmd">open</span> https://docs.muxvo.dev &nbsp;<span class="comment"># Read docs</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer style="padding:40px 24px 32px">
+  <div class="term-content" style="max-width:700px">
+    <div class="footer-sep">&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</div>
+    <div style="margin-top:16px"><span class="prompt">$</span> <span class="cmd">muxvo --links</span></div>
+    <div style="margin-top:8px">
+      <a href="#" class="link-cmd"><span style="color:var(--amber)">docs</span> &nbsp;&nbsp;&nbsp; <span class="comment">https://docs.muxvo.dev</span></a>
+      <a href="#" class="link-cmd"><span style="color:var(--amber)">github</span> &nbsp; <span class="comment">https://github.com/user/muxvo</span></a>
+      <a href="#" class="link-cmd"><span style="color:var(--amber)">twitter</span> <span class="comment">https://twitter.com/muxvo</span></a>
+    </div>
+    <div style="margin-top:24px"><span class="prompt">$</span> <span class="cmd">exit</span></div>
+    <div style="margin-top:4px;color:var(--text-dim)">muxvo session ended. &copy; 2026 Muxvo.</div>
+  </div>
+</footer>
+
+<script>
+// Close nav on click outside
+document.addEventListener('click',e=>{
+  const nav=document.getElementById('chrome-nav');
+  if(!e.target.closest('.chrome-title'))nav.classList.remove('open');
+});
+// Scroll reveal
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:.15});
+document.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
+// Progress bar animation
+const pObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){
+  document.getElementById('progress-bar').classList.add('animate');
+  setTimeout(()=>{document.getElementById('install-complete').classList.add('show')},1700);
+  pObs.unobserve(e.target);
+}})},{threshold:.3});
+pObs.observe(document.getElementById('progress-section'));
+// Hero typewriter: show all lines with stagger
+const lines=document.querySelectorAll('.hero-line');
+lines.forEach((l,i)=>{l.style.opacity='0';l.style.transition='opacity .3s ease-out';
+  setTimeout(()=>{l.style.opacity='1'},300+i*150)});
+// Skip animation on click/key
+const skipAnim=()=>{lines.forEach(l=>{l.style.opacity='1';l.style.transition='none'});
+  document.removeEventListener('click',skipAnim);document.removeEventListener('keydown',skipAnim)};
+document.addEventListener('click',skipAnim,{once:true});
+document.addEventListener('keydown',skipAnim,{once:true});
+</script>
+</body>
+</html>

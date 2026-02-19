@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muxvo — AI CLI 指挥中心</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-deep:#06080c;--bg-pri:#0a0e14;--bg-card:#0d1117;--bg-elev:#161b22;--bg-hover:#1c2333;
+  --text-pri:#e5e7eb;--text-sec:#9ca3af;--text-mut:#4b5563;
+  --amber:#e8a748;--amber-h:#f0c060;--amber-mut:rgba(232,167,72,.15);--amber-glow:rgba(232,167,72,.08);
+  --border:#1e2530;--border-amber:rgba(232,167,72,.25);
+  --font-d:'DM Sans',system-ui,sans-serif;--font-m:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg-pri);color:var(--text-pri);font-family:var(--font-d);font-size:14px;overflow-x:hidden}
+a{color:var(--amber);text-decoration:none}
+.container{max-width:1100px;margin:0 auto;padding:0 24px}
+
+/* Nav */
+nav{position:sticky;top:0;z-index:100;height:64px;display:flex;align-items:center;background:rgba(10,14,20,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+nav .container{display:flex;align-items:center;justify-content:space-between;width:100%}
+.nav-logo{font-size:18px;font-weight:700;color:var(--text-pri);display:flex;align-items:center;gap:8px}
+.nav-logo span{color:var(--amber)}
+.nav-links{display:flex;gap:32px;align-items:center}
+.nav-links a{color:var(--text-sec);font-size:14px;font-weight:500;transition:color .15s}
+.nav-links a:hover{color:var(--text-pri)}
+.btn-amber{background:var(--amber);color:var(--bg-deep);font-weight:600;font-size:15px;padding:8px 20px;border-radius:6px;border:none;cursor:pointer;transition:background .2s,transform .2s}
+.btn-amber:hover{background:var(--amber-h);transform:scale(1.02)}
+.btn-ghost{background:transparent;color:var(--text-pri);border:1px solid var(--border);font-weight:600;font-size:15px;padding:8px 20px;border-radius:6px;cursor:pointer;transition:border-color .2s,color .2s}
+.btn-ghost:hover{border-color:var(--border-amber);color:var(--amber)}
+.hamburger{display:none;background:none;border:none;color:var(--text-pri);font-size:24px;cursor:pointer}
+
+/* Hero */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 24px 80px;position:relative;background:var(--bg-deep)}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 55%,var(--amber-glow),transparent 70%);pointer-events:none}
+.hero h1{font-size:64px;font-weight:700;line-height:1.08;max-width:780px;letter-spacing:-.02em}
+.hero h1 em{font-style:normal;color:var(--amber)}
+.hero p{font-size:20px;color:var(--text-sec);max-width:560px;margin-top:20px;line-height:1.5}
+.hero-btns{display:flex;gap:16px;margin-top:40px}
+.hero-btns .btn-amber{padding:14px 32px;border-radius:8px}
+.hero-btns .btn-ghost{padding:14px 32px;border-radius:8px}
+.hero-shot{margin-top:56px;width:90vw;max-width:1100px;border-radius:12px;border:1px solid var(--border);box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 120px rgba(232,167,72,.05);overflow:hidden}
+.hero-shot .mock-ui{background:var(--bg-card);aspect-ratio:16/9;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;padding:32px;position:relative}
+.hero-shot .mock-ui::before{content:'Muxvo Terminal Grid';position:absolute;top:8px;left:12px;font-size:11px;color:var(--text-mut);font-family:var(--font-m)}
+.term-pane{background:var(--bg-deep);border-radius:4px;padding:12px;font-family:var(--font-m);font-size:11px;color:var(--text-sec);overflow:hidden;display:flex;flex-direction:column;gap:4px}
+.term-pane .prompt{color:var(--amber)}
+.term-pane .cmd{color:var(--text-pri)}
+
+/* Features Grid */
+.features{padding:120px 0;background:linear-gradient(var(--bg-deep),var(--bg-pri))}
+.features .section-title{text-align:center;font-size:36px;font-weight:600;line-height:1.2}
+.features .section-sub{text-align:center;color:var(--text-sec);font-size:16px;margin-top:12px}
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:64px}
+.feat-card{background:var(--bg-card);border:1px solid var(--border);border-top:2px solid var(--amber);border-radius:8px;padding:32px;transition:all .3s ease}
+.feat-card:hover{background:var(--bg-hover);border-color:var(--border-amber);box-shadow:0 0 24px rgba(232,167,72,.06)}
+.feat-card .icon{width:32px;height:32px;color:var(--amber);margin-bottom:16px;font-size:24px}
+.feat-card h3{font-size:18px;font-weight:600;margin-bottom:8px}
+.feat-card p{font-size:14px;color:var(--text-sec);line-height:1.6}
+
+/* Feature Deep Dive */
+.deep{padding:120px 0;background:var(--bg-pri)}
+.deep-row{display:flex;gap:64px;align-items:center;max-width:1100px;margin:0 auto;padding:0 24px}
+.deep-row.reverse{flex-direction:row-reverse}
+.deep-row+.deep-row{margin-top:120px}
+.deep-img{flex:0 0 55%;border-radius:8px;border:1px solid var(--border);overflow:hidden;aspect-ratio:16/10;background:var(--bg-card);display:flex;align-items:center;justify-content:center;color:var(--text-mut);font-family:var(--font-m);font-size:13px}
+.deep-text{flex:1}
+.deep-text h2{font-size:36px;font-weight:600;line-height:1.2}
+.deep-text p{font-size:16px;color:var(--text-sec);margin-top:16px;line-height:1.6}
+.deep-text ul{list-style:none;margin-top:24px}
+.deep-text ul li{font-size:14px;color:var(--text-pri);padding:6px 0;display:flex;align-items:center;gap:10px}
+.deep-text ul li::before{content:'';width:6px;height:6px;background:var(--amber);border-radius:50%;flex-shrink:0}
+
+/* CLI Bar */
+.cli-bar{padding:80px 0;background:var(--bg-deep);text-align:center}
+.cli-bar h2{font-size:24px;font-weight:600}
+.cli-tools{display:flex;justify-content:center;gap:64px;margin-top:48px;flex-wrap:wrap}
+.cli-tool{display:flex;flex-direction:column;align-items:center;gap:8px;transition:transform .2s}
+.cli-tool:hover{transform:scale(1.05)}
+.cli-tool .cli-icon{width:48px;height:48px;border-radius:12px;background:var(--bg-card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--amber)}
+.cli-tool .cli-name{font-size:16px;font-weight:500;color:var(--text-sec)}
+.cli-tool .cli-status{font-size:12px;color:#4ade80;display:flex;align-items:center;gap:4px}
+.cli-tool .cli-status::before{content:'';width:6px;height:6px;background:#4ade80;border-radius:50%}
+
+/* Install */
+.install{padding:120px 0;background:var(--bg-pri)}
+.install h2{font-size:36px;font-weight:600;text-align:center}
+.install-steps{max-width:640px;margin:48px auto 0;display:flex;flex-direction:column;gap:32px}
+.step{display:flex;gap:20px;align-items:flex-start}
+.step-num{width:28px;height:28px;border:2px solid var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--amber);font-weight:600;flex-shrink:0;margin-top:14px}
+.code-block{background:var(--bg-elev);border-radius:8px;padding:16px 20px;font-family:var(--font-m);font-size:14px;flex:1;position:relative;border:1px solid var(--border)}
+.code-block .dollar{color:var(--text-mut)}
+.code-block .arg{color:var(--amber)}
+.step-desc{font-size:14px;color:var(--text-sec);line-height:1.6;flex:1;padding-top:16px}
+
+/* CTA */
+.cta{padding:120px 0;background:var(--bg-deep);text-align:center;position:relative}
+.cta::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 60%,rgba(232,167,72,.10),transparent 70%);pointer-events:none}
+.cta h2{font-size:36px;font-weight:600;position:relative}
+.cta p{font-size:16px;color:var(--text-sec);margin-top:12px;position:relative}
+.cta .btn-amber{padding:16px 40px;border-radius:8px;margin-top:40px;font-size:17px;position:relative}
+.cta .cta-sub{margin-top:24px;font-size:14px;color:var(--text-mut);position:relative}
+
+/* Footer */
+footer{background:var(--bg-deep);border-top:1px solid var(--border);padding:48px 0}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:48px}
+.footer-brand{font-size:13px;color:var(--text-mut)}
+.footer-brand .logo{font-size:16px;font-weight:700;color:var(--text-pri);margin-bottom:8px}
+.footer-brand .logo span{color:var(--amber)}
+.footer-col h4{font-size:13px;font-weight:600;color:var(--text-sec);text-transform:uppercase;letter-spacing:.05em;margin-bottom:16px}
+.footer-col a{display:block;font-size:13px;color:var(--text-sec);padding:4px 0;transition:color .15s}
+.footer-col a:hover{color:var(--text-pri)}
+
+/* Animations */
+.fade-in{opacity:0;transform:translateY(16px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+@media(prefers-reduced-motion:reduce){.fade-in{opacity:1;transform:none;transition:none}}
+
+/* Responsive */
+@media(max-width:1023px){
+  .feat-grid{grid-template-columns:repeat(2,1fr)}
+  .deep-row,.deep-row.reverse{flex-direction:column}
+  .deep-img{flex:none;width:100%}
+  .hero h1{font-size:44px}
+  .features,.deep,.install{padding:96px 0}
+}
+@media(max-width:767px){
+  .nav-links{display:none}
+  .hamburger{display:block}
+  .feat-grid{grid-template-columns:1fr}
+  .hero h1{font-size:36px}
+  .hero p{font-size:16px}
+  .hero-btns{flex-direction:column;align-items:center}
+  .cli-tools{flex-direction:column;align-items:center;gap:32px}
+  .footer-grid{grid-template-columns:1fr}
+  .features,.deep,.install,.cta{padding:64px 0}
+  .deep-row+.deep-row{margin-top:64px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <div class="nav-logo"><span>&#9670;</span> Muxvo</div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#cli">CLI Tools</a>
+      <a href="#install">Download</a>
+      <button class="btn-amber">Download</button>
+    </div>
+    <button class="hamburger" onclick="document.querySelector('.nav-links').classList.toggle('show')">&#9776;</button>
+  </div>
+</nav>
+
+<section class="hero">
+  <h1 class="fade-in">AI CLI 工具的<em>指挥中心</em></h1>
+  <p class="fade-in">平铺终端、聊天历史搜索、配置可视化、Skill 市场 —— 为 Claude Code、Codex 和 Gemini CLI 打造的桌面工作台。</p>
+  <div class="hero-btns fade-in">
+    <button class="btn-amber">Download for macOS</button>
+    <button class="btn-ghost">View on GitHub</button>
+  </div>
+  <div class="hero-shot fade-in">
+    <div class="mock-ui">
+      <div class="term-pane"><span class="prompt">~/project-a $</span><span class="cmd">claude "重构认证模块"</span><span>正在分析代码结构...</span></div>
+      <div class="term-pane"><span class="prompt">~/project-b $</span><span class="cmd">codex "添加单元测试"</span><span>生成测试文件中...</span></div>
+      <div class="term-pane"><span class="prompt">~/project-a $</span><span class="cmd">gemini "优化 SQL 查询"</span><span>检查索引使用情况...</span></div>
+      <div class="term-pane"><span class="prompt">~/project-c $</span><span class="cmd">claude "review PR #42"</span><span>读取 diff 内容...</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="features" id="features">
+  <div class="container">
+    <h2 class="section-title fade-in">为 AI CLI 重度用户而造</h2>
+    <p class="section-sub fade-in">一个指挥中心，掌控一切。</p>
+    <div class="feat-grid">
+      <div class="feat-card fade-in"><div class="icon">&#9638;</div><h3>平铺终端</h3><p>全屏网格布局，多终端并行运行，像平铺窗口管理器一样操控。</p></div>
+      <div class="feat-card fade-in"><div class="icon">&#9741;</div><h3>聊天历史</h3><p>跨 Session 全文搜索所有 AI 对话记录，按时间、项目过滤。</p></div>
+      <div class="feat-card fade-in"><div class="icon">&#9783;</div><h3>文件浏览</h3><p>在终端面板旁直接浏览项目文件树，无需切换窗口。</p></div>
+      <div class="feat-card fade-in"><div class="icon">&#9881;</div><h3>配置编辑</h3><p>可视化管理 CLAUDE.md、Codex 和 Gemini CLI 配置。</p></div>
+      <div class="feat-card fade-in"><div class="icon">&#10070;</div><h3>Skill 市场</h3><p>社区驱动的 Skill 包生态，AI 自动评分，一键安装。</p></div>
+      <div class="feat-card fade-in"><div class="icon">&#9654;</div><h3>多 CLI 管理</h3><p>Claude Code、Codex、Gemini CLI —— 统一工作台管理。</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="deep">
+  <div class="deep-row">
+    <div class="deep-img fade-in">[ 平铺终端截图 — 2x2 Grid ]</div>
+    <div class="deep-text fade-in">
+      <h2>全屏平铺终端</h2>
+      <p>像平铺窗口管理器一样操控多个终端。2x2、3x1、自定义布局，每个面板独立运行不同的 CLI 工具。</p>
+      <ul>
+        <li>灵活的网格布局：2x2, 3x1, 自定义</li>
+        <li>独立 Resize 和 Focus 切换</li>
+        <li>每个面板显示前台进程状态</li>
+      </ul>
+    </div>
+  </div>
+  <div class="deep-row reverse">
+    <div class="deep-img fade-in">[ 聊天历史搜索截图 ]</div>
+    <div class="deep-text fade-in">
+      <h2>搜索每一段 AI 对话</h2>
+      <p>跨 Session 全文搜索所有 AI CLI 对话记录。输入关键词，秒级返回结果，支持按时间和项目过滤。</p>
+      <ul>
+        <li>全文搜索，跨工具、跨 Session</li>
+        <li>按时间线、项目、CLI 工具过滤</li>
+        <li>一键导出对话记录</li>
+      </ul>
+    </div>
+  </div>
+  <div class="deep-row">
+    <div class="deep-img fade-in">[ Skill 市场截图 ]</div>
+    <div class="deep-text fade-in">
+      <h2>探索、安装、评分 Skill</h2>
+      <p>社区驱动的 Skill 市场，每个包经 AI 自动评分。发现适合你工作流的 Skill，一键安装到工作台。</p>
+      <ul>
+        <li>AI 质量评分系统</li>
+        <li>一键安装 / 卸载</li>
+        <li>版本管理和自动更新</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="cli-bar" id="cli">
+  <div class="container">
+    <h2 class="fade-in">支持你最爱的 AI CLI 工具</h2>
+    <div class="cli-tools fade-in">
+      <div class="cli-tool"><div class="cli-icon">A</div><div class="cli-name">Claude Code</div><div class="cli-status">Supported</div></div>
+      <div class="cli-tool"><div class="cli-icon">O</div><div class="cli-name">Codex</div><div class="cli-status">Supported</div></div>
+      <div class="cli-tool"><div class="cli-icon">G</div><div class="cli-name">Gemini CLI</div><div class="cli-status">Supported</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="install" id="install">
+  <div class="container">
+    <h2 class="fade-in">30 秒快速开始</h2>
+    <div class="install-steps">
+      <div class="step fade-in">
+        <div class="step-num">1</div>
+        <div class="code-block"><span class="dollar">$ </span>brew install --cask <span class="arg">muxvo</span></div>
+      </div>
+      <div class="step fade-in">
+        <div class="step-num">2</div>
+        <div class="code-block"><span class="dollar">$ </span><span class="arg">muxvo</span></div>
+      </div>
+      <div class="step fade-in">
+        <div class="step-num">3</div>
+        <div class="step-desc">选择你的 CLI 工具，开始工作。Muxvo 会自动检测已安装的 AI CLI。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <h2 class="fade-in">准备好接管控制了吗？</h2>
+  <p class="fade-in">下载 Muxvo，改变你的 AI CLI 工作流。</p>
+  <button class="btn-amber fade-in">Download for macOS</button>
+  <div class="cta-sub fade-in">免费开源 &middot; macOS</div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand"><div class="logo"><span>&#9670;</span> Muxvo</div>AI CLI Workbench<br>&copy; 2026 Muxvo</div>
+      <div class="footer-col"><h4>Product</h4><a href="#">Features</a><a href="#">Download</a><a href="#">Changelog</a><a href="#">Roadmap</a></div>
+      <div class="footer-col"><h4>Community</h4><a href="#">GitHub</a><a href="#">Discord</a><a href="#">Twitter</a></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:.15});
+document.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>

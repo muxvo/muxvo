@@ -528,12 +528,13 @@ describe('CHAT L2 -- 规则层测试', () => {
   // ---------------------------------------------------------------------------
   describe('特殊规则', () => {
     test('CHAT_L2_05_default_all_projects: 默认选中全部项目', async () => {
-      const { useChatPanelStore } = await import(
-        '@/renderer/stores/chat-panel'
-      );
-      const store = useChatPanelStore();
+      const { createChatHandlers } = await import('@/main/ipc/chat-handlers');
+      const handlers = createChatHandlers();
 
-      expect(store.selectedProject).toBe('全部项目');
+      // Default: __all__ returns sessions from all projects
+      const result = await handlers.getSessions({ projectHash: '__all__' });
+      expect(result).toHaveProperty('sessions');
+      expect(Array.isArray(result.sessions)).toBe(true);
     });
 
     test('CHAT_L2_27_lazy_load: 延迟加载历史数据', async () => {

@@ -74,7 +74,7 @@ export function ChatHistoryPanel() {
         }
       }
     });
-    return () => unsub?.();
+    return () => { unsub?.(); };
   }, [selectedSessionId, sessions]);
 
   const totalSessionCount = projects.reduce((sum, p) => sum + p.sessionCount, 0);

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muxvo — 方案 06 Orchestrator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-deep:#06080c;--bg-primary:#0a0e14;--bg-card:#0d1117;--bg-elevated:#161b22;--bg-hover:#1c2333;
+  --amber:#e8a748;--amber-hover:#f0c060;--amber-glow:#e8a74818;--amber-border:#e8a74840;
+  --tool-claude:#e8a748;--tool-codex:#4ade80;--tool-gemini:#60a5fa;
+  --text-hero:#fff;--text-primary:#d4d4d8;--text-secondary:#71717a;--text-muted:#3f3f46;
+  --border:#1e2530;--border-focus:#e8a74855;
+  --sans:'DM Sans',system-ui,sans-serif;--mono:'JetBrains Mono','Menlo',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg-deep);color:var(--text-primary);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.container{max-width:1200px;margin:0 auto;padding:0 64px}
+.container--narrow{max-width:800px;margin:0 auto;padding:0 64px}
+@media(max-width:768px){.container,.container--narrow{padding:0 24px}}
+
+/* ===== HERO ===== */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:60px 24px 40px}
+.hero-glow{position:absolute;top:45%;left:50%;width:900px;height:600px;transform:translate(-50%,-50%);background:radial-gradient(ellipse,#e8a74810 0%,transparent 70%);pointer-events:none}
+.hero-text{text-align:center;position:relative;z-index:1;margin-bottom:32px}
+.hero-text h1{font:700 48px/1.15 var(--sans);color:var(--text-hero);letter-spacing:-0.02em}
+.hero-text h1 span{display:block}
+.hero-text p{font:400 20px/1.5 var(--sans);color:var(--text-secondary);margin-top:16px;max-width:540px;margin-left:auto;margin-right:auto}
+.cta-group{display:flex;gap:16px;justify-content:center;margin-top:28px;position:relative;z-index:1}
+.btn-primary{display:inline-flex;align-items:center;padding:14px 32px;background:var(--amber);color:var(--bg-deep);font:600 15px/1 var(--sans);border:none;border-radius:6px;cursor:pointer;text-decoration:none;transition:background .2s,box-shadow .2s}
+.btn-primary:hover{background:var(--amber-hover);box-shadow:0 0 20px var(--amber-border)}
+.btn-secondary{display:inline-flex;align-items:center;padding:14px 32px;background:transparent;color:var(--text-primary);font:600 15px/1 var(--sans);border:1px solid var(--border);border-radius:6px;cursor:pointer;text-decoration:none;transition:border-color .2s,color .2s}
+.btn-secondary:hover{border-color:var(--border-focus);color:var(--amber)}
+.hero-screenshot{position:relative;z-index:1;width:100%;max-width:960px;margin-top:40px;border-radius:12px;border:1px solid var(--border);overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,0.4)}
+.hero-screenshot::after{content:'';position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(transparent,var(--bg-deep));pointer-events:none}
+.mock-ui{width:100%;aspect-ratio:16/9;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;padding:8px;background:var(--bg-deep)}
+.mock-panel{background:var(--bg-primary);border-radius:4px;padding:12px;font:400 12px/1.5 var(--mono);color:var(--text-muted);overflow:hidden}
+.mock-panel .mp-title{font-size:10px;color:var(--amber);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+
+/* ===== ORCHESTRATION DIAGRAM ===== */
+.section{padding:120px 0}
+.section--orch{background:var(--bg-primary)}
+.section-header{text-align:center;margin-bottom:56px}
+.section-header h2{font:700 36px/1.2 var(--sans);color:var(--text-hero)}
+.section-header p{font:400 16px/1.6 var(--sans);color:var(--text-secondary);margin-top:12px}
+.orch-diagram{position:relative;max-width:800px;margin:0 auto;height:380px}
+.orch-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.node{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:12px;transition:border-color .2s,box-shadow .2s;z-index:2}
+.node--center{width:160px;height:72px;background:var(--bg-card);border:2px solid var(--amber);box-shadow:0 0 32px #e8a74820;left:50%;top:0;transform:translateX(-50%)}
+.node--center span{font:600 16px/1 var(--sans);color:var(--amber)}
+.node--tool{width:150px;height:68px;background:var(--bg-card);border:1px solid var(--border);gap:10px;padding:0 16px;top:140px}
+.node--tool .tool-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.node--tool span{font:600 14px/1.3 var(--sans);color:var(--text-primary)}
+.node--tool:hover{border-color:var(--border-focus);box-shadow:0 0 16px #e8a74810}
+.node--t1{left:50%;transform:translateX(-245%)}
+.node--t2{left:50%;transform:translateX(-50%)}
+.node--t3{left:50%;transform:translateX(145%)}
+.node--feature{width:130px;height:56px;background:var(--bg-elevated);border:1px solid var(--border);top:280px}
+.node--feature span{font:400 13px/1.3 var(--sans);color:var(--text-secondary)}
+.node--f1{left:50%;transform:translateX(-245%)}
+.node--f2{left:50%;transform:translateX(-50%)}
+.node--f3{left:50%;transform:translateX(145%)}
+
+/* SVG connections */
+.conn{stroke:#e8a74840;stroke-width:1.5;fill:none;stroke-dasharray:4 4}
+.conn--active{stroke:#e8a74880;stroke-dasharray:none}
+.flow-dot{fill:var(--amber);opacity:0}
+.orch-diagram.visible .flow-dot{animation:flowMove 3s ease-in-out infinite}
+@keyframes flowMove{0%{offset-distance:0%;opacity:0}10%{opacity:1}90%{opacity:1}100%{offset-distance:100%;opacity:0}}
+/* draw-in for lines */
+.conn{stroke-dashoffset:200;transition:stroke-dashoffset .8s ease-out}
+.orch-diagram.visible .conn{stroke-dashoffset:0}
+.orch-diagram.visible .conn--active{stroke-dasharray:none;stroke-dashoffset:0}
+/* node fade-in */
+.node{opacity:0;transform-origin:center;transition:opacity .5s ease-out}
+.orch-diagram.visible .node{opacity:1}
+.orch-diagram.visible .node--center{transition-delay:0ms}
+.orch-diagram.visible .node--t1{transition-delay:200ms}
+.orch-diagram.visible .node--t2{transition-delay:300ms}
+.orch-diagram.visible .node--t3{transition-delay:400ms}
+.orch-diagram.visible .node--f1{transition-delay:500ms}
+.orch-diagram.visible .node--f2{transition-delay:600ms}
+.orch-diagram.visible .node--f3{transition-delay:700ms}
+/* keep transform for positioning */
+.orch-diagram.visible .node--center{transform:translateX(-50%)}
+.orch-diagram.visible .node--t1{transform:translateX(-245%)}
+.orch-diagram.visible .node--t2{transform:translateX(-50%)}
+.orch-diagram.visible .node--t3{transform:translateX(145%)}
+.orch-diagram.visible .node--f1{transform:translateX(-245%)}
+.orch-diagram.visible .node--f2{transform:translateX(-50%)}
+.orch-diagram.visible .node--f3{transform:translateX(145%)}
+
+/* ===== FEATURES DEEP DIVE ===== */
+.section--features{background:var(--bg-deep)}
+.feature-row{display:flex;gap:60px;align-items:center;margin-bottom:80px}
+.feature-row:last-child{margin-bottom:0}
+.feature-row--reverse{flex-direction:row-reverse}
+.feature-text{flex:1;min-width:0}
+.feature-text h3{font:700 24px/1.3 var(--sans);color:var(--text-primary)}
+.feature-text p{font:400 15px/1.7 var(--sans);color:var(--text-secondary);margin-top:12px}
+.feature-list{list-style:none;margin-top:16px}
+.feature-list li{font:400 14px/1.6 var(--sans);color:var(--text-primary);padding-left:16px;position:relative;margin-bottom:4px}
+.feature-list li::before{content:'\00B7';color:var(--amber);position:absolute;left:0;font-weight:700}
+.feature-img{flex:1;min-width:0;aspect-ratio:16/10;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font:400 14px/1 var(--sans);box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+
+/* ===== CLI / CTA ===== */
+.section--cli{background:var(--bg-primary)}
+.cli-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:700px;margin:0 auto}
+.cli-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:28px 20px;text-align:center;transition:border-color .2s}
+.cli-card:hover{border-color:var(--border-focus)}
+.cli-dot{width:12px;height:12px;border-radius:50%;margin:0 auto 12px}
+.cli-card h3{font:600 15px/1.3 var(--sans);color:var(--text-primary)}
+.cli-card p{font:400 13px/1.4 var(--sans);color:var(--text-secondary);margin-top:4px}
+.section--cta{background:linear-gradient(var(--bg-primary),var(--bg-deep));text-align:center;position:relative;padding:120px 0}
+.cta-glow2{position:absolute;bottom:20%;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(ellipse,#e8a74815 0%,transparent 70%);pointer-events:none}
+.section--cta h2{font:700 36px/1.2 var(--sans);color:var(--text-hero);position:relative}
+.section--cta p{font:400 16px/1.6 var(--sans);color:var(--text-secondary);margin-top:12px;position:relative}
+.section--cta .cta-group{margin-top:32px;position:relative}
+.section--cta .meta{font:400 13px/1.5 var(--sans);color:var(--text-muted);margin-top:24px;position:relative}
+
+/* Scroll reveal */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s ease-out,transform .6s ease-out}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+@media(prefers-reduced-motion:reduce){.reveal,.node,.conn{opacity:1;transform:none;transition:none}.flow-dot{display:none}.node--center{transform:translateX(-50%)!important}.node--t1,.node--f1{transform:translateX(-245%)!important}.node--t2,.node--f2{transform:translateX(-50%)!important}.node--t3,.node--f3{transform:translateX(145%)!important}}
+@media(max-width:768px){
+  .hero-text h1{font-size:32px}.hero-text p{font-size:16px}
+  .section{padding:80px 0}.section-header h2,.section--cta h2{font-size:28px}
+  .orch-diagram{height:auto;display:flex;flex-direction:column;align-items:center;gap:16px;padding:0 24px}
+  .node{position:static!important;transform:none!important;opacity:1!important;width:100%!important;max-width:280px}
+  .orch-svg{display:none}
+  .feature-row,.feature-row--reverse{flex-direction:column;gap:24px}
+  .feature-img{width:100%;aspect-ratio:16/9}
+  .cli-grid{grid-template-columns:1fr}
+  .cta-group{flex-direction:column;align-items:center}
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-text">
+    <h1><span>One workbench.</span><span>Three AI CLIs.</span><span style="color:var(--amber)">Total control.</span></h1>
+    <p>在一个界面中编排 Claude Code、Codex 和 Gemini CLI</p>
+  </div>
+  <div class="cta-group">
+    <a href="#" class="btn-primary">Download for macOS</a>
+    <a href="#" class="btn-secondary">View on GitHub</a>
+  </div>
+  <div class="hero-screenshot">
+    <div class="mock-ui">
+      <div class="mock-panel"><div class="mp-title">Terminal 1 &mdash; claude</div><span style="color:#4ade80">$</span> claude<br><span style="color:#71717a">Claude Code v1.2</span></div>
+      <div class="mock-panel"><div class="mp-title">Terminal 2 &mdash; codex</div><span style="color:#4ade80">$</span> codex<br><span style="color:#71717a">Codex CLI ready</span></div>
+      <div class="mock-panel"><div class="mp-title">Chat History</div><span style="color:#71717a">148 conversations</span><br><span style="color:#e8a748">Search...</span></div>
+      <div class="mock-panel"><div class="mp-title">Skill Market</div><span style="color:#71717a">24 skills</span><br><span style="color:#4ade80">3 updates</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ORCHESTRATION DIAGRAM -->
+<section class="section section--orch">
+  <div class="container">
+    <div class="section-header reveal"><h2>你的 CLI 工具，统一编排</h2><p>Muxvo 将你的 AI CLI 工具连接为一个统一的工作空间</p></div>
+    <div class="orch-diagram" id="orchDiagram">
+      <svg class="orch-svg" viewBox="0 0 800 380" preserveAspectRatio="xMidYMid meet">
+        <!-- Muxvo -> tools -->
+        <path class="conn conn--active" d="M400,72 C400,100 175,110 175,140" id="line1"/>
+        <path class="conn conn--active" d="M400,72 C400,106 400,106 400,140" id="line2"/>
+        <path class="conn conn--active" d="M400,72 C400,100 625,110 625,140" id="line3"/>
+        <!-- Tools -> features -->
+        <path class="conn" d="M175,208 L175,280" stroke-dasharray="4 4"/>
+        <path class="conn" d="M400,208 L400,280" stroke-dasharray="4 4"/>
+        <path class="conn" d="M625,208 L625,280" stroke-dasharray="4 4"/>
+        <!-- Flow dots (fallback: static dashed lines above) -->
+        <circle class="flow-dot" r="3" style="offset-path:path('M400,72 C400,100 175,110 175,140');animation-delay:0s"><title>data flow</title></circle>
+        <circle class="flow-dot" r="3" style="offset-path:path('M400,72 C400,106 400,106 400,140');animation-delay:1s"><title>data flow</title></circle>
+        <circle class="flow-dot" r="3" style="offset-path:path('M400,72 C400,100 625,110 625,140');animation-delay:2s"><title>data flow</title></circle>
+      </svg>
+      <!-- Nodes -->
+      <div class="node node--center"><span>Muxvo Workbench</span></div>
+      <div class="node node--tool node--t1"><div class="tool-dot" style="background:var(--tool-claude)"></div><span>Claude Code</span></div>
+      <div class="node node--tool node--t2"><div class="tool-dot" style="background:var(--tool-codex)"></div><span>Codex</span></div>
+      <div class="node node--tool node--t3"><div class="tool-dot" style="background:var(--tool-gemini)"></div><span>Gemini CLI</span></div>
+      <div class="node node--feature node--f1"><span>Terminal Grid</span></div>
+      <div class="node node--feature node--f2"><span>Chat History</span></div>
+      <div class="node node--feature node--f3"><span>Config Editor</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES DEEP DIVE -->
+<section class="section section--features">
+  <div class="container">
+    <div class="section-header reveal"><h2>深入了解核心功能</h2></div>
+    <div class="feature-row reveal">
+      <div class="feature-text">
+        <h3>平铺终端网格</h3>
+        <p>全屏平铺管理多个终端 session。每个面板独立运行，互不干扰。</p>
+        <ul class="feature-list"><li>支持 1-9 个终端面板</li><li>拖拽边框调整大小</li><li>每个面板独立追踪工作目录</li></ul>
+      </div>
+      <div class="feature-img">Tiling Terminal Grid</div>
+    </div>
+    <div class="feature-row feature-row--reverse reveal">
+      <div class="feature-text">
+        <h3>聊天历史搜索</h3>
+        <p>跨 session 搜索所有 AI 对话记录。再也不会丢失重要的上下文。</p>
+        <ul class="feature-list"><li>全文搜索所有历史对话</li><li>按日期、项目、工具筛选</li><li>一键导出对话记录</li></ul>
+      </div>
+      <div class="feature-img">Chat History Search</div>
+    </div>
+    <div class="feature-row reveal">
+      <div class="feature-text">
+        <h3>Skill 市场 + AI 评分</h3>
+        <p>发现和安装社区 Skill 包。每个 Skill 都经过 AI 质量自动评估。</p>
+        <ul class="feature-list"><li>浏览和搜索社区 Skill 包</li><li>一键安装和自动更新</li><li>AI 驱动的质量评分系统</li></ul>
+      </div>
+      <div class="feature-img">Skill Marketplace</div>
+    </div>
+  </div>
+</section>
+
+<!-- CLI SUPPORT -->
+<section class="section section--cli">
+  <div class="container--narrow">
+    <div class="section-header reveal"><h2>支持你最爱的 AI CLI</h2></div>
+    <div class="cli-grid reveal">
+      <div class="cli-card"><div class="cli-dot" style="background:var(--tool-claude)"></div><h3>Claude Code</h3><p>Anthropic</p></div>
+      <div class="cli-card"><div class="cli-dot" style="background:var(--tool-codex)"></div><h3>Codex</h3><p>OpenAI</p></div>
+      <div class="cli-card"><div class="cli-dot" style="background:var(--tool-gemini)"></div><h3>Gemini CLI</h3><p>Google</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="section--cta">
+  <div class="cta-glow2"></div>
+  <div class="container--narrow reveal">
+    <h2>准备好开始编排了吗？</h2>
+    <p>下载 Muxvo，在几分钟内统一你的 AI CLI 工作流</p>
+    <div class="cta-group"><a href="#" class="btn-primary">Download for macOS</a><a href="#" class="btn-secondary">View on GitHub</a></div>
+    <div class="meta">v0.1.0 &middot; macOS &middot; MIT License</div>
+  </div>
+</section>
+
+<script>
+(function(){
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);}});
+  },{threshold:0.2});
+  document.querySelectorAll('.reveal,#orchDiagram').forEach(function(el){obs.observe(el);});
+})();
+</script>
+</body>
+</html>
