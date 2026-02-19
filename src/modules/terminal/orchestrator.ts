@@ -2,20 +2,10 @@
  * Terminal orchestrator - coordinates terminal creation/closure with grid, editor, watcher
  */
 
-const GRID_LAYOUTS: Record<number, { cols: number; rows: number }> = {
-  1: { cols: 1, rows: 1 },
-  2: { cols: 2, rows: 1 },
-  3: { cols: 3, rows: 1 },
-  4: { cols: 2, rows: 2 },
-  5: { cols: 3, rows: 2 },
-  6: { cols: 3, rows: 2 },
-};
+import { calculateGridLayout } from '@/shared/utils/grid-layout';
 
 function getGridLayout(count: number) {
-  if (GRID_LAYOUTS[count]) return GRID_LAYOUTS[count];
-  const cols = Math.ceil(Math.sqrt(count));
-  const rows = Math.ceil(count / cols);
-  return { cols, rows };
+  return calculateGridLayout(count);
 }
 
 export function createTerminalOrchestrator(opts: { currentCount: number }) {

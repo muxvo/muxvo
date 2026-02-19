@@ -1,0 +1,36 @@
+/* ResizeHandle — Draggable dividers between grid cells */
+
+.resize-handle {
+  position: absolute;
+  z-index: 20;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+/* Column handle: vertical bar */
+.resize-handle--col {
+  width: 8px;
+  top: 0;
+  bottom: 0;
+  cursor: col-resize;
+  transform: translateX(-50%);
+}
+
+/* Row handle: horizontal bar */
+.resize-handle--row {
+  height: 8px;
+  left: 0;
+  right: 0;
+  cursor: row-resize;
+  transform: translateY(-50%);
+}
+
+/* Hover state */
+.resize-handle:hover {
+  background: var(--accent-glow, rgba(232, 167, 72, 0.3));
+}
+
+/* Active / dragging state */
+.resize-handle:active {
+  background: var(--accent, #e8a748);
+}

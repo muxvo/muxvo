@@ -32,6 +32,7 @@ interface CloseConfirmState {
 
 export function App(): JSX.Element {
   const [terminals, setTerminals] = useState<TerminalEntry[]>([]);
+  const [terminalOrder, setTerminalOrder] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'Tiling' | 'Focused'>('Tiling');
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -52,12 +53,14 @@ export function App(): JSX.Element {
           cwd: info.cwd || '/',
         }));
         setTerminals(entries);
+        setTerminalOrder(entries.map((e) => e.id));
       }
     });
 
     // Listen for terminal exits to remove from grid
     const unsubExit = window.api.terminal.onExit((event) => {
       setTerminals((prev) => prev.filter((t) => t.id !== event.id));
+      setTerminalOrder((prev) => prev.filter((id) => id !== event.id));
     });
 
     // Listen for state changes to update terminal state
@@ -76,6 +79,7 @@ export function App(): JSX.Element {
         cwd: info.cwd || '/',
       }));
       setTerminals(entries);
+      setTerminalOrder(entries.map((e) => e.id));
     });
 
     // Listen for cwd changes (OSC 7 detection from main process)
@@ -98,6 +102,7 @@ export function App(): JSX.Element {
     const result = await window.api.terminal.create(home);
     if (result?.success && result.data) {
       setTerminals((prev) => [...prev, { id: result.data.id, state: 'Running', cwd: home }]);
+      setTerminalOrder((prev) => [...prev, result.data.id]);
     }
   }, []);
 
@@ -112,6 +117,7 @@ export function App(): JSX.Element {
     // No active process or just shell — close directly
     await window.api.terminal.close(id);
     setTerminals((prev) => prev.filter((t) => t.id !== id));
+    setTerminalOrder((prev) => prev.filter((tid) => tid !== id));
   }, []);
 
   const handleCloseConfirm = useCallback(async () => {
@@ -119,6 +125,7 @@ export function App(): JSX.Element {
     setCloseConfirm({ open: false, terminalId: '', processName: '' });
     await window.api.terminal.close(terminalId, true);
     setTerminals((prev) => prev.filter((t) => t.id !== terminalId));
+    setTerminalOrder((prev) => prev.filter((tid) => tid !== terminalId));
   }, [closeConfirm]);
 
   const handleCloseCancel = useCallback(() => {
@@ -141,6 +148,10 @@ export function App(): JSX.Element {
 
   const handleTileClick = useCallback((id: string) => {
     setSelectedId(id);
+  }, []);
+
+  const handleReorder = useCallback((newOrder: string[]) => {
+    setTerminalOrder(newOrder);
   }, []);
 
   // Esc key exits focused mode (only when focus is on UI, not inside terminal)
@@ -172,10 +183,17 @@ export function App(): JSX.Element {
 
   const maxReached = terminals.length >= MAX_TERMINALS;
 
+  // Sort terminals by terminalOrder
+  const orderedTerminals = terminalOrder.length > 0
+    ? terminalOrder
+        .map((id) => terminals.find((t) => t.id === id))
+        .filter((t): t is TerminalEntry => t !== undefined)
+    : terminals;
+
   return (
     <PanelProvider>
       <AppContent
-        terminals={terminals}
+        terminals={orderedTerminals}
         viewMode={viewMode}
         focusedId={focusedId}
         selectedId={selectedId}
@@ -189,6 +207,7 @@ export function App(): JSX.Element {
         onClose={removeTerminal}
         onCloseConfirm={handleCloseConfirm}
         onCloseCancel={handleCloseCancel}
+        onReorder={handleReorder}
       />
     </PanelProvider>
   );
@@ -210,6 +229,7 @@ function AppContent({
   onClose,
   onCloseConfirm,
   onCloseCancel,
+  onReorder,
 }: {
   terminals: TerminalEntry[];
   viewMode: 'Tiling' | 'Focused';
@@ -225,6 +245,7 @@ function AppContent({
   onClose: (id: string) => void;
   onCloseConfirm: () => void;
   onCloseCancel: () => void;
+  onReorder: (newOrder: string[]) => void;
 }): JSX.Element {
   const { state, dispatch } = usePanelContext();
 
@@ -246,6 +267,7 @@ function AppContent({
           onSidebarClick={onSidebarClick}
           onClick={onClick}
           onClose={onClose}
+          onReorder={onReorder}
         />
       </main>
 

@@ -19,9 +19,9 @@ export const gridFixtures = [
   { count: 2, expectedCols: 2, expectedRows: 1, layout: '2x1 对半' },
   { count: 3, expectedCols: 3, expectedRows: 1, layout: '3x1 三等分' },
   { count: 4, expectedCols: 2, expectedRows: 2, layout: '2x2 四宫格' },
-  { count: 5, expectedCols: 3, expectedRows: 2, layout: '上3下2' },
+  { count: 5, expectedCols: 6, expectedRows: 2, layout: '上3下2 span居中' },
   { count: 6, expectedCols: 3, expectedRows: 2, layout: '3x2 六宫格' },
-  { count: 7, expectedCols: 3, expectedRows: 3, layout: 'ceil(sqrt7)=3 列' },
+  { count: 7, expectedCols: 12, expectedRows: 2, layout: '上4下3 span居中' },
   { count: 20, expectedCols: 5, expectedRows: 4, layout: 'ceil(sqrt20)=5 列' },
 ] as const;
 

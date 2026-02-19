@@ -25,6 +25,13 @@ interface Props {
   focused?: boolean;
   selected?: boolean;
   staggerIndex?: number;
+  draggable?: boolean;
+  onDragStart?: (id: string) => void;
+  onDragEnd?: () => void;
+  onDragOver?: (id: string) => void;
+  onDrop?: (id: string) => void;
+  onDragLeave?: () => void;
+  dragState?: 'none' | 'dragging' | 'drag-over';
 }
 
 /** File icon SVG (inline) */
@@ -59,7 +66,14 @@ export function TerminalTile({
   compact,
   focused,
   selected,
-  staggerIndex
+  staggerIndex,
+  draggable: draggableProp,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDrop,
+  onDragLeave,
+  dragState = 'none'
 }: Props): JSX.Element {
   const ui = getTerminalProcessUI(state);
   const tileRef = useRef<HTMLDivElement>(null);
@@ -72,6 +86,33 @@ export function TerminalTile({
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     tileRef.current.style.setProperty('--mx', `${x}%`);
     tileRef.current.style.setProperty('--my', `${y}%`);
+  };
+
+  // Drag: disable in focused/compact mode
+  const isDraggable = draggableProp && !focused && !compact;
+
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', id);
+    onDragStart?.(id);
+  };
+
+  const handleDragEnd = () => {
+    onDragEnd?.();
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    onDragOver?.(id);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    onDrop?.(id);
+  };
+
+  const handleDragLeave = () => {
+    onDragLeave?.();
   };
 
   // Naming machine state
@@ -98,6 +139,8 @@ export function TerminalTile({
     !compact ? 'tile-enter' : '',
     focused ? 'tile-focused' : '',
     selected ? 'tile-selected' : '',
+    dragState === 'dragging' ? 'dragging' : '',
+    dragState === 'drag-over' ? 'drag-over' : '',
   ].filter(Boolean).join(' ');
 
   function shortenPath(path: string, truncate = true): string {
@@ -178,9 +221,17 @@ export function TerminalTile({
       onDoubleClick={onDoubleClick}
       onClick={onClick}
       onMouseMove={handleMouseMove}
+      onDragEnd={handleDragEnd}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+      onDragLeave={handleDragLeave}
     >
       {/* Header: [status-dot] [cwd · name-area] [spacer] [file-btn] [max-btn] */}
-      <div className="tile-header">
+      <div
+        className="tile-header"
+        draggable={isDraggable}
+        onDragStart={handleDragStart}
+      >
         {/* Status dot */}
         <span
           className={`tile-status ${state === 'Running' ? 'tile-status--running' : 'tile-status--idle'}`}
