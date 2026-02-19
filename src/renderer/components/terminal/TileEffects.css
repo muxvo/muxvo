@@ -245,6 +245,7 @@
 }
 
 .tile-focused {
+  height: 100%;
   z-index: 100;
   border-color: var(--border-focus);
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 80px rgba(232, 167, 72, 0.06);
