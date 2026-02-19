@@ -561,9 +561,9 @@ describe('L3 -- 跨模块联动', () => {
 
   // CROSS_L3_01: 新建终端触发多模块更新
   test('CROSS_L3_01: 新建终端触发多模块更新', async () => {
-    // Create 5th terminal -> grid recalculates to 上3下2
+    // Create 5th terminal -> grid recalculates to 上3下2 (span居中: 6列2行)
     const grid5 = gridFixtures.find((g) => g.count === 5)!;
-    expect(grid5.expectedCols).toBe(3);
+    expect(grid5.expectedCols).toBe(6);
     expect(grid5.expectedRows).toBe(2);
 
     // RED: import orchestrator (will fail -- not implemented)
@@ -574,7 +574,7 @@ describe('L3 -- 跨模块联动', () => {
     const result = await orchestrator.createTerminal({ cwd: terminalFixtures.validCwd });
 
     expect(result.terminalState).toBe('Created');
-    expect(result.gridUpdate.cols).toBe(3);
+    expect(result.gridUpdate.cols).toBe(6);
     expect(result.gridUpdate.rows).toBe(2);
     expect(result.editorMode).toBe('RichEditor');
     expect(result.watcherAdded).toBe(true);

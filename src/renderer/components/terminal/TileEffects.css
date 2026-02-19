@@ -291,3 +291,21 @@
   animation: tileEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: calc(var(--stagger-index, 0) * 50ms);
 }
+
+/* === Drag & Drop === */
+.tile.dragging {
+  opacity: 0.4;
+}
+
+.tile.drag-over {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px rgba(232, 167, 72, 0.18), 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+.tile-header[draggable='true'] {
+  cursor: grab;
+}
+
+.tile-header[draggable='true']:active {
+  cursor: grabbing;
+}

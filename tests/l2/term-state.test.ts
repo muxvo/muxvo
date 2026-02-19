@@ -45,6 +45,17 @@ describe('TERM L2 -- 状态机与布局测试', () => {
         if ('distribution' in expected) {
           expect(result.distribution).toEqual(expected.distribution);
         }
+        if ('rowPattern' in expected) {
+          expect(result.rowPattern).toEqual(expected.rowPattern);
+        }
+        if ('spanRow' in expected) {
+          // JSON keys are strings, convert to number keys for comparison
+          const expectedSpanRow: Record<number, number> = {};
+          for (const [k, v] of Object.entries(expected.spanRow as Record<string, number>)) {
+            expectedSpanRow[Number(k)] = v;
+          }
+          expect(result.spanRow).toEqual(expectedSpanRow);
+        }
       },
     );
 

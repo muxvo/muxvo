@@ -15,10 +15,10 @@ interface GridResizeManager {
   rowRatios: number[];
   cursor: string;
   persistedRatios: number[];
-  startColResize(index: number, event: { clientX: number }): boolean;
+  startColResize(index: number, event: { clientX: number }, containerSize?: number): boolean;
   moveResize(event: { clientX?: number; clientY?: number }): void;
   endResize(): void;
-  startRowResize(index: number, event: { clientY: number }): void;
+  startRowResize(index: number, event: { clientY: number }, containerSize?: number): void;
   doubleClickColGap(index: number): void;
   doubleClickRowGap(index: number): void;
 }
@@ -27,6 +27,7 @@ export function createGridResizeManager(opts: GridResizeOpts): GridResizeManager
   let resizeType: 'col' | 'row' | null = null;
   let resizeIndex = -1;
   let startPos = 0;
+  let containerPx = 0;
 
   const manager: GridResizeManager = {
     columnRatios: opts.columnRatios ? [...opts.columnRatios] : Array(opts.cols).fill(1),
@@ -34,11 +35,12 @@ export function createGridResizeManager(opts: GridResizeOpts): GridResizeManager
     cursor: 'default',
     persistedRatios: [],
 
-    startColResize(index: number, event: { clientX: number }): boolean {
+    startColResize(index: number, event: { clientX: number }, containerSize?: number): boolean {
       if (opts.viewMode === 'Focused') return false;
       resizeType = 'col';
       resizeIndex = index;
       startPos = event.clientX;
+      containerPx = containerSize ?? 0;
       manager.cursor = 'col-resize';
       return true;
     },
@@ -48,7 +50,12 @@ export function createGridResizeManager(opts: GridResizeOpts): GridResizeManager
       if (resizeType === 'col' && event.clientX !== undefined) {
         const delta = event.clientX - startPos;
         const totalRatio = manager.columnRatios[resizeIndex] + manager.columnRatios[resizeIndex + 1];
-        const shift = (delta / 1000) * totalRatio;
+        const ratioSum = manager.columnRatios.reduce((a, b) => a + b, 0);
+        // Use actual container pixels for precise conversion when available
+        const totalPx = containerPx > 0
+          ? (totalRatio / ratioSum) * containerPx
+          : 1000;
+        const shift = (delta / totalPx) * totalRatio;
         const newLeft = manager.columnRatios[resizeIndex] + shift;
         const newRight = totalRatio - newLeft;
         if (newLeft > 0.1 && newRight > 0.1) {
@@ -59,7 +66,11 @@ export function createGridResizeManager(opts: GridResizeOpts): GridResizeManager
       } else if (resizeType === 'row' && event.clientY !== undefined) {
         const delta = event.clientY - startPos;
         const totalRatio = manager.rowRatios[resizeIndex] + manager.rowRatios[resizeIndex + 1];
-        const shift = (delta / 1000) * totalRatio;
+        const ratioSum = manager.rowRatios.reduce((a, b) => a + b, 0);
+        const totalPx = containerPx > 0
+          ? (totalRatio / ratioSum) * containerPx
+          : 1000;
+        const shift = (delta / totalPx) * totalRatio;
         const newTop = manager.rowRatios[resizeIndex] + shift;
         const newBottom = totalRatio - newTop;
         if (newTop > 0.1 && newBottom > 0.1) {
@@ -78,12 +89,14 @@ export function createGridResizeManager(opts: GridResizeOpts): GridResizeManager
       }
       resizeType = null;
       resizeIndex = -1;
+      containerPx = 0;
     },
 
-    startRowResize(index: number, event: { clientY: number }) {
+    startRowResize(index: number, event: { clientY: number }, containerSize?: number) {
       resizeType = 'row';
       resizeIndex = index;
       startPos = event.clientY;
+      containerPx = containerSize ?? 0;
       manager.cursor = 'row-resize';
     },
 
