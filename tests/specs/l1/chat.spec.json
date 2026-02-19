@@ -7,26 +7,25 @@
   "cases": [
     {
       "id": "CHAT_L1_01",
-      "description": "chat:get-history IPC 格式 -- 返回 { sessions: Array<SessionSummary> }",
+      "description": "chat:get-history IPC 格式 -- 返回 { sessions: Array<{display, timestamp, project, sessionId}> }",
       "type": "ipc",
       "channel": "chat:get-history",
       "direction": "invoke",
       "input": null,
       "expectedResponse": {
-        "sessions": "Array<{sessionId: string, project: string, projectHash: string, title: string, timestamp: number, messageCount: number}>"
+        "sessions": "Array<{display: string, timestamp: string, project: string, sessionId: string}>"
       },
       "statePath": "Closed -> Loading -> Ready",
       "priority": "P0"
     },
     {
       "id": "CHAT_L1_02",
-      "description": "chat:get-session IPC 格式 -- 传入 sessionId+projectHash 返回 messages 数组",
+      "description": "chat:get-session IPC 格式 -- 传入 sessionId 返回 messages 数组",
       "type": "ipc",
       "channel": "chat:get-session",
       "direction": "invoke",
       "input": {
-        "sessionId": "string",
-        "projectHash": "string"
+        "sessionId": "string"
       },
       "expectedResponse": {
         "messages": "Array<{type: string, message: string, timestamp: string, cwd: string}>"
