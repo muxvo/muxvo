@@ -177,14 +177,14 @@ export function createDualSourceReader(opts: DualSourceOpts) {
     try {
       const content = await readFile(ccPath, 'utf-8');
       const parsed = parseJsonl(content);
-      const entries = (parsed.entries as HistoryEntry[]).filter(e => e.sessionId);
+      const entries = (parsed.entries as unknown as HistoryEntry[]).filter(e => e.sessionId);
       return { source: 'cc', entries, fallback: false };
     } catch {
       // CC read failed, try mirror
       try {
         const content = await readFile(mirrorPath, 'utf-8');
         const parsed = parseJsonl(content);
-        const entries = (parsed.entries as HistoryEntry[]).filter(e => e.sessionId);
+        const entries = (parsed.entries as unknown as HistoryEntry[]).filter(e => e.sessionId);
         return { source: 'mirror', entries, fallback: true, hint: '当前显示本地备份数据' };
       } catch {
         return { source: null, entries: [], fallback: false, error: 'CC files and mirror both unavailable' };
@@ -227,7 +227,7 @@ export function createDualSourceReader(opts: DualSourceOpts) {
       try {
         const content = await readFile(ccPath, 'utf-8');
         const parsed = parseJsonl(content);
-        const messages = parsed.entries as SessionMessage[];
+        const messages = parsed.entries as unknown as SessionMessage[];
         return {
           source: 'cc',
           messages,
@@ -238,7 +238,7 @@ export function createDualSourceReader(opts: DualSourceOpts) {
         try {
           const content = await readFile(mirrorPath, 'utf-8');
           const parsed = parseJsonl(content);
-          const messages = parsed.entries as SessionMessage[];
+          const messages = parsed.entries as unknown as SessionMessage[];
           return {
             source: 'mirror',
             messages,
