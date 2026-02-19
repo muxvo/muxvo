@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muxvo - AI CLI 工作台 | Editorial Magazine</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --amber: #e8a748;
+  --amber-dim: #c4883a;
+  --bg: #06080c;
+  --bg-surface: #0d1117;
+  --bg-elevated: #161b22;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --text-dim: #484f58;
+  --border: #21262d;
+  --serif: 'Playfair Display', Georgia, serif;
+  --sans: 'DM Sans', -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* Utility */
+.container { max-width: 1100px; margin: 0 auto; padding: 0 32px; }
+
+/* Navigation - minimal magazine masthead */
+.masthead {
+  padding: 24px 0;
+  border-bottom: 3px solid var(--amber);
+  position: relative;
+}
+.masthead .container {
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.masthead-logo {
+  font-family: var(--serif); font-size: 2.2rem; font-weight: 900;
+  color: var(--text); letter-spacing: 0.05em; text-transform: uppercase;
+}
+.masthead-issue {
+  font-family: var(--mono); font-size: 0.75rem; color: var(--text-muted);
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+.masthead-divider {
+  height: 1px; background: var(--border); margin-top: 12px;
+}
+.masthead-nav {
+  display: flex; gap: 32px; list-style: none;
+  padding: 14px 0; border-bottom: 1px solid var(--border);
+}
+.masthead-nav a {
+  font-family: var(--sans); font-size: 0.8rem; font-weight: 600;
+  color: var(--text-muted); text-decoration: none; text-transform: uppercase;
+  letter-spacing: 0.12em; transition: color 0.3s;
+}
+.masthead-nav a:hover { color: var(--amber); }
+
+/* Hero - editorial spread */
+.hero {
+  padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border);
+}
+.hero-layout {
+  display: grid; grid-template-columns: 2fr 1fr; gap: 60px; align-items: end;
+}
+.hero-kicker {
+  font-family: var(--mono); font-size: 0.75rem; color: var(--amber);
+  text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 20px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-kicker::before {
+  content: ''; display: block; width: 40px; height: 2px; background: var(--amber);
+}
+.hero h1 {
+  font-family: var(--serif); font-size: clamp(3rem, 7vw, 5.5rem);
+  font-weight: 900; line-height: 1.0; letter-spacing: -0.02em;
+  margin-bottom: 32px;
+}
+.hero h1 em {
+  font-style: italic; color: var(--amber);
+}
+.hero-sidebar {
+  border-left: 1px solid var(--border); padding-left: 32px;
+}
+.hero-sidebar p {
+  font-size: 1.1rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 24px;
+}
+.hero-sidebar .byline {
+  font-family: var(--mono); font-size: 0.75rem; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.1em;
+}
+
+/* Drop cap */
+.drop-cap::first-letter {
+  font-family: var(--serif); font-size: 4.5em; float: left;
+  line-height: 0.8; margin-right: 12px; margin-top: 6px;
+  color: var(--amber); font-weight: 900;
+}
+
+/* Pull quote */
+.pull-quote {
+  border-left: 3px solid var(--amber); padding: 24px 0 24px 32px;
+  margin: 48px 0; font-family: var(--serif); font-size: 1.6rem;
+  font-style: italic; line-height: 1.5; color: var(--text);
+}
+.pull-quote cite {
+  display: block; font-family: var(--sans); font-size: 0.8rem;
+  font-style: normal; color: var(--text-muted); margin-top: 16px;
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+
+/* Features - magazine multi-column */
+.features { padding: 80px 0; }
+.features-header {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 60px;
+  padding-bottom: 48px; border-bottom: 1px solid var(--border);
+  margin-bottom: 48px;
+}
+.features-header .section-num {
+  font-family: var(--serif); font-size: 6rem; font-weight: 900;
+  color: var(--bg-elevated); line-height: 1; margin-bottom: 8px;
+  -webkit-text-stroke: 1px var(--text-dim);
+}
+.features-header h2 {
+  font-family: var(--serif); font-size: 2.4rem; font-weight: 700;
+  line-height: 1.15; letter-spacing: -0.01em;
+}
+.features-header h2 em { font-style: italic; color: var(--amber); }
+.features-header p {
+  font-size: 1.05rem; color: var(--text-muted); line-height: 1.8;
+  align-self: end;
+}
+
+.features-grid {
+  display: grid; grid-template-columns: 2fr 1fr; gap: 32px 60px;
+}
+.feature-item {
+  padding: 32px 0; border-bottom: 1px solid var(--border);
+  display: grid; grid-template-columns: 48px 1fr; gap: 20px; align-items: start;
+}
+.feature-num {
+  font-family: var(--serif); font-size: 2rem; font-weight: 900;
+  color: var(--amber); line-height: 1;
+}
+.feature-item h3 {
+  font-family: var(--serif); font-size: 1.3rem; font-weight: 700;
+  margin-bottom: 8px;
+}
+.feature-item p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.7; }
+
+/* Feature sidebar card */
+.feature-aside {
+  background: var(--bg-surface); border: 1px solid var(--border);
+  padding: 32px; grid-row: span 3; align-self: start;
+}
+.feature-aside h4 {
+  font-family: var(--mono); font-size: 0.7rem; text-transform: uppercase;
+  letter-spacing: 0.15em; color: var(--amber); margin-bottom: 20px;
+  padding-bottom: 12px; border-bottom: 1px solid var(--border);
+}
+.feature-aside ul { list-style: none; }
+.feature-aside li {
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+  font-size: 0.9rem; color: var(--text-muted);
+  display: flex; justify-content: space-between;
+}
+.feature-aside li span { color: var(--text); font-weight: 600; }
+
+/* Terminal - editorial frame */
+.terminal-section {
+  padding: 80px 0; border-top: 1px solid var(--border);
+}
+.terminal-layout {
+  display: grid; grid-template-columns: 1fr 2fr; gap: 60px; align-items: start;
+}
+.terminal-intro .section-label {
+  font-family: var(--mono); font-size: 0.7rem; text-transform: uppercase;
+  letter-spacing: 0.15em; color: var(--amber); margin-bottom: 20px;
+  display: flex; align-items: center; gap: 12px;
+}
+.terminal-intro .section-label::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.terminal-intro h2 {
+  font-family: var(--serif); font-size: 2rem; font-weight: 700;
+  line-height: 1.2; margin-bottom: 20px;
+}
+.terminal-intro p { color: var(--text-muted); line-height: 1.8; font-size: 0.95rem; }
+
+.terminal-frame {
+  background: var(--bg-surface); border: 1px solid var(--border); overflow: hidden;
+}
+.terminal-bar {
+  display: flex; align-items: center; gap: 8px; padding: 12px 20px;
+  background: var(--bg-elevated); border-bottom: 1px solid var(--border);
+}
+.terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+.terminal-dot:nth-child(1) { background: #ff5f57; }
+.terminal-dot:nth-child(2) { background: #ffbd2e; }
+.terminal-dot:nth-child(3) { background: #28c840; }
+.terminal-tab {
+  margin-left: 16px; font-family: var(--mono); font-size: 0.7rem;
+  color: var(--text-muted); padding: 4px 12px;
+  border: 1px solid var(--border); border-radius: 4px;
+}
+.terminal-tab.active { color: var(--amber); border-color: var(--amber); }
+.terminal-body {
+  padding: 24px; font-family: var(--mono); font-size: 0.82rem;
+  line-height: 1.9; min-height: 300px;
+}
+.terminal-body .prompt { color: var(--amber); }
+.terminal-body .cmd { color: var(--text); }
+.terminal-body .output { color: var(--text-muted); }
+.terminal-body .success { color: #28c840; }
+.terminal-line { opacity: 0; animation: lineIn 0.5s forwards; }
+@keyframes lineIn { to { opacity: 1; } }
+
+/* CTA - editorial closing */
+.cta-section {
+  padding: 100px 0; border-top: 3px solid var(--amber); text-align: center;
+}
+.cta-section .page-num {
+  font-family: var(--serif); font-size: 0.85rem; color: var(--text-dim);
+  margin-bottom: 40px;
+}
+.cta-section h2 {
+  font-family: var(--serif); font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900; line-height: 1.1; margin-bottom: 20px;
+  max-width: 700px; margin-left: auto; margin-right: auto;
+}
+.cta-section h2 em { font-style: italic; color: var(--amber); }
+.cta-section p {
+  color: var(--text-muted); font-size: 1.1rem; max-width: 500px;
+  margin: 0 auto 40px; line-height: 1.7;
+}
+.btn-editorial {
+  display: inline-block; padding: 16px 48px; border: 2px solid var(--amber);
+  background: transparent; color: var(--amber); font-family: var(--sans);
+  font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.15em; cursor: pointer; transition: all 0.3s;
+}
+.btn-editorial:hover { background: var(--amber); color: var(--bg); }
+
+/* Footer - magazine colophon */
+footer {
+  padding: 32px 0; border-top: 1px solid var(--border);
+  display: flex; justify-content: center;
+}
+footer p {
+  font-family: var(--mono); font-size: 0.7rem; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.1em;
+}
+
+/* Scroll reveal */
+.reveal { opacity: 0; transform: translateY(24px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero-layout { grid-template-columns: 1fr; gap: 32px; }
+  .hero-sidebar { border-left: none; padding-left: 0; border-top: 1px solid var(--border); padding-top: 24px; }
+  .features-header { grid-template-columns: 1fr; gap: 24px; }
+  .features-grid { grid-template-columns: 1fr; }
+  .feature-aside { grid-row: span 1; }
+  .terminal-layout { grid-template-columns: 1fr; gap: 32px; }
+  .masthead-nav { gap: 16px; flex-wrap: wrap; }
+  .container { padding: 0 20px; }
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="container">
+    <div class="masthead-logo">Muxvo</div>
+    <div class="masthead-issue">2025 年刊 / 桌面工作台专题</div>
+  </div>
+  <div class="container">
+    <div class="masthead-divider"></div>
+    <nav>
+      <ul class="masthead-nav">
+        <li><a href="#features">核心功能</a></li>
+        <li><a href="#terminal">终端演示</a></li>
+        <li><a href="#cta">立即体验</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container">
+    <div class="hero-layout reveal">
+      <div class="hero-main">
+        <div class="hero-kicker">封面专题</div>
+        <h1>驾驭<em>AI 命令行</em>的艺术</h1>
+      </div>
+      <div class="hero-sidebar">
+        <p class="drop-cap">当开发者同时驾驭 Claude Code、Codex 和 Gemini CLI 三驾马车时，一个优雅的指挥台变得不可或缺。Muxvo 正是这样一款为 AI 原生时代打造的桌面工作台。</p>
+        <div class="byline">文 / Muxvo 团队 &mdash; 2025</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <div class="pull-quote reveal">
+    "我们不只是在做一个终端模拟器。我们在重新定义开发者与 AI 工具之间的交互界面。"
+    <cite>Muxvo 设计理念</cite>
+  </div>
+</div>
+
+<section class="features" id="features">
+  <div class="container">
+    <div class="features-header reveal">
+      <div>
+        <div class="section-num">01</div>
+        <h2>六大核心，<br><em>重塑工作流</em></h2>
+      </div>
+      <p>从终端管理到 Skill 市场，Muxvo 覆盖了 AI CLI 用户的每一个核心需求。以下是让开发者爱不释手的六个理由。</p>
+    </div>
+
+    <div class="features-grid">
+      <div>
+        <div class="feature-item reveal">
+          <div class="feature-num">01</div>
+          <div>
+            <h3>全屏平铺终端</h3>
+            <p>多终端并排展示，实时监控多个 AI 会话。支持自动布局和自由拖拽，让你同时掌控全局。</p>
+          </div>
+        </div>
+        <div class="feature-item reveal">
+          <div class="feature-num">02</div>
+          <div>
+            <h3>聊天历史搜索</h3>
+            <p>全文检索所有 AI 对话记录，快速定位之前的解决方案和代码片段，彻底告别重复提问。</p>
+          </div>
+        </div>
+        <div class="feature-item reveal">
+          <div class="feature-num">03</div>
+          <div>
+            <h3>智能文件浏览</h3>
+            <p>集成文件管理器，直接预览项目结构和文件内容，配合终端操作实现所见即所得的开发体验。</p>
+          </div>
+        </div>
+        <div class="feature-item reveal">
+          <div class="feature-num">04</div>
+          <div>
+            <h3>配置可视化</h3>
+            <p>图形化编辑 CLAUDE.md、Settings 等配置文件，复杂配置一目了然，无需手动修改 JSON。</p>
+          </div>
+        </div>
+        <div class="feature-item reveal">
+          <div class="feature-num">05</div>
+          <div>
+            <h3>Skill 市场</h3>
+            <p>浏览和安装社区 Skill 扩展，AI 评分系统帮你筛选高质量内容，一键安装即用。</p>
+          </div>
+        </div>
+        <div class="feature-item reveal">
+          <div class="feature-num">06</div>
+          <div>
+            <h3>极速响应</h3>
+            <p>基于 Electron + Vite 构建，冷启动飞快。轻量状态管理确保界面始终流畅响应。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature-aside reveal">
+        <h4>技术规格</h4>
+        <ul>
+          <li>框架 <span>Electron + Vite</span></li>
+          <li>前端 <span>React + TypeScript</span></li>
+          <li>终端 <span>xterm.js</span></li>
+          <li>支持 CLI <span>Claude / Codex / Gemini</span></li>
+          <li>IPC 通道 <span>60 个</span></li>
+          <li>测试覆盖 <span>609+ 用例</span></li>
+          <li>许可证 <span>MIT</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="terminal-section" id="terminal">
+  <div class="container">
+    <div class="terminal-layout">
+      <div class="terminal-intro reveal">
+        <div class="section-label">终端演示</div>
+        <h2>优雅地管理每一次 AI 对话</h2>
+        <p>Muxvo 为每个 AI CLI 工具提供独立终端标签页，实时展示输出流。配合聊天历史和文件浏览，打造完整的 AI 辅助开发工作流。</p>
+      </div>
+      <div class="terminal-frame reveal">
+        <div class="terminal-bar">
+          <div class="terminal-dot"></div>
+          <div class="terminal-dot"></div>
+          <div class="terminal-dot"></div>
+          <span class="terminal-tab active">claude-code</span>
+          <span class="terminal-tab">codex</span>
+        </div>
+        <div class="terminal-body" id="terminalBody"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section" id="cta">
+  <div class="container">
+    <div class="page-num reveal">-- III --</div>
+    <h2 class="reveal">开启你的<br><em>AI 原生开发</em>之旅</h2>
+    <p class="reveal">免费下载 Muxvo，加入数千名开发者的行列，用更优雅的方式驾驭 AI 命令行工具。</p>
+    <button class="btn-editorial reveal">立即下载</button>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>&copy; 2025 Muxvo &middot; 为 AI 原生开发者而造 &middot; MIT License</p>
+  </div>
+</footer>
+
+<script>
+// Scroll reveal
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Terminal typing
+const lines = [
+  { type: 'prompt', text: '~/projects/webapp $' },
+  { type: 'cmd', text: ' claude "将用户认证从 session 迁移到 JWT"' },
+  { type: 'output', text: '' },
+  { type: 'output', text: '  分析项目结构中...' },
+  { type: 'output', text: '  识别到 12 个相关文件' },
+  { type: 'success', text: '  ✓ 重构 auth/jwt.ts - 新增令牌签发与验证' },
+  { type: 'success', text: '  ✓ 更新 middleware/auth.ts - 替换 session 校验' },
+  { type: 'success', text: '  ✓ 更新 routes/api.ts - 注入 JWT 中间件' },
+  { type: 'success', text: '  ✓ 全部 47 个测试通过' },
+  { type: 'output', text: '' },
+  { type: 'prompt', text: '~/projects/webapp $' },
+  { type: 'cmd', text: ' muxvo history search "JWT 迁移"' },
+  { type: 'output', text: '  找到 3 条相关对话记录' },
+];
+
+function animateTerminal() {
+  const body = document.getElementById('terminalBody');
+  body.innerHTML = '';
+  lines.forEach((line, i) => {
+    setTimeout(() => {
+      const div = document.createElement('div');
+      div.className = 'terminal-line';
+      div.style.animationDelay = '0s';
+      if (line.type === 'prompt') div.innerHTML = `<span class="prompt">${line.text}</span>`;
+      else if (line.type === 'cmd') div.innerHTML = `<span class="cmd">${line.text}</span>`;
+      else if (line.type === 'success') div.innerHTML = `<span class="success">${line.text}</span>`;
+      else div.innerHTML = `<span class="output">${line.text || '&nbsp;'}</span>`;
+      body.appendChild(div);
+    }, i * 320);
+  });
+}
+
+const termObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { animateTerminal(); termObs.unobserve(e.target); } });
+}, { threshold: 0.3 });
+termObs.observe(document.getElementById('terminalBody'));
+</script>
+</body>
+</html>

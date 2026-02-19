@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muxvo - AI CLI 工作台 | 极简终端</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--amber:#e8a748;--green:#4af626;--dim:#5a6068;--bg:#0a0a0a;--text:#c8c8c8;--muted:#3a3e44}
+html{scroll-behavior:smooth}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);font-size:14px;line-height:1.8;overflow-x:hidden}
+::selection{background:var(--amber);color:#000}
+
+/* Layout */
+.shell{max-width:860px;margin:0 auto;padding:1rem 1.5rem}
+
+/* Nav */
+nav{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid #1a1a1a;padding:0}
+.nav-inner{display:flex;gap:2rem;align-items:center;padding:.8rem 0;flex-wrap:wrap}
+.nav-prompt{color:var(--green)}
+.nav-link{color:var(--dim);text-decoration:none;transition:color .2s}
+.nav-link:hover,.nav-link.active{color:var(--amber)}
+.nav-cwd{color:var(--muted);font-size:.75rem;margin-left:auto}
+
+/* Cursor */
+.cursor{display:inline-block;width:8px;height:15px;background:var(--amber);animation:blink 1s step-end infinite;vertical-align:text-bottom;margin-left:2px}
+@keyframes blink{50%{opacity:0}}
+
+/* Section */
+.section{padding:3rem 0;border-bottom:1px solid #1a1a1a}
+.section:last-of-type{border-bottom:none}
+.comment{color:var(--muted);font-size:.8rem}
+.comment::before{content:'# '}
+.blank{height:1.8em}
+
+/* Hero */
+.hero{padding:5rem 0 3rem;border-bottom:1px solid #1a1a1a}
+.ascii-logo{color:var(--amber);font-size:clamp(.45rem,.9vw,.85rem);line-height:1.2;white-space:pre;margin-bottom:2rem;overflow-x:auto}
+.hero-cmd{margin-top:1.5rem}
+.hero-cmd .prompt{color:var(--green)}
+.hero-cmd .flag{color:var(--amber)}
+.hero-desc{color:var(--dim);margin:.8rem 0;max-width:600px}
+.hero-tags{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.5rem}
+.tag{color:var(--muted);font-size:.75rem;padding:.2rem .6rem;border:1px solid #222}
+
+/* Tree style features */
+.tree{padding-left:0;list-style:none}
+.tree-item{position:relative;padding:.3rem 0}
+.tree-branch{color:var(--muted)}
+.tree-name{color:var(--amber)}
+.tree-desc{color:var(--dim);font-size:.82rem}
+.tree-sub{padding-left:2.5rem;list-style:none}
+.tree-sub .tree-item::before{content:'';position:absolute;left:-1.5rem;top:0;bottom:0;width:1px;border-left:1px solid #222}
+
+/* Terminal Demo */
+.demo-window{border:1px solid #222;margin:1.5rem 0;background:#050505}
+.demo-bar{padding:.4rem .8rem;border-bottom:1px solid #1a1a1a;color:var(--muted);font-size:.7rem;display:flex;justify-content:space-between}
+.demo-body{padding:1rem;line-height:2;font-size:.82rem;min-height:160px}
+.demo-body .p{color:var(--green)}
+.demo-body .c{color:var(--text)}
+.demo-body .o{color:var(--dim)}
+.demo-body .s{color:var(--green)}
+.demo-body .a{color:var(--amber)}
+.demo-body .m{color:#c678dd}
+
+/* CTA */
+.cta-section{text-align:left;padding:3rem 0}
+.cta-box{border:1px solid #222;padding:1.5rem;margin-top:1rem}
+.cta-box .install-cmd{color:var(--amber);font-size:1rem;margin:.8rem 0}
+.cta-box .note{color:var(--muted);font-size:.75rem}
+.cta-links{display:flex;gap:1.5rem;margin-top:1.5rem;flex-wrap:wrap}
+.cta-link{color:var(--text);text-decoration:none;padding:.5rem 1.2rem;border:1px solid var(--amber);transition:all .2s;font-size:.85rem}
+.cta-link:hover{background:var(--amber);color:#0a0a0a}
+.cta-link.secondary{border-color:#333;color:var(--dim)}
+.cta-link.secondary:hover{border-color:var(--dim);color:var(--text);background:transparent}
+
+/* Footer */
+footer{border-top:1px solid #1a1a1a;padding:1.5rem 0;color:var(--muted);font-size:.7rem;text-align:center}
+
+/* Divider */
+.hr{color:var(--muted);font-size:.7rem;margin:0;overflow:hidden;white-space:nowrap}
+
+/* Typing reveal */
+.type-reveal{opacity:0;transform:translateY(8px);transition:all .5s ease}
+.type-reveal.visible{opacity:1;transform:none}
+
+/* Responsive */
+@media(max-width:600px){
+  .shell{padding:1rem .8rem}
+  .ascii-logo{font-size:.35rem}
+  .nav-cwd{display:none}
+  body{font-size:13px}
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+<nav>
+<div class="nav-inner">
+  <span class="nav-prompt">$</span>
+  <a href="#hero" class="nav-link active">home</a>
+  <a href="#features" class="nav-link">features</a>
+  <a href="#demo" class="nav-link">demo</a>
+  <a href="#install" class="nav-link">install</a>
+  <span class="nav-cwd">~/muxvo</span>
+</div>
+</nav>
+
+<!-- Hero -->
+<section class="hero" id="hero">
+<div class="ascii-logo" aria-label="Muxvo ASCII Art">
+ __  __
+|  \/  |_   ___  ___   _____
+| |\/| | | | \ \/ / \ / / _ \
+| |  | | |_| |>  < \ V / (_) |
+|_|  |_|\__,_/_/\_\ \_/ \___/
+</div>
+
+<div class="comment">AI CLI 桌面工作台 -- v2.0</div>
+<div class="blank"></div>
+<div class="hero-cmd">
+<span class="prompt">$</span> muxvo <span class="flag">--info</span>
+</div>
+<p class="hero-desc">
+为 Claude Code、Codex、Gemini CLI 打造的统一桌面工作台。<br>
+全屏平铺终端 | 聊天历史搜索 | Skill 市场 + AI 评分。
+</p>
+<div class="hero-tags">
+  <span class="tag">electron</span>
+  <span class="tag">terminal</span>
+  <span class="tag">claude-code</span>
+  <span class="tag">codex</span>
+  <span class="tag">gemini-cli</span>
+</div>
+</section>
+
+<!-- Features -->
+<section class="section" id="features">
+<div class="comment type-reveal">$ tree ./features --depth=2</div>
+<div class="blank"></div>
+<ul class="tree">
+  <li class="tree-item type-reveal">
+    <span class="tree-branch">.</span>
+  </li>
+  <li class="tree-item type-reveal">
+    <span class="tree-branch">|-- </span><span class="tree-name">terminal/</span>
+    <span class="tree-desc"> ........... 全屏平铺终端管理</span>
+    <ul class="tree-sub">
+      <li class="tree-item"><span class="tree-branch">|-- </span>multi-pane.ts <span class="tree-desc">-- 多终端并排平铺，实时查看</span></li>
+      <li class="tree-item"><span class="tree-branch">|-- </span>state-sync.ts <span class="tree-desc">-- 终端状态持久化，重启不丢失</span></li>
+      <li class="tree-item"><span class="tree-branch">`-- </span>cwd-tracker.ts <span class="tree-desc">-- 工作目录自动追踪</span></li>
+    </ul>
+  </li>
+  <li class="tree-item type-reveal">
+    <span class="tree-branch">|-- </span><span class="tree-name">chat-history/</span>
+    <span class="tree-desc"> ...... 聊天历史全文搜索</span>
+    <ul class="tree-sub">
+      <li class="tree-item"><span class="tree-branch">|-- </span>search.ts <span class="tree-desc">-- 1,247 条记录，毫秒级检索</span></li>
+      <li class="tree-item"><span class="tree-branch">`-- </span>export.ts <span class="tree-desc">-- 导出 Markdown / JSON</span></li>
+    </ul>
+  </li>
+  <li class="tree-item type-reveal">
+    <span class="tree-branch">|-- </span><span class="tree-name">skill-market/</span>
+    <span class="tree-desc"> ...... V2 Skill 生态系统</span>
+    <ul class="tree-sub">
+      <li class="tree-item"><span class="tree-branch">|-- </span>marketplace.ts <span class="tree-desc">-- 社区共建，一键安装</span></li>
+      <li class="tree-item"><span class="tree-branch">`-- </span>ai-scorer.ts <span class="tree-desc">-- AI 智能评分与推荐</span></li>
+    </ul>
+  </li>
+  <li class="tree-item type-reveal">
+    <span class="tree-branch">|-- </span><span class="tree-name">file-browser/</span>
+    <span class="tree-desc"> ...... 内置文件浏览器</span>
+    <ul class="tree-sub">
+      <li class="tree-item"><span class="tree-branch">`-- </span>tree-view.ts <span class="tree-desc">-- 树形结构，快速导航</span></li>
+    </ul>
+  </li>
+  <li class="tree-item type-reveal">
+    <span class="tree-branch">|-- </span><span class="tree-name">config-editor/</span>
+    <span class="tree-desc"> ..... 配置可视化编辑</span>
+    <ul class="tree-sub">
+      <li class="tree-item"><span class="tree-branch">`-- </span>visual-edit.ts <span class="tree-desc">-- 图形化编辑 CLAUDE.md</span></li>
+    </ul>
+  </li>
+  <li class="tree-item type-reveal">
+    <span class="tree-branch">`-- </span><span class="tree-name">unified-hub/</span>
+    <span class="tree-desc"> ....... 多工具统一管理</span>
+    <ul class="tree-sub">
+      <li class="tree-item"><span class="tree-branch">`-- </span>launcher.ts <span class="tree-desc">-- Claude Code + Codex + Gemini CLI</span></li>
+    </ul>
+  </li>
+</ul>
+<div class="blank"></div>
+<div class="type-reveal"><span style="color:var(--dim)">6 directories, 9 files</span></div>
+</section>
+
+<!-- Terminal Demo -->
+<section class="section" id="demo">
+<div class="comment type-reveal">$ cat ./demo/session.log</div>
+<div class="demo-window type-reveal">
+<div class="demo-bar">
+  <span>muxvo:session -- zsh</span>
+  <span>120x40</span>
+</div>
+<div class="demo-body" id="typed-demo"></div>
+</div>
+</section>
+
+<!-- Install / CTA -->
+<section class="cta-section" id="install">
+<div class="comment type-reveal">$ muxvo install --help</div>
+<div class="blank"></div>
+<div class="cta-box type-reveal">
+  <div style="color:var(--text)">安装 Muxvo</div>
+  <div class="blank"></div>
+  <div class="comment">macOS (Apple Silicon / Intel)</div>
+  <div class="install-cmd">$ brew install --cask muxvo</div>
+  <div class="blank"></div>
+  <div class="comment">或直接下载</div>
+  <div class="install-cmd">$ curl -fsSL https://muxvo.dev/install.sh | sh</div>
+  <div class="blank"></div>
+  <div class="note">要求: macOS 12+ | Node.js 18+</div>
+</div>
+<div class="blank"></div>
+<div class="cta-links type-reveal">
+  <a href="#" class="cta-link">下载 .dmg</a>
+  <a href="#" class="cta-link secondary">GitHub</a>
+  <a href="#" class="cta-link secondary">文档</a>
+</div>
+</section>
+
+<div class="hr">------------------------------------------------------------------------</div>
+
+<footer>
+  <p><span style="color:var(--dim)">$</span> echo "2026 Muxvo. 为 AI 时代的开发者而生。"</p>
+</footer>
+
+</div><!-- /shell -->
+
+<script>
+// Scroll reveal
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+}, { threshold: 0.1 });
+document.querySelectorAll('.type-reveal').forEach(el => obs.observe(el));
+
+// Terminal typing
+const lines = [
+  { t: 'p', text: '~/ $ ', cmd: 'muxvo start' },
+  { t: 'o', text: '' },
+  { t: 's', text: '  Muxvo v2.0.0' },
+  { t: 'o', text: '  启动工作台...' },
+  { t: 'o', text: '' },
+  { t: 's', text: '  [OK] 终端管理器 .......... 就绪' },
+  { t: 's', text: '  [OK] 聊天历史同步 ........ 1,247 条' },
+  { t: 's', text: '  [OK] Skill 市场 .......... 38 个已装' },
+  { t: 's', text: '  [OK] 文件浏览器 .......... 就绪' },
+  { t: 'o', text: '' },
+  { t: 'p', text: '~/ $ ', cmd: 'muxvo chat search "部署方案"' },
+  { t: 'o', text: '' },
+  { t: 'a', text: '  搜索: "部署方案"' },
+  { t: 'o', text: '  找到 7 条匹配 (0.02s)' },
+  { t: 'o', text: '' },
+  { t: 'm', text: '  1. 2026-02-18 claude  "Docker 多阶段构建部署"' },
+  { t: 'm', text: '  2. 2026-02-15 codex   "K8s 滚动更新策略"' },
+  { t: 'm', text: '  3. 2026-02-10 gemini  "Vercel Edge 部署优化"' },
+  { t: 'o', text: '' },
+  { t: 's', text: '  >> 选择记录查看详情，或继续输入命令' },
+];
+
+const demo = document.getElementById('typed-demo');
+let li = 0, ci = 0, curDiv = null;
+
+function typeDemo() {
+  if (li >= lines.length) { demo.innerHTML += '<br><span class="p">~/ $ </span><span class="cursor"></span>'; return; }
+  const l = lines[li];
+  if (!curDiv) { curDiv = document.createElement('div'); demo.appendChild(curDiv); ci = 0; }
+
+  if (l.cmd) {
+    // typing a command
+    if (ci === 0) curDiv.innerHTML = '<span class="p">' + l.text + '</span><span class="c"></span>';
+    const cmdSpan = curDiv.querySelector('.c');
+    if (ci < l.cmd.length) {
+      cmdSpan.textContent += l.cmd[ci++];
+      setTimeout(typeDemo, 35 + Math.random() * 40);
+    } else { curDiv = null; li++; setTimeout(typeDemo, 400); }
+  } else {
+    curDiv.innerHTML = '<span class="' + l.t + '">' + l.text + '</span>';
+    curDiv = null; li++;
+    setTimeout(typeDemo, l.text ? 100 : 50);
+  }
+}
+
+const demoObs = new IntersectionObserver((entries) => {
+  if (entries[0].isIntersecting) { typeDemo(); demoObs.disconnect(); }
+}, { threshold: 0.3 });
+demoObs.observe(demo);
+</script>
+</body>
+</html>

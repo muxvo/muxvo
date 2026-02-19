@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MUXVO — 粗野主义</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--amber:#e8a748;--black:#000;--white:#fff;--border:4px solid var(--black)}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--white);color:var(--black);overflow-x:hidden;cursor:crosshair}
+a{color:inherit;text-decoration:none}
+::selection{background:var(--amber);color:var(--black)}
+
+/* Hero */
+.hero{min-height:100vh;border-bottom:var(--border);display:flex;flex-direction:column;justify-content:center;position:relative;padding:2rem}
+.hero-label{font-size:clamp(1rem,2vw,1.4rem);font-weight:700;text-transform:uppercase;letter-spacing:.3em;border:var(--border);display:inline-block;padding:.5rem 1.2rem;position:absolute;top:2rem;left:2rem;transition:all .2s}
+.hero-label:hover{background:var(--black);color:var(--white)}
+.hero-title{font-size:clamp(4rem,15vw,12rem);font-weight:900;line-height:.88;letter-spacing:-.06em;margin-left:-.5vw}
+.hero-title .accent{color:var(--amber);display:inline-block;transition:transform .3s}
+.hero-title .accent:hover{transform:rotate(-5deg) scale(1.08)}
+.hero-sub{font-size:clamp(1.2rem,3vw,2.4rem);font-weight:700;max-width:700px;margin-top:2rem;line-height:1.3;border-left:8px solid var(--amber);padding-left:1.5rem}
+.hero-badge{position:absolute;right:2rem;top:50%;transform:translateY(-50%) rotate(12deg);font-size:clamp(1rem,2.5vw,1.8rem);font-weight:900;border:var(--border);padding:1rem 2rem;background:var(--amber);transition:transform .3s}
+.hero-badge:hover{transform:translateY(-50%) rotate(-3deg) scale(1.1)}
+.scroll-hint{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:.9rem;animation:bounce 2s infinite}
+@keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-12px)}}
+
+/* Features */
+.features{border-bottom:var(--border)}
+.features-header{font-size:clamp(3rem,8vw,7rem);font-weight:900;padding:3rem 2rem 1rem;letter-spacing:-.04em;line-height:.95}
+.features-header span{color:var(--amber)}
+.feat-grid{display:grid;grid-template-columns:1fr 1fr}
+.feat-item{border:var(--border);padding:2.5rem 2rem;position:relative;overflow:hidden;transition:all .25s}
+.feat-item:hover{background:var(--black);color:var(--white)}
+.feat-item:hover .feat-num{color:var(--amber)}
+.feat-num{font-size:clamp(4rem,8vw,6rem);font-weight:900;line-height:1;opacity:.15;position:absolute;right:1rem;top:.5rem;transition:all .3s}
+.feat-item:hover .feat-num{opacity:1;transform:rotate(-8deg)}
+.feat-title{font-size:clamp(1.4rem,3vw,2.2rem);font-weight:900;margin-bottom:.8rem;text-transform:uppercase;letter-spacing:.02em}
+.feat-desc{font-size:clamp(.95rem,1.5vw,1.15rem);line-height:1.5;max-width:420px;font-weight:400}
+
+/* Terminal */
+.terminal-section{border-bottom:var(--border);display:grid;grid-template-columns:1fr 1fr;min-height:70vh}
+.terminal-text{padding:4rem 2rem;display:flex;flex-direction:column;justify-content:center;border-right:var(--border)}
+.terminal-text h2{font-size:clamp(2.5rem,6vw,5rem);font-weight:900;line-height:.95;letter-spacing:-.03em}
+.terminal-text h2 span{display:block;color:var(--amber);transform:translateX(1.5rem);font-style:italic}
+.terminal-text p{margin-top:1.5rem;font-size:clamp(1rem,1.8vw,1.3rem);line-height:1.6;max-width:480px;border-top:var(--border);padding-top:1.5rem}
+.terminal-demo{background:var(--black);color:#b0b0b0;font-family:'JetBrains Mono',monospace;padding:2.5rem 2rem;display:flex;flex-direction:column;justify-content:center;position:relative;font-size:clamp(.75rem,1.2vw,1rem);line-height:1.8}
+.terminal-demo::before{content:'TERMINAL';position:absolute;top:1.5rem;right:2rem;font-size:.7rem;letter-spacing:.4em;color:var(--amber);border:2px solid var(--amber);padding:.3rem .8rem}
+.t-prompt{color:var(--amber)}
+.t-cmd{color:var(--white)}
+.t-comment{color:#555}
+.t-output{color:#888}
+.t-cursor{display:inline-block;width:8px;height:1.1em;background:var(--amber);animation:blink 1s step-end infinite;vertical-align:text-bottom;margin-left:2px}
+@keyframes blink{50%{opacity:0}}
+.t-line{opacity:0;animation:typeIn .3s forwards}
+@keyframes typeIn{to{opacity:1}}
+
+/* CTA */
+.cta{min-height:50vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4rem 2rem;position:relative}
+.cta-big{font-size:clamp(3rem,10vw,9rem);font-weight:900;line-height:.9;letter-spacing:-.05em}
+.cta-big .rotate{display:inline-block;color:var(--amber);transform:rotate(-6deg);transition:transform .3s}
+.cta-big .rotate:hover{transform:rotate(3deg) scale(1.05)}
+.cta-sub{font-size:clamp(1rem,2vw,1.5rem);margin-top:1.5rem;font-weight:700;max-width:500px}
+.cta-btn{display:inline-block;margin-top:2.5rem;font-size:clamp(1.1rem,2vw,1.6rem);font-weight:900;text-transform:uppercase;letter-spacing:.15em;border:var(--border);padding:1.2rem 3rem;background:var(--black);color:var(--white);transition:all .2s;cursor:pointer}
+.cta-btn:hover{background:var(--amber);color:var(--black);transform:translate(-4px,-4px);box-shadow:4px 4px 0 var(--black)}
+.cta-footer{margin-top:3rem;font-size:.85rem;letter-spacing:.15em;text-transform:uppercase;opacity:.5}
+
+/* Marquee */
+.marquee{border-top:var(--border);border-bottom:var(--border);overflow:hidden;white-space:nowrap;padding:1rem 0;background:var(--black);color:var(--white)}
+.marquee-inner{display:inline-block;animation:scroll 20s linear infinite;font-size:clamp(1rem,2vw,1.5rem);font-weight:900;letter-spacing:.15em;text-transform:uppercase}
+@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.marquee-inner span{color:var(--amber);margin:0 2rem}
+
+/* Responsive */
+@media(max-width:768px){
+  .feat-grid{grid-template-columns:1fr}
+  .terminal-section{grid-template-columns:1fr}
+  .terminal-text{border-right:none;border-bottom:var(--border)}
+  .hero-badge{position:relative;right:auto;top:auto;transform:rotate(5deg);margin-top:2rem;display:inline-block}
+  .hero{padding:6rem 1.5rem 3rem}
+  .terminal-text h2 span{transform:translateX(.5rem)}
+}
+</style>
+</head>
+<body>
+
+<!-- Marquee Top -->
+<div class="marquee">
+  <div class="marquee-inner" id="marquee">
+    AI 终端工作台 <span>///</span> Claude Code <span>///</span> Codex <span>///</span> Gemini CLI <span>///</span> 全屏终端 <span>///</span> 聊天历史 <span>///</span> Skill 市场 <span>///</span> AI 评分 <span>///</span>
+    AI 终端工作台 <span>///</span> Claude Code <span>///</span> Codex <span>///</span> Gemini CLI <span>///</span> 全屏终端 <span>///</span> 聊天历史 <span>///</span> Skill 市场 <span>///</span> AI 评分 <span>///</span>
+  </div>
+</div>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-label">桌面工作台 / 2025</div>
+  <h1 class="hero-title">MUX<span class="accent">VO</span></h1>
+  <p class="hero-sub">为 AI CLI 重度用户打造的终极桌面工作台。终端、历史、配置、市场——一站搞定。</p>
+  <div class="hero-badge">开源免费 ↗</div>
+  <div class="scroll-hint">[ 向下滚动 ↓ ]</div>
+</section>
+
+<!-- Features -->
+<section class="features">
+  <h2 class="features-header">核心<span>功能</span></h2>
+  <div class="feat-grid">
+    <div class="feat-item" style="animation-delay:.1s">
+      <div class="feat-num">01</div>
+      <h3 class="feat-title">全屏终端</h3>
+      <p class="feat-desc">多终端平铺管理，全屏沉浸式操作。支持 Claude Code、Codex、Gemini CLI 无缝切换。</p>
+    </div>
+    <div class="feat-item">
+      <div class="feat-num">02</div>
+      <h3 class="feat-title">聊天历史</h3>
+      <p class="feat-desc">自动同步所有 AI 对话记录，全文搜索、导出，再也不丢失任何灵感。</p>
+    </div>
+    <div class="feat-item">
+      <div class="feat-num">03</div>
+      <h3 class="feat-title">配置可视化</h3>
+      <p class="feat-desc">图形化编辑 CLAUDE.md、MCP 配置，告别手动编辑 JSON 的痛苦。</p>
+    </div>
+    <div class="feat-item">
+      <div class="feat-num">04</div>
+      <h3 class="feat-title">Skill 市场</h3>
+      <p class="feat-desc">V2 Skill 生态系统，AI 自动评分，一键安装社区最佳实践。</p>
+    </div>
+  </div>
+</section>
+
+<!-- Terminal Demo -->
+<section class="terminal-section">
+  <div class="terminal-text">
+    <h2>真正的<span>终端体验</span></h2>
+    <p>不是模拟器，不是简化版。完整的终端能力，配合 AI CLI 工具的深度集成，让你的开发效率翻倍。</p>
+  </div>
+  <div class="terminal-demo" id="terminalDemo">
+    <div class="t-line" style="animation-delay:.2s"><span class="t-comment"># 在 Muxvo 中启动 Claude Code</span></div>
+    <div class="t-line" style="animation-delay:.6s"><span class="t-prompt">~/project $</span> <span class="t-cmd">claude</span></div>
+    <div class="t-line" style="animation-delay:1s"><span class="t-output">╭──────────────────────────────╮</span></div>
+    <div class="t-line" style="animation-delay:1.1s"><span class="t-output">│  Claude Code v1.0            │</span></div>
+    <div class="t-line" style="animation-delay:1.2s"><span class="t-output">│  已连接 Muxvo 工作台         │</span></div>
+    <div class="t-line" style="animation-delay:1.3s"><span class="t-output">╰──────────────────────────────╯</span></div>
+    <div class="t-line" style="animation-delay:1.8s"><span class="t-prompt">claude &gt;</span> <span class="t-cmd">重构 chat 模块的状态管理</span></div>
+    <div class="t-line" style="animation-delay:2.4s"><span class="t-output">正在分析代码结构...</span></div>
+    <div class="t-line" style="animation-delay:3s"><span class="t-output">已完成 3 个文件的重构 ✓</span></div>
+    <div class="t-line" style="animation-delay:3.5s"><span class="t-prompt">~/project $</span> <span class="t-cursor"></span></div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <h2 class="cta-big">立即<br><span class="rotate">开始</span></h2>
+  <p class="cta-sub">加入数千名开发者，用 Muxvo 释放 AI CLI 工具的全部潜力。</p>
+  <a href="#" class="cta-btn">下载 Muxvo →</a>
+  <div class="cta-footer">macOS / Windows / Linux</div>
+</section>
+
+<!-- Marquee Bottom -->
+<div class="marquee">
+  <div class="marquee-inner">
+    MUXVO <span>★</span> 开源 <span>★</span> 免费 <span>★</span> 高效 <span>★</span> 极致 <span>★</span>
+    MUXVO <span>★</span> 开源 <span>★</span> 免费 <span>★</span> 高效 <span>★</span> 极致 <span>★</span>
+    MUXVO <span>★</span> 开源 <span>★</span> 免费 <span>★</span> 高效 <span>★</span> 极致 <span>★</span>
+  </div>
+</div>
+
+<script>
+// Intersection Observer for terminal lines
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.querySelectorAll('.t-line').forEach((line, i) => {
+        line.style.animationDelay = `${i * 0.4}s`;
+        line.style.animationPlayState = 'running';
+      });
+    }
+  });
+}, { threshold: 0.3 });
+const term = document.getElementById('terminalDemo');
+if (term) observer.observe(term);
+
+// Parallax-like tilt on feature items
+document.querySelectorAll('.feat-item').forEach(item => {
+  item.addEventListener('mousemove', e => {
+    const rect = item.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 6;
+    const y = ((e.clientY - rect.top) / rect.height - 0.5) * 6;
+    item.style.transform = `translate(${x}px, ${y}px)`;
+  });
+  item.addEventListener('mouseleave', () => {
+    item.style.transform = 'translate(0,0)';
+  });
+});
+</script>
+</body>
+</html>
