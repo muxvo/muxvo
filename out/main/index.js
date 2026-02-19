@@ -27,8 +27,8 @@ const utils = require("@electron-toolkit/utils");
 const child_process = require("child_process");
 const pty = require("node-pty");
 const os = require("os");
-const promises = require("fs/promises");
 const fs = require("fs");
+const promises = require("fs/promises");
 function _interopNamespaceDefault(e) {
   const n = Object.create(null, { [Symbol.toStringTag]: { value: "Module" } });
   if (e) {
@@ -77,7 +77,8 @@ const IPC_CHANNELS = {
     WRITE_CLIPBOARD_IMAGE: "fs:write-clipboard-image"
   },
   CHAT: {
-    GET_HISTORY: "chat:get-history",
+    GET_PROJECTS: "chat:get-projects",
+    GET_SESSIONS: "chat:get-sessions",
     GET_SESSION: "chat:get-session",
     SEARCH: "chat:search",
     SESSION_UPDATE: "chat:session-update",
@@ -498,256 +499,332 @@ function parseJsonl(input) {
     incompleteTailIgnored
   };
 }
-function createDualSourceReader(opts) {
-  const isTestMode = opts.ccPath !== void 0 || opts.ccExists !== void 0;
-  if (isTestMode) {
-    return {
-      async read() {
-        if (opts.ccExists && opts.ccReadable !== false) {
-          return {
-            source: "cc",
-            data: [],
-            fallback: false
-          };
-        }
-        if (opts.mirrorExists) {
-          return {
-            source: "mirror",
-            data: [],
-            fallback: true,
-            hint: "当前显示本地备份数据"
-          };
-        }
-        return {
-          source: null,
-          fallback: false,
-          error: "CC files and mirror both unavailable",
-          state: "Error"
-        };
-      },
-      // Compatibility shims for real API
-      async readHistory() {
-        const result = await this.read();
-        return {
-          source: result.source,
-          entries: result.data || [],
-          fallback: result.fallback,
-          error: result.error,
-          hint: result.hint
-        };
-      },
-      async readSession() {
-        const result = await this.read();
-        return {
-          source: result.source,
-          messages: result.data || [],
-          fallback: result.fallback,
-          error: result.error,
-          hint: result.hint
-        };
-      }
-    };
+function createChatProjectReader(opts) {
+  const projectsDir = path.join(opts.ccBasePath, "projects");
+  async function readFirstLines(filePath, maxLines) {
+    const content = await fs.promises.readFile(filePath, "utf-8");
+    const lines = content.split("\n");
+    return lines.slice(0, maxLines);
   }
-  const { ccBasePath, mirrorBasePath } = opts;
-  if (!ccBasePath || !mirrorBasePath) {
-    throw new Error("ccBasePath and mirrorBasePath are required for production mode");
+  async function extractCwdFromFile(filePath) {
+    try {
+      const lines = await readFirstLines(filePath, 20);
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        try {
+          const obj = JSON.parse(trimmed);
+          if (obj.type === "user" && obj.cwd) {
+            return obj.cwd;
+          }
+        } catch {
+        }
+      }
+    } catch {
+    }
+    return "";
+  }
+  async function extractSessionSummary(projectHash, filePath, fileName) {
+    const sessionId = fileName.replace(/\.jsonl$/, "");
+    const stat = await fs.promises.stat(filePath);
+    const lastModified = stat.mtimeMs;
+    let title = "";
+    let startedAt = "";
+    let messageCount = 0;
+    try {
+      const content = await fs.promises.readFile(filePath, "utf-8");
+      const contentLines = content.split("\n");
+      let foundFirstUser = false;
+      for (const line of contentLines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        if (trimmed.includes('"type":"user"') || trimmed.includes('"type": "user"')) {
+          messageCount++;
+          if (!foundFirstUser) {
+            try {
+              const obj = JSON.parse(trimmed);
+              if (obj.type === "user") {
+                const rawContent = typeof obj.message?.content === "string" ? obj.message.content : typeof obj.content === "string" ? obj.content : "";
+                title = rawContent.slice(0, 100);
+                startedAt = obj.timestamp || "";
+                foundFirstUser = true;
+              }
+            } catch {
+            }
+          }
+        } else if (trimmed.includes('"type":"assistant"') || trimmed.includes('"type": "assistant"')) {
+          messageCount++;
+        }
+      }
+    } catch {
+    }
+    return {
+      sessionId,
+      projectHash,
+      title,
+      startedAt,
+      lastModified,
+      messageCount
+    };
   }
   return {
     /**
-     * Read history.jsonl from CC path, fallback to mirror if unavailable.
+     * Scan all projects under ~/.claude/projects/
      */
-    async readHistory() {
-      const ccPath = `${ccBasePath}/history.jsonl`;
-      const mirrorPath = `${mirrorBasePath}/history.jsonl`;
+    async getProjects() {
       try {
-        const content = await promises.readFile(ccPath, "utf-8");
-        const parsed = parseJsonl(content);
-        const entries = parsed.entries.filter((e) => e.sessionId);
-        return {
-          source: "cc",
-          entries,
-          fallback: false
-        };
-      } catch {
-        try {
-          const content = await promises.readFile(mirrorPath, "utf-8");
-          const parsed = parseJsonl(content);
-          const entries = parsed.entries.filter((e) => e.sessionId);
-          return {
-            source: "mirror",
-            entries,
-            fallback: true,
-            hint: "当前显示本地备份数据"
-          };
-        } catch {
-          return {
-            source: null,
-            entries: [],
-            fallback: false,
-            error: "CC files and mirror both unavailable"
-          };
+        const dirs = await fs.promises.readdir(projectsDir, { withFileTypes: true });
+        const projects = [];
+        for (const dir of dirs) {
+          if (!dir.isDirectory()) continue;
+          const projectHash = dir.name;
+          const projectPath = path.join(projectsDir, projectHash);
+          try {
+            const files = await fs.promises.readdir(projectPath);
+            const jsonlFiles = files.filter((f) => f.endsWith(".jsonl"));
+            if (jsonlFiles.length === 0) continue;
+            let lastActivity = 0;
+            for (const f of jsonlFiles) {
+              try {
+                const stat = await fs.promises.stat(path.join(projectPath, f));
+                if (stat.mtimeMs > lastActivity) {
+                  lastActivity = stat.mtimeMs;
+                }
+              } catch {
+              }
+            }
+            const displayPath = await extractCwdFromFile(path.join(projectPath, jsonlFiles[0]));
+            const displayName = displayPath ? path.basename(displayPath) : projectHash;
+            projects.push({
+              projectHash,
+              displayPath,
+              displayName,
+              sessionCount: jsonlFiles.length,
+              lastActivity
+            });
+          } catch {
+          }
         }
+        projects.sort((a, b) => b.lastActivity - a.lastActivity);
+        return projects;
+      } catch {
+        return [];
       }
     },
     /**
-     * Read session JSONL from CC path, fallback to mirror if unavailable.
-     * @param projectHash - Project hash (e.g., "abc123")
-     * @param sessionId - Session ID (e.g., "uuid-string")
+     * List sessions for a specific project.
      */
-    async readSession(projectHash, sessionId) {
-      const ccPath = `${ccBasePath}/projects/${projectHash}/${sessionId}.jsonl`;
-      const mirrorPath = `${mirrorBasePath}/projects/${projectHash}/${sessionId}.jsonl`;
+    async getSessionsForProject(projectHash) {
+      const projectPath = path.join(projectsDir, projectHash);
       try {
-        const content = await promises.readFile(ccPath, "utf-8");
-        const parsed = parseJsonl(content);
-        const messages = parsed.entries;
-        return {
-          source: "cc",
-          messages,
-          fallback: false
-        };
-      } catch {
-        try {
-          const content = await promises.readFile(mirrorPath, "utf-8");
-          const parsed = parseJsonl(content);
-          const messages = parsed.entries;
-          return {
-            source: "mirror",
-            messages,
-            fallback: true,
-            hint: "当前显示本地备份数据"
-          };
-        } catch {
-          return {
-            source: null,
-            messages: [],
-            fallback: false,
-            error: "Session file not found in CC or mirror"
-          };
+        const files = await fs.promises.readdir(projectPath);
+        const jsonlFiles = files.filter((f) => f.endsWith(".jsonl"));
+        const sessions = [];
+        for (const f of jsonlFiles) {
+          try {
+            const summary = await extractSessionSummary(projectHash, path.join(projectPath, f), f);
+            sessions.push(summary);
+          } catch {
+          }
         }
+        sessions.sort((a, b) => b.lastModified - a.lastModified);
+        return sessions;
+      } catch {
+        return [];
       }
     },
-    // Test-friendly API compatibility (not used in production)
-    async read() {
-      const result = await this.readHistory();
-      return {
-        source: result.source,
-        data: result.entries,
-        fallback: result.fallback,
-        error: result.error,
-        hint: result.hint
-      };
+    /**
+     * Get recent sessions across all projects.
+     */
+    async getAllRecentSessions(limit) {
+      try {
+        const dirs = await fs.promises.readdir(projectsDir, { withFileTypes: true });
+        const allFiles = [];
+        for (const dir of dirs) {
+          if (!dir.isDirectory()) continue;
+          const projectHash = dir.name;
+          const projectPath = path.join(projectsDir, projectHash);
+          try {
+            const files = await fs.promises.readdir(projectPath);
+            for (const f of files) {
+              if (!f.endsWith(".jsonl")) continue;
+              try {
+                const filePath = path.join(projectPath, f);
+                const stat = await fs.promises.stat(filePath);
+                allFiles.push({ projectHash, fileName: f, filePath, mtime: stat.mtimeMs });
+              } catch {
+              }
+            }
+          } catch {
+          }
+        }
+        allFiles.sort((a, b) => b.mtime - a.mtime);
+        const topFiles = allFiles.slice(0, limit);
+        const sessions = [];
+        for (const file of topFiles) {
+          try {
+            const summary = await extractSessionSummary(file.projectHash, file.filePath, file.fileName);
+            sessions.push(summary);
+          } catch {
+          }
+        }
+        return sessions;
+      } catch {
+        return [];
+      }
+    },
+    /**
+     * Read and normalize all messages from a session file.
+     */
+    async readSession(projectHash, sessionId) {
+      const filePath = path.join(projectsDir, projectHash, `${sessionId}.jsonl`);
+      try {
+        const content = await fs.promises.readFile(filePath, "utf-8");
+        const parsed = parseJsonl(content);
+        const messages = [];
+        for (const entry of parsed.entries) {
+          const type = entry.type;
+          if (type !== "user" && type !== "assistant") continue;
+          let normalizedContent;
+          if (type === "user") {
+            const msgContent = entry.message?.content;
+            normalizedContent = typeof msgContent === "string" ? msgContent : typeof entry.content === "string" ? entry.content : "";
+          } else {
+            const msgContent = entry.message?.content;
+            if (Array.isArray(msgContent)) {
+              normalizedContent = msgContent;
+            } else if (Array.isArray(entry.content)) {
+              normalizedContent = entry.content;
+            } else if (typeof msgContent === "string") {
+              normalizedContent = msgContent;
+            } else if (typeof entry.content === "string") {
+              normalizedContent = entry.content;
+            } else {
+              normalizedContent = "";
+            }
+          }
+          messages.push({
+            uuid: entry.uuid || "",
+            type,
+            sessionId: entry.sessionId || sessionId,
+            cwd: entry.cwd || "",
+            gitBranch: entry.gitBranch,
+            timestamp: entry.timestamp || "",
+            content: normalizedContent
+          });
+        }
+        return messages;
+      } catch {
+        return [];
+      }
+    },
+    /**
+     * Search across all sessions for a query string.
+     */
+    async search(query) {
+      const results = [];
+      const q = query.toLowerCase();
+      try {
+        const dirs = await fs.promises.readdir(projectsDir, { withFileTypes: true });
+        for (const dir of dirs) {
+          if (!dir.isDirectory()) continue;
+          const projectHash = dir.name;
+          const projectPath = path.join(projectsDir, projectHash);
+          try {
+            const files = await fs.promises.readdir(projectPath);
+            for (const f of files) {
+              if (!f.endsWith(".jsonl")) continue;
+              const sessionId = f.replace(/\.jsonl$/, "");
+              try {
+                const content = await fs.promises.readFile(path.join(projectPath, f), "utf-8");
+                const lines = content.split("\n");
+                for (const line of lines) {
+                  const trimmed = line.trim();
+                  if (!trimmed) continue;
+                  try {
+                    const obj = JSON.parse(trimmed);
+                    if (obj.type !== "user") continue;
+                    const text = typeof obj.message?.content === "string" ? obj.message.content : typeof obj.content === "string" ? obj.content : "";
+                    if (text.toLowerCase().includes(q)) {
+                      results.push({
+                        projectHash,
+                        sessionId,
+                        snippet: text.slice(0, 200),
+                        timestamp: obj.timestamp || ""
+                      });
+                    }
+                  } catch {
+                  }
+                }
+              } catch {
+              }
+            }
+          } catch {
+          }
+        }
+      } catch {
+      }
+      return results;
     }
   };
 }
 const CC_BASE_PATH = path.join(os.homedir(), ".claude");
-const MIRROR_BASE_PATH = path.join(os.homedir(), ".muxvo", "data", "mirror");
 function createChatHandlers() {
-  const reader = createDualSourceReader({
-    ccBasePath: CC_BASE_PATH,
-    mirrorBasePath: MIRROR_BASE_PATH
-  });
+  const reader = createChatProjectReader({ ccBasePath: CC_BASE_PATH });
   return {
-    async getHistory(opts) {
-      if (opts?.forceFail) {
-        return {
-          sessions: [],
-          error: { code: "FILE_NOT_FOUND", message: "CC files and mirror both unavailable" }
-        };
+    async getProjects() {
+      const projects = await reader.getProjects();
+      return { projects };
+    },
+    async getSessions(params) {
+      if (params.projectHash === "__all__") {
+        const sessions2 = await reader.getAllRecentSessions(50);
+        return { sessions: sessions2 };
       }
-      const result = await reader.readHistory();
-      if (result.source === null) {
-        return {
-          sessions: [],
-          error: { code: "FILE_NOT_FOUND", message: result.error || "History unavailable" }
-        };
-      }
-      return {
-        sessions: result.entries,
-        source: result.source,
-        fallback: result.fallback,
-        hint: result.hint
-      };
+      const sessions = await reader.getSessionsForProject(params.projectHash);
+      return { sessions };
     },
     async getSession(params) {
-      const projectHash = params.projectHash || "default";
-      const result = await reader.readSession(projectHash, params.sessionId);
-      if (result.source === null) {
-        return {
-          messages: [],
-          error: { code: "FILE_NOT_FOUND", message: result.error || "Session unavailable" }
-        };
-      }
-      return {
-        messages: result.messages,
-        source: result.source,
-        fallback: result.fallback,
-        hint: result.hint
-      };
+      const messages = await reader.readSession(params.projectHash, params.sessionId);
+      return { messages };
     },
     async search(params) {
-      const history = await reader.readHistory();
-      if (history.source === null) return { results: [] };
-      const q = params.query.toLowerCase();
-      const results = history.entries.filter((e) => e.display.toLowerCase().includes(q)).map((e) => ({
-        project: e.project,
-        sessionId: e.sessionId || "",
-        snippet: e.display.slice(0, 100),
-        timestamp: e.timestamp
-      }));
+      const results = await reader.search(params.query);
       return { results };
     },
     async export(params) {
       const { promises: fsp } = await import("fs");
-      const { join: join2 } = await import("path");
-      const { homedir: homedir2 } = await import("os");
-      const projectHash = params.projectHash || "default";
-      const result = await reader.readSession(projectHash, params.sessionId);
-      if (result.source === null) {
-        return {
-          outputPath: "",
-          error: { code: "SESSION_NOT_FOUND", message: result.error || "Session unavailable" }
-        };
-      }
+      const messages = await reader.readSession(params.projectHash, params.sessionId);
       let content;
       let ext;
       if (params.format === "json") {
-        content = JSON.stringify(result.messages, null, 2);
+        content = JSON.stringify(messages, null, 2);
         ext = "json";
       } else {
         const lines = [`# Session Export: ${params.sessionId}`, ""];
-        for (const msg of result.messages) {
-          const role = msg.message?.role || "unknown";
-          const timestamp = msg.timestamp || "";
-          const body = msg.message?.content || "";
-          lines.push(`## ${role} (${timestamp})`, "", body, "");
+        for (const msg of messages) {
+          const role = msg.type;
+          const body = typeof msg.content === "string" ? msg.content : msg.content.filter((b) => b.type === "text").map((b) => b.text).join("\n");
+          lines.push(`## ${role} (${msg.timestamp})`, "", body, "");
         }
         content = lines.join("\n");
         ext = "md";
       }
-      const exportDir = join2(homedir2(), ".muxvo", "exports");
+      const exportDir = path.join(os.homedir(), ".muxvo", "exports");
       await fsp.mkdir(exportDir, { recursive: true });
-      const filePath = join2(exportDir, `${params.sessionId}.${ext}`);
+      const filePath = path.join(exportDir, `${params.sessionId}.${ext}`);
       await fsp.writeFile(filePath, content, "utf-8");
       return { outputPath: filePath };
     }
   };
 }
-createChatHandlers();
 function registerChatHandlers() {
   const handlers = createChatHandlers();
-  electron.ipcMain.handle(IPC_CHANNELS.CHAT.GET_HISTORY, async (_event, params) => {
-    return handlers.getHistory(params);
-  });
-  electron.ipcMain.handle(IPC_CHANNELS.CHAT.GET_SESSION, async (_event, params) => {
-    return handlers.getSession(params);
-  });
-  electron.ipcMain.handle(IPC_CHANNELS.CHAT.SEARCH, async (_event, params) => {
-    return handlers.search(params);
-  });
-  electron.ipcMain.handle(IPC_CHANNELS.CHAT.EXPORT, async (_event, params) => {
-    return handlers.export(params);
-  });
+  electron.ipcMain.handle(IPC_CHANNELS.CHAT.GET_PROJECTS, async () => handlers.getProjects());
+  electron.ipcMain.handle(IPC_CHANNELS.CHAT.GET_SESSIONS, async (_e, p) => handlers.getSessions(p));
+  electron.ipcMain.handle(IPC_CHANNELS.CHAT.GET_SESSION, async (_e, p) => handlers.getSession(p));
+  electron.ipcMain.handle(IPC_CHANNELS.CHAT.SEARCH, async (_e, p) => handlers.search(p));
+  electron.ipcMain.handle(IPC_CHANNELS.CHAT.EXPORT, async (_e, p) => handlers.export(p));
 }
 const CLAUDE_DIR$1 = path.join(os.homedir(), ".claude");
 const RESOURCE_TYPE_MAP = {

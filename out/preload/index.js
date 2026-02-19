@@ -29,7 +29,8 @@ const IPC_CHANNELS = {
     WRITE_CLIPBOARD_IMAGE: "fs:write-clipboard-image"
   },
   CHAT: {
-    GET_HISTORY: "chat:get-history",
+    GET_PROJECTS: "chat:get-projects",
+    GET_SESSIONS: "chat:get-sessions",
     GET_SESSION: "chat:get-session",
     SEARCH: "chat:search",
     SESSION_UPDATE: "chat:session-update",
@@ -159,9 +160,11 @@ const api = {
   },
   // --- Chat domain ---
   chat: {
-    getHistory: (params) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_HISTORY, params),
-    getSession: (sessionId) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_SESSION, { sessionId }),
+    getProjects: () => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_PROJECTS),
+    getSessions: (projectHash) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_SESSIONS, { projectHash }),
+    getSession: (projectHash, sessionId) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_SESSION, { projectHash, sessionId }),
     search: (query) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.SEARCH, { query }),
+    export: (projectHash, sessionId, format) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.EXPORT, { projectHash, sessionId, format }),
     onSessionUpdate: (callback) => {
       const handler = (_event, data) => callback(data);
       electron.ipcRenderer.on(IPC_CHANNELS.CHAT.SESSION_UPDATE, handler);
@@ -171,8 +174,7 @@ const api = {
       const handler = (_event, data) => callback(data);
       electron.ipcRenderer.on(IPC_CHANNELS.CHAT.SYNC_STATUS, handler);
       return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.CHAT.SYNC_STATUS, handler);
-    },
-    export: (sessionId, format) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.EXPORT, { sessionId, format })
+    }
   },
   // --- Auth domain ---
   auth: {
