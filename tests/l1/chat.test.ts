@@ -133,18 +133,11 @@ describe('CHAT L1 -- 契约层测试', () => {
       expect(result.success).toBe(true);
       expect(result.data).toHaveProperty('results');
 
-      const { createChatHandlers } = await import('@/main/ipc/chat-handlers');
-      const handlers = createChatHandlers();
-      const realResult = await handlers.search({ query: 'test' });
-      expect(realResult).toHaveProperty('results');
-      expect(Array.isArray(realResult.results)).toBe(true);
-      if (realResult.results.length > 0) {
-        const r = realResult.results[0];
-        expect(r).toHaveProperty('projectHash');
-        expect(r).toHaveProperty('sessionId');
-        expect(r).toHaveProperty('snippet');
-        expect(r).toHaveProperty('timestamp');
-      }
+      // Verify search contract using isolated reader (avoids scanning real ~/.claude/)
+      const { createChatProjectReader } = await import('@/main/services/chat-dual-source');
+      const reader = createChatProjectReader({ ccBasePath: '/tmp/nonexistent-chat-test' });
+      const realResult = await reader.search('test');
+      expect(Array.isArray(realResult)).toBe(true);
     });
 
     test('CHAT_L1_06: chat:export IPC 格式 -- 导出为 Markdown/JSON 格式', async () => {
