@@ -18,6 +18,9 @@ disown
 ## Commands
 
 ```bash
+# Build for production
+npm run build
+
 # Run all tests (609 tests, runs verify-coverage as pretest)
 npm test
 
@@ -52,8 +55,11 @@ npx tsc --noEmit
 ```
 Main Process (src/main/)          Renderer Process (src/renderer/)
 ├── ipc/        ← IPC handlers   ├── components/   ← UI components
-├── services/   ← Core logic     ├── features/     ← Feature stores/views
+├── services/   ← Core logic     ├── contexts/     ← React contexts
+                                  ├── features/     ← Feature stores/views
+                                  ├── hooks/        ← Custom React hooks
                                   ├── stores/       ← State management
+                                  ├── styles/       ← Global styles
                                   └── utils/        ← UI utilities
 ```
 
@@ -61,7 +67,7 @@ Communication is exclusively through IPC channels organized by 10 domains (`src/
 
 ### Source Code Layout
 
-- **`src/shared/`** — Cross-process code: types (14 files), state machines, utility functions, error definitions, constants
+- **`src/shared/`** — Cross-process code: types (12 files), state machines, utility functions, error definitions, constants
 - **`src/shared/machines/`** — State machines using simple class pattern (NO XState). Each exports a `create*Machine()` factory returning `{ state, context, send() }`
 - **`src/modules/`** — 15 domain modules (app, auth, chat, community, config, data, editor, file, marketplace, onboarding, publish, score, security, showcase, terminal). These are higher-level orchestrators used primarily by L3 tests
 - **`src/main/services/`** — Main process business logic (terminal manager, chat sync, file watcher, marketplace installer, etc.)
