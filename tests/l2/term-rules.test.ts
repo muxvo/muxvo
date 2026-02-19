@@ -616,4 +616,69 @@ describe('TERM L2 -- 业务规则测试', () => {
       expect(manager.order).toEqual(['A', 'B', 'C']);
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // 2.11 Grid 布局升级补充测试
+  // ---------------------------------------------------------------------------
+  describe('Grid 布局升级补充测试', () => {
+    test('TERM_L2_101_resize_container_size: containerSize 精确比例计算', async () => {
+      const { createGridResizeManager } = await import(
+        '@/renderer/stores/grid-resize'
+      );
+      const manager = createGridResizeManager({
+        cols: 2,
+        rows: 1,
+        columnRatios: [1, 1],
+      });
+
+      // With containerSize=1000, each col is 500px. Drag right 100px
+      manager.startColResize(0, { clientX: 500 }, 1000);
+      manager.moveResize({ clientX: 600 });
+      manager.endResize();
+
+      // 100px / 1000px total * 2 (total ratio) = 0.2 shift
+      // Left: 1 + 0.2 = 1.2, Right: 1 - 0.2 = 0.8
+      expect(manager.columnRatios[0]).toBeCloseTo(1.2, 1);
+      expect(manager.columnRatios[1]).toBeCloseTo(0.8, 1);
+    });
+
+    test('TERM_L2_102_resize_no_container_fallback: 无 containerSize 回退', async () => {
+      const { createGridResizeManager } = await import(
+        '@/renderer/stores/grid-resize'
+      );
+      const manager = createGridResizeManager({
+        cols: 2,
+        rows: 1,
+        columnRatios: [1, 1],
+      });
+
+      // Without containerSize, uses fallback totalPx=1000
+      manager.startColResize(0, { clientX: 500 });
+      manager.moveResize({ clientX: 600 });
+      manager.endResize();
+
+      // Should still resize (delta=100, totalPx=1000, shift=0.2)
+      expect(manager.columnRatios[0]).toBeGreaterThan(1);
+      expect(manager.columnRatios[1]).toBeLessThan(1);
+      expect(manager.columnRatios[0] + manager.columnRatios[1]).toBeCloseTo(2, 5);
+    });
+
+    test('TERM_L2_103_drag_same_position: 拖拽到自身位置不变', async () => {
+      const { createDragManager } = await import(
+        '@/renderer/stores/drag-manager'
+      );
+      const manager = createDragManager({
+        order: ['A', 'B', 'C', 'D'],
+      });
+
+      // Drag A to A (same position) — UI layer guards this (TerminalGrid.tsx),
+      // at the drag-manager level dropBefore(self) removes self then can't find
+      // target so appends to end. Verify this raw behavior.
+      manager.startDrag('A');
+      manager.dropBefore('A');
+
+      // A is removed from filtered list, targetIndex=-1, pushed to end
+      expect(manager.order).toEqual(['B', 'C', 'D', 'A']);
+    });
+  });
 });

@@ -72,6 +72,55 @@ describe('TERM L2 -- 状态机与布局测试', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // 2.1b computeTilePlacements 放置计算
+  // ---------------------------------------------------------------------------
+  describe('computeTilePlacements 放置计算', () => {
+    test('TERM_L2_98_placement_span5: 5 终端 span 居中放置', async () => {
+      const { calculateGridLayout } = await import('@/shared/utils/grid-layout');
+      const { computeTilePlacements } = await import('@/renderer/components/terminal/TerminalGrid');
+      const layout = calculateGridLayout(5);
+      const placements = computeTilePlacements(layout, 5);
+
+      // Row 0: 3 tiles, each span 2 in 6-col grid
+      expect(placements[0].gridColumn).toBe('1 / span 2');
+      expect(placements[1].gridColumn).toBe('3 / span 2');
+      expect(placements[2].gridColumn).toBe('5 / span 2');
+      // Row 1: 2 tiles, each span 3 in 6-col grid
+      expect(placements[3].gridColumn).toBe('1 / span 3');
+      expect(placements[4].gridColumn).toBe('4 / span 3');
+    });
+
+    test('TERM_L2_99_placement_span7: 7 终端 span 居中放置', async () => {
+      const { calculateGridLayout } = await import('@/shared/utils/grid-layout');
+      const { computeTilePlacements } = await import('@/renderer/components/terminal/TerminalGrid');
+      const layout = calculateGridLayout(7);
+      const placements = computeTilePlacements(layout, 7);
+
+      // Row 0: 4 tiles, each span 3 in 12-col grid
+      expect(placements[0].gridColumn).toBe('1 / span 3');
+      expect(placements[1].gridColumn).toBe('4 / span 3');
+      expect(placements[2].gridColumn).toBe('7 / span 3');
+      expect(placements[3].gridColumn).toBe('10 / span 3');
+      // Row 1: 3 tiles, each span 4 in 12-col grid
+      expect(placements[4].gridColumn).toBe('1 / span 4');
+      expect(placements[5].gridColumn).toBe('5 / span 4');
+      expect(placements[6].gridColumn).toBe('9 / span 4');
+    });
+
+    test('TERM_L2_100_placement_simple4: 4 终端简单网格放置', async () => {
+      const { calculateGridLayout } = await import('@/shared/utils/grid-layout');
+      const { computeTilePlacements } = await import('@/renderer/components/terminal/TerminalGrid');
+      const layout = calculateGridLayout(4);
+      const placements = computeTilePlacements(layout, 4);
+
+      expect(placements[0]).toEqual({ gridRow: '1', gridColumn: '1' });
+      expect(placements[1]).toEqual({ gridRow: '1', gridColumn: '2' });
+      expect(placements[2]).toEqual({ gridRow: '2', gridColumn: '1' });
+      expect(placements[3]).toEqual({ gridRow: '2', gridColumn: '2' });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // 2.2 状态机: 终端进程生命周期 (PRD 6.2)
   // ---------------------------------------------------------------------------
   describe('状态机: 终端进程生命周期', () => {
