@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muxvo — 方案 10 文档信号塔</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-deep:#06080c;--bg-primary:#0a0e14;--bg-code:#161b22;--bg-card:#0d1117;--bg-hover:#1c2333;
+  --amber:#e8a748;--amber-hover:#f0c060;--amber-bg:#e8a74815;--amber-border:#e8a74840;--amber-inline:#e8a74825;
+  --text-hero:#fff;--text-primary:#d4d4d8;--text-secondary:#71717a;--text-muted:#3f3f46;--text-link:#60a5fa;
+  --border:#1e2530;--border-focus:#e8a74855;
+  --sans:'DM Sans',system-ui,sans-serif;--mono:'JetBrains Mono','Menlo',monospace;
+  --sidebar-w:260px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg-primary);color:var(--text-primary);font-family:var(--sans);font-size:15px;line-height:1.75;-webkit-font-smoothing:antialiased}
+
+/* ===== SIDEBAR ===== */
+.sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--bg-deep);border-right:1px solid var(--border);padding:24px 16px;overflow-y:auto;z-index:100;display:flex;flex-direction:column}
+.sidebar-logo{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.sidebar-logo .diamond{width:16px;height:16px;background:var(--amber);transform:rotate(45deg);border-radius:2px;flex-shrink:0}
+.sidebar-logo span{font:700 16px/1 var(--sans);color:var(--text-primary)}
+.sidebar-version{font:400 13px/1 var(--sans);color:var(--text-muted);margin-bottom:20px}
+.sidebar-sep{height:1px;background:var(--border);margin:12px 0}
+.nav-item{display:block;padding:8px 12px;font:500 14px/1.3 var(--sans);color:var(--text-secondary);border-radius:4px;border-left:2px solid transparent;text-decoration:none;transition:color .15s,background .15s,border-color .15s;margin-bottom:2px}
+.nav-item:hover{color:var(--text-primary);background:var(--bg-hover)}
+.nav-item.active{color:var(--amber);background:var(--amber-bg);border-left-color:var(--amber)}
+.sidebar-bottom{margin-top:auto;padding-top:16px}
+.sidebar-bottom .btn-sm{display:block;text-align:center;padding:10px 16px;background:var(--amber);color:var(--bg-deep);font:600 14px/1 var(--sans);border:none;border-radius:6px;cursor:pointer;text-decoration:none;transition:background .2s;margin-bottom:8px}
+.sidebar-bottom .btn-sm:hover{background:var(--amber-hover)}
+.sidebar-bottom .gh-link{display:block;text-align:center;font:400 13px/1.5 var(--sans);color:var(--text-secondary);text-decoration:none}
+.sidebar-bottom .gh-link:hover{color:var(--amber)}
+
+/* ===== TOPBAR (mobile) ===== */
+.topbar{display:none;position:fixed;top:0;left:0;right:0;height:52px;background:#06080cee;backdrop-filter:blur(8px);border-bottom:1px solid var(--border);align-items:center;padding:0 16px;z-index:90}
+.topbar-hamburger{width:32px;height:32px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.topbar-title{font:700 14px/1 var(--sans);color:var(--text-primary);margin-left:12px}
+.topbar-dl{margin-left:auto;padding:8px 16px;background:var(--amber);color:var(--bg-deep);font:600 13px/1 var(--sans);border:none;border-radius:6px;cursor:pointer;text-decoration:none}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:#06080c80;z-index:99}
+
+/* ===== CONTENT ===== */
+.content{margin-left:var(--sidebar-w);padding:48px 80px 80px}
+.content-inner{max-width:800px}
+
+/* Hero fade-in per D3 feedback */
+.hero-doc{opacity:0;animation:fadeInHero .3s ease-out .1s forwards}
+@keyframes fadeInHero{to{opacity:1}}
+
+h1{font:700 36px/1.2 var(--sans);color:var(--text-hero);margin-bottom:16px}
+h2{font:700 28px/1.3 var(--sans);color:var(--text-hero);padding-left:16px;border-left:3px solid var(--amber);margin-bottom:16px}
+h3{font:600 20px/1.4 var(--sans);color:var(--text-primary);margin-bottom:8px}
+p{margin-bottom:16px}
+.text-secondary{color:var(--text-secondary)}
+.section-doc{padding-top:64px}
+.section-doc:first-of-type{padding-top:0}
+
+/* Screenshot */
+.hero-img{width:100%;border-radius:8px;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,0.3);overflow:hidden;margin:24px 0 32px;aspect-ratio:16/9;background:var(--bg-card);display:flex;align-items:center;justify-content:center}
+.mock-ui{width:100%;height:100%;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;padding:6px;background:var(--bg-deep)}
+.mock-panel{background:var(--bg-primary);border-radius:3px;padding:10px;font:400 11px/1.5 var(--mono);color:var(--text-muted);overflow:hidden}
+.mock-panel .mp-title{font-size:9px;color:var(--amber);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+
+/* CTA */
+.cta-inline{display:flex;gap:12px;margin:20px 0 0}
+.btn-primary{display:inline-flex;padding:12px 28px;background:var(--amber);color:var(--bg-deep);font:600 15px/1 var(--sans);border:none;border-radius:6px;cursor:pointer;text-decoration:none;transition:background .2s}
+.btn-primary:hover{background:var(--amber-hover)}
+.btn-secondary{display:inline-flex;padding:12px 28px;background:transparent;color:var(--text-primary);font:600 15px/1 var(--sans);border:1px solid var(--border);border-radius:6px;cursor:pointer;text-decoration:none;transition:border-color .2s,color .2s}
+.btn-secondary:hover{border-color:var(--border-focus);color:var(--amber)}
+
+/* Code block */
+.code-block{position:relative;background:var(--bg-code);border:1px solid var(--border);border-radius:6px;padding:16px 20px;margin:16px 0 24px;overflow-x:auto;font:400 14px/1.65 var(--mono);color:var(--text-primary)}
+.code-block .lang{position:absolute;top:8px;right:48px;font:500 11px/1 var(--mono);color:var(--text-muted);background:var(--bg-card);padding:2px 6px;border-radius:3px}
+.code-block .copy-btn{position:absolute;top:8px;right:12px;background:none;border:none;color:var(--text-muted);font-size:14px;cursor:pointer;padding:2px 4px;transition:color .15s}
+.code-block .copy-btn:hover{color:var(--text-secondary)}
+.code-block .copy-btn.copied{color:var(--amber)}
+.code-comment{color:var(--text-muted)}
+.code-cmd{color:var(--amber)}
+.code-flag{color:var(--text-link)}
+.code-string{color:#4ade80}
+
+/* Feature card */
+.feature-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:32px}
+.feature-card-img{width:100%;aspect-ratio:16/9;background:var(--bg-code);display:flex;align-items:center;justify-content:center;font:400 13px/1 var(--sans);color:var(--text-muted);border-bottom:1px solid var(--border)}
+.feature-card-body{padding:24px}
+.feature-card-body h3{margin-bottom:8px}
+.feature-card-body p{color:var(--text-secondary);margin-bottom:12px}
+.feature-list{list-style:none;margin:0}
+.feature-list li{font:400 14px/1.6 var(--sans);color:var(--text-primary);padding-left:16px;position:relative;margin-bottom:4px}
+.feature-list li::before{content:'\00B7';color:var(--amber);position:absolute;left:0;font-weight:700}
+
+/* Table */
+.cli-table{width:100%;border-collapse:collapse;margin:16px 0}
+.cli-table th{text-align:left;padding:10px 16px;font:600 13px/1 var(--sans);color:var(--text-secondary);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.05em}
+.cli-table td{padding:12px 16px;color:var(--text-primary);border-bottom:1px solid #1e253050;font-size:14px}
+.cli-table tr:hover td{background:var(--bg-hover)}
+.status-ok{color:#4ade80}
+.status-planned{color:var(--text-secondary)}
+
+/* Install tabs */
+.install-tabs{display:flex;gap:0;margin-bottom:0;border-bottom:1px solid var(--border)}
+.install-tab{padding:8px 16px;font:500 14px/1 var(--sans);color:var(--text-secondary);border:none;background:none;border-bottom:2px solid transparent;cursor:pointer;transition:color .15s,border-color .15s}
+.install-tab:hover{color:var(--text-primary)}
+.install-tab.active{color:var(--amber);border-bottom-color:var(--amber)}
+.install-content{display:none}
+.install-content.active{display:block}
+
+/* FAQ */
+.faq-item{border-bottom:1px solid var(--border);padding:16px 0}
+.faq-q{font:500 15px/1.5 var(--sans);color:var(--text-primary);cursor:pointer;display:flex;align-items:center;gap:8px;background:none;border:none;width:100%;text-align:left;padding:0}
+.faq-q:hover{color:var(--amber)}
+.faq-arrow{color:var(--amber);font-size:12px;transition:transform .2s;flex-shrink:0}
+.faq-a{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
+.faq-a.open{grid-template-rows:1fr}
+.faq-a-inner{overflow:hidden}
+.faq-a-inner p{font:400 15px/1.75 var(--sans);color:var(--text-secondary);padding:12px 0 4px 20px}
+
+/* Footer */
+.footer-cta{border-top:1px solid var(--border);padding:64px 0;text-align:center;margin-top:64px}
+.footer-cta h2{border:none;padding:0;font-size:28px;margin-bottom:16px}
+.footer-meta{font:400 13px/1.5 var(--sans);color:var(--text-muted);margin-top:20px}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:1023px){
+  .sidebar{transform:translateX(-100%);transition:transform .3s ease-out;width:280px}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay.open{display:block}
+  .topbar{display:flex}
+  .content{margin-left:0;padding:72px 40px 60px}
+}
+@media(max-width:768px){
+  .content{padding:68px 24px 48px}
+  h1{font-size:28px}h2{font-size:24px}h3{font-size:18px}
+  .cta-inline{flex-direction:column}
+  .feature-card-img{aspect-ratio:4/3}
+  .hero-img{aspect-ratio:4/3}
+}
+@media(prefers-reduced-motion:reduce){.hero-doc{opacity:1;animation:none}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR (mobile) -->
+<div class="topbar" id="topbar">
+  <button class="topbar-hamburger" id="menuBtn" aria-label="Toggle menu">&#9776;</button>
+  <span class="topbar-title">Muxvo</span>
+  <a href="#" class="topbar-dl">Download</a>
+</div>
+<div class="sidebar-overlay" id="overlay"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo"><div class="diamond"></div><span>Muxvo</span></div>
+  <div class="sidebar-version">v0.1.0</div>
+  <div class="sidebar-sep"></div>
+  <a href="#quickstart" class="nav-item active" data-nav>Quick Start</a>
+  <a href="#features" class="nav-item" data-nav>Features</a>
+  <a href="#cli" class="nav-item" data-nav>Supported CLIs</a>
+  <a href="#install" class="nav-item" data-nav>Installation</a>
+  <a href="#faq" class="nav-item" data-nav>FAQ</a>
+  <div class="sidebar-bottom">
+    <div class="sidebar-sep"></div>
+    <a href="#" class="btn-sm">Download</a>
+    <a href="#" class="gh-link">GitHub</a>
+  </div>
+</nav>
+
+<!-- CONTENT -->
+<main class="content">
+<div class="content-inner">
+
+<!-- Hero -->
+<div class="hero-doc" id="hero">
+  <h1>AI CLI 工具的指挥中心</h1>
+  <p>Muxvo 是一个桌面工作台，将 Claude Code、Codex 和 Gemini CLI 整合为一个平铺终端界面，提供聊天历史搜索、文件浏览、配置编辑和 Skill 市场。</p>
+  <div class="cta-inline">
+    <a href="#" class="btn-primary">Download for macOS</a>
+    <a href="#" class="btn-secondary">View on GitHub</a>
+  </div>
+  <div class="hero-img">
+    <div class="mock-ui">
+      <div class="mock-panel"><div class="mp-title">Terminal 1</div><span style="color:#4ade80">$</span> claude</div>
+      <div class="mock-panel"><div class="mp-title">Terminal 2</div><span style="color:#4ade80">$</span> codex</div>
+      <div class="mock-panel"><div class="mp-title">Chat History</div><span style="color:#71717a">148 conversations</span></div>
+      <div class="mock-panel"><div class="mp-title">Skills</div><span style="color:#71717a">24 installed</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Start -->
+<div class="section-doc" id="quickstart">
+  <h2>Quick Start</h2>
+  <p class="text-secondary">一分钟内启动 Muxvo。</p>
+  <h3>1. 下载安装</h3>
+  <div class="code-block">
+    <span class="lang">bash</span>
+    <button class="copy-btn" onclick="copyCode(this)" title="Copy">&#128203;</button>
+<span class="code-comment"># macOS (Apple Silicon / Intel)</span>
+<span class="code-cmd">curl</span> <span class="code-flag">-fsSL</span> https://muxvo.app/install | <span class="code-cmd">sh</span>
+  </div>
+  <h3>2. 启动</h3>
+  <div class="code-block">
+    <span class="lang">bash</span>
+    <button class="copy-btn" onclick="copyCode(this)" title="Copy">&#128203;</button>
+<span class="code-cmd">muxvo</span>
+  </div>
+  <h3>3. 添加 CLI 工具</h3>
+  <p class="text-secondary">Muxvo 自动检测已安装的 AI CLI。当前支持：</p>
+  <ul class="feature-list">
+    <li>Claude Code (Anthropic)</li>
+    <li>Codex (OpenAI)</li>
+    <li>Gemini CLI (Google)</li>
+  </ul>
+</div>
+
+<!-- Features -->
+<div class="section-doc" id="features">
+  <h2>Features</h2>
+  <div class="feature-card">
+    <div class="feature-card-img">Tiling Terminal Grid</div>
+    <div class="feature-card-body">
+      <h3>平铺终端网格</h3>
+      <p>全屏平铺管理多个终端 session。拖拽调整大小，点击切换焦点，每个面板独立运行。</p>
+      <ul class="feature-list"><li>支持 1-9 个终端面板</li><li>拖拽边框调整大小</li><li>每个面板独立追踪工作目录</li></ul>
+    </div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-card-img">Chat History Search</div>
+    <div class="feature-card-body">
+      <h3>聊天历史搜索</h3>
+      <p>跨 session 全文搜索所有 AI 对话记录。按日期、项目、工具筛选，一键导出。</p>
+      <ul class="feature-list"><li>全文搜索所有历史对话</li><li>按日期、项目、工具筛选</li><li>导出为 Markdown 或 JSON</li></ul>
+    </div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-card-img">Skill Marketplace + AI Scoring</div>
+    <div class="feature-card-body">
+      <h3>Skill 市场 + AI 评分</h3>
+      <p>发现和安装社区 Skill 包。每个 Skill 都经过 AI 质量自动评估，帮你快速判断质量。</p>
+      <ul class="feature-list"><li>浏览和搜索社区 Skill 包</li><li>一键安装和自动更新</li><li>AI 驱动的质量评分系统</li></ul>
+    </div>
+  </div>
+</div>
+
+<!-- Supported CLIs -->
+<div class="section-doc" id="cli">
+  <h2>Supported CLIs</h2>
+  <p class="text-secondary">Muxvo 当前支持以下 AI CLI 工具，更多即将到来。</p>
+  <table class="cli-table">
+    <thead><tr><th>Tool</th><th>Provider</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Claude Code</td><td>Anthropic</td><td class="status-ok">&#10003; Supported</td></tr>
+      <tr><td>Codex</td><td>OpenAI</td><td class="status-ok">&#10003; Supported</td></tr>
+      <tr><td>Gemini CLI</td><td>Google</td><td class="status-ok">&#10003; Supported</td></tr>
+      <tr><td>Aider</td><td>&mdash;</td><td class="status-planned">Planned</td></tr>
+      <tr><td>Continue</td><td>&mdash;</td><td class="status-planned">Planned</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Installation -->
+<div class="section-doc" id="install">
+  <h2>Installation</h2>
+  <div class="install-tabs">
+    <button class="install-tab active" data-tab="curl">curl</button>
+    <button class="install-tab" data-tab="brew">Homebrew</button>
+    <button class="install-tab" data-tab="manual">Manual</button>
+  </div>
+  <div class="install-content active" id="tab-curl">
+    <div class="code-block">
+      <span class="lang">bash</span>
+      <button class="copy-btn" onclick="copyCode(this)">&#128203;</button>
+<span class="code-cmd">curl</span> <span class="code-flag">-fsSL</span> https://muxvo.app/install | <span class="code-cmd">sh</span>
+    </div>
+  </div>
+  <div class="install-content" id="tab-brew">
+    <div class="code-block">
+      <span class="lang">bash</span>
+      <button class="copy-btn" onclick="copyCode(this)">&#128203;</button>
+<span class="code-cmd">brew</span> install muxvo
+    </div>
+  </div>
+  <div class="install-content" id="tab-manual">
+    <div class="code-block">
+      <span class="lang">bash</span>
+      <button class="copy-btn" onclick="copyCode(this)">&#128203;</button>
+<span class="code-comment"># Download from GitHub Releases</span>
+<span class="code-cmd">wget</span> https://github.com/muxvo/muxvo/releases/latest/download/Muxvo.dmg
+<span class="code-cmd">open</span> Muxvo.dmg
+    </div>
+  </div>
+  <h3>System Requirements</h3>
+  <ul class="feature-list">
+    <li>macOS 12.0 or later</li>
+    <li>Apple Silicon or Intel</li>
+    <li>200MB disk space</li>
+  </ul>
+</div>
+
+<!-- FAQ -->
+<div class="section-doc" id="faq">
+  <h2>FAQ</h2>
+  <div class="faq-item">
+    <button class="faq-q" onclick="toggleFaq(this)"><span class="faq-arrow">&#9656;</span>Muxvo 是免费的吗？</button>
+    <div class="faq-a"><div class="faq-a-inner"><p>是的。Muxvo 是开源免费软件，使用 MIT 许可证。</p></div></div>
+  </div>
+  <div class="faq-item">
+    <button class="faq-q" onclick="toggleFaq(this)"><span class="faq-arrow">&#9656;</span>Muxvo 会替代我的终端吗？</button>
+    <div class="faq-a"><div class="faq-a-inner"><p>不会。Muxvo 包装你现有的终端和 AI CLI 工具，它不替代它们，而是组织它们。</p></div></div>
+  </div>
+  <div class="faq-item">
+    <button class="faq-q" onclick="toggleFaq(this)"><span class="faq-arrow">&#9656;</span>Muxvo 收集什么数据？</button>
+    <div class="faq-a"><div class="faq-a-inner"><p>Muxvo 不收集任何用户数据。所有聊天历史和配置都存储在你的本地机器上。</p></div></div>
+  </div>
+  <div class="faq-item">
+    <button class="faq-q" onclick="toggleFaq(this)"><span class="faq-arrow">&#9656;</span>我可以用 Muxvo 管理其他 CLI 工具吗？</button>
+    <div class="faq-a"><div class="faq-a-inner"><p>目前 Muxvo 专注于 AI CLI 工具（Claude Code、Codex、Gemini CLI）。更多工具支持在路线图中。</p></div></div>
+  </div>
+</div>
+
+<!-- Footer CTA -->
+<div class="footer-cta">
+  <h2>准备好试试 Muxvo 了吗？</h2>
+  <a href="#" class="btn-primary">Download for macOS</a>
+  <div class="footer-meta">MIT License &middot; v0.1.0 &middot; Made for CLI devs</div>
+</div>
+
+</div>
+</main>
+
+<script>
+(function(){
+  // Sidebar scroll tracking
+  var navItems = document.querySelectorAll('[data-nav]');
+  var sections = [];
+  navItems.forEach(function(n){
+    var id = n.getAttribute('href').replace('#','');
+    var el = document.getElementById(id);
+    if(el) sections.push({id:id, el:el, nav:n});
+  });
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        navItems.forEach(function(n){n.classList.remove('active')});
+        sections.forEach(function(s){if(s.id===e.target.id)s.nav.classList.add('active')});
+      }
+    });
+  },{rootMargin:'-20% 0px -60% 0px'});
+  sections.forEach(function(s){obs.observe(s.el)});
+
+  // Mobile sidebar
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('overlay');
+  var menuBtn = document.getElementById('menuBtn');
+  menuBtn.addEventListener('click',function(){sidebar.classList.toggle('open');overlay.classList.toggle('open')});
+  overlay.addEventListener('click',function(){sidebar.classList.remove('open');overlay.classList.remove('open')});
+  navItems.forEach(function(n){n.addEventListener('click',function(){sidebar.classList.remove('open');overlay.classList.remove('open')})});
+})();
+
+// Install tabs
+document.querySelectorAll('.install-tab').forEach(function(tab){
+  tab.addEventListener('click',function(){
+    document.querySelectorAll('.install-tab').forEach(function(t){t.classList.remove('active')});
+    document.querySelectorAll('.install-content').forEach(function(c){c.classList.remove('active')});
+    tab.classList.add('active');
+    document.getElementById('tab-'+tab.dataset.tab).classList.add('active');
+  });
+});
+
+// FAQ toggle (grid-template-rows: 0fr -> 1fr per D1 feedback)
+function toggleFaq(btn){
+  var answer = btn.nextElementSibling;
+  var arrow = btn.querySelector('.faq-arrow');
+  var isOpen = answer.classList.contains('open');
+  answer.classList.toggle('open');
+  arrow.style.transform = isOpen ? '' : 'rotate(90deg)';
+}
+
+// Copy code
+function copyCode(btn){
+  var block = btn.closest('.code-block');
+  var text = block.textContent.replace(block.querySelector('.lang').textContent,'').replace('📋','').replace('Copied!','').trim();
+  navigator.clipboard.writeText(text).then(function(){
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(function(){btn.innerHTML='&#128203;';btn.classList.remove('copied')},1500);
+  });
+}
+</script>
+</body>
+</html>

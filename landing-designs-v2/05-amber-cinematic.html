@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muxvo — 暗室聚光</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --void:#030508;--deep:#06080c;--card:#0c1018;
+  --text-pri:#f3f4f6;--text-sec:#9ca3af;--text-mut:#4b5563;
+  --amber:#e8a748;--amber-bright:#f5be5e;--amber-h:#f0c060;
+  --glow-s:rgba(232,167,72,.12);--glow-m:rgba(232,167,72,.06);--glow-w:rgba(232,167,72,.03);
+  --border:#141a24;
+  --font-d:'DM Sans',system-ui,sans-serif;--font-m:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+html{scroll-behavior:smooth}
+body{background:var(--void);color:var(--text-pri);font-family:var(--font-d);overflow-x:hidden}
+a{color:var(--amber);text-decoration:none}
+.container{max-width:960px;margin:0 auto;padding:0 24px}
+
+/* Nav */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;display:flex;align-items:center;transition:background .4s}
+nav.scrolled{background:rgba(3,5,8,.92);backdrop-filter:blur(12px)}
+nav .container{display:flex;align-items:center;justify-content:space-between;width:100%}
+.nav-logo{font:700 16px var(--font-d);color:var(--text-pri);display:flex;align-items:center;gap:8px}
+.nav-logo span{color:var(--amber)}
+.nav-links{display:flex;gap:28px;align-items:center}
+.nav-links a{color:var(--text-sec);font:500 13px var(--font-d);transition:color .15s}
+.nav-links a:hover{color:var(--text-pri)}
+.btn-amber{background:var(--amber);color:var(--void);font:600 14px var(--font-d);padding:8px 20px;border:none;border-radius:6px;cursor:pointer;transition:all .2s}
+.btn-amber:hover{background:var(--amber-h);transform:scale(1.02)}
+.btn-ghost{background:transparent;color:var(--text-pri);border:1px solid var(--border);font:600 14px var(--font-d);padding:8px 20px;border-radius:6px;cursor:pointer;transition:all .2s}
+.btn-ghost:hover{border-color:rgba(232,167,72,.3);color:var(--amber)}
+.hamburger{display:none;background:none;border:none;color:var(--text-pri);font-size:22px;cursor:pointer}
+
+/* Hero */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 24px 80px;position:relative}
+.hero-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80vw;height:60vh;background:radial-gradient(ellipse at center,var(--glow-s),var(--glow-w) 50%,transparent 70%);pointer-events:none;opacity:0;animation:heroGlow 2s var(--ease) .3s forwards}
+@keyframes heroGlow{to{opacity:1}}
+.hero h1{font-size:64px;font-weight:700;line-height:1.05;max-width:800px;position:relative;text-shadow:0 0 30px rgba(232,167,72,.2);opacity:0;animation:fadeUp .8s var(--ease) .5s forwards}
+.hero h1 em{font-style:normal;color:var(--amber)}
+.hero p{font-size:22px;color:var(--text-sec);max-width:560px;margin-top:20px;line-height:1.5;position:relative;opacity:0;animation:fadeUp .8s var(--ease) .7s forwards}
+.hero-btns{display:flex;gap:16px;margin-top:40px;position:relative;opacity:0;animation:fadeUp .6s var(--ease) .9s forwards}
+.hero-btns .btn-amber{padding:14px 32px;font-size:15px;border-radius:8px;box-shadow:0 0 30px rgba(232,167,72,.15)}
+.hero-btns .btn-ghost{padding:14px 32px;font-size:15px;border-radius:8px}
+.hero-shot{margin-top:56px;width:85vw;max-width:1000px;border-radius:10px;border:1px solid var(--border);box-shadow:0 20px 80px rgba(0,0,0,.6),0 0 100px rgba(232,167,72,.06);overflow:hidden;position:relative;opacity:0;animation:fadeUp .8s var(--ease) 1.2s forwards}
+.hero-shot::before{content:'';position:absolute;top:0;left:20%;right:20%;height:40%;background:radial-gradient(ellipse at top center,rgba(232,167,72,.05),transparent);pointer-events:none;z-index:1}
+.mock-ui{background:var(--card);aspect-ratio:16/9;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;padding:24px}
+.term-pane{background:var(--void);border-radius:4px;padding:10px;font:400 11px/1.5 var(--font-m);color:var(--text-sec);overflow:hidden}
+.term-pane .prompt{color:var(--amber)}.term-pane .cmd{color:var(--text-pri)}
+@keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+.hero h1,.hero p,.hero-btns,.hero-shot{transform:translateY(24px)}
+
+/* Void Transition */
+.void-gap{height:120px;background:var(--void)}
+
+/* Feature Section with independent glow */
+.feature-section{min-height:70vh;display:flex;align-items:center;padding:160px 0;position:relative}
+.feature-section .glow{position:absolute;top:50%;width:55vw;height:60%;transform:translateY(-50%);background:radial-gradient(ellipse at center,var(--glow-s),var(--glow-m) 40%,transparent 70%);pointer-events:none;opacity:0;transition:opacity .8s ease}
+.feature-section.left .glow{left:0}.feature-section.right .glow{right:0}
+.feature-section.visible .glow{opacity:1}
+.feat-inner{display:flex;gap:64px;align-items:center}
+.feat-inner.reverse{flex-direction:row-reverse}
+.feat-img{flex:0 0 50%;border-radius:8px;border:1px solid var(--border);overflow:hidden;aspect-ratio:16/10;background:var(--card);display:flex;align-items:center;justify-content:center;color:var(--text-mut);font:400 13px var(--font-m);position:relative}
+.feat-img::after{content:'';position:absolute;bottom:-60px;left:10%;right:10%;height:60px;background:linear-gradient(rgba(232,167,72,.03),transparent);pointer-events:none}
+.feat-text h2{font-size:44px;font-weight:600;line-height:1.15}
+.feat-text .divider{width:40px;height:2px;background:var(--amber);margin-top:20px}
+.feat-text p{font-size:18px;color:var(--text-sec);margin-top:16px;line-height:1.7;max-width:420px}
+.feat-text ul{list-style:none;margin-top:32px}
+.feat-text ul li{font-size:16px;color:#d1d5db;padding:6px 0;display:flex;align-items:center;gap:12px}
+.feat-text ul li::before{content:'';width:12px;height:2px;background:var(--amber);flex-shrink:0}
+
+/* CLI Support (dark zone) */
+.cli-zone{padding:80px 0;text-align:center}
+.cli-zone h2{font-size:22px;font-weight:600;color:var(--text-sec)}
+.cli-items{display:flex;justify-content:center;gap:56px;margin-top:40px;flex-wrap:wrap}
+.cli-item{display:flex;flex-direction:column;align-items:center;gap:8px}
+.cli-item .dot{width:8px;height:8px;border-radius:50%;background:var(--amber);box-shadow:0 0 20px rgba(232,167,72,.4)}
+.cli-item .name{font-size:15px;color:var(--text-sec)}
+.cli-item .status{font-size:11px;color:#4ade80}
+
+/* Install */
+.install-section{padding:120px 0;position:relative}
+.install-section .glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60vw;height:50%;background:radial-gradient(ellipse at center,var(--glow-m),transparent 70%);pointer-events:none}
+.install-section h2{font-size:36px;font-weight:600;text-align:center;position:relative}
+.install-steps{max-width:580px;margin:48px auto 0;display:flex;flex-direction:column;gap:24px;position:relative}
+.step{display:flex;gap:16px;align-items:flex-start}
+.step-dot{width:12px;height:12px;background:var(--amber);border-radius:50%;flex-shrink:0;margin-top:16px}
+.code-block{flex:1;background:var(--deep);border-left:3px solid var(--amber);padding:16px 20px;font:400 14px/1.5 var(--font-m)}
+.code-block .dollar{color:var(--text-mut)}
+.code-block .arg{color:var(--amber)}
+.step-desc{flex:1;font-size:15px;color:var(--text-sec);line-height:1.6;padding-top:12px}
+
+/* Final CTA - strongest glow */
+.final-cta{padding:160px 0;text-align:center;position:relative}
+.final-cta .glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70vw;height:55%;background:radial-gradient(ellipse at center,rgba(232,167,72,.15),var(--glow-m) 40%,transparent 70%);pointer-events:none}
+.final-cta h2{font-size:44px;font-weight:700;position:relative}
+.final-cta .btn-amber{padding:18px 48px;font-size:17px;border-radius:8px;margin-top:40px;box-shadow:0 0 40px rgba(232,167,72,.2);position:relative}
+.final-cta .btn-amber:hover{box-shadow:0 0 60px rgba(232,167,72,.3);transform:scale(1.03)}
+.final-cta .sub{margin-top:24px;font-size:14px;color:var(--text-mut);position:relative}
+
+/* Footer */
+footer{padding:40px 0;opacity:.7}
+.footer-inner{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.footer-inner .brand{font:600 14px var(--font-d);color:var(--text-mut)}
+.footer-inner .brand span{color:var(--amber)}
+.footer-inner .links{display:flex;gap:24px}
+.footer-inner .links a{font-size:13px;color:var(--text-mut);transition:color .15s}
+.footer-inner .links a:hover{color:var(--text-sec)}
+
+/* Scroll animations */
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+@media(prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+  .hero h1,.hero p,.hero-btns,.hero-shot{opacity:1;transform:none;animation:none}
+  .hero-glow{opacity:1;animation:none}
+}
+
+/* Responsive */
+@media(max-width:1023px){
+  .feat-inner,.feat-inner.reverse{flex-direction:column}
+  .feat-img{flex:none;width:100%}
+  .feat-text h2{font-size:36px}
+  .hero h1{font-size:48px}
+  .feature-section{padding:120px 0}
+  .void-gap{height:80px}
+}
+@media(max-width:767px){
+  .nav-links{display:none}.hamburger{display:block}
+  .hero h1{font-size:36px;text-shadow:none}
+  .hero p{font-size:18px}
+  .hero-btns{flex-direction:column;align-items:center}
+  .hero-shot{width:100%;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+  .feat-text h2{font-size:28px}
+  .feat-text p{font-size:16px}
+  .feature-section{padding:80px 0;min-height:auto}
+  .void-gap{height:24px}
+  .cli-items{flex-direction:column;gap:24px}
+  .final-cta{padding:80px 0}
+  .final-cta h2{font-size:32px}
+  .install-section{padding:80px 0}
+  .footer-inner{flex-direction:column;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="container">
+    <div class="nav-logo"><span>&#9670;</span> Muxvo</div>
+    <div class="nav-links">
+      <a href="#f1">Features</a>
+      <a href="#install">Install</a>
+      <button class="btn-amber">Download</button>
+    </div>
+    <button class="hamburger">&#9776;</button>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-glow"></div>
+  <h1>AI CLI 工具的<em>指挥中心</em></h1>
+  <p>平铺终端、聊天历史搜索、Skill 市场 —— 为 Claude Code、Codex 和 Gemini CLI 打造。</p>
+  <div class="hero-btns">
+    <button class="btn-amber">Download for macOS</button>
+    <button class="btn-ghost">View on GitHub</button>
+  </div>
+  <div class="hero-shot">
+    <div class="mock-ui">
+      <div class="term-pane"><span class="prompt">~/project $</span> <span class="cmd">claude "重构模块"</span><br>分析代码中...</div>
+      <div class="term-pane"><span class="prompt">~/api $</span> <span class="cmd">codex "写测试"</span><br>生成测试...</div>
+      <div class="term-pane"><span class="prompt">~/db $</span> <span class="cmd">gemini "优化 SQL"</span><br>检查索引...</div>
+      <div class="term-pane"><span class="prompt">~/app $</span> <span class="cmd">claude "review PR"</span><br>读取变更...</div>
+    </div>
+  </div>
+</section>
+
+<div class="void-gap"></div>
+
+<section class="feature-section left" id="f1">
+  <div class="glow"></div>
+  <div class="container">
+    <div class="feat-inner reveal">
+      <div class="feat-img">[ 平铺终端 2x2 Grid ]</div>
+      <div class="feat-text">
+        <h2>全屏平铺终端</h2>
+        <div class="divider"></div>
+        <p>像平铺窗口管理器一样操控多个终端。灵活布局，每个面板独立运行不同的 CLI 工具。</p>
+        <ul>
+          <li>灵活网格：2x2, 3x1, 自定义</li>
+          <li>独立 Resize 和 Focus 切换</li>
+          <li>前台进程状态实时显示</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="void-gap"></div>
+
+<section class="feature-section right">
+  <div class="glow"></div>
+  <div class="container">
+    <div class="feat-inner reverse reveal">
+      <div class="feat-img">[ 聊天历史搜索界面 ]</div>
+      <div class="feat-text">
+        <h2>搜索每一段 AI 对话</h2>
+        <div class="divider"></div>
+        <p>跨 Session 全文搜索所有 AI CLI 对话。输入关键词，秒级返回，支持按时间和项目过滤。</p>
+        <ul>
+          <li>全文搜索，跨工具、跨 Session</li>
+          <li>时间线、项目、CLI 多维过滤</li>
+          <li>一键导出对话记录</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="void-gap"></div>
+
+<section class="feature-section left">
+  <div class="glow"></div>
+  <div class="container">
+    <div class="feat-inner reveal">
+      <div class="feat-img">[ Skill 市场截图 ]</div>
+      <div class="feat-text">
+        <h2>探索、安装、评分 Skill</h2>
+        <div class="divider"></div>
+        <p>社区驱动的 Skill 市场，每个包经 AI 自动评分。发现最适合你的工作流工具。</p>
+        <ul>
+          <li>AI 质量评分系统</li>
+          <li>一键安装 / 卸载</li>
+          <li>版本管理和自动更新</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="void-gap"></div>
+
+<section class="cli-zone">
+  <div class="container">
+    <h2 class="reveal">支持的 AI CLI 工具</h2>
+    <div class="cli-items reveal">
+      <div class="cli-item"><div class="dot"></div><div class="name">Claude Code</div><div class="status">Supported</div></div>
+      <div class="cli-item"><div class="dot"></div><div class="name">Codex</div><div class="status">Supported</div></div>
+      <div class="cli-item"><div class="dot"></div><div class="name">Gemini CLI</div><div class="status">Supported</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="install-section" id="install">
+  <div class="glow"></div>
+  <div class="container">
+    <h2 class="reveal">30 秒快速开始</h2>
+    <div class="install-steps">
+      <div class="step reveal"><div class="step-dot"></div><div class="code-block"><span class="dollar">$ </span>brew install --cask <span class="arg">muxvo</span></div></div>
+      <div class="step reveal"><div class="step-dot"></div><div class="code-block"><span class="dollar">$ </span><span class="arg">muxvo</span></div></div>
+      <div class="step reveal"><div class="step-dot"></div><div class="step-desc">选择你的 CLI 工具，开始工作。Muxvo 会自动检测已安装的 AI CLI。</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="final-cta">
+  <div class="glow"></div>
+  <h2 class="reveal">准备好接管控制了吗？</h2>
+  <button class="btn-amber reveal">Download for macOS</button>
+  <div class="sub reveal">免费开源 &middot; macOS</div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="brand"><span>&#9670;</span> Muxvo &middot; AI CLI Workbench</div>
+      <div class="links"><a href="#">GitHub</a><a href="#">Discord</a><a href="#">Twitter</a></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Nav scroll detection
+window.addEventListener('scroll',()=>{document.getElementById('nav').classList.toggle('scrolled',window.scrollY>100)});
+// Intersection Observer for reveals and feature glows
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:.2});
+document.querySelectorAll('.reveal,.feature-section').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
