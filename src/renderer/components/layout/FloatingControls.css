@@ -1,10 +1,9 @@
-/* FloatingControls — Bottom floating pill bar */
+/* FloatingControls — Top-right floating pill bar */
 
 .floating-controls {
   position: fixed;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 46px;
+  right: 16px;
   display: flex;
   gap: 6px;
   background: rgba(22, 27, 34, 0.75);
