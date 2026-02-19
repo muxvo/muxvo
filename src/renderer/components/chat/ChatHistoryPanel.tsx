@@ -102,7 +102,7 @@ export function ChatHistoryPanel() {
         }
       }
     });
-    return () => unsub?.();
+    return () => { unsub?.(); };
   }, [selectedSessionId, allSessions]);
 
   return (

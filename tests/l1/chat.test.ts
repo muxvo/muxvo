@@ -39,7 +39,7 @@ describe('CHAT L1 -- 契约层测试', () => {
 
       // RED: verify real handler returns correct shape (will fail)
       const { chatHandlers } = await import('@/main/ipc/chat-handlers');
-      const realResult = await chatHandlers.getHistory();
+      const realResult = await chatHandlers.getHistory() as { sessions: unknown[] };
       expect(realResult).toHaveProperty('sessions');
       expect(Array.isArray(realResult.sessions)).toBe(true);
       if (realResult.sessions.length > 0) {
@@ -109,7 +109,7 @@ describe('CHAT L1 -- 契约层测试', () => {
       // RED: verify real handler error shape (will fail)
       const { chatHandlers } = await import('@/main/ipc/chat-handlers');
       // Simulate unavailable files scenario
-      const errorResult = await chatHandlers.getHistory({ forceFail: true });
+      const errorResult = await chatHandlers.getHistory({ forceFail: true }) as { error: { code: string } };
       expect(errorResult.error).toBeDefined();
       expect(errorResult.error.code).toBe('FILE_NOT_FOUND');
     });
@@ -273,13 +273,19 @@ describe('CHAT L1 -- 契约层测试', () => {
       const { useChatPanelStore } = await import('@/renderer/stores/chat-panel');
       const store = useChatPanelStore();
 
+      // Load sessions first so filtering has data
+      await store.loadSessions([
+        { sessionId: 's1', project: 'my-project', projectHash: 'h1', title: 'Session 1', timestamp: 1704067200000, messageCount: 3 },
+        { sessionId: 's2', project: 'other-project', projectHash: 'h2', title: 'Session 2', timestamp: 1704153600000, messageCount: 5 },
+      ]);
+
       // Simulate selecting a project
       store.selectProject('my-project');
 
       expect(store.selectedProject).toBe('my-project');
       // Middle panel should filter to that project's sessions
       expect(store.filteredSessions.every(
-        (s: { project: string }) => s.project === 'my-project',
+        (s) => s.project === 'my-project',
       )).toBe(true);
       // Right panel should clear
       expect(store.selectedSession).toBeNull();
@@ -338,6 +344,11 @@ describe('CHAT L1 -- 契约层测试', () => {
       // RED: import the real chat panel store (will fail)
       const { useChatPanelStore } = await import('@/renderer/stores/chat-panel');
       const store = useChatPanelStore();
+
+      // Load sessions so search has data to match against
+      await store.loadSessions([
+        { sessionId: 's1', project: 'proj', projectHash: 'h1', title: 'Test query session', timestamp: 1704067200000, messageCount: 3 },
+      ]);
 
       // Simulate search with results
       await store.search('test query');
