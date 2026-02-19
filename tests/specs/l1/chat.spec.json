@@ -7,34 +7,62 @@
   "cases": [
     {
       "id": "CHAT_L1_01",
-      "description": "chat:get-history IPC 格式 -- 返回 { sessions: Array<{display, timestamp, project, sessionId}> }",
+      "description": "chat:get-projects IPC 格式 -- 返回 { projects: ProjectInfo[] }",
       "type": "ipc",
-      "channel": "chat:get-history",
+      "channel": "chat:get-projects",
       "direction": "invoke",
       "input": null,
       "expectedResponse": {
-        "sessions": "Array<{display: string, timestamp: string, project: string, sessionId: string}>"
+        "projects": "Array<{projectHash: string, displayPath: string, displayName: string, sessionCount: number, lastActivity: number}>"
       },
-      "statePath": "Closed -> Loading -> Ready",
       "priority": "P0"
     },
     {
       "id": "CHAT_L1_02",
-      "description": "chat:get-session IPC 格式 -- 传入 sessionId 返回 messages 数组",
+      "description": "chat:get-sessions IPC 格式 -- 传入 projectHash 返回 sessions 数组",
       "type": "ipc",
-      "channel": "chat:get-session",
+      "channel": "chat:get-sessions",
       "direction": "invoke",
       "input": {
-        "sessionId": "string"
+        "projectHash": "string"
       },
       "expectedResponse": {
-        "messages": "Array<{type: string, message: string, timestamp: string, cwd: string}>"
+        "sessions": "Array<{sessionId: string, projectHash: string, title: string, startedAt: string, lastModified: number, messageCount: number}>"
       },
       "priority": "P0"
     },
     {
       "id": "CHAT_L1_03",
-      "description": "chat:search IPC 格式 -- 传入 query 返回匹配 sessions",
+      "description": "chat:get-sessions __all__ 模式 -- 传入 __all__ 返回所有项目的最近 sessions",
+      "type": "ipc",
+      "channel": "chat:get-sessions",
+      "direction": "invoke",
+      "input": {
+        "projectHash": "__all__"
+      },
+      "expectedResponse": {
+        "sessions": "Array<SessionSummary>"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "CHAT_L1_04",
+      "description": "chat:get-session IPC 格式 -- 传入 projectHash+sessionId 返回 messages 数组",
+      "type": "ipc",
+      "channel": "chat:get-session",
+      "direction": "invoke",
+      "input": {
+        "projectHash": "string",
+        "sessionId": "string"
+      },
+      "expectedResponse": {
+        "messages": "Array<{uuid: string, type: string, sessionId: string, cwd: string, timestamp: string, content: string|AssistantContentBlock[]}>"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "CHAT_L1_05",
+      "description": "chat:search IPC 格式 -- 传入 query 返回 SearchResult[]",
       "type": "ipc",
       "channel": "chat:search",
       "direction": "invoke",
@@ -42,73 +70,46 @@
         "query": "test"
       },
       "expectedResponse": {
-        "results": "Array<{sessionId: string, matches: number, context: string}>"
+        "results": "Array<{projectHash: string, sessionId: string, snippet: string, timestamp: string}>"
       },
       "priority": "P0"
     },
     {
-      "id": "CHAT_L1_04",
-      "description": "chat:get-history 错误响应 -- CC 文件不可用时返回统一错误格式",
-      "type": "ipc",
-      "channel": "chat:get-history",
-      "direction": "invoke",
-      "condition": "CC files and mirror both unavailable",
-      "expectedResponse": {
-        "code": "FILE_NOT_FOUND",
-        "message": "string"
-      },
-      "priority": "P1"
-    },
-    {
-      "id": "CHAT_L1_05",
-      "description": "chat:export IPC 格式 -- 导出为 Markdown 格式",
+      "id": "CHAT_L1_06",
+      "description": "chat:export IPC 格式 -- 导出为 Markdown/JSON 格式",
       "type": "ipc",
       "channel": "chat:export",
       "direction": "invoke",
       "input": {
+        "projectHash": "string",
         "sessionId": "string",
-        "format": "md"
+        "format": "markdown"
       },
       "expectedResponse": {
-        "filePath": "string"
+        "outputPath": "string"
       },
       "priority": "P1"
     },
     {
-      "id": "CHAT_L1_06",
-      "description": "chat:session-update 推送格式 -- 后台同步推送新/更新 session",
+      "id": "CHAT_L1_07",
+      "description": "chat:session-update 推送格式 -- 推送 projectHash+sessionId",
       "type": "ipc-push",
       "channel": "chat:session-update",
       "expectedPayload": {
-        "sessionId": "string",
-        "action": "\"added\"|\"updated\"",
-        "data": "object"
+        "projectHash": "string",
+        "sessionId": "string"
       },
       "priority": "P0"
     },
     {
-      "id": "CHAT_L1_07",
+      "id": "CHAT_L1_08",
       "description": "chat:sync-status 推送格式 -- 同步状态变化通知",
       "type": "ipc-push",
       "channel": "chat:sync-status",
       "expectedPayload": {
-        "status": "\"syncing\"|\"done\"|\"error\"",
-        "lastSync": "string",
-        "progress": "number (optional)"
+        "status": "\"syncing\"|\"idle\"|\"error\""
       },
       "priority": "P1"
-    },
-    {
-      "id": "CHAT_L1_08",
-      "description": "默认选中全部项目 -- 左栏\"全部项目\"默认高亮",
-      "type": "default-value",
-      "target": "chatHistory.selectedProject",
-      "expectedValue": "全部项目",
-      "expectedUI": {
-        "leftPanel": "\"全部项目\" highlighted",
-        "middlePanel": "shows all sessions"
-      },
-      "priority": "P0"
     },
     {
       "id": "CHAT_L1_09",
@@ -190,10 +191,10 @@
     },
     {
       "id": "CHAT_L1_15",
-      "description": "空状态(CC已装但无记录) -- 显示\"还没有聊天记录...\"",
+      "description": "空状态(无 projects) -- 显示\"还没有聊天记录...\"",
       "type": "ui-state",
-      "state": "emptyState_noHistory",
-      "condition": "~/.claude/ exists but history.jsonl is empty",
+      "state": "emptyState_noProjects",
+      "condition": "~/.claude/projects/ exists but is empty",
       "expectedUI": {
         "message": "还没有聊天记录..."
       },
@@ -206,7 +207,7 @@
       "state": "projectFilter",
       "action": "click project in left panel",
       "expectedBehavior": {
-        "middlePanel": "filters to that project's sessions",
+        "middlePanel": "calls getSessions(projectHash) to filter",
         "rightPanel": "clears"
       },
       "priority": "P0"
@@ -218,7 +219,7 @@
       "state": "sessionDetail",
       "action": "click session card in middle panel",
       "expectedBehavior": {
-        "rightPanel": "loads and displays full conversation (bubble style)"
+        "rightPanel": "calls getSession(projectHash, sessionId) and displays messages"
       },
       "priority": "P0"
     },

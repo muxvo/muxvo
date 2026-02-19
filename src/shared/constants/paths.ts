@@ -14,9 +14,6 @@ import { homedir } from 'os';
 /** CC 根数据目录 ~/.claude/ */
 export const CC_DATA_DIR = join(homedir(), '.claude');
 
-/** CC 全局聊天历史索引 */
-export const CC_HISTORY_PATH = join(CC_DATA_DIR, 'history.jsonl');
-
 /** CC 全局设置 */
 export const CC_SETTINGS_PATH = join(CC_DATA_DIR, 'settings.json');
 
