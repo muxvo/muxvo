@@ -302,6 +302,8 @@ function TilingGrid({ terminals, selectedId, onDoubleClick, onClick, onClose, on
               gridColumn: placement?.gridColumn,
               minWidth: 0,
               minHeight: 0,
+              height: '100%',
+              overflow: 'hidden',
             }}
           >
             <TerminalTile
