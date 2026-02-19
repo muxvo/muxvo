@@ -709,6 +709,56 @@ describe('L3 -- 跨模块联动', () => {
     closed = chain.handleEsc();
     expect(closed).toBe('tiling-noop');
   });
+
+  // CROSS_L3_07: 拖拽排序+Grid 重排联动
+  test('CROSS_L3_07: 拖拽排序+Grid 重排联动', async () => {
+    // 5 terminals -> grid 6 cols, 2 rows (span centering)
+    const { calculateGridLayout } = await import('@/shared/utils/grid-layout');
+    const layout5 = calculateGridLayout(5);
+    expect(layout5.cols).toBe(6);
+    expect(layout5.rows).toBe(2);
+
+    // Drag reorder: move C before A
+    const { createDragManager } = await import('@/renderer/stores/drag-manager');
+    const dm = createDragManager({ order: ['A', 'B', 'C', 'D', 'E'] });
+    dm.startDrag('C');
+    dm.dropBefore('A');
+    expect(dm.order).toEqual(['C', 'A', 'B', 'D', 'E']);
+
+    // Close terminal E -> 4 terminals, grid recalculates
+    const layout4 = calculateGridLayout(4);
+    expect(layout4.cols).toBe(2);
+    expect(layout4.rows).toBe(2);
+  });
+
+  // CROSS_L3_08: Resize+布局重算联动
+  test('CROSS_L3_08: Resize+布局重算联动', async () => {
+    const { createGridResizeManager } = await import('@/renderer/stores/grid-resize');
+    const { calculateGridLayout } = await import('@/shared/utils/grid-layout');
+
+    // 4 terminals -> 2x2 grid
+    const layout4 = calculateGridLayout(4);
+    expect(layout4.cols).toBe(2);
+    expect(layout4.rows).toBe(2);
+
+    // Resize columns with precise container size
+    const rm = createGridResizeManager({ cols: 2, rows: 2 });
+    rm.startColResize(0, { clientX: 500 }, 1000);
+    rm.moveResize({ clientX: 600 });
+    rm.endResize();
+    expect(rm.columnRatios[0]).not.toBe(1);
+    expect(rm.columnRatios[1]).not.toBe(1);
+
+    // Add 5th terminal -> grid recalculates to 6x2
+    const layout5 = calculateGridLayout(5);
+    expect(layout5.cols).toBe(6);
+    expect(layout5.rows).toBe(2);
+
+    // New resize manager for new shape has fresh equal ratios
+    const rm2 = createGridResizeManager({ cols: 6, rows: 2 });
+    expect(rm2.columnRatios).toEqual([1, 1, 1, 1, 1, 1]);
+    expect(rm2.rowRatios).toEqual([1, 1]);
+  });
 });
 
 // ============================================================

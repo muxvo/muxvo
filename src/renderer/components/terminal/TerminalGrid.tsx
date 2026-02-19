@@ -116,7 +116,7 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
 }
 
 /** Compute grid placement for each tile based on layout result */
-function computeTilePlacements(layout: GridLayoutResult, count: number): Array<{ gridRow: string; gridColumn: string }> {
+export function computeTilePlacements(layout: GridLayoutResult, count: number): Array<{ gridRow: string; gridColumn: string }> {
   const { cols, rowPattern, spanRow, distribution, lastRowCentered } = layout;
   const placements: Array<{ gridRow: string; gridColumn: string }> = [];
 
@@ -369,7 +369,7 @@ function TilingGrid({ terminals, selectedId, onDoubleClick, onClick, onClose, on
 }
 
 /** Compute handle positions as percentages (between adjacent items) */
-function computeHandlePositions(ratios: number[]): number[] {
+export function computeHandlePositions(ratios: number[]): number[] {
   const positions: number[] = [];
   const total = ratios.reduce((a, b) => a + b, 0);
   let cumulative = 0;

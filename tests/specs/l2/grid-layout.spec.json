@@ -5,7 +5,7 @@
   "source": "tests/l2/term-state.test.ts",
   "docSource": "docs/Muxvo_测试_v2/02_modules/test_TERM.md",
   "fixtureSource": "tests/helpers/test-fixtures.ts (gridFixtures)",
-  "totalCases": 11,
+  "totalCases": 13,
   "cases": [
     {
       "id": "TERM_L2_01_grid_1",
@@ -115,6 +115,26 @@
       "input": { "terminalCount": 20 },
       "expected": { "cols": 5, "rows": 4 },
       "formula": "cols = ceil(sqrt(20)) = 5, rows = ceil(20/5) = 4, 上限测试",
+      "priority": "P1"
+    },
+    {
+      "id": "TERM_L2_12_grid_8",
+      "description": "8 终端 → 4x2",
+      "type": "algorithm",
+      "function": "calculateGridLayout",
+      "input": { "terminalCount": 8 },
+      "expected": { "cols": 4, "rows": 2, "distribution": [4, 4] },
+      "formula": "4x2网格均分",
+      "priority": "P1"
+    },
+    {
+      "id": "TERM_L2_13_grid_0",
+      "description": "0 终端 → 空网格",
+      "type": "algorithm",
+      "function": "calculateGridLayout",
+      "input": { "terminalCount": 0 },
+      "expected": { "cols": 0, "rows": 0 },
+      "formula": "空状态特殊处理",
       "priority": "P1"
     }
   ]
