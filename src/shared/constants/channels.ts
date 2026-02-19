@@ -32,7 +32,8 @@ export const IPC_CHANNELS = {
     WRITE_CLIPBOARD_IMAGE: 'fs:write-clipboard-image',
   },
   CHAT: {
-    GET_HISTORY: 'chat:get-history',
+    GET_PROJECTS: 'chat:get-projects',
+    GET_SESSIONS: 'chat:get-sessions',
     GET_SESSION: 'chat:get-session',
     SEARCH: 'chat:search',
     SESSION_UPDATE: 'chat:session-update',
