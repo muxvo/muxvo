@@ -69,6 +69,30 @@ function ToolResultBlock({ content }: ToolResultBlockProps) {
   );
 }
 
+/**
+ * Extract text from message content which may be string or content block array
+ */
+function extractTextContent(content: string | Array<{ type: string; text?: string }>): string {
+  if (typeof content === 'string') return content;
+  return content
+    .filter(block => block.type === 'text' && block.text)
+    .map(block => block.text!)
+    .join('\n');
+}
+
+/**
+ * Check if content array contains tool_use or tool_result blocks
+ */
+function hasToolBlocks(content: string | Array<{ type: string; text?: string }>): { toolCall: boolean; toolResult: boolean } {
+  if (typeof content === 'string') {
+    return { toolCall: false, toolResult: false };
+  }
+  return {
+    toolCall: content.some(block => block.type === 'tool_use'),
+    toolResult: content.some(block => block.type === 'tool_result'),
+  };
+}
+
 interface MessageBubbleProps {
   message: SessionMessage;
 }
@@ -77,9 +101,10 @@ function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.type === 'user';
   const isAssistant = message.type === 'assistant';
 
-  // Simple detection for tool calls/results (placeholder for now)
-  const hasToolCall = message.message.content.includes('[Tool Call]');
-  const hasToolResult = message.message.content.includes('[Tool Result]');
+  if (!message.message) return null;
+
+  const textContent = extractTextContent(message.message.content);
+  const { toolCall: hasToolCall, toolResult: hasToolResult } = hasToolBlocks(message.message.content);
 
   return (
     <div className={`message-bubble ${isUser ? 'message-bubble--user' : 'message-bubble--assistant'}`}>
@@ -89,18 +114,18 @@ function MessageBubble({ message }: MessageBubbleProps) {
 
       <div className="message-bubble__content">
         {hasToolCall && (
-          <ToolCallBlock content={message.message.content} />
+          <ToolCallBlock content={textContent} />
         )}
         {hasToolResult && (
-          <ToolResultBlock content={message.message.content} />
+          <ToolResultBlock content={textContent} />
         )}
         {!hasToolCall && !hasToolResult && (
           <>
             {isAssistant ? (
-              <MarkdownPreview content={message.message.content} />
+              <MarkdownPreview content={textContent} />
             ) : (
               <div className="message-bubble__text">
-                {message.message.content}
+                {textContent}
               </div>
             )}
           </>
@@ -119,8 +144,14 @@ const MESSAGE_PAGE_SIZE = 50;
 export function SessionDetail({ messages, loading }: SessionDetailProps) {
   const [visibleCount, setVisibleCount] = useState(MESSAGE_PAGE_SIZE);
 
+  // Filter out file-history-snapshot messages (not displayable)
+  const displayMessages = React.useMemo(
+    () => messages.filter(m => m.type !== 'file-history-snapshot'),
+    [messages]
+  );
+
   // Reset visible count when messages change (new session selected)
-  const messageKey = messages.length > 0 ? messages[0].messageId : '';
+  const messageKey = displayMessages.length > 0 ? displayMessages[0].uuid : '';
   React.useEffect(() => { setVisibleCount(MESSAGE_PAGE_SIZE); }, [messageKey]);
 
   if (loading) {
@@ -131,7 +162,7 @@ export function SessionDetail({ messages, loading }: SessionDetailProps) {
     );
   }
 
-  if (messages.length === 0) {
+  if (displayMessages.length === 0) {
     return (
       <div className="session-detail">
         <div className="session-detail__empty">选择一个会话查看详情</div>
@@ -139,21 +170,21 @@ export function SessionDetail({ messages, loading }: SessionDetailProps) {
     );
   }
 
-  const visibleMessages = messages.slice(0, visibleCount);
-  const hasMore = messages.length > visibleCount;
+  const visibleMessages = displayMessages.slice(0, visibleCount);
+  const hasMore = displayMessages.length > visibleCount;
 
   return (
     <div className="session-detail">
       <div className="session-detail__messages">
         {visibleMessages.map((message) => (
-          <MessageBubble key={message.messageId} message={message} />
+          <MessageBubble key={message.uuid} message={message} />
         ))}
         {hasMore && (
           <button
             className="session-detail__load-more"
             onClick={() => setVisibleCount(prev => prev + MESSAGE_PAGE_SIZE)}
           >
-            加载更多消息 ({messages.length - visibleCount} 条)
+            加载更多消息 ({displayMessages.length - visibleCount} 条)
           </button>
         )}
       </div>

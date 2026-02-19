@@ -111,8 +111,8 @@ const api = {
   chat: {
     getHistory: (params?: any) =>
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_HISTORY, params),
-    getSession: (sessionId: string) =>
-      ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_SESSION, { sessionId }),
+    getSession: (sessionId: string, projectHash: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_SESSION, { sessionId, projectHash }),
     search: (query: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.SEARCH, { query }),
     onSessionUpdate: (callback: (data: any) => void) => {
@@ -125,8 +125,8 @@ const api = {
       ipcRenderer.on(IPC_CHANNELS.CHAT.SYNC_STATUS, handler);
       return () => ipcRenderer.removeListener(IPC_CHANNELS.CHAT.SYNC_STATUS, handler);
     },
-    export: (sessionId: string, format: string) =>
-      ipcRenderer.invoke(IPC_CHANNELS.CHAT.EXPORT, { sessionId, format }),
+    export: (sessionId: string, format: string, projectHash: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.EXPORT, { sessionId, format, projectHash }),
   },
 
   // --- Auth domain ---
