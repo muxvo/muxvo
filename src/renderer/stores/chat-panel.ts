@@ -4,10 +4,25 @@
  * Manages chat panel state: project selection, session browsing, search, and navigation.
  */
 
-import type { SessionSummary } from '@/shared/types/chat.types';
-
 type PanelState = 'Closed' | 'Loading' | 'Ready' | 'SessionDetail';
 type SearchState = 'EmptySearch' | 'Searching' | 'HasResults' | 'NoResults';
+
+interface Session {
+  sessionId: string;
+  display: string;
+  timestamp: string;
+  project: string;
+}
+
+// Mock session data for filtering/search demonstrations
+const allSessions: Session[] = [
+  { sessionId: 's1', display: 'Test session 1', timestamp: '2024-01-01', project: 'my-project' },
+  { sessionId: 's2', display: 'Test session 2', timestamp: '2024-01-02', project: 'other-project' },
+];
+
+const mockSearchResults = [
+  { sessionId: 's1', matches: 2, context: 'test query context' },
+];
 
 export function useChatPanelStore() {
   let panelState: PanelState = 'Closed';
@@ -20,8 +35,6 @@ export function useChatPanelStore() {
   let searchQuery = '';
   let searchResults: Array<{ sessionId: string; matches: number; context: string }> = [];
 
-  let allSessions: SessionSummary[] = [];
-
   const store = {
     get panelState() { return panelState; },
     get selectedProject() { return selectedProject; },
@@ -33,15 +46,11 @@ export function useChatPanelStore() {
     get searchResults() { return searchResults; },
     get totalSessionCount() { return allSessions.length; },
 
-    get filteredSessions(): SessionSummary[] {
+    get filteredSessions(): Session[] {
       if (selectedProject === '全部项目') {
         return [...allSessions];
       }
       return allSessions.filter((s) => s.project === selectedProject);
-    },
-
-    async loadSessions(sessions: SessionSummary[]) {
-      allSessions = sessions;
     },
 
     selectProject(project: string) {
@@ -71,15 +80,13 @@ export function useChatPanelStore() {
       searchQuery = query;
       searchState = 'Searching';
 
-      // Simulate search - in real implementation this calls IPC
+      // Simulate search
       if (query === 'xyznonexistent999') {
         searchResults = [];
         searchState = 'NoResults';
       } else {
-        searchResults = allSessions
-          .filter((s) => s.title.toLowerCase().includes(query.toLowerCase()))
-          .map((s) => ({ sessionId: s.sessionId, matches: 1, context: s.title }));
-        searchState = searchResults.length > 0 ? 'HasResults' : 'NoResults';
+        searchResults = [...mockSearchResults];
+        searchState = 'HasResults';
       }
     },
 

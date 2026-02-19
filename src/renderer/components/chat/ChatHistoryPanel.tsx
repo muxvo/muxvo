@@ -12,7 +12,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ProjectList } from './ProjectList';
 import { SessionList } from './SessionList';
 import { SessionDetail } from './SessionDetail';
-import type { SessionSummary, SessionMessage } from '@/shared/types/chat.types';
+import type { HistoryEntry, SessionMessage } from '@/shared/types/chat.types';
 import './ChatHistoryPanel.css';
 
 export type SortMode = 'time' | 'project';
@@ -20,8 +20,8 @@ export type SortMode = 'time' | 'project';
 export function ChatHistoryPanel() {
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
-  const [allSessions, setAllSessions] = useState<SessionSummary[]>([]);
-  const [filteredSessions, setFilteredSessions] = useState<SessionSummary[]>([]);
+  const [allSessions, setAllSessions] = useState<HistoryEntry[]>([]);
+  const [filteredSessions, setFilteredSessions] = useState<HistoryEntry[]>([]);
   const [messages, setMessages] = useState<SessionMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [sortMode, setSortMode] = useState<SortMode>('time');
@@ -43,7 +43,7 @@ export function ChatHistoryPanel() {
   // D8: Filter by project + apply sort
   useEffect(() => {
     let list = selectedProject
-      ? allSessions.filter((s: SessionSummary) => s.project === selectedProject)
+      ? allSessions.filter((s: HistoryEntry) => s.project === selectedProject)
       : allSessions;
 
     if (sortMode === 'project') {
@@ -69,14 +69,9 @@ export function ChatHistoryPanel() {
     }
 
     const fetchSession = async () => {
-      const session = allSessions.find(s => s.sessionId === selectedSessionId);
-      if (!session) {
-        setMessages([]);
-        return;
-      }
       setLoading(true);
       try {
-        const result = await window.api.chat.getSession(selectedSessionId, session.projectHash);
+        const result = await window.api.chat.getSession(selectedSessionId);
         setMessages(result?.messages || []);
       } catch (error) {
         console.error('Failed to fetch session:', error);
@@ -87,29 +82,25 @@ export function ChatHistoryPanel() {
     };
 
     fetchSession();
-  }, [selectedSessionId, allSessions]);
+  }, [selectedSessionId]);
 
   // Listen for real-time session updates
   useEffect(() => {
     const unsub = window.api.chat.onSessionUpdate?.((data: { sessionId: string }) => {
       // Refresh if the updated session is currently selected
       if (data.sessionId === selectedSessionId) {
-        const session = allSessions.find(s => s.sessionId === data.sessionId);
-        if (session) {
-          window.api.chat.getSession(data.sessionId, session.projectHash).then((result: { messages?: SessionMessage[] }) => {
-            setMessages(result?.messages || []);
-          });
-        }
+        window.api.chat.getSession(data.sessionId).then((result: { messages?: SessionMessage[] }) => {
+          setMessages(result?.messages || []);
+        });
       }
     });
-    return () => { unsub?.(); };
-  }, [selectedSessionId, allSessions]);
+    return () => unsub?.();
+  }, [selectedSessionId]);
 
   return (
     <div className="chat-history-panel">
       <div className="chat-history-panel__left">
         <ProjectList
-          sessions={allSessions}
           onSelectProject={handleSelectProject}
           selectedProject={selectedProject}
         />

@@ -22,13 +22,13 @@ describe('CHAT L1 -- 契约层测试', () => {
   describe('IPC 通道格式验证', () => {
     const ipcCases = chatSpec.cases.filter((c) => c.type === 'ipc');
 
-    test('CHAT_L1_01: chat:get-history IPC 格式 -- 返回 { sessions: Array<SessionSummary> }', async () => {
+    test('CHAT_L1_01: chat:get-history IPC 格式 -- 返回 { sessions: Array<{display, timestamp, project, sessionId}> }', async () => {
       // Register a mock handler returning the expected shape
       handleIpc('chat:get-history', async () => ({
         success: true,
         data: {
           sessions: [
-            { sessionId: 's1', project: '/proj', projectHash: 'abc123', title: 'Test session', timestamp: 1704067200000, messageCount: 5 },
+            { display: 'test', timestamp: '2024-01-01', project: '/proj', sessionId: 's1' },
           ],
         },
       }));
@@ -39,36 +39,34 @@ describe('CHAT L1 -- 契约层测试', () => {
 
       // RED: verify real handler returns correct shape (will fail)
       const { chatHandlers } = await import('@/main/ipc/chat-handlers');
-      const realResult = await chatHandlers.getHistory() as { sessions: unknown[] };
+      const realResult = await chatHandlers.getHistory();
       expect(realResult).toHaveProperty('sessions');
       expect(Array.isArray(realResult.sessions)).toBe(true);
       if (realResult.sessions.length > 0) {
-        expect(realResult.sessions[0]).toHaveProperty('sessionId');
-        expect(realResult.sessions[0]).toHaveProperty('project');
-        expect(realResult.sessions[0]).toHaveProperty('projectHash');
-        expect(realResult.sessions[0]).toHaveProperty('title');
+        expect(realResult.sessions[0]).toHaveProperty('display');
         expect(realResult.sessions[0]).toHaveProperty('timestamp');
-        expect(realResult.sessions[0]).toHaveProperty('messageCount');
+        expect(realResult.sessions[0]).toHaveProperty('project');
+        expect(realResult.sessions[0]).toHaveProperty('sessionId');
       }
     });
 
-    test('CHAT_L1_02: chat:get-session IPC 格式 -- 传入 sessionId+projectHash 返回 messages 数组', async () => {
+    test('CHAT_L1_02: chat:get-session IPC 格式 -- 传入 sessionId 返回 messages 数组', async () => {
       handleIpc('chat:get-session', async () => ({
         success: true,
         data: {
           messages: [
-            { type: 'user', uuid: 'u1', sessionId: 'test-session', timestamp: '2024-01-01' },
+            { type: 'user', message: 'hello', timestamp: '2024-01-01', cwd: '/proj' },
           ],
         },
       }));
 
-      const result = await invokeIpc('chat:get-session', { sessionId: 'test-session', projectHash: 'test-hash' });
+      const result = await invokeIpc('chat:get-session', { sessionId: 'test-session' });
       expect(result.success).toBe(true);
       expect(result.data).toHaveProperty('messages');
 
       // RED: verify real handler (will fail)
       const { chatHandlers } = await import('@/main/ipc/chat-handlers');
-      const realResult = await chatHandlers.getSession({ sessionId: 'test-session', projectHash: 'test-hash' });
+      const realResult = await chatHandlers.getSession({ sessionId: 'test-session' });
       expect(realResult).toHaveProperty('messages');
       expect(Array.isArray(realResult.messages)).toBe(true);
     });
@@ -109,7 +107,7 @@ describe('CHAT L1 -- 契约层测试', () => {
       // RED: verify real handler error shape (will fail)
       const { chatHandlers } = await import('@/main/ipc/chat-handlers');
       // Simulate unavailable files scenario
-      const errorResult = await chatHandlers.getHistory({ forceFail: true }) as { error: { code: string } };
+      const errorResult = await chatHandlers.getHistory({ forceFail: true });
       expect(errorResult.error).toBeDefined();
       expect(errorResult.error.code).toBe('FILE_NOT_FOUND');
     });
@@ -126,7 +124,7 @@ describe('CHAT L1 -- 契约层测试', () => {
 
       // RED: verify real handler (will fail)
       const { chatHandlers } = await import('@/main/ipc/chat-handlers');
-      const realResult = await chatHandlers.export({ sessionId: 's1', format: 'markdown', projectHash: 'test-hash' });
+      const realResult = await chatHandlers.export({ sessionId: 's1', format: 'markdown' });
       expect(realResult).toHaveProperty('outputPath');
       expect(typeof realResult.outputPath).toBe('string');
     });
@@ -273,19 +271,13 @@ describe('CHAT L1 -- 契约层测试', () => {
       const { useChatPanelStore } = await import('@/renderer/stores/chat-panel');
       const store = useChatPanelStore();
 
-      // Load sessions first so filtering has data
-      await store.loadSessions([
-        { sessionId: 's1', project: 'my-project', projectHash: 'h1', title: 'Session 1', timestamp: 1704067200000, messageCount: 3 },
-        { sessionId: 's2', project: 'other-project', projectHash: 'h2', title: 'Session 2', timestamp: 1704153600000, messageCount: 5 },
-      ]);
-
       // Simulate selecting a project
       store.selectProject('my-project');
 
       expect(store.selectedProject).toBe('my-project');
       // Middle panel should filter to that project's sessions
       expect(store.filteredSessions.every(
-        (s) => s.project === 'my-project',
+        (s: { project: string }) => s.project === 'my-project',
       )).toBe(true);
       // Right panel should clear
       expect(store.selectedSession).toBeNull();
@@ -344,11 +336,6 @@ describe('CHAT L1 -- 契约层测试', () => {
       // RED: import the real chat panel store (will fail)
       const { useChatPanelStore } = await import('@/renderer/stores/chat-panel');
       const store = useChatPanelStore();
-
-      // Load sessions so search has data to match against
-      await store.loadSessions([
-        { sessionId: 's1', project: 'proj', projectHash: 'h1', title: 'Test query session', timestamp: 1704067200000, messageCount: 3 },
-      ]);
 
       // Simulate search with results
       await store.search('test query');
