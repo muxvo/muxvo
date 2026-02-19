@@ -5,7 +5,7 @@
   "description": "Electron desktop workbench for AI CLI tools",
   "main": "./out/main/index.js",
   "scripts": {
-    "dev": "electron-vite dev",
+    "dev": "rm -rf out/renderer && electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "verify:coverage": "tsx tests/scripts/verify-coverage.ts",
