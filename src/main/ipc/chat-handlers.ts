@@ -41,17 +41,15 @@ export function createChatHandlers() {
       }
 
       return {
-        sessions: result.entries,
+        sessions: result.sessions,
         source: result.source,
         fallback: result.fallback,
         hint: result.hint,
       };
     },
 
-    async getSession(params: { sessionId: string; projectHash?: string }): Promise<Record<string, unknown>> {
-      // If projectHash not provided, try to extract from sessionId or use default
-      const projectHash = params.projectHash || 'default';
-      const result = await reader.readSession(projectHash, params.sessionId);
+    async getSession(params: { sessionId: string; projectHash: string }): Promise<Record<string, unknown>> {
+      const result = await reader.readSession(params.projectHash, params.sessionId);
 
       if (result.source === null) {
         return {
@@ -69,27 +67,26 @@ export function createChatHandlers() {
     },
 
     async search(params: { query: string }): Promise<Record<string, unknown>> {
-      const history = await reader.readHistory();
-      if (history.source === null) return { results: [] };
+      const raw = await reader.readRawHistory();
+      if (raw.source === null) return { results: [] };
       const q = params.query.toLowerCase();
-      const results = history.entries
-        .filter((e: any) => e.display.toLowerCase().includes(q))
-        .map((e: any) => ({
+      const results = raw.entries
+        .filter((e) => e.display.toLowerCase().includes(q))
+        .map((e) => ({
           project: e.project,
-          sessionId: e.sessionId || '',
+          sessionId: e.sessionId,
           snippet: e.display.slice(0, 100),
           timestamp: e.timestamp,
         }));
       return { results };
     },
 
-    async export(params: { sessionId: string; format: string; projectHash?: string }): Promise<Record<string, unknown>> {
+    async export(params: { sessionId: string; format: string; projectHash: string }): Promise<Record<string, unknown>> {
       const { promises: fsp } = await import('fs');
       const { join } = await import('path');
       const { homedir } = await import('os');
 
-      const projectHash = params.projectHash || 'default';
-      const result = await reader.readSession(projectHash, params.sessionId);
+      const result = await reader.readSession(params.projectHash, params.sessionId);
 
       if (result.source === null) {
         return {
@@ -142,7 +139,7 @@ export function registerChatHandlers(): void {
     return handlers.getHistory(params);
   });
 
-  ipcMain.handle(IPC_CHANNELS.CHAT.GET_SESSION, async (_event, params: { sessionId: string; projectHash?: string }) => {
+  ipcMain.handle(IPC_CHANNELS.CHAT.GET_SESSION, async (_event, params: { sessionId: string; projectHash: string }) => {
     return handlers.getSession(params);
   });
 
@@ -150,7 +147,7 @@ export function registerChatHandlers(): void {
     return handlers.search(params);
   });
 
-  ipcMain.handle(IPC_CHANNELS.CHAT.EXPORT, async (_event, params: { sessionId: string; format: string }) => {
+  ipcMain.handle(IPC_CHANNELS.CHAT.EXPORT, async (_event, params: { sessionId: string; format: string; projectHash: string }) => {
     return handlers.export(params);
   });
 }

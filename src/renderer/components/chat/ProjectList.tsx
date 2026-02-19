@@ -5,13 +5,15 @@
  * - "全部项目" 选项（默认选中）
  * - 项目列表，每项: 彩色圆点 + 项目名 + 会话数
  * - 圆点颜色: 按项目名 hash 生成固定颜色
+ * - 数据从父组件 ChatHistoryPanel 通过 sessions prop 传入
  */
 
-import React, { useState, useEffect } from 'react';
-import type { HistoryEntry } from '@/shared/types/chat.types';
+import React, { useMemo } from 'react';
+import type { SessionSummary } from '@/shared/types/chat.types';
 import './ProjectList.css';
 
 interface ProjectListProps {
+  sessions: SessionSummary[];
   onSelectProject: (projectPath: string | null) => void;
   selectedProject: string | null;
 }
@@ -36,53 +38,34 @@ function hashColor(str: string): string {
   return `hsl(${hue}, 65%, 55%)`;
 }
 
-export function ProjectList({ onSelectProject, selectedProject }: ProjectListProps) {
-  const [projects, setProjects] = useState<ProjectSummary[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
+export function ProjectList({ sessions, onSelectProject, selectedProject }: ProjectListProps) {
+  const { projects, totalCount } = useMemo(() => {
+    const projectMap = new Map<string, Set<string>>();
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const result = await window.api.chat.getHistory();
-        const sessions: HistoryEntry[] = result?.sessions || [];
-
-        // Group by project
-        const projectMap = new Map<string, Set<string>>();
-
-        sessions.forEach((session) => {
-          if (!projectMap.has(session.project)) {
-            projectMap.set(session.project, new Set());
-          }
-          projectMap.get(session.project)!.add(session.sessionId);
-        });
-
-        // Convert to array
-        const projectList: ProjectSummary[] = Array.from(projectMap.entries()).map(
-          ([projectPath, sessionIds]) => {
-            const basename = projectPath.split('/').pop() || projectPath;
-            return {
-              path: projectPath,
-              name: basename,
-              sessionCount: sessionIds.size,
-              color: hashColor(projectPath),
-            };
-          }
-        );
-
-        // Sort by name
-        projectList.sort((a, b) => a.name.localeCompare(b.name));
-
-        setProjects(projectList);
-        setTotalCount(sessions.length);
-      } catch (error) {
-        console.error('Failed to fetch projects:', error);
-        setProjects([]);
-        setTotalCount(0);
+    sessions.forEach((s) => {
+      if (!projectMap.has(s.project)) {
+        projectMap.set(s.project, new Set());
       }
-    };
+      projectMap.get(s.project)!.add(s.sessionId);
+    });
 
-    fetchProjects();
-  }, []);
+    const projectList: ProjectSummary[] = Array.from(projectMap.entries()).map(
+      ([projectPath, sessionIds]) => {
+        const basename = projectPath.split('/').pop() || projectPath;
+        return {
+          path: projectPath,
+          name: basename,
+          sessionCount: sessionIds.size,
+          color: hashColor(projectPath),
+        };
+      }
+    );
+
+    // Sort by name
+    projectList.sort((a, b) => a.name.localeCompare(b.name));
+
+    return { projects: projectList, totalCount: sessions.length };
+  }, [sessions]);
 
   return (
     <div className="project-list">

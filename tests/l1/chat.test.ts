@@ -22,13 +22,13 @@ describe('CHAT L1 -- 契约层测试', () => {
   describe('IPC 通道格式验证', () => {
     const ipcCases = chatSpec.cases.filter((c) => c.type === 'ipc');
 
-    test('CHAT_L1_01: chat:get-history IPC 格式 -- 返回 { sessions: Array<{display, timestamp, project, sessionId}> }', async () => {
+    test('CHAT_L1_01: chat:get-history IPC 格式 -- 返回 { sessions: Array<SessionSummary> }', async () => {
       // Register a mock handler returning the expected shape
       handleIpc('chat:get-history', async () => ({
         success: true,
         data: {
           sessions: [
-            { display: 'test', timestamp: '2024-01-01', project: '/proj', sessionId: 's1' },
+            { sessionId: 's1', project: '/proj', projectHash: 'abc123', title: 'Test session', timestamp: 1704067200000, messageCount: 5 },
           ],
         },
       }));
@@ -43,30 +43,32 @@ describe('CHAT L1 -- 契约层测试', () => {
       expect(realResult).toHaveProperty('sessions');
       expect(Array.isArray(realResult.sessions)).toBe(true);
       if (realResult.sessions.length > 0) {
-        expect(realResult.sessions[0]).toHaveProperty('display');
-        expect(realResult.sessions[0]).toHaveProperty('timestamp');
-        expect(realResult.sessions[0]).toHaveProperty('project');
         expect(realResult.sessions[0]).toHaveProperty('sessionId');
+        expect(realResult.sessions[0]).toHaveProperty('project');
+        expect(realResult.sessions[0]).toHaveProperty('projectHash');
+        expect(realResult.sessions[0]).toHaveProperty('title');
+        expect(realResult.sessions[0]).toHaveProperty('timestamp');
+        expect(realResult.sessions[0]).toHaveProperty('messageCount');
       }
     });
 
-    test('CHAT_L1_02: chat:get-session IPC 格式 -- 传入 sessionId 返回 messages 数组', async () => {
+    test('CHAT_L1_02: chat:get-session IPC 格式 -- 传入 sessionId+projectHash 返回 messages 数组', async () => {
       handleIpc('chat:get-session', async () => ({
         success: true,
         data: {
           messages: [
-            { type: 'user', message: 'hello', timestamp: '2024-01-01', cwd: '/proj' },
+            { type: 'user', uuid: 'u1', sessionId: 'test-session', timestamp: '2024-01-01' },
           ],
         },
       }));
 
-      const result = await invokeIpc('chat:get-session', { sessionId: 'test-session' });
+      const result = await invokeIpc('chat:get-session', { sessionId: 'test-session', projectHash: 'test-hash' });
       expect(result.success).toBe(true);
       expect(result.data).toHaveProperty('messages');
 
       // RED: verify real handler (will fail)
       const { chatHandlers } = await import('@/main/ipc/chat-handlers');
-      const realResult = await chatHandlers.getSession({ sessionId: 'test-session' });
+      const realResult = await chatHandlers.getSession({ sessionId: 'test-session', projectHash: 'test-hash' });
       expect(realResult).toHaveProperty('messages');
       expect(Array.isArray(realResult.messages)).toBe(true);
     });
@@ -124,7 +126,7 @@ describe('CHAT L1 -- 契约层测试', () => {
 
       // RED: verify real handler (will fail)
       const { chatHandlers } = await import('@/main/ipc/chat-handlers');
-      const realResult = await chatHandlers.export({ sessionId: 's1', format: 'markdown' });
+      const realResult = await chatHandlers.export({ sessionId: 's1', format: 'markdown', projectHash: 'test-hash' });
       expect(realResult).toHaveProperty('outputPath');
       expect(typeof realResult.outputPath).toBe('string');
     });

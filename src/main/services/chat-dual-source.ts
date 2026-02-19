@@ -6,7 +6,7 @@
 
 import { readFile } from 'fs/promises';
 import { parseJsonl } from './jsonl-parser';
-import type { HistoryEntry, SessionMessage } from '@/shared/types/chat.types';
+import type { HistoryEntry, SessionMessage, SessionSummary } from '@/shared/types/chat.types';
 
 interface DualSourceOpts {
   ccBasePath?: string;
@@ -20,6 +20,14 @@ interface DualSourceOpts {
 }
 
 interface HistoryReadResult {
+  source: 'cc' | 'mirror' | null;
+  sessions: SessionSummary[];
+  fallback: boolean;
+  error?: string;
+  hint?: string;
+}
+
+interface RawHistoryReadResult {
   source: 'cc' | 'mirror' | null;
   entries: HistoryEntry[];
   fallback: boolean;
@@ -42,6 +50,42 @@ interface ReadResult {
   error?: string;
   hint?: string;
   state?: string;
+}
+
+/**
+ * Aggregate raw HistoryEntry[] into SessionSummary[] grouped by sessionId.
+ */
+function aggregateToSessions(entries: HistoryEntry[]): SessionSummary[] {
+  const groups = new Map<string, HistoryEntry[]>();
+  for (const entry of entries) {
+    const group = groups.get(entry.sessionId);
+    if (group) {
+      group.push(entry);
+    } else {
+      groups.set(entry.sessionId, [entry]);
+    }
+  }
+
+  const sessions: SessionSummary[] = [];
+  for (const [sessionId, group] of groups) {
+    // Find entry with latest timestamp for title
+    let latest = group[0];
+    for (let i = 1; i < group.length; i++) {
+      if (group[i].timestamp > latest.timestamp) {
+        latest = group[i];
+      }
+    }
+    sessions.push({
+      sessionId,
+      project: latest.project,
+      projectHash: latest.project.replace(/[^a-zA-Z0-9-]/g, '-'),
+      title: latest.display.slice(0, 100),
+      timestamp: latest.timestamp,
+      messageCount: group.length,
+    });
+  }
+
+  return sessions;
 }
 
 export function createDualSourceReader(opts: DualSourceOpts) {
@@ -80,8 +124,18 @@ export function createDualSourceReader(opts: DualSourceOpts) {
         };
       },
 
-      // Compatibility shims for real API
       async readHistory(): Promise<HistoryReadResult> {
+        const result = await this.read();
+        return {
+          source: result.source,
+          sessions: [],
+          fallback: result.fallback,
+          error: result.error,
+          hint: result.hint,
+        };
+      },
+
+      async readRawHistory(): Promise<RawHistoryReadResult> {
         const result = await this.read();
         return {
           source: result.source,
@@ -112,48 +166,52 @@ export function createDualSourceReader(opts: DualSourceOpts) {
     throw new Error('ccBasePath and mirrorBasePath are required for production mode');
   }
 
+  /**
+   * Internal: read and filter raw entries from history.jsonl (CC with mirror fallback).
+   */
+  async function readEntriesFromFile(): Promise<RawHistoryReadResult> {
+    const ccPath = `${ccBasePath}/history.jsonl`;
+    const mirrorPath = `${mirrorBasePath}/history.jsonl`;
+
+    // Try CC primary source first
+    try {
+      const content = await readFile(ccPath, 'utf-8');
+      const parsed = parseJsonl(content);
+      const entries = (parsed.entries as HistoryEntry[]).filter(e => e.sessionId);
+      return { source: 'cc', entries, fallback: false };
+    } catch {
+      // CC read failed, try mirror
+      try {
+        const content = await readFile(mirrorPath, 'utf-8');
+        const parsed = parseJsonl(content);
+        const entries = (parsed.entries as HistoryEntry[]).filter(e => e.sessionId);
+        return { source: 'mirror', entries, fallback: true, hint: '当前显示本地备份数据' };
+      } catch {
+        return { source: null, entries: [], fallback: false, error: 'CC files and mirror both unavailable' };
+      }
+    }
+  }
+
   return {
     /**
-     * Read history.jsonl from CC path, fallback to mirror if unavailable.
+     * Read history.jsonl and aggregate into SessionSummary[].
      */
     async readHistory(): Promise<HistoryReadResult> {
-      const ccPath = `${ccBasePath}/history.jsonl`;
-      const mirrorPath = `${mirrorBasePath}/history.jsonl`;
+      const raw = await readEntriesFromFile();
+      return {
+        source: raw.source,
+        sessions: aggregateToSessions(raw.entries),
+        fallback: raw.fallback,
+        error: raw.error,
+        hint: raw.hint,
+      };
+    },
 
-      // Try CC primary source first
-      try {
-        const content = await readFile(ccPath, 'utf-8');
-        const parsed = parseJsonl(content);
-        // Filter out entries without sessionId (old format)
-        const entries = (parsed.entries as HistoryEntry[]).filter(e => e.sessionId);
-        return {
-          source: 'cc',
-          entries,
-          fallback: false,
-        };
-      } catch {
-        // CC read failed, try mirror
-        try {
-          const content = await readFile(mirrorPath, 'utf-8');
-          const parsed = parseJsonl(content);
-          // Filter out entries without sessionId (old format)
-          const entries = (parsed.entries as HistoryEntry[]).filter(e => e.sessionId);
-          return {
-            source: 'mirror',
-            entries,
-            fallback: true,
-            hint: '当前显示本地备份数据',
-          };
-        } catch {
-          // Both unavailable
-          return {
-            source: null,
-            entries: [],
-            fallback: false,
-            error: 'CC files and mirror both unavailable',
-          };
-        }
-      }
+    /**
+     * Read raw HistoryEntry[] from history.jsonl (for search use).
+     */
+    async readRawHistory(): Promise<RawHistoryReadResult> {
+      return readEntriesFromFile();
     },
 
     /**
@@ -201,13 +259,13 @@ export function createDualSourceReader(opts: DualSourceOpts) {
 
     // Test-friendly API compatibility (not used in production)
     async read(): Promise<ReadResult> {
-      const result = await this.readHistory();
+      const raw = await readEntriesFromFile();
       return {
-        source: result.source,
-        data: result.entries,
-        fallback: result.fallback,
-        error: result.error,
-        hint: result.hint,
+        source: raw.source,
+        data: raw.entries,
+        fallback: raw.fallback,
+        error: raw.error,
+        hint: raw.hint,
       };
     },
   };

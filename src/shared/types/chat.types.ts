@@ -19,21 +19,31 @@ export interface HistoryEntry {
   timestamp: number;
   /** 项目路径 */
   project: string;
-  /** Session ID (optional for backward compatibility with older entries) */
-  sessionId?: string;
+  /** Session ID */
+  sessionId: string;
+}
+
+/** 按 sessionId 聚合后的会话摘要 */
+export interface SessionSummary {
+  sessionId: string;
+  project: string;
+  projectHash: string;
+  title: string;
+  timestamp: number;
+  messageCount: number;
 }
 
 /** Session JSONL 中的每行消息 */
 export interface SessionMessage {
-  type: 'user' | 'assistant';
-  messageId: string;
+  type: 'user' | 'assistant' | 'file-history-snapshot';
+  uuid: string;
   sessionId: string;
   timestamp: string;
-  cwd: string;
+  cwd?: string;
   gitBranch?: string;
-  message: {
+  message?: {
     role: 'user' | 'assistant';
-    content: string;
+    content: string | Array<{ type: string; text?: string }>;
   };
 }
 
