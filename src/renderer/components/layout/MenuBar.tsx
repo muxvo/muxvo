@@ -18,9 +18,11 @@ interface Props {
   viewMode?: 'Tiling' | 'Focused';
   onBackToTiling?: () => void;
   terminalCount?: number;
+  onAddTerminal?: () => void;
+  maxReached?: boolean;
 }
 
-export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0 }: Props): JSX.Element {
+export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0, onAddTerminal, maxReached }: Props): JSX.Element {
   const { state, dispatch } = usePanelContext();
 
   const activeDropdown = state.menuDropdown.open ? state.menuDropdown.type : null;
@@ -104,6 +106,15 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0
             ← 回到平铺
           </button>
         )}
+
+        <button
+          className="menu-bar__add-btn"
+          onClick={onAddTerminal}
+          disabled={maxReached}
+          title="新建终端"
+        >
+          +
+        </button>
       </header>
 
       {activeDropdown && (
