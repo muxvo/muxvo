@@ -6,6 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Muxvo is an Electron desktop workbench for AI CLI tools (Claude Code, Codex, Gemini CLI). It provides terminal management, chat history browsing, config editing, a rich editor, and a V2 Skill marketplace with AI scoring and showcase publishing.
 
+## 启动 Muxvo
+
+启动 Muxvo 时必须使用 `nohup` + `disown`，确保关闭 Claude Code 后 Muxvo 不会被终止：
+
+```bash
+nohup npx electron-vite dev > /dev/null 2>&1 &
+disown
+```
+
 ## Commands
 
 ```bash

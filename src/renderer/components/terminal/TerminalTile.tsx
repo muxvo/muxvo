@@ -108,8 +108,9 @@ export function TerminalTile({
     }
     if (truncate) {
       const parts = short.split('/');
-      if (parts.length > 3) {
-        return parts[0] + '/\u2026/' + parts.slice(-2).join('/');
+      if (parts.length > 4) {
+        // 保留倒数 3 段，前面用 … 代替
+        return '\u2026/' + parts.slice(-3).join('/');
       }
     }
     return short;

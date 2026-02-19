@@ -32,7 +32,12 @@ export function XTermRenderer({ terminalId }: Props): JSX.Element {
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
     term.open(containerRef.current);
-    fitAddon.fit();
+    // 延迟 fit，等待容器完成布局后再计算列宽行高
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        fitAddon.fit();
+      });
+    });
     termRef.current = term;
 
     // Terminal input -> send to Main process
@@ -67,6 +72,9 @@ export function XTermRenderer({ terminalId }: Props): JSX.Element {
       }
       pendingLiveData.length = 0;
       bufferedDataWritten = true;
+
+      // buffer 写入完成后重新 fit，确保列宽与内容匹配
+      requestAnimationFrame(() => fitAddon.fit());
 
       // Self-verification
       const lines = term.buffer.active.length;

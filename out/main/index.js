@@ -1948,6 +1948,10 @@ function createWindow(windowConfig) {
   });
   if (utils.is.dev && process.env["ELECTRON_RENDERER_URL"]) {
     mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
+  } else if (utils.is.dev) {
+    const fallbackUrl = "http://localhost:5173";
+    console.warn("[MUXVO] ELECTRON_RENDERER_URL not set in dev mode, using fallback:", fallbackUrl);
+    mainWindow.loadURL(fallbackUrl);
   } else {
     mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
   }
