@@ -98,6 +98,11 @@ function createWindow(windowConfig?: WindowConfig): void {
   // Development: load Vite dev server; Production: load built files
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
+  } else if (is.dev) {
+    // 开发模式但 ELECTRON_RENDERER_URL 未设置，使用默认端口避免加载旧静态文件
+    const fallbackUrl = 'http://localhost:5173';
+    console.warn('[MUXVO] ELECTRON_RENDERER_URL not set in dev mode, using fallback:', fallbackUrl);
+    mainWindow.loadURL(fallbackUrl);
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
   }
