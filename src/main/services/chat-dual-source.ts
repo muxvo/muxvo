@@ -275,13 +275,19 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
           // Normalize content
           let normalizedContent: string | SessionMessage['content'];
           if (type === 'user') {
-            // User content: prefer message.content (string), fallback to entry.content
+            // User content: string for normal input, array for tool_result/interrupted messages
             const msgContent = (entry.message as Record<string, unknown>)?.content;
-            normalizedContent = typeof msgContent === 'string'
-              ? msgContent
-              : typeof entry.content === 'string'
-                ? entry.content
-                : '';
+            if (typeof msgContent === 'string') {
+              normalizedContent = msgContent;
+            } else if (Array.isArray(msgContent)) {
+              normalizedContent = msgContent as SessionMessage['content'];
+            } else if (typeof entry.content === 'string') {
+              normalizedContent = entry.content;
+            } else if (Array.isArray(entry.content)) {
+              normalizedContent = entry.content as SessionMessage['content'];
+            } else {
+              normalizedContent = '';
+            }
           } else {
             // Assistant content: prefer message.content (array), fallback to entry.content
             const msgContent = (entry.message as Record<string, unknown>)?.content;

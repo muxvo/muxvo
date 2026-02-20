@@ -97,15 +97,13 @@ function MessageBubble({ message }: MessageBubbleProps) {
       </div>
 
       <div className="message-bubble__content">
-        {isUser ? (
-          <div className="message-bubble__text">
-            {message.content as string}
-          </div>
-        ) : (
-          Array.isArray(message.content)
-            ? (message.content as AssistantContentBlock[]).map((block, i) => renderContentBlock(block, i))
-            : <MarkdownPreview content={String(message.content)} />
-        )}
+        {typeof message.content === 'string' ? (
+          isUser
+            ? <div className="message-bubble__text">{message.content}</div>
+            : <MarkdownPreview content={message.content} />
+        ) : Array.isArray(message.content) ? (
+          (message.content as AssistantContentBlock[]).map((block, i) => renderContentBlock(block, i))
+        ) : null}
       </div>
 
       <div className="message-bubble__meta">
