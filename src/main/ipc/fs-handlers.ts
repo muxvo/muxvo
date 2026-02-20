@@ -69,10 +69,15 @@ export function createFsHandlers() {
       const resolved = normalize(resolve(params.path));
 
       if (!isWritablePath(resolved)) {
-        return {
-          success: false,
-          error: { code: 'PERMISSION_DENIED', message: 'Path is outside writable directories' },
-        };
+        // Allow overwriting files that already exist on disk (editor save semantics)
+        try {
+          await fsp.access(resolved);
+        } catch {
+          return {
+            success: false,
+            error: { code: 'PERMISSION_DENIED', message: 'Path is outside writable directories and file does not exist' },
+          };
+        }
       }
 
       try {

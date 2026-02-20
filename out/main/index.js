@@ -1138,10 +1138,14 @@ function createFsHandlers() {
     async writeFile(params) {
       const resolved = path.normalize(path.resolve(params.path));
       if (!isWritablePath(resolved)) {
-        return {
-          success: false,
-          error: { code: "PERMISSION_DENIED", message: "Path is outside writable directories" }
-        };
+        try {
+          await fs.promises.access(resolved);
+        } catch {
+          return {
+            success: false,
+            error: { code: "PERMISSION_DENIED", message: "Path is outside writable directories and file does not exist" }
+          };
+        }
       }
       try {
         const tmpPath = `${resolved}.muxvo-tmp-${Date.now()}`;
