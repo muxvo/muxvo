@@ -146,7 +146,7 @@ const api = {
   fs: {
     selectDirectory: (defaultPath) => electron.ipcRenderer.invoke(IPC_CHANNELS.FS.SELECT_DIRECTORY, defaultPath ? { defaultPath } : void 0),
     readDir: (dirPath) => electron.ipcRenderer.invoke(IPC_CHANNELS.FS.READ_DIR, { path: dirPath }),
-    readFile: (filePath) => electron.ipcRenderer.invoke(IPC_CHANNELS.FS.READ_FILE, { path: filePath }),
+    readFile: (filePath, encoding) => electron.ipcRenderer.invoke(IPC_CHANNELS.FS.READ_FILE, { path: filePath, encoding }),
     writeFile: (filePath, content) => electron.ipcRenderer.invoke(IPC_CHANNELS.FS.WRITE_FILE, { path: filePath, content }),
     watchStart: (id, paths) => electron.ipcRenderer.invoke(IPC_CHANNELS.FS.WATCH_START, { id, paths }),
     watchStop: (id) => electron.ipcRenderer.invoke(IPC_CHANNELS.FS.WATCH_STOP, { id }),

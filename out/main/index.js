@@ -23,6 +23,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 const electron = require("electron");
 const path = require("path");
+const url = require("url");
 const utils = require("@electron-toolkit/utils");
 const child_process = require("child_process");
 const pty = require("node-pty");
@@ -1122,6 +1123,10 @@ function createFsHandlers() {
     },
     async readFile(params) {
       try {
+        if (params.encoding === "base64") {
+          const buffer = await fs.promises.readFile(params.path);
+          return { success: true, data: { content: buffer.toString("base64"), encoding: "base64" } };
+        }
         const content = await fs.promises.readFile(params.path, "utf-8");
         return { success: true, data: { content, encoding: "utf-8" } };
       } catch (err) {
@@ -2073,6 +2078,9 @@ function createConfigManager(deps) {
   }
   return { loadConfig, saveConfig };
 }
+electron.protocol.registerSchemesAsPrivileged([
+  { scheme: "local-file", privileges: { bypassCSP: true, supportFetchAPI: true, stream: true } }
+]);
 for (const stream of [process.stdout, process.stderr]) {
   stream?.on("error", (err) => {
     if (err.code === "EPIPE") return;
@@ -2129,6 +2137,10 @@ let chatWatcher = null;
 let configWatcher = null;
 let memoryPush = null;
 electron.app.whenReady().then(() => {
+  electron.protocol.handle("local-file", (request) => {
+    const filePath = decodeURIComponent(request.url.replace("local-file://", ""));
+    return electron.net.fetch(url.pathToFileURL(filePath).href);
+  });
   initConfigDir(electron.app.getPath("userData"));
   const configManager = createConfigManager();
   configManager.loadConfig();
