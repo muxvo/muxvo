@@ -15,6 +15,7 @@ import { ChatHistoryPanel } from './components/chat/ChatHistoryPanel';
 import { FilePanel } from './components/file/FilePanel';
 import { FileTempView } from './components/file/FileTempView';
 import { PanelProvider, usePanelContext } from './contexts/PanelContext';
+import { I18nProvider, useI18n, type Locale } from './i18n';
 import './App.css';
 
 /** Image extensions */
@@ -60,6 +61,15 @@ export function App(): JSX.Element {
     terminalId: '',
     processName: '',
   });
+  const [initialLocale, setInitialLocale] = useState<Locale>('zh');
+
+  useEffect(() => {
+    window.api.app.getPreferences().then((result: any) => {
+      if (result?.success && result.data?.language) {
+        setInitialLocale(result.data.language as Locale);
+      }
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     // Load existing terminals on mount
@@ -210,25 +220,27 @@ export function App(): JSX.Element {
     : terminals;
 
   return (
-    <PanelProvider>
-      <AppContent
-        terminals={orderedTerminals}
-        viewMode={viewMode}
-        focusedId={focusedId}
-        selectedId={selectedId}
-        maxReached={maxReached}
-        closeConfirm={closeConfirm}
-        onDoubleClick={handleDoubleClick}
-        onSidebarClick={handleSidebarClick}
-        onClick={handleTileClick}
-        onBackToTiling={handleBackToTiling}
-        onAddTerminal={addTerminal}
-        onClose={removeTerminal}
-        onCloseConfirm={handleCloseConfirm}
-        onCloseCancel={handleCloseCancel}
-        onReorder={handleReorder}
-      />
-    </PanelProvider>
+    <I18nProvider initialLocale={initialLocale}>
+      <PanelProvider>
+        <AppContent
+          terminals={orderedTerminals}
+          viewMode={viewMode}
+          focusedId={focusedId}
+          selectedId={selectedId}
+          maxReached={maxReached}
+          closeConfirm={closeConfirm}
+          onDoubleClick={handleDoubleClick}
+          onSidebarClick={handleSidebarClick}
+          onClick={handleTileClick}
+          onBackToTiling={handleBackToTiling}
+          onAddTerminal={addTerminal}
+          onClose={removeTerminal}
+          onCloseConfirm={handleCloseConfirm}
+          onCloseCancel={handleCloseCancel}
+          onReorder={handleReorder}
+        />
+      </PanelProvider>
+    </I18nProvider>
   );
 }
 
@@ -267,6 +279,7 @@ function AppContent({
   onReorder: (newOrder: string[]) => void;
 }): JSX.Element {
   const { state, dispatch } = usePanelContext();
+  const { t } = useI18n();
 
   // File content loading for FileTempView
   const [fileContent, setFileContent] = useState('');
@@ -323,7 +336,7 @@ function AppContent({
             <rect x="3" y="14" width="7" height="7" rx="1" />
             <rect x="14" y="14" width="7" height="7" rx="1" />
           </svg>
-          回到平铺
+          {t('app.backToTiling')}
         </button>
       )}
 

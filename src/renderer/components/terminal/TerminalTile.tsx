@@ -8,6 +8,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
+import { useI18n } from '@/renderer/i18n';
 import { XTermRenderer } from './XTermRenderer';
 import { getTerminalProcessUI } from '@/renderer/stores/terminal-process-ui-map';
 import { createNamingMachine } from '@/shared/machines/terminal-naming';
@@ -76,6 +77,7 @@ export function TerminalTile({
   onDragLeave,
   dragState = 'none'
 }: Props): JSX.Element {
+  const { t } = useI18n();
   const ui = getTerminalProcessUI(state);
   const tileRef = useRef<HTMLDivElement>(null);
   const { dispatch: panelDispatch } = usePanelContext();
@@ -276,7 +278,7 @@ export function TerminalTile({
                     className="tile-custom-name tile-custom-name--placeholder"
                     onClick={handlePlaceholderClick}
                   >
-                    命名...
+                    {t('terminal.namePlaceholder')}
                   </span>
                 </>
               )}
@@ -290,7 +292,7 @@ export function TerminalTile({
             {/* File button (amber pill) */}
             <button className="tile-file-btn" onClick={handleFileClick}>
               <FileIcon />
-              文件
+              {t('terminal.file')}
             </button>
 
             {/* Maximize button (blue pill) */}

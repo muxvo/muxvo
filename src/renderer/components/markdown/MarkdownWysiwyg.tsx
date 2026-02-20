@@ -20,6 +20,7 @@ export function MarkdownWysiwyg({ content, onChange }: MarkdownWysiwygProps) {
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const initializedRef = useRef(false);
+  const isInternalRef = useRef(false);
 
   const editor = useEditor({
     extensions: [StarterKit, Markdown],
@@ -30,12 +31,17 @@ export function MarkdownWysiwyg({ content, onChange }: MarkdownWysiwygProps) {
     },
     onUpdate: ({ editor }) => {
       if (!initializedRef.current) return;
+      isInternalRef.current = true;
       onChangeRef.current(editor.getMarkdown());
     },
   });
 
-  // Sync external content changes (file switch)
+  // Sync external content changes only (file switch), skip internal edits
   useEffect(() => {
+    if (isInternalRef.current) {
+      isInternalRef.current = false;
+      return;
+    }
     if (editor && !editor.isDestroyed) {
       initializedRef.current = false;
       editor.commands.setContent(content, { contentType: 'markdown' });

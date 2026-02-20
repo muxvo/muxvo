@@ -11,6 +11,7 @@
 import React, { useState, useMemo } from 'react';
 import type { SessionSummary } from '@/shared/types/chat.types';
 import type { SortMode } from './ChatHistoryPanel';
+import { useI18n } from '@/renderer/i18n';
 import './SessionList.css';
 
 const PAGE_SIZE = 50;
@@ -74,6 +75,7 @@ function extractTags(title: string): Array<{ label: string; color: string }> {
 }
 
 export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time', onSortChange }: SessionListProps) {
+  const { t } = useI18n();
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   // Reset visible count when sessions change (e.g. project filter)
@@ -92,21 +94,21 @@ export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time',
     return (
       <div className="session-list">
         <div className="session-list__header">
-          <span>会话</span>
+          <span>{t('chat.sessions')}</span>
           {onSortChange && (
             <div className="session-list__sort">
               <button
                 className={`session-list__sort-btn ${sortMode === 'time' ? 'session-list__sort-btn--active' : ''}`}
                 onClick={() => onSortChange('time')}
-              >时间</button>
+              >{t('chat.time')}</button>
               <button
                 className={`session-list__sort-btn ${sortMode === 'project' ? 'session-list__sort-btn--active' : ''}`}
                 onClick={() => onSortChange('project')}
-              >项目</button>
+              >{t('chat.project')}</button>
             </div>
           )}
         </div>
-        <div className="session-list__empty">暂无会话记录</div>
+        <div className="session-list__empty">{t('chat.noSessions')}</div>
       </div>
     );
   }
@@ -114,17 +116,17 @@ export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time',
   return (
     <div className="session-list">
       <div className="session-list__header">
-        <span>会话 ({sortedSessions.length})</span>
+        <span>{t('chat.sessionsCount', { count: sortedSessions.length })}</span>
         {onSortChange && (
           <div className="session-list__sort">
             <button
               className={`session-list__sort-btn ${sortMode === 'time' ? 'session-list__sort-btn--active' : ''}`}
               onClick={() => onSortChange('time')}
-            >时间</button>
+            >{t('chat.time')}</button>
             <button
               className={`session-list__sort-btn ${sortMode === 'project' ? 'session-list__sort-btn--active' : ''}`}
               onClick={() => onSortChange('project')}
-            >项目</button>
+            >{t('chat.project')}</button>
           </div>
         )}
       </div>
@@ -163,7 +165,7 @@ export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time',
                   </span>
                 ))}
               </div>
-              <span className="session-card__count">{session.messageCount} 条</span>
+              <span className="session-card__count">{t('chat.messageCount', { count: session.messageCount })}</span>
             </div>
           </div>
         );
@@ -174,7 +176,7 @@ export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time',
           className="session-list__load-more"
           onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
         >
-          加载更多 ({sortedSessions.length - visibleCount} 条)
+          {t('chat.loadMore', { count: sortedSessions.length - visibleCount })}
         </button>
       )}
     </div>

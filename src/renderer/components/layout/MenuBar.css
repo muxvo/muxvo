@@ -93,7 +93,6 @@
 }
 
 .menu-bar__add-btn {
-  margin-left: auto;
   z-index: 2;
   -webkit-app-region: no-drag;
   background: var(--accent-glow);
@@ -120,4 +119,25 @@
 .menu-bar__add-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.menu-bar__lang-btn {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  margin-left: auto;
+  margin-right: 8px;
+  z-index: 2;
+  -webkit-app-region: no-drag;
+  transition: all 0.15s;
+}
+
+.menu-bar__lang-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }

@@ -12,6 +12,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { MarkdownPreview } from '@/renderer/components/markdown/MarkdownPreview';
+import { useI18n } from '@/renderer/i18n';
 import type { SessionMessage, AssistantContentBlock } from '@/shared/types/chat.types';
 import './SessionDetail.css';
 
@@ -26,6 +27,7 @@ interface ToolCallBlockProps {
 }
 
 function ToolCallBlock({ name, input }: ToolCallBlockProps) {
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -35,7 +37,7 @@ function ToolCallBlock({ name, input }: ToolCallBlockProps) {
     >
       <div className="tool-call-block__header">
         <span className="tool-call-block__icon">{expanded ? '▼' : '▶'}</span>
-        <span className="tool-call-block__label">Tool Call{name ? `: ${name}` : ''}</span>
+        <span className="tool-call-block__label">{t('chat.toolCall')}{name ? `: ${name}` : ''}</span>
       </div>
       {expanded && (
         <pre className="tool-call-block__content">
@@ -51,6 +53,7 @@ interface ToolResultBlockProps {
 }
 
 function ToolResultBlock({ content }: ToolResultBlockProps) {
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -60,7 +63,7 @@ function ToolResultBlock({ content }: ToolResultBlockProps) {
     >
       <div className="tool-result-block__header">
         <span className="tool-result-block__icon">{expanded ? '▼' : '▶'}</span>
-        <span className="tool-result-block__label">Tool Result</span>
+        <span className="tool-result-block__label">{t('chat.toolResult')}</span>
       </div>
       {expanded && (
         <pre className="tool-result-block__content">
@@ -89,12 +92,13 @@ interface MessageBubbleProps {
 }
 
 const MessageBubble = React.memo(function MessageBubble({ message }: MessageBubbleProps) {
+  const { t } = useI18n();
   const isUser = message.type === 'user';
 
   return (
     <div className={`message-bubble ${isUser ? 'message-bubble--user' : 'message-bubble--assistant'}`}>
       <div className="message-bubble__label">
-        {isUser ? 'YOU' : 'CLAUDE'}
+        {isUser ? t('chat.you') : t('chat.claude')}
       </div>
 
       <div className="message-bubble__content">
