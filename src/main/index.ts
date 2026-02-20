@@ -11,9 +11,16 @@
  * - Config persistence (save on close, restore on launch)
  */
 
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, protocol, net } from 'electron';
 import { join } from 'path';
+import { pathToFileURL } from 'url';
 import { is } from '@electron-toolkit/utils';
+
+// Register custom protocol for serving local files (images, etc.)
+// Must be called before app.whenReady()
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'local-file', privileges: { bypassCSP: true, supportFetchAPI: true, stream: true } },
+]);
 import { createTerminalManager } from './services/terminal/manager';
 import { createRealPtyAdapter } from './services/terminal/pty-adapter';
 import { registerTerminalHandlers } from './ipc/terminal-handlers';
@@ -114,6 +121,12 @@ let configWatcher: ReturnType<typeof createConfigWatcher> | null = null;
 let memoryPush: ReturnType<typeof createMemoryPushTimer> | null = null;
 
 app.whenReady().then(() => {
+  // Handle local-file:// protocol for serving local images/files to renderer
+  protocol.handle('local-file', (request) => {
+    const filePath = decodeURIComponent(request.url.replace('local-file://', ''));
+    return net.fetch(pathToFileURL(filePath).href);
+  });
+
   // Initialize config persistence
   initConfigDir(app.getPath('userData'));
   const configManager = createConfigManager();

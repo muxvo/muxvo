@@ -30,14 +30,9 @@ function mapExtToFileType(ext: string): 'markdown' | 'code' | 'text' | 'image' {
   return 'text';
 }
 
-/** Map extension to MIME type for data URI */
-function extToMime(ext: string): string {
-  const map: Record<string, string> = {
-    png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg',
-    gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml',
-    bmp: 'image/bmp', ico: 'image/x-icon',
-  };
-  return map[ext] || 'image/png';
+/** Build local-file:// URL for serving images via custom protocol */
+function toLocalFileUrl(filePath: string): string {
+  return `local-file://${encodeURIComponent(filePath)}`;
 }
 
 const MAX_TERMINALS = 20;
@@ -286,12 +281,8 @@ function AppContent({
     setFileContent('');
 
     if (detectedType === 'image') {
-      // Read image as base64, build data URI
-      window.api.fs.readFile(filePath, 'base64').then((result: { success: boolean; data?: { content: string } }) => {
-        if (result?.success && result.data) {
-          setFileContent(`data:${extToMime(ext)};base64,${result.data.content}`);
-        }
-      }).catch(() => {});
+      // Use custom local-file:// protocol to serve image directly
+      setFileContent(toLocalFileUrl(filePath));
     } else {
       window.api.fs.readFile(filePath).then((result: { success: boolean; data?: { content: string } }) => {
         if (result?.success && result.data) {
