@@ -11,6 +11,7 @@
  */
 
 import { useState, useRef, useCallback } from 'react';
+import { useI18n } from '@/renderer/i18n';
 import { calculateGridLayout, GridLayoutResult } from '@/shared/utils/grid-layout';
 import { createGridResizeManager } from '@/renderer/stores/grid-resize';
 import { createDragManager } from '@/renderer/stores/drag-manager';
@@ -36,6 +37,7 @@ interface Props {
 }
 
 export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, selectedId, onDoubleClick, onSidebarClick, onClick, onClose, onReorder }: Props): JSX.Element {
+  const { t } = useI18n();
   if (terminals.length === 0) {
     return (
       <div style={{
@@ -47,7 +49,7 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
         color: 'var(--text-secondary)',
         fontSize: '13px',
       }}>
-        No terminals. Click + to create one.
+        {t('terminal.noTerminals')}
       </div>
     );
   }

@@ -9,6 +9,7 @@
 
 import React from 'react';
 import type { ProjectInfo } from '@/shared/types/chat.types';
+import { useI18n } from '@/renderer/i18n';
 import './ProjectList.css';
 
 interface ProjectListProps {
@@ -28,16 +29,18 @@ function hashColor(str: string): string {
 }
 
 export function ProjectList({ projects, selectedProjectHash, onSelectProject, totalSessionCount }: ProjectListProps) {
+  const { t } = useI18n();
+
   return (
     <div className="project-list">
-      <div className="project-list__header">项目</div>
+      <div className="project-list__header">{t('chat.projects')}</div>
 
       <div
         className={`project-list__item ${selectedProjectHash === null ? 'project-list__item--selected' : ''}`}
         onClick={() => onSelectProject(null)}
       >
         <span className="project-list__dot" style={{ background: 'var(--accent)' }} />
-        <span className="project-list__name">全部项目</span>
+        <span className="project-list__name">{t('chat.allProjects')}</span>
         <span className="project-list__count">{totalSessionCount}</span>
       </div>
 

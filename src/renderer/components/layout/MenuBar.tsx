@@ -9,6 +9,7 @@
  */
 
 import { usePanelContext } from '@/renderer/contexts/PanelContext';
+import { useI18n } from '@/renderer/i18n';
 import { MenuDropdown } from './MenuDropdown';
 import './MenuBar.css';
 
@@ -24,6 +25,7 @@ interface Props {
 
 export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0, onAddTerminal, maxReached }: Props): JSX.Element {
   const { state, dispatch } = usePanelContext();
+  const { t, locale, setLocale } = useI18n();
 
   const activeDropdown = state.menuDropdown.open ? state.menuDropdown.type : null;
   const chatOpen = state.chatHistory.open;
@@ -79,7 +81,7 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0
             className={`menu-bar__tab${activeTab === 'terminals' ? ' menu-bar__tab--active' : ''}`}
             onClick={() => handleTabClick('terminals')}
           >
-            终端{terminalCount > 0 && <span className="menu-bar__badge">{terminalCount}</span>}
+            {t('menu.terminal')}{terminalCount > 0 && <span className="menu-bar__badge">{terminalCount}</span>}
           </button>
           <button
             className={`menu-bar__tab${activeTab === 'skills' ? ' menu-bar__tab--active' : ''}`}
@@ -97,21 +99,28 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0
             className={`menu-bar__tab${activeTab === 'chat' ? ' menu-bar__tab--active' : ''}`}
             onClick={() => handleTabClick('chat')}
           >
-            历史聊天
+            {t('menu.chatHistory')}
           </button>
         </nav>
 
         {viewMode === 'Focused' && onBackToTiling && (
           <button className="menu-bar__back-btn" onClick={onBackToTiling}>
-            ← 回到平铺
+            {t('menu.backToTiling')}
           </button>
         )}
+
+        <button
+          className="menu-bar__lang-btn"
+          onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')}
+        >
+          {locale === 'zh' ? 'EN' : '中'}
+        </button>
 
         <button
           className="menu-bar__add-btn"
           onClick={onAddTerminal}
           disabled={maxReached}
-          title="新建终端"
+          title={t('menu.newTerminal')}
         >
           +
         </button>

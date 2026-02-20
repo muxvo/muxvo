@@ -7,6 +7,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useI18n } from '@/renderer/i18n';
 import { MarkdownWysiwyg } from '@/renderer/components/markdown/MarkdownWysiwyg';
 import { TerminalTile } from '@/renderer/components/terminal/TerminalTile';
 import { UnsavedPromptDialog } from './UnsavedPromptDialog';
@@ -137,6 +138,7 @@ export function FileTempView({
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   // Editing state
+  const { t } = useI18n();
   const [editContent, setEditContent] = useState('');
   const [isDirty, setIsDirty] = useState(false);
   const [sourceMode, setSourceMode] = useState(false); // false=WYSIWYG, true=raw source textarea
@@ -375,7 +377,7 @@ export function FileTempView({
               onClick={() => setSourceMode(prev => !prev)}
               title="⌘/"
             >
-              {sourceMode ? 'WYSIWYG' : 'Source'}
+              {sourceMode ? t('file.wysiwyg') : t('file.source')}
             </button>
           )}
           <span

@@ -3,6 +3,7 @@
  * Displays add/remove buttons and terminal count.
  */
 
+import { useI18n } from '@/renderer/i18n';
 import './FloatingControls.css';
 
 interface FloatingControlsProps {
@@ -16,6 +17,7 @@ export function FloatingControls({
   onAddTerminal,
   maxReached,
 }: FloatingControlsProps): JSX.Element {
+  const { t } = useI18n();
   return (
     <div className="floating-controls">
       <button
@@ -23,10 +25,10 @@ export function FloatingControls({
         onClick={onAddTerminal}
         disabled={maxReached}
       >
-        + 新建终端
+        {t('floating.newTerminal')}
       </button>
       <div className="floating-controls__count">
-        {terminalCount} 个终端
+        {t('terminal.count', { count: terminalCount })}
       </div>
     </div>
   );

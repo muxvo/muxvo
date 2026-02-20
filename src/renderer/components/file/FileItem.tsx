@@ -5,6 +5,7 @@
  */
 
 import React from 'react';
+import { useI18n } from '@/renderer/i18n';
 
 interface FileItemProps {
   name: string;
@@ -41,6 +42,7 @@ export function FileItem({
   expanded,
   onClick,
 }: FileItemProps) {
+  const { t } = useI18n();
   const classList = [
     'file-item',
     type === 'folder' ? 'file-item--folder' : '',
@@ -59,7 +61,7 @@ export function FileItem({
       <span className="file-item__icon">{getFileIcon(type, ext, expanded)}</span>
       <span className="file-item__name">{name}</span>
       {meta && <span className="file-item__meta">{meta}</span>}
-      {isNew && <span className="file-item__badge">NEW</span>}
+      {isNew && <span className="file-item__badge">{t('file.new')}</span>}
     </div>
   );
 }

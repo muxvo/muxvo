@@ -5,6 +5,7 @@
  */
 
 import React, { useEffect } from 'react';
+import { useI18n } from '@/renderer/i18n';
 import './UnsavedPromptDialog.css';
 
 interface UnsavedPromptDialogProps {
@@ -20,6 +21,7 @@ export function UnsavedPromptDialog({
   onDiscard,
   onCancel,
 }: UnsavedPromptDialogProps) {
+  const { t } = useI18n();
   // Esc = cancel
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -36,31 +38,29 @@ export function UnsavedPromptDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="unsaved-prompt-dialog__title">
-          Unsaved Changes
+          {t('unsaved.title')}
         </div>
         <div className="unsaved-prompt-dialog__message">
-          File{' '}
-          <span className="unsaved-prompt-dialog__filename">{fileName}</span>{' '}
-          has unsaved changes.
+          {t('unsaved.message', { fileName })}
         </div>
         <div className="unsaved-prompt-dialog__actions">
           <button
             className="unsaved-prompt-dialog__btn unsaved-prompt-dialog__btn--cancel"
             onClick={onCancel}
           >
-            Cancel
+            {t('unsaved.cancel')}
           </button>
           <button
             className="unsaved-prompt-dialog__btn unsaved-prompt-dialog__btn--discard"
             onClick={onDiscard}
           >
-            Discard
+            {t('unsaved.discard')}
           </button>
           <button
             className="unsaved-prompt-dialog__btn unsaved-prompt-dialog__btn--save"
             onClick={onSave}
           >
-            Save
+            {t('unsaved.save')}
           </button>
         </div>
       </div>

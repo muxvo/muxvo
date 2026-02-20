@@ -13,6 +13,7 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { isShellProcess } from '@/shared/utils/shell-detect';
+import { useI18n } from '@/renderer/i18n';
 import './CwdPicker.css';
 
 interface Props {
@@ -37,6 +38,7 @@ export function CwdPicker({
   onClose,
   onConfirmExit,
 }: Props) {
+  const { t } = useI18n();
   const popupRef = useRef<HTMLDivElement>(null);
   const homePath = window.api.app.getHomePath();
 
@@ -129,12 +131,12 @@ export function CwdPicker({
         style={{ top, left }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="cwd-picker-header">切换工作目录</div>
+        <div className="cwd-picker-header">{t('cwd.title')}</div>
         <div className="cwd-picker-current">
-          当前: <span className="cwd-picker-current-path">{currentCwd}</span>
+          {t('cwd.current')} <span className="cwd-picker-current-path">{currentCwd}</span>
         </div>
         <div className="cwd-picker-quick">
-          <div className="cwd-picker-section-title">快捷路径</div>
+          <div className="cwd-picker-section-title">{t('cwd.quickPaths')}</div>
           {quickPaths.map((item) => (
             <button
               key={item.path}
@@ -147,7 +149,7 @@ export function CwdPicker({
         </div>
         <div className="cwd-picker-browse">
           <button className="cwd-picker-browse-btn" onClick={handleBrowse}>
-            浏览...
+            {t('cwd.browse')}
           </button>
         </div>
       </div>
