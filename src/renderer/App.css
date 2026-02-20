@@ -26,6 +26,17 @@
   background: var(--bg-deep);
 }
 
+/* Skills panel overlay (full-screen below menu bar) */
+.skills-panel-overlay {
+  position: fixed;
+  top: var(--menu-bar-height);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 180;
+  background: var(--bg-deep);
+}
+
 /* === Ambient background glow (prototype-history-A.html) === */
 body::before {
   content: '';

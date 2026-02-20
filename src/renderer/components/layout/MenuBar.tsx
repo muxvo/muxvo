@@ -29,9 +29,10 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0
 
   const activeDropdown = state.menuDropdown.open ? state.menuDropdown.type : null;
   const chatOpen = state.chatHistory.open;
+  const skillsOpen = state.skillsPanel.open;
 
   function getActiveTab(): TabId {
-    if (activeDropdown === 'skills') return 'skills';
+    if (skillsOpen) return 'skills';
     if (activeDropdown === 'mcp') return 'mcp';
     if (chatOpen) return 'chat';
     return 'terminals';
@@ -44,17 +45,31 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0
       // Close any open dropdown/panel, back to terminal grid
       if (activeDropdown) dispatch({ type: 'TOGGLE_MENU_DROPDOWN', dropdownType: activeDropdown });
       if (chatOpen) dispatch({ type: 'CLOSE_CHAT_HISTORY' });
+      if (skillsOpen) dispatch({ type: 'CLOSE_SKILLS_PANEL' });
       return;
     }
 
-    if (tab === 'skills' || tab === 'mcp') {
+    if (tab === 'skills') {
       if (chatOpen) dispatch({ type: 'CLOSE_CHAT_HISTORY' });
-      dispatch({ type: 'TOGGLE_MENU_DROPDOWN', dropdownType: tab });
+      if (activeDropdown) dispatch({ type: 'TOGGLE_MENU_DROPDOWN', dropdownType: activeDropdown });
+      if (skillsOpen) {
+        dispatch({ type: 'CLOSE_SKILLS_PANEL' });
+      } else {
+        dispatch({ type: 'OPEN_SKILLS_PANEL' });
+      }
+      return;
+    }
+
+    if (tab === 'mcp') {
+      if (chatOpen) dispatch({ type: 'CLOSE_CHAT_HISTORY' });
+      if (skillsOpen) dispatch({ type: 'CLOSE_SKILLS_PANEL' });
+      dispatch({ type: 'TOGGLE_MENU_DROPDOWN', dropdownType: 'mcp' });
       return;
     }
 
     if (tab === 'chat') {
       if (activeDropdown) dispatch({ type: 'TOGGLE_MENU_DROPDOWN', dropdownType: activeDropdown });
+      if (skillsOpen) dispatch({ type: 'CLOSE_SKILLS_PANEL' });
       if (chatOpen) {
         dispatch({ type: 'CLOSE_CHAT_HISTORY' });
       } else {
