@@ -24,7 +24,8 @@ interface SessionListProps {
 }
 
 /**
- * Format timestamp to relative time
+ * Format timestamp: 24h with date context
+ * 今天 14:30 / 昨天 09:15 / 02-18 22:00
  */
 function formatTime(timestamp: number): string {
   const now = new Date();
@@ -34,17 +35,18 @@ function formatTime(timestamp: number): string {
   yesterday.setDate(yesterday.getDate() - 1);
 
   const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const time = `${hours}:${minutes}`;
 
   if (dateOnly.getTime() === today.getTime()) {
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${hours}:${minutes}`;
+    return `今天 ${time}`;
   } else if (dateOnly.getTime() === yesterday.getTime()) {
-    return 'yesterday';
+    return `昨天 ${time}`;
   } else {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
-    return `${month}-${day}`;
+    return `${month}-${day} ${time}`;
   }
 }
 
