@@ -1806,6 +1806,7 @@ function registerAnalyticsHandlers() {
 function createChatWatcher() {
   let watcher = null;
   const projectsDir = path.join(os.homedir(), ".claude", "projects");
+  const pendingTimers = /* @__PURE__ */ new Map();
   return {
     start() {
       try {
@@ -1813,11 +1814,19 @@ function createChatWatcher() {
           if (!filename || !filename.endsWith(".jsonl")) return;
           const parts = filename.split("/");
           if (parts.length >= 2) {
-            const projectId = parts[parts.length - 2];
+            const projectHash = parts[parts.length - 2];
             const sessionId = parts[parts.length - 1].replace(".jsonl", "");
-            electron.BrowserWindow.getAllWindows().forEach((win) => {
-              win.webContents.send(IPC_CHANNELS.CHAT.SESSION_UPDATE, { projectId, sessionId });
-            });
+            const key = `${projectHash}/${sessionId}`;
+            const existing = pendingTimers.get(key);
+            if (existing) clearTimeout(existing);
+            pendingTimers.set(key, setTimeout(() => {
+              pendingTimers.delete(key);
+              electron.BrowserWindow.getAllWindows().forEach((win) => {
+                if (!win.isDestroyed()) {
+                  win.webContents.send(IPC_CHANNELS.CHAT.SESSION_UPDATE, { projectHash, sessionId });
+                }
+              });
+            }, 500));
           }
         });
       } catch {
@@ -1826,6 +1835,8 @@ function createChatWatcher() {
     stop() {
       watcher?.close();
       watcher = null;
+      for (const timer of pendingTimers.values()) clearTimeout(timer);
+      pendingTimers.clear();
     }
   };
 }

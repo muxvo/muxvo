@@ -9,7 +9,7 @@
  * - 代码块: 复制按钮
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { MarkdownPreview } from '@/renderer/components/markdown/MarkdownPreview';
 import type { SessionMessage, AssistantContentBlock } from '@/shared/types/chat.types';
 import './SessionDetail.css';
@@ -119,10 +119,19 @@ const MESSAGE_PAGE_SIZE = 50;
 
 export function SessionDetail({ messages, loading }: SessionDetailProps) {
   const [visibleCount, setVisibleCount] = useState(MESSAGE_PAGE_SIZE);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Reset visible count when messages change (new session selected)
+  // Reset visible count when a different session is selected
   const messageKey = messages.length > 0 ? messages[0].uuid : '';
-  React.useEffect(() => { setVisibleCount(MESSAGE_PAGE_SIZE); }, [messageKey]);
+  useEffect(() => { setVisibleCount(MESSAGE_PAGE_SIZE); }, [messageKey]);
+
+  // Auto-scroll to bottom when messages change (new session or real-time update)
+  useEffect(() => {
+    if (messages.length > 0) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    }
+  }, [messages]);
 
   if (loading) {
     return (
@@ -140,23 +149,26 @@ export function SessionDetail({ messages, loading }: SessionDetailProps) {
     );
   }
 
-  const visibleMessages = messages.slice(0, visibleCount);
-  const hasMore = messages.length > visibleCount;
+  // Show the LAST N messages (most recent), with "load earlier" at top
+  const startIndex = Math.max(0, messages.length - visibleCount);
+  const visibleMessages = messages.slice(startIndex);
+  const hasEarlier = startIndex > 0;
 
   return (
-    <div className="session-detail">
+    <div className="session-detail" ref={containerRef}>
       <div className="session-detail__messages">
-        {visibleMessages.map((message) => (
-          <MessageBubble key={message.uuid} message={message} />
-        ))}
-        {hasMore && (
+        {hasEarlier && (
           <button
             className="session-detail__load-more"
             onClick={() => setVisibleCount(prev => prev + MESSAGE_PAGE_SIZE)}
           >
-            加载更多消息 ({messages.length - visibleCount} 条)
+            加载更早消息 ({startIndex} 条)
           </button>
         )}
+        {visibleMessages.map((message) => (
+          <MessageBubble key={message.uuid} message={message} />
+        ))}
+        <div ref={messagesEndRef} />
       </div>
     </div>
   );
