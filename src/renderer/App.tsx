@@ -12,6 +12,7 @@ import { FloatingControls } from './components/layout/FloatingControls';
 import { TerminalGrid } from './components/terminal/TerminalGrid';
 import { CloseConfirmDialog } from './components/terminal/CloseConfirmDialog';
 import { ChatHistoryPanel } from './components/chat/ChatHistoryPanel';
+import { SkillsPanel } from './components/skill/SkillsPanel';
 import { FilePanel } from './components/file/FilePanel';
 import { FileTempView } from './components/file/FileTempView';
 import { PanelProvider, usePanelContext } from './contexts/PanelContext';
@@ -329,6 +330,13 @@ function AppContent({
       {state.chatHistory.open && (
         <div className="chat-history-overlay">
           <ChatHistoryPanel />
+        </div>
+      )}
+
+      {/* Skills panel overlay (three-column: skill list | file tree | editor) */}
+      {state.skillsPanel.open && (
+        <div className="skills-panel-overlay">
+          <SkillsPanel />
         </div>
       )}
 

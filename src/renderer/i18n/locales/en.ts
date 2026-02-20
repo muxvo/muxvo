@@ -39,4 +39,12 @@ export const en = {
   'cwd.browse': 'Browse...',
   'floating.newTerminal': '+ New Terminal',
   'lang.label': '中/EN',
+  'skills.title': 'Skills',
+  'skills.count': '{count} skills',
+  'skills.noSkills': 'No skills found',
+  'skills.noSkillsHint': '~/.claude/skills/',
+  'skills.selectSkill': 'Select a skill to view files',
+  'skills.selectFile': 'Select a file to view content',
+  'skills.loading': 'Loading...',
+  'skills.emptyFolder': 'Empty folder',
 } as const;

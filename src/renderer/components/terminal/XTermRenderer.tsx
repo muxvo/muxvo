@@ -25,122 +25,111 @@ export function XTermRenderer({ terminalId }: Props): JSX.Element {
   useEffect(() => {
     if (!containerRef.current) return;
 
-    let cancelled = false;
-    let cleanup: (() => void) | undefined;
+    // Create terminal synchronously with defaults (ensures immediate render)
+    const term = new Terminal({
+      cursorBlink: DEFAULT_TERMINAL_CONFIG.cursorBlink,
+      cursorStyle: DEFAULT_TERMINAL_CONFIG.cursorStyle,
+      fontSize: DEFAULT_TERMINAL_CONFIG.fontSize,
+      fontFamily: DEFAULT_TERMINAL_CONFIG.fontFamily,
+      theme: resolveTerminalTheme(DEFAULT_TERMINAL_CONFIG.themeName),
+    });
 
-    async function init() {
-      // Load terminal config from persisted app config
-      let terminalConfig = DEFAULT_TERMINAL_CONFIG;
-      try {
-        const result = await window.api.app.getConfig();
-        if (result?.data?.terminal) {
-          terminalConfig = { ...DEFAULT_TERMINAL_CONFIG, ...result.data.terminal };
-        }
-      } catch {
-        // Use defaults on error
+    term.open(containerRef.current);
+    const addonManager = createAddonManager(term);
+    addonManager.loadAll();
+    searchAddonRef.current = addonManager.getSearchAddon();
+    const fitAddon = addonManager.getFitAddon();
+
+    // Cmd/Ctrl+F toggles terminal search bar
+    term.attachCustomKeyEventHandler((e: KeyboardEvent) => {
+      const isMod = navigator.platform.includes('Mac') ? e.metaKey : e.ctrlKey;
+      if (isMod && e.key === 'f' && e.type === 'keydown') {
+        setSearchVisible((prev) => !prev);
+        return false;
       }
-
-      if (cancelled || !containerRef.current) return;
-
-      const term = new Terminal({
-        cursorBlink: terminalConfig.cursorBlink,
-        cursorStyle: terminalConfig.cursorStyle,
-        fontSize: terminalConfig.fontSize,
-        fontFamily: terminalConfig.fontFamily,
-        theme: resolveTerminalTheme(terminalConfig.themeName),
-      });
-
-      term.open(containerRef.current);
-      const addonManager = createAddonManager(term);
-      addonManager.loadAll();
-      searchAddonRef.current = addonManager.getSearchAddon();
-      const fitAddon = addonManager.getFitAddon();
-
-      // Cmd/Ctrl+F toggles terminal search bar
-      term.attachCustomKeyEventHandler((e: KeyboardEvent) => {
-        const isMod = navigator.platform.includes('Mac') ? e.metaKey : e.ctrlKey;
-        if (isMod && e.key === 'f' && e.type === 'keydown') {
-          setSearchVisible((prev) => !prev);
-          return false;
-        }
-        return true;
-      });
-      // 延迟 fit，等待容器完成布局后再计算列宽行高
+      return true;
+    });
+    // 延迟 fit，等待容器完成布局后再计算列宽行高
+    requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          fitAddon.fit();
-        });
-      });
-      termRef.current = term;
-
-      // Terminal input -> send to Main process
-      term.onData((data) => {
-        window.api.terminal.write(terminalId, data);
-      });
-
-      // Queue/flush pattern: subscribe first, fetch buffer, replay, then go live
-      let bufferedDataWritten = false;
-      const pendingLiveData: string[] = [];
-
-      const unsubOutput = window.api.terminal.onOutput((event) => {
-        if (event.id === terminalId) {
-          if (!bufferedDataWritten) {
-            pendingLiveData.push(event.data);
-          } else {
-            term.write(event.data);
-          }
-        }
-      });
-
-      // Fetch buffered output (captures anything from before subscription)
-      console.log(`[MUXVO:restore] XTermRenderer mounted for id=${terminalId}`);
-      window.api.terminal.getBuffer(terminalId).then((result: { success: boolean; data?: string }) => {
-        if (result?.success && result.data) {
-          console.log(`[MUXVO:restore] buffer received for id=${terminalId} bytes=${result.data.length}`);
-          term.write(result.data);
-        }
-        // Flush any live data that arrived during getBuffer round-trip
-        for (const data of pendingLiveData) {
-          term.write(data);
-        }
-        pendingLiveData.length = 0;
-        bufferedDataWritten = true;
-
-        // buffer 写入完成后重新 fit，确保列宽与内容匹配
-        requestAnimationFrame(() => fitAddon.fit());
-
-        // Self-verification
-        const lines = term.buffer.active.length;
-        console.log(`[MUXVO:restore] xterm lines after buffer replay: ${lines} for id=${terminalId}`);
-        if (lines <= 1) {
-          console.warn(`[MUXVO:restore] WARNING: terminal ${terminalId} may still be blank after buffer replay`);
-        }
-      });
-
-      // Resize observer -> fit terminal
-      const observer = new ResizeObserver(() => {
         fitAddon.fit();
       });
-      observer.observe(containerRef.current!);
+    });
+    termRef.current = term;
 
-      // Notify Main process of terminal size changes
-      term.onResize(({ cols, rows }) => {
-        window.api.terminal.resize(terminalId, cols, rows);
-      });
+    // Async: load persisted config and apply (theme/font changes take effect live)
+    window.api.app.getConfig().then((result) => {
+      if (result?.data?.terminal) {
+        const cfg = { ...DEFAULT_TERMINAL_CONFIG, ...result.data.terminal };
+        term.options.theme = resolveTerminalTheme(cfg.themeName);
+        term.options.fontSize = cfg.fontSize;
+        term.options.fontFamily = cfg.fontFamily;
+        term.options.cursorStyle = cfg.cursorStyle;
+        term.options.cursorBlink = cfg.cursorBlink;
+        requestAnimationFrame(() => fitAddon.fit());
+      }
+    }).catch(() => { /* use defaults on error */ });
 
-      cleanup = () => {
-        unsubOutput();
-        observer.disconnect();
-        addonManager.disposeAll();
-        term.dispose();
-      };
-    }
+    // Terminal input -> send to Main process
+    term.onData((data) => {
+      window.api.terminal.write(terminalId, data);
+    });
 
-    init();
+    // Queue/flush pattern: subscribe first, fetch buffer, replay, then go live
+    let bufferedDataWritten = false;
+    const pendingLiveData: string[] = [];
+
+    const unsubOutput = window.api.terminal.onOutput((event) => {
+      if (event.id === terminalId) {
+        if (!bufferedDataWritten) {
+          pendingLiveData.push(event.data);
+        } else {
+          term.write(event.data);
+        }
+      }
+    });
+
+    // Fetch buffered output (captures anything from before subscription)
+    console.log(`[MUXVO:restore] XTermRenderer mounted for id=${terminalId}`);
+    window.api.terminal.getBuffer(terminalId).then((result: { success: boolean; data?: string }) => {
+      if (result?.success && result.data) {
+        console.log(`[MUXVO:restore] buffer received for id=${terminalId} bytes=${result.data.length}`);
+        term.write(result.data);
+      }
+      // Flush any live data that arrived during getBuffer round-trip
+      for (const data of pendingLiveData) {
+        term.write(data);
+      }
+      pendingLiveData.length = 0;
+      bufferedDataWritten = true;
+
+      // buffer 写入完成后重新 fit，确保列宽与内容匹配
+      requestAnimationFrame(() => fitAddon.fit());
+
+      // Self-verification
+      const lines = term.buffer.active.length;
+      console.log(`[MUXVO:restore] xterm lines after buffer replay: ${lines} for id=${terminalId}`);
+      if (lines <= 1) {
+        console.warn(`[MUXVO:restore] WARNING: terminal ${terminalId} may still be blank after buffer replay`);
+      }
+    });
+
+    // Resize observer -> fit terminal
+    const observer = new ResizeObserver(() => {
+      fitAddon.fit();
+    });
+    observer.observe(containerRef.current);
+
+    // Notify Main process of terminal size changes
+    term.onResize(({ cols, rows }) => {
+      window.api.terminal.resize(terminalId, cols, rows);
+    });
 
     return () => {
-      cancelled = true;
-      cleanup?.();
+      unsubOutput();
+      observer.disconnect();
+      addonManager.disposeAll();
+      term.dispose();
     };
   }, [terminalId]);
 

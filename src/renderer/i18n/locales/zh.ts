@@ -39,4 +39,12 @@ export const zh = {
   'cwd.browse': '浏览...',
   'floating.newTerminal': '+ 新建终端',
   'lang.label': '中/EN',
+  'skills.title': 'Skills',
+  'skills.count': '{count} 个技能',
+  'skills.noSkills': '暂无技能',
+  'skills.noSkillsHint': '~/.claude/skills/',
+  'skills.selectSkill': '选择一个技能查看文件',
+  'skills.selectFile': '选择一个文件查看内容',
+  'skills.loading': '加载中...',
+  'skills.emptyFolder': '空目录',
 } as const;
