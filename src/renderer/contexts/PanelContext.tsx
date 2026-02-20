@@ -9,14 +9,14 @@ import { createContext, useContext, useReducer, type ReactNode } from 'react';
 
 export interface PanelState {
   filePanel: { open: boolean; terminalId: string | null };
-  tempView: { active: boolean; contentKey: string | null; projectCwd: string | null };
+  tempView: { active: boolean; contentKey: string | null; projectCwd: string | null; terminalId: string | null };
   chatHistory: { open: boolean };
   menuDropdown: { open: boolean; type: 'skills' | 'mcp' | null };
 }
 
 const initialState: PanelState = {
   filePanel: { open: false, terminalId: null },
-  tempView: { active: false, contentKey: null, projectCwd: null },
+  tempView: { active: false, contentKey: null, projectCwd: null, terminalId: null },
   chatHistory: { open: false },
   menuDropdown: { open: false, type: null },
 };
@@ -26,7 +26,7 @@ const initialState: PanelState = {
 type PanelAction =
   | { type: 'OPEN_FILE_PANEL'; terminalId: string }
   | { type: 'CLOSE_FILE_PANEL' }
-  | { type: 'OPEN_TEMP_VIEW'; contentKey: string; projectCwd: string }
+  | { type: 'OPEN_TEMP_VIEW'; contentKey: string; projectCwd: string; terminalId: string }
   | { type: 'CLOSE_TEMP_VIEW' }
   | { type: 'OPEN_CHAT_HISTORY' }
   | { type: 'CLOSE_CHAT_HISTORY' }
@@ -50,12 +50,12 @@ function panelReducer(state: PanelState, action: PanelAction): PanelState {
     case 'OPEN_TEMP_VIEW':
       return {
         ...state,
-        tempView: { active: true, contentKey: action.contentKey, projectCwd: action.projectCwd },
+        tempView: { active: true, contentKey: action.contentKey, projectCwd: action.projectCwd, terminalId: action.terminalId },
       };
     case 'CLOSE_TEMP_VIEW':
       return {
         ...state,
-        tempView: { active: false, contentKey: null, projectCwd: null },
+        tempView: { active: false, contentKey: null, projectCwd: null, terminalId: null },
       };
     case 'OPEN_CHAT_HISTORY':
       return {
