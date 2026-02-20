@@ -5,16 +5,10 @@
 
 import { useRef, useEffect } from 'react';
 import { useFocusTrap } from '@/renderer/hooks/useFocusTrap';
+import { useSkills } from '@/renderer/hooks/useSkills';
 import './MenuDropdown.css';
 
-// ── Demo data (will be replaced with IPC config:get-resources later) ──
-
-const SKILLS_DEMO = [
-  { name: 'commit', desc: 'Generate conventional commit messages from staged changes' },
-  { name: 'review-pr', desc: 'Analyze PR diff and provide structured code review' },
-  { name: 'refactor', desc: 'Identify and apply safe refactoring patterns' },
-  { name: 'test-gen', desc: 'Generate unit tests for selected functions' },
-];
+// ── Demo data (MCP — will be replaced with real data later) ──
 
 const MCP_DEMO = [
   { name: 'filesystem', desc: 'Local file system access with sandboxing', type: 'stdio' as const, detail: 'npx @anthropic/mcp-fs' },
@@ -31,6 +25,7 @@ interface MenuDropdownProps {
 
 export function MenuDropdown({ type, onClose }: MenuDropdownProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { skills, loading, error } = useSkills();
 
   useFocusTrap(containerRef, true, onClose);
 
@@ -51,24 +46,45 @@ export function MenuDropdown({ type, onClose }: MenuDropdownProps): JSX.Element 
   }, [onClose]);
 
   const isSkills = type === 'skills';
-  const items = isSkills ? SKILLS_DEMO : MCP_DEMO;
   const title = isSkills ? 'Skills' : 'MCP Servers';
+  const count = isSkills ? (loading && skills.length === 0 ? '...' : skills.length) : MCP_DEMO.length;
 
   return (
     <div className="menu-dropdown" ref={containerRef} role="menu">
       <div className="menu-dropdown__header">
         {title}
-        <span className="menu-dropdown__count">{items.length}</span>
+        <span className="menu-dropdown__count">{count}</span>
       </div>
       <div className="menu-dropdown__content">
         {isSkills
-          ? SKILLS_DEMO.map((s) => (
+          ? loading && skills.length === 0
+            ? (
+              <div className="menu-dropdown__status">
+                <div className="menu-dropdown__spinner" />
+                <span>Loading skills...</span>
+              </div>
+            )
+            : error
+            ? (
+              <div className="menu-dropdown__status menu-dropdown__status--error">
+                <span>Failed to load skills</span>
+                <span className="menu-dropdown__status-hint">{error}</span>
+              </div>
+            )
+            : skills.length === 0
+            ? (
+              <div className="menu-dropdown__status">
+                <span>No skills found</span>
+                <span className="menu-dropdown__status-hint">~/.claude/skills/</span>
+              </div>
+            )
+            : skills.map((s) => (
               <div className="menu-dropdown__item" key={s.name} role="menuitem" tabIndex={0}>
                 <div className="menu-dropdown__item-icon menu-dropdown__item-icon--skill">⚡</div>
                 <div className="menu-dropdown__item-body">
                   <div className="menu-dropdown__item-name">{s.name}</div>
                   <div className="menu-dropdown__item-desc">{s.desc}</div>
-                  <div className="menu-dropdown__item-meta">~/.claude/skills/{s.name}/</div>
+                  <div className="menu-dropdown__item-meta">{s.path}</div>
                 </div>
               </div>
             ))
