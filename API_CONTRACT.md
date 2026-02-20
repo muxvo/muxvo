@@ -1,10 +1,10 @@
 # API 接口契约文档
 
 > 此文档由 Claude Code Hook 自动生成（AST 解析版）
-> 生成时间: 2026-02-20T17:47:39.636Z
+> 生成时间: 2026-02-20T18:07:49.747Z
 > 项目路径: /Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo
-> 扫描文件数: 242
-> 接口总数: 13
+> 扫描文件数: 246
+> 接口总数: 14
 
 ## 基础信息
 
@@ -99,6 +99,14 @@
 - **调用函数**: `next.delete()`
 - **请求参数**: 无额外参数
 
+### renderer
+
+#### `DELETE {变量:fn}`
+
+- **位置**: `renderer/stores/terminal-config.ts:42`
+- **调用函数**: `listeners.delete()`
+- **请求参数**: 无额外参数
+
 ---
 
 ## 接口索引
@@ -118,3 +126,4 @@
 | GET | `change` | modules | modules/marketplace/directory-watcher.ts:28 |
 | DELETE | `{变量:p}` | 组件 | renderer/components/file/FilePanel.tsx:137 |
 | DELETE | `{变量:folderPath}` | 组件 | renderer/components/file/FilePanel.tsx:139 |
+| DELETE | `{变量:fn}` | renderer | renderer/stores/terminal-config.ts:42 |

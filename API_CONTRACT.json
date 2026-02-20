@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-02-20T17:47:39.636Z",
+  "generatedAt": "2026-02-20T18:07:49.747Z",
   "projectPath": "/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo",
-  "totalApis": 13,
-  "scannedFiles": 242,
+  "totalApis": 14,
+  "scannedFiles": 246,
   "categories": {
     "main": [
       {
@@ -141,6 +141,18 @@
         "responseFields": [],
         "category": "组件"
       }
+    ],
+    "renderer": [
+      {
+        "path": "{变量:fn}",
+        "method": "DELETE",
+        "file": "renderer/stores/terminal-config.ts",
+        "line": 42,
+        "functionName": "listeners.delete",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      }
     ]
   },
   "apis": [
@@ -273,6 +285,16 @@
       "params": [],
       "responseFields": [],
       "category": "组件"
+    },
+    {
+      "path": "{变量:fn}",
+      "method": "DELETE",
+      "file": "renderer/stores/terminal-config.ts",
+      "line": 42,
+      "functionName": "listeners.delete",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
     }
   ]
 }

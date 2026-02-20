@@ -60,6 +60,21 @@ export interface GridLayout {
   rowRatios: number[];
 }
 
+/** 终端光标样式 */
+export type TerminalCursorStyle = 'block' | 'underline' | 'bar';
+
+/** 终端主题名称 */
+export type TerminalThemeName = 'dark' | 'light' | 'monokai' | 'dracula' | 'solarized-dark';
+
+/** 终端配置 */
+export interface TerminalConfig {
+  themeName: TerminalThemeName;
+  fontFamily: string;
+  fontSize: number;
+  cursorStyle: TerminalCursorStyle;
+  cursorBlink: boolean;
+}
+
 /** app:get-config 返回的 Muxvo 本地配置 */
 export interface MuxvoConfig {
   window: {
@@ -76,6 +91,7 @@ export interface MuxvoConfig {
   ftvRightWidth?: number;
   theme: string;
   fontSize: number;
+  terminal?: TerminalConfig;
 }
 
 /** app:get-preferences 返回的用户偏好 */

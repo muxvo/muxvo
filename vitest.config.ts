@@ -27,6 +27,8 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
       '@tests': path.resolve(__dirname, './tests'),
+      // @xterm/addon-ligatures has broken main field (points to non-existent .js, only .mjs exists)
+      '@xterm/addon-ligatures$': path.resolve(__dirname, './node_modules/@xterm/addon-ligatures/lib/addon-ligatures.mjs'),
     },
   },
 });

@@ -310,3 +310,51 @@
 .tile-header[draggable='true']:active {
   cursor: grabbing;
 }
+
+/* === Terminal search bar === */
+.terminal-search-bar {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-card, #2d2d2d);
+  border: 1px solid var(--border, #444);
+  border-radius: 6px;
+  padding: 4px 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.terminal-search-bar input {
+  background: transparent;
+  border: 1px solid var(--border, #555);
+  color: var(--text-primary, #ccc);
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  outline: none;
+  width: 180px;
+}
+
+.terminal-search-bar input:focus {
+  border-color: var(--accent, #e8a748);
+}
+
+.terminal-search-bar button {
+  background: transparent;
+  border: 1px solid var(--border, #555);
+  color: var(--text-secondary, #999);
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.terminal-search-bar button:hover {
+  background: var(--bg-hover, #3d3d3d);
+  color: var(--text-primary, #ccc);
+}

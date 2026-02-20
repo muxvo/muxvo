@@ -98,6 +98,14 @@ describe('TERM L1 -- 契约层测试', () => {
         expect(config.tile.columnRatios).toEqual(expectedValue);
       } else if (target === 'gridLayout.rowRatios') {
         expect(config.tile.rowRatios).toEqual(expectedValue);
+      } else if (target === 'terminal.themeName') {
+        expect(config.terminal.themeName).toBe(expectedValue);
+      } else if (target === 'terminal.fontSize') {
+        expect(config.terminal.fontSize).toBe(expectedValue);
+      } else if (target === 'terminal.cursorStyle') {
+        expect(config.terminal.cursorStyle).toBe(expectedValue);
+      } else if (target === 'terminal.cursorBlink') {
+        expect(config.terminal.cursorBlink).toBe(expectedValue);
       }
     });
 
