@@ -691,10 +691,14 @@ function createChatProjectReader(opts) {
             if (typeof msgContent === "string") {
               normalizedContent = msgContent;
             } else if (Array.isArray(msgContent)) {
-              normalizedContent = msgContent;
+              const blocks = msgContent;
+              const hasOnlyToolResults = blocks.length > 0 && blocks.every((b) => b.type === "tool_result");
+              if (hasOnlyToolResults) {
+                continue;
+              }
+              const textParts = blocks.filter((b) => b.type === "text" && typeof b.text === "string").map((b) => b.text);
+              normalizedContent = textParts.join("\n") || "";
             } else if (typeof entry.content === "string") {
-              normalizedContent = entry.content;
-            } else if (Array.isArray(entry.content)) {
               normalizedContent = entry.content;
             } else {
               normalizedContent = "";
