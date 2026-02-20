@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-02-20T07:01:32.111Z",
+  "generatedAt": "2026-02-20T08:06:45.153Z",
   "projectPath": "/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo",
-  "totalApis": 12,
+  "totalApis": 13,
   "scannedFiles": 236,
   "categories": {
     "main": [
@@ -122,10 +122,20 @@
     ],
     "组件": [
       {
-        "path": "{变量:folderName}",
+        "path": "{变量:p}",
         "method": "DELETE",
         "file": "renderer/components/file/FilePanel.tsx",
-        "line": 82,
+        "line": 137,
+        "functionName": "next.delete",
+        "params": [],
+        "responseFields": [],
+        "category": "组件"
+      },
+      {
+        "path": "{变量:folderPath}",
+        "method": "DELETE",
+        "file": "renderer/components/file/FilePanel.tsx",
+        "line": 139,
         "functionName": "next.delete",
         "params": [],
         "responseFields": [],
@@ -245,10 +255,20 @@
       "category": "modules"
     },
     {
-      "path": "{变量:folderName}",
+      "path": "{变量:p}",
       "method": "DELETE",
       "file": "renderer/components/file/FilePanel.tsx",
-      "line": 82,
+      "line": 137,
+      "functionName": "next.delete",
+      "params": [],
+      "responseFields": [],
+      "category": "组件"
+    },
+    {
+      "path": "{变量:folderPath}",
+      "method": "DELETE",
+      "file": "renderer/components/file/FilePanel.tsx",
+      "line": 139,
       "functionName": "next.delete",
       "params": [],
       "responseFields": [],

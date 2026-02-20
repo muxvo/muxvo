@@ -8,14 +8,14 @@ import { createContext, useContext, useReducer, type ReactNode } from 'react';
 // ── State Shape ──
 
 export interface PanelState {
-  filePanel: { open: boolean; projectIndex: number | null };
+  filePanel: { open: boolean; terminalId: string | null };
   tempView: { active: boolean; contentKey: string | null };
   chatHistory: { open: boolean };
   menuDropdown: { open: boolean; type: 'skills' | 'mcp' | null };
 }
 
 const initialState: PanelState = {
-  filePanel: { open: false, projectIndex: null },
+  filePanel: { open: false, terminalId: null },
   tempView: { active: false, contentKey: null },
   chatHistory: { open: false },
   menuDropdown: { open: false, type: null },
@@ -24,7 +24,7 @@ const initialState: PanelState = {
 // ── Actions ──
 
 type PanelAction =
-  | { type: 'OPEN_FILE_PANEL'; projectIndex: number }
+  | { type: 'OPEN_FILE_PANEL'; terminalId: string }
   | { type: 'CLOSE_FILE_PANEL' }
   | { type: 'OPEN_TEMP_VIEW'; contentKey: string }
   | { type: 'CLOSE_TEMP_VIEW' }
@@ -40,12 +40,12 @@ function panelReducer(state: PanelState, action: PanelAction): PanelState {
     case 'OPEN_FILE_PANEL':
       return {
         ...state,
-        filePanel: { open: true, projectIndex: action.projectIndex },
+        filePanel: { open: true, terminalId: action.terminalId },
       };
     case 'CLOSE_FILE_PANEL':
       return {
         ...state,
-        filePanel: { open: false, projectIndex: null },
+        filePanel: { open: false, terminalId: null },
       };
     case 'OPEN_TEMP_VIEW':
       return {

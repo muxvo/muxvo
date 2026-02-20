@@ -12,6 +12,7 @@ import { XTermRenderer } from './XTermRenderer';
 import { getTerminalProcessUI } from '@/renderer/stores/terminal-process-ui-map';
 import { createNamingMachine } from '@/shared/machines/terminal-naming';
 import { CwdPicker } from './CwdPicker';
+import { usePanelContext } from '@/renderer/contexts/PanelContext';
 import './TileEffects.css';
 
 interface Props {
@@ -77,6 +78,7 @@ export function TerminalTile({
 }: Props): JSX.Element {
   const ui = getTerminalProcessUI(state);
   const tileRef = useRef<HTMLDivElement>(null);
+  const { dispatch: panelDispatch } = usePanelContext();
 
   // Mouse tracking for gloss effect
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -203,7 +205,7 @@ export function TerminalTile({
 
   const handleFileClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // TODO: open file panel
+    panelDispatch({ type: 'OPEN_FILE_PANEL', terminalId: id });
   };
 
   const handleCloseClick = (e: React.MouseEvent) => {

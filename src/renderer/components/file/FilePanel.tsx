@@ -2,10 +2,13 @@
  * FilePanel Component
  *
  * Right slide-out file sidebar showing project file tree.
+ * Loads real files from the terminal's working directory via IPC readDir.
+ * Supports lazy folder expansion/collapse.
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { FileItem } from './FileItem';
+import type { FileEntry as IpcFileEntry } from '@/shared/types/fs.types';
 import './FilePanel.css';
 
 interface FileEntry {
@@ -15,7 +18,7 @@ interface FileEntry {
   meta?: string;
   indent: number;
   isNew?: boolean;
-  children?: FileEntry[];
+  path?: string;
 }
 
 interface FilePanelProps {
@@ -29,17 +32,65 @@ function getProjectName(cwd: string): string {
   return cwd.split('/').pop() || '~';
 }
 
-/** Mock file tree for when API is unavailable */
-const MOCK_FILES: FileEntry[] = [
-  { name: 'src', type: 'folder', indent: 0 },
-  { name: 'index.ts', type: 'file', ext: 'ts', indent: 1 },
-  { name: 'app.tsx', type: 'file', ext: 'tsx', indent: 1 },
-  { name: 'README.md', type: 'file', ext: 'md', indent: 0, meta: '2.1KB' },
-  { name: 'package.json', type: 'file', ext: 'json', indent: 0, meta: '1.4KB' },
-];
+/** Format file size for display */
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes}B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+}
+
+/** Map IPC FileEntry[] to UI FileEntry[] */
+function mapIpcEntries(entries: IpcFileEntry[], indent: number): FileEntry[] {
+  const sorted = [...entries].sort((a, b) => {
+    if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  return sorted
+    .filter(entry => !entry.name.startsWith('.'))
+    .map(entry => {
+      const ext = entry.isDirectory
+        ? undefined
+        : entry.name.includes('.') ? entry.name.split('.').pop() : undefined;
+      const meta = entry.size != null ? formatFileSize(entry.size) : undefined;
+      return {
+        name: entry.name,
+        type: (entry.isDirectory ? 'folder' : 'file') as 'file' | 'folder',
+        ext,
+        meta,
+        indent,
+        path: entry.path,
+      };
+    });
+}
+
+/** Insert children after a parent entry in the flat list */
+function insertAfter(list: FileEntry[], parent: FileEntry, children: FileEntry[]): FileEntry[] {
+  const idx = list.findIndex(f => f.path === parent.path);
+  if (idx === -1) return list;
+  const cleaned = removeChildren(list, parent.path!, parent.indent);
+  const insertIdx = cleaned.findIndex(f => f.path === parent.path);
+  return [
+    ...cleaned.slice(0, insertIdx + 1),
+    ...children,
+    ...cleaned.slice(insertIdx + 1),
+  ];
+}
+
+/** Remove all entries that are children of the given parent (deeper indent) */
+function removeChildren(list: FileEntry[], parentPath: string, parentIndent: number): FileEntry[] {
+  const parentIdx = list.findIndex(f => f.path === parentPath);
+  if (parentIdx === -1) return list;
+
+  let endIdx = parentIdx + 1;
+  while (endIdx < list.length && list[endIdx].indent > parentIndent) {
+    endIdx++;
+  }
+  return [...list.slice(0, parentIdx + 1), ...list.slice(endIdx)];
+}
 
 export function FilePanel({ projectCwd, onClose, onOpenFile }: FilePanelProps) {
-  const [files, setFiles] = useState<FileEntry[]>(MOCK_FILES);
+  const [files, setFiles] = useState<FileEntry[]>([]);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [isOpen, setIsOpen] = useState(false);
 
@@ -49,21 +100,19 @@ export function FilePanel({ projectCwd, onClose, onOpenFile }: FilePanelProps) {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Load file list
+  // Load root file list
   useEffect(() => {
-    // Use window.api.fs if available, otherwise fall back to mock
-    if (typeof window !== 'undefined' && (window as any).api?.fs?.readDir) {
-      (window as any).api.fs
-        .readDir(projectCwd)
-        .then((entries: FileEntry[]) => {
-          if (entries && entries.length > 0) {
-            setFiles(entries);
-          }
-        })
-        .catch(() => {
-          // Keep mock data on error
-        });
-    }
+    setExpandedFolders(new Set());
+    window.api.fs
+      .readDir(projectCwd)
+      .then((result: { success: boolean; data?: IpcFileEntry[] }) => {
+        if (result?.success && result.data) {
+          setFiles(mapIpcEntries(result.data, 0));
+        }
+      })
+      .catch(() => {
+        // Silently fail — panel shows empty
+      });
   }, [projectCwd]);
 
   // Esc to close
@@ -75,27 +124,44 @@ export function FilePanel({ projectCwd, onClose, onOpenFile }: FilePanelProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-  const handleFolderToggle = useCallback((folderName: string) => {
-    setExpandedFolders((prev) => {
-      const next = new Set(prev);
-      if (next.has(folderName)) {
-        next.delete(folderName);
-      } else {
-        next.add(folderName);
+  const handleFolderToggle = useCallback(async (entry: FileEntry) => {
+    const folderPath = entry.path;
+    if (!folderPath) return;
+
+    if (expandedFolders.has(folderPath)) {
+      // Collapse
+      setExpandedFolders(prev => {
+        const next = new Set(prev);
+        // Also remove any children folders that were expanded
+        for (const p of prev) {
+          if (p.startsWith(folderPath + '/')) next.delete(p);
+        }
+        next.delete(folderPath);
+        return next;
+      });
+      setFiles(current => removeChildren(current, folderPath, entry.indent));
+    } else {
+      // Expand
+      setExpandedFolders(prev => new Set(prev).add(folderPath));
+      try {
+        const result = await window.api.fs.readDir(folderPath);
+        if (result?.success && result.data) {
+          const children = mapIpcEntries(result.data as IpcFileEntry[], entry.indent + 1);
+          setFiles(current => insertAfter(current, entry, children));
+        }
+      } catch {
+        // Silently fail — folder stays in expanded set but shows no children
       }
-      return next;
-    });
-  }, []);
+    }
+  }, [expandedFolders]);
 
   const handleFileClick = useCallback(
     (entry: FileEntry) => {
       if (entry.type === 'folder') {
-        handleFolderToggle(entry.name);
+        handleFolderToggle(entry);
       } else {
-        onOpenFile(
-          `${projectCwd}/${entry.name}`,
-          entry.ext || entry.name.split('.').pop() || ''
-        );
+        const filePath = entry.path || `${projectCwd}/${entry.name}`;
+        onOpenFile(filePath, entry.ext || entry.name.split('.').pop() || '');
       }
     },
     [projectCwd, onOpenFile, handleFolderToggle]
@@ -123,7 +189,7 @@ export function FilePanel({ projectCwd, onClose, onOpenFile }: FilePanelProps) {
         <div className="file-panel__content">
           {files.map((entry) => (
             <FileItem
-              key={`${entry.indent}-${entry.name}`}
+              key={entry.path || `${entry.indent}-${entry.name}`}
               name={entry.name}
               type={entry.type}
               indent={entry.indent}
@@ -131,6 +197,7 @@ export function FilePanel({ projectCwd, onClose, onOpenFile }: FilePanelProps) {
               meta={entry.meta}
               isNew={entry.isNew}
               isActive={false}
+              expanded={entry.type === 'folder' && entry.path ? expandedFolders.has(entry.path) : undefined}
               onClick={() => handleFileClick(entry)}
             />
           ))}
