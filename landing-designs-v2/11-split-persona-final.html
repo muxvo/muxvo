@@ -1,0 +1,2327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muxvo — AI CLI 工作台 | Manage Claude Code, Codex, Gemini CLI</title>
+<meta name="description" content="Muxvo 是 AI CLI 工具的桌面工作台。在一个指挥中心管理 Claude Code、Codex、Gemini CLI。The desktop workbench for AI CLI tools.">
+
+<!-- Open Graph -->
+<meta property="og:title" content="Muxvo — AI CLI 工作台">
+<meta property="og:description" content="不是终端，是工作台。管理 Claude Code、Codex、Gemini CLI 的桌面指挥中心。">
+<meta property="og:type" content="website">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Muxvo — AI CLI 工作台">
+<meta name="twitter:description" content="不是终端，是工作台。管理 Claude Code、Codex、Gemini CLI 的桌面指挥中心。">
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   CSS RESET
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ============================================================
+   CSS VARIABLES
+   ============================================================ */
+:root {
+  /* Before side (cold, lifeless) */
+  --bg-before: #14161e;
+  --bg-before-card: #1c1e28;
+  --border-before: #2a2d38;
+  --text-before: #a0a4b0;
+  --text-before-dim: #5a5e6a;
+
+  /* After side (warm, vibrant) */
+  --bg-after: #06080c;
+  --bg-after-card: #0d1117;
+  --border-after: #1e2530;
+  --border-after-active: rgba(232,167,72,0.4);
+  --text-after: #f5f5f5;
+  --text-after-sec: #9ca3af;
+
+  /* Brand */
+  --amber: #e8a748;
+  --amber-light: #f5c563;
+  --amber-hover: #f0c060;
+  --amber-glow: rgba(232,167,72,0.12);
+  --amber-border: rgba(232,167,72,0.4);
+  --amber-muted: rgba(232,167,72,0.12);
+  --success: #4ade80;
+
+  /* Fonts */
+  --font-display: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ============================================================
+   BASE TYPOGRAPHY
+   ============================================================ */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-display);
+  background: var(--bg-after);
+  color: var(--text-after);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ============================================================
+   UTILITY CLASSES
+   ============================================================ */
+.text-amber {
+  color: var(--amber);
+}
+
+/* ============================================================
+   BUTTON UTILITIES
+   ============================================================ */
+.btn-amber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--amber);
+  color: #06080c;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s, box-shadow 0.2s;
+}
+
+.btn-amber:hover {
+  opacity: 0.9;
+  box-shadow: 0 0 16px rgba(232,167,72,0.3);
+}
+
+.btn-amber-lg {
+  padding: 14px 32px;
+  font-size: 15px;
+  border-radius: 8px;
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border-after);
+  color: var(--text-after);
+  padding: 14px 32px;
+  border-radius: 8px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.btn-ghost:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  background: rgba(6,8,12,0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.3s;
+}
+
+.nav--scrolled {
+  border-bottom-color: var(--border-after);
+}
+
+.nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.nav-logo {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--amber);
+}
+
+.nav-tagline {
+  font-size: 11px;
+  color: var(--text-after-sec);
+  white-space: nowrap;
+}
+
+.nav-links {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+}
+
+.nav-links a {
+  font-size: 14px;
+  color: var(--text-after-sec);
+  transition: color 0.15s;
+}
+
+.nav-links a:hover {
+  color: var(--amber);
+}
+
+.nav-hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-after);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+
+/* ============================================================
+   HERO LABELS
+   ============================================================ */
+.label-before {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-before-dim);
+}
+
+.label-after {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+/* ============================================================
+   HERO SPLIT LAYOUT
+   ============================================================ */
+.hero-split {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+}
+
+.hero-before,
+.hero-after {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 120px 48px 80px;
+}
+
+.hero-before {
+  background: var(--bg-before);
+  justify-content: flex-end;
+}
+
+.hero-after {
+  background: var(--bg-after);
+  justify-content: flex-start;
+}
+
+.hero-content {
+  max-width: 480px;
+}
+
+.hero-title-before {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--text-before);
+  letter-spacing: -0.02em;
+  margin-top: 16px;
+}
+
+.hero-title-after {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--text-after);
+  letter-spacing: -0.02em;
+  margin-top: 16px;
+}
+
+.hero-desc-before {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-before-dim);
+  margin-top: 16px;
+  letter-spacing: 0.02em;
+}
+
+/* ============================================================
+   DIVIDER (Vertical amber line)
+   ============================================================ */
+.hero-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%) scaleY(0);
+  transform-origin: center;
+  z-index: 10;
+  background: linear-gradient(
+    to bottom,
+    transparent 10%,
+    rgba(232,167,72,0.4) 30%,
+    var(--amber) 50%,
+    rgba(232,167,72,0.4) 70%,
+    transparent 90%
+  );
+}
+
+.hero-divider--visible {
+  animation: divider-grow 0.6s ease-out forwards;
+}
+
+@keyframes divider-grow {
+  from { transform: translateX(-50%) scaleY(0); }
+  to   { transform: translateX(-50%) scaleY(1); }
+}
+
+.hero-divider-dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  background: var(--amber);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 11;
+  box-shadow: 0 0 12px rgba(232,167,72,0.4);
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(232,167,72,0.3); }
+  50%      { box-shadow: 0 0 16px rgba(232,167,72,0.5); }
+}
+
+/* ============================================================
+   MOCK WINDOWS (Hero Before side)
+   ============================================================ */
+.mock-windows {
+  position: relative;
+  height: 220px;
+  margin-top: 32px;
+}
+
+.mock-win {
+  position: absolute;
+  background: var(--bg-before-card);
+  border: 1px solid var(--border-before);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-before-dim);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.mock-win-titlebar {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.mock-win-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-before);
+}
+
+.mock-win-path {
+  font-size: 10px;
+  color: var(--border-before);
+  margin-bottom: 4px;
+}
+
+.mock-win-line {
+  color: var(--text-before-dim);
+  opacity: 0.5;
+  line-height: 1.6;
+}
+
+.mock-win--1 {
+  top: 0;
+  left: 0;
+  width: 200px;
+  transform: rotate(-3deg);
+  z-index: 1;
+}
+
+.mock-win--2 {
+  top: 20px;
+  left: 100px;
+  width: 190px;
+  transform: rotate(2deg);
+  z-index: 2;
+}
+
+.mock-win--3 {
+  top: 60px;
+  left: 30px;
+  width: 220px;
+  transform: rotate(5deg);
+  z-index: 3;
+}
+
+.mock-win--4 {
+  top: 90px;
+  left: 140px;
+  width: 180px;
+  transform: rotate(-1deg);
+  z-index: 4;
+}
+
+/* ============================================================
+   AFTER SCREENSHOT (Hero After side)
+   ============================================================ */
+.after-screenshot {
+  margin-top: 32px;
+  background: var(--bg-after-card);
+  border: 1px solid var(--border-after-active);
+  border-radius: 8px;
+  padding: 3px;
+  box-shadow: 0 0 48px rgba(232,167,72,0.1);
+}
+
+.after-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+
+.after-pane {
+  background: var(--bg-after);
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-after-sec);
+  line-height: 1.5;
+  border-radius: 4px;
+}
+
+.after-pane-title {
+  font-size: 9px;
+  color: var(--amber);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.after-pane-prompt {
+  color: var(--amber);
+}
+
+.after-pane-success {
+  color: var(--success);
+}
+
+/* ============================================================
+   TYPING ANIMATION (below Hero screenshot)
+   ============================================================ */
+.typing-block {
+  margin-top: 20px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  min-height: 48px;
+}
+
+.typing-prompt {
+  color: var(--amber);
+}
+
+.typing-cmd {
+  color: var(--text-after);
+}
+
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  background: var(--amber);
+  vertical-align: text-bottom;
+  animation: cursor-blink 1.06s step-end infinite;
+}
+
+@keyframes cursor-blink {
+  50% { opacity: 0; }
+}
+
+.typing-feedback {
+  color: var(--success);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.typing-feedback--visible {
+  opacity: 1;
+}
+
+/* ============================================================
+   COMPARE SECTIONS
+   ============================================================ */
+.compare-section {
+  display: flex;
+  min-height: 500px;
+  position: relative;
+}
+
+.compare-section--reversed {
+  flex-direction: row-reverse;
+}
+
+.compare-before,
+.compare-after {
+  flex: 1;
+  padding: 80px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.compare-before {
+  background: var(--bg-before);
+}
+
+.compare-after {
+  background: var(--bg-after);
+}
+
+.compare-before .compare-inner,
+.compare-after .compare-inner {
+  max-width: 480px;
+  width: 100%;
+}
+
+.compare-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+  z-index: 5;
+  background: linear-gradient(to bottom, transparent 10%, rgba(232, 167, 72, 0.25) 50%, transparent 90%);
+}
+
+.compare-label {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: inline-block;
+  margin-bottom: 4px;
+}
+
+.label-problem {
+  color: var(--text-before-dim);
+}
+
+.label-solution {
+  color: var(--amber);
+}
+
+.compare-title {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-top: 8px;
+  letter-spacing: -0.01em;
+}
+
+.compare-before .compare-title {
+  color: var(--text-before);
+}
+
+.compare-after .compare-title {
+  color: var(--text-after);
+}
+
+.compare-desc {
+  font-size: 16px;
+  line-height: 1.7;
+  margin-top: 12px;
+}
+
+.compare-before .compare-desc {
+  color: var(--text-before-dim);
+}
+
+.compare-after .compare-desc {
+  color: var(--text-after-sec);
+}
+
+/* ============================================================
+   BEFORE MOCK: Enhanced overlapping windows
+   ============================================================ */
+.mock-windows-enhanced {
+  position: relative;
+  height: 220px;
+  margin-top: 24px;
+}
+
+.mock-windows-enhanced .mock-win-e {
+  position: absolute;
+  background: var(--bg-before-card);
+  border: 1px solid var(--border-before);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-before-dim);
+  line-height: 1.5;
+  width: 220px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.mock-windows-enhanced .mock-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-before);
+}
+
+.mock-windows-enhanced .mock-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--border-before);
+}
+
+.mock-windows-enhanced .mock-titlebar-text {
+  font-size: 10px;
+  color: var(--text-before-dim);
+  margin-left: 6px;
+}
+
+.mock-windows-enhanced .mock-cmd {
+  color: var(--text-before-dim);
+}
+
+.mock-windows-enhanced .mock-output {
+  color: var(--text-before-dim);
+  opacity: 0.5;
+}
+
+.mock-windows-enhanced .mock-win-1 {
+  top: 0;
+  left: 0;
+  transform: rotate(-3deg);
+  z-index: 1;
+}
+
+.mock-windows-enhanced .mock-win-2 {
+  top: 20px;
+  left: 100px;
+  transform: rotate(2deg);
+  z-index: 2;
+}
+
+.mock-windows-enhanced .mock-win-3 {
+  top: 50px;
+  left: 40px;
+  transform: rotate(4deg);
+  z-index: 3;
+}
+
+.mock-windows-enhanced .mock-win-4 {
+  top: 80px;
+  left: 140px;
+  transform: rotate(-1deg);
+  z-index: 4;
+  height: 28px;
+  overflow: hidden;
+}
+
+/* ============================================================
+   BEFORE MOCK: File list (lost conversations)
+   ============================================================ */
+.mock-file-list {
+  margin-top: 24px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-before-dim);
+  background: var(--bg-before-card);
+  border: 1px solid var(--border-before);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.mock-file-list .file-path-header {
+  font-size: 11px;
+  color: var(--text-before-dim);
+  opacity: 0.6;
+  margin-bottom: 10px;
+}
+
+.mock-file-list .file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border-before);
+}
+
+.mock-file-list .file-item:last-child {
+  border-bottom: none;
+}
+
+.mock-file-list .file-name {
+  color: var(--text-before-dim);
+}
+
+.mock-file-list .file-size {
+  font-size: 10px;
+  color: var(--text-before-dim);
+  opacity: 0.5;
+}
+
+.mock-file-list .file-unknown {
+  color: #e05252;
+  font-size: 14px;
+  font-weight: 700;
+  margin-left: 6px;
+}
+
+.mock-file-list .file-more {
+  font-size: 11px;
+  color: var(--text-before-dim);
+  opacity: 0.4;
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* ============================================================
+   BEFORE MOCK: GitHub search (skill discovery)
+   ============================================================ */
+.mock-github-search {
+  margin-top: 24px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg-before-card);
+  border: 1px solid var(--border-before);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.mock-github-search .gh-search-bar {
+  display: flex;
+  align-items: center;
+  background: var(--bg-before);
+  border: 1px solid var(--border-before);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.mock-github-search .gh-search-icon {
+  color: var(--text-before-dim);
+  opacity: 0.5;
+  margin-right: 8px;
+  font-size: 13px;
+}
+
+.mock-github-search .gh-search-text {
+  color: var(--text-before-dim);
+  font-size: 12px;
+}
+
+.mock-github-search .gh-results-count {
+  font-size: 11px;
+  color: var(--text-before-dim);
+  opacity: 0.5;
+  margin-bottom: 12px;
+}
+
+.mock-github-search .gh-repo-item {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-before);
+}
+
+.mock-github-search .gh-repo-item:last-child {
+  border-bottom: none;
+}
+
+.mock-github-search .gh-repo-name {
+  color: var(--text-before);
+  font-size: 13px;
+}
+
+.mock-github-search .gh-repo-meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--text-before-dim);
+  opacity: 0.6;
+}
+
+.mock-github-search .gh-quality-unknown {
+  color: var(--text-before-dim);
+  opacity: 0.5;
+  font-style: italic;
+}
+
+/* ============================================================
+   AFTER MOCK: Terminal grid
+   ============================================================ */
+.mock-grid {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  background: var(--bg-after-card);
+  border: 1px solid var(--border-after-active);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 32px rgba(232, 167, 72, 0.08);
+}
+
+.mock-grid .grid-pane {
+  background: var(--bg-after);
+  padding: 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-after-sec);
+  line-height: 1.6;
+}
+
+.mock-grid .grid-pane-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--amber);
+  margin-bottom: 4px;
+}
+
+.mock-grid .grid-pane-path {
+  font-size: 9px;
+  color: var(--text-after-sec);
+  opacity: 0.6;
+  margin-bottom: 6px;
+}
+
+.mock-grid .grid-pane-output {
+  font-size: 10px;
+  color: var(--text-after-sec);
+  line-height: 1.5;
+}
+
+.mock-grid .grid-pane-success {
+  color: var(--success);
+}
+
+/* ============================================================
+   AFTER MOCK: Search UI (chat search)
+   ============================================================ */
+.mock-search-ui {
+  margin-top: 24px;
+  background: var(--bg-after-card);
+  border: 1px solid var(--border-after-active);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 0 32px rgba(232, 167, 72, 0.08);
+}
+
+.mock-search-ui .search-input-row {
+  display: flex;
+  align-items: center;
+  background: var(--bg-after);
+  border: 1px solid var(--border-after-active);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+.mock-search-ui .search-icon {
+  color: var(--amber);
+  margin-right: 10px;
+  font-size: 14px;
+}
+
+.mock-search-ui .search-text {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-after);
+}
+
+.mock-search-ui .search-result-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-after);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.mock-search-ui .search-result-item:last-child {
+  border-bottom: none;
+}
+
+.mock-search-ui .search-result-header {
+  font-size: 11px;
+  color: var(--text-after-sec);
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+
+.mock-search-ui .search-result-snippet {
+  font-size: 12px;
+  color: var(--text-after-sec);
+  line-height: 1.5;
+}
+
+.mock-search-ui .search-highlight {
+  color: var(--amber);
+  font-weight: 600;
+}
+
+/* ============================================================
+   AFTER MOCK: Skill market cards
+   ============================================================ */
+.mock-skill-market {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.mock-skill-market .skill-card {
+  background: var(--bg-after-card);
+  border: 1px solid var(--border-after);
+  border-radius: 8px;
+  padding: 14px;
+  font-family: var(--font-mono);
+  transition: border-color 0.2s;
+}
+
+.mock-skill-market .skill-card:hover {
+  border-color: var(--border-after-active);
+}
+
+.mock-skill-market .skill-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-after);
+  margin-bottom: 6px;
+  font-family: var(--font-display);
+}
+
+.mock-skill-market .skill-score {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--amber);
+  margin-bottom: 4px;
+}
+
+.mock-skill-market .skill-installs {
+  font-size: 10px;
+  color: var(--text-after-sec);
+  opacity: 0.7;
+  margin-bottom: 10px;
+}
+
+.mock-skill-market .skill-btn {
+  display: inline-block;
+  background: var(--amber);
+  color: var(--bg-after);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+}
+
+.mock-skill-market .skill-btn--installed {
+  background: transparent;
+  border: 1px solid var(--success);
+  color: var(--success);
+}
+
+/* ============================================================
+   PANORAMA SECTION
+   ============================================================ */
+.panorama {
+  padding: 120px 0;
+  text-align: center;
+  position: relative;
+  background: var(--bg-after);
+}
+
+.panorama-header {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.panorama-header h2 {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--text-after);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.panorama-header p {
+  font-size: 18px;
+  color: var(--text-after-sec);
+  margin-top: 12px;
+}
+
+.panorama-frame {
+  position: relative;
+  max-width: 1100px;
+  width: 90vw;
+  margin: 48px auto 0;
+}
+
+/* Cinematic amber glow behind screenshot */
+.panorama-frame::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  left: -40px;
+  right: -40px;
+  bottom: -60px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(232,167,72,0.12),
+    rgba(232,167,72,0.04) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.panorama-shot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 7fr 3fr;
+  gap: 2px;
+  background: var(--bg-after-card);
+  border: 1px solid rgba(232,167,72,0.25);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    0 0 80px rgba(232,167,72,0.12),
+    0 4px 32px rgba(0,0,0,0.4);
+}
+
+.p-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+}
+
+.p-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Individual pane — 12px font (not 9px!) */
+.p-pane {
+  background: var(--bg-after);
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-after-sec);
+  line-height: 1.5;
+}
+
+.p-pane-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--amber);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.p-pane-path {
+  font-size: 10px;
+  color: var(--border-after);
+  margin-bottom: 4px;
+}
+
+.p-pane-prompt {
+  color: var(--amber);
+}
+
+.p-pane-success {
+  color: var(--success);
+}
+
+.p-pane--sidebar {
+  font-family: var(--font-display);
+  font-size: 12px;
+}
+
+.p-pane--sidebar .p-sidebar-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--amber);
+  margin-bottom: 6px;
+}
+
+.p-pane--sidebar .p-sidebar-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-after-sec);
+  margin-bottom: 8px;
+}
+
+.p-pane--sidebar .p-sidebar-item {
+  font-size: 11px;
+  color: var(--text-after-sec);
+  padding: 2px 0;
+  line-height: 1.5;
+}
+
+.p-pane--sidebar .p-sidebar-item-amber {
+  color: var(--amber);
+  font-size: 10px;
+}
+
+.p-pane--sidebar .p-sidebar-item-dim {
+  color: var(--text-before-dim);
+}
+
+/* ============================================================
+   BLUEPRINT CORNERS
+   ============================================================ */
+.blueprint-corner {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(232,167,72,0.35);
+  z-index: 2;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.blueprint-corner--tl { top: -16px; left: -8px; }
+.blueprint-corner--tr { top: -16px; right: -8px; }
+.blueprint-corner--bl { bottom: -16px; left: -8px; }
+.blueprint-corner--br { bottom: -16px; right: -8px; }
+
+/* ============================================================
+   CTA SECTION
+   ============================================================ */
+.cta-section {
+  text-align: center;
+  padding: 120px 24px;
+  position: relative;
+  background: linear-gradient(
+    180deg,
+    var(--bg-before) 0%,
+    #0e1018 25%,
+    var(--bg-after) 50%
+  );
+}
+
+.cta-glow {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 400px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(232,167,72,0.1),
+    rgba(232,167,72,0.03) 50%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.cta-before-text {
+  font-size: 16px;
+  color: var(--text-before-dim);
+  position: relative;
+  z-index: 1;
+}
+
+.cta-headline {
+  font-size: 56px;
+  font-weight: 700;
+  color: var(--text-after);
+  margin-top: 16px;
+  position: relative;
+  z-index: 1;
+  letter-spacing: -0.02em;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 32px;
+  position: relative;
+  z-index: 1;
+  flex-wrap: wrap;
+}
+
+.cta-note {
+  font-size: 14px;
+  color: var(--text-after-sec);
+  margin-top: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+footer {
+  background: var(--bg-after);
+  padding: 0 24px 48px;
+}
+
+.footer-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--amber), transparent);
+  margin-bottom: 48px;
+}
+
+.footer-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+}
+
+.footer-column h5 {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-after);
+  margin-bottom: 12px;
+}
+
+.footer-column a {
+  display: block;
+  font-size: 13px;
+  color: var(--text-after-sec);
+  padding: 4px 0;
+  transition: color 0.15s;
+}
+
+.footer-column a:hover {
+  color: var(--amber);
+}
+
+.footer-bottom {
+  max-width: 1200px;
+  margin: 32px auto 0;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-after);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.footer-logo {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--amber);
+}
+
+.footer-tagline {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-after-sec);
+}
+
+.footer-copyright {
+  font-size: 13px;
+  color: var(--text-after-sec);
+}
+
+/* ============================================================
+   SCROLL ANIMATIONS
+   ============================================================ */
+.fade-left {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.fade-right {
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.fade-up {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.fade-left.visible,
+.fade-right.visible,
+.fade-up.visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Stagger children */
+.stagger > * {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.stagger > *:nth-child(1) { transition-delay: 0ms; }
+.stagger > *:nth-child(2) { transition-delay: 80ms; }
+.stagger > *:nth-child(3) { transition-delay: 160ms; }
+.stagger > *:nth-child(4) { transition-delay: 240ms; }
+.stagger > *:nth-child(5) { transition-delay: 320ms; }
+.stagger > *:nth-child(6) { transition-delay: 400ms; }
+.stagger > *:nth-child(7) { transition-delay: 480ms; }
+.stagger > *:nth-child(8) { transition-delay: 560ms; }
+
+.stagger.visible > * {
+  opacity: 1;
+  transform: none;
+}
+
+/* ============================================================
+   RESPONSIVE: Tablet (<=1023px)
+   ============================================================ */
+@media (max-width: 1023px) {
+  /* Hero */
+  .hero-split {
+    flex-direction: column;
+  }
+
+  .hero-before,
+  .hero-after {
+    padding: 80px 24px 60px;
+    justify-content: center;
+  }
+
+  .hero-content {
+    max-width: 100%;
+  }
+
+  .hero-title-before,
+  .hero-title-after {
+    font-size: 36px;
+  }
+
+  .hero-divider {
+    display: none;
+  }
+
+  .hero-after {
+    position: relative;
+  }
+
+  .hero-after::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--amber), transparent);
+  }
+
+  .nav-tagline {
+    display: none;
+  }
+
+  /* Compare */
+  .compare-section {
+    flex-direction: column;
+  }
+
+  .compare-section--reversed {
+    flex-direction: column;
+  }
+
+  .compare-divider {
+    display: none;
+  }
+
+  .compare-before,
+  .compare-after {
+    padding: 48px 24px;
+  }
+
+  .compare-after {
+    position: relative;
+  }
+
+  .compare-after::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(232, 167, 72, 0.4), transparent);
+  }
+
+  .compare-title {
+    font-size: 24px;
+  }
+
+  .compare-desc {
+    font-size: 15px;
+  }
+
+  .mock-windows-enhanced {
+    height: 180px;
+  }
+
+  .mock-windows-enhanced .mock-win-e {
+    width: 180px;
+    font-size: 10px;
+  }
+
+  .mock-skill-market {
+    grid-template-columns: 1fr;
+  }
+
+  /* Panorama */
+  .panorama {
+    padding: 80px 0;
+  }
+
+  .panorama-header h2 {
+    font-size: 36px;
+  }
+
+  .panorama-shot {
+    grid-template-columns: 1fr;
+  }
+
+  .p-sidebar {
+    flex-direction: row;
+  }
+
+  .blueprint-corner {
+    display: none;
+  }
+
+  /* CTA */
+  .cta-headline {
+    font-size: 40px;
+  }
+
+  /* Footer */
+  .footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE: Mobile (<=767px)
+   ============================================================ */
+@media (max-width: 767px) {
+  /* Nav hamburger */
+  .nav-hamburger {
+    display: block;
+  }
+
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
+    background: rgba(6,8,12,0.97);
+    padding: 24px;
+    gap: 20px;
+    border-bottom: 1px solid var(--border-after);
+    z-index: 99;
+  }
+
+  .nav-links--open {
+    display: flex;
+  }
+
+  /* Hero */
+  .hero-title-before,
+  .hero-title-after {
+    font-size: 32px;
+  }
+
+  .mock-win--3,
+  .mock-win--4 {
+    display: none;
+  }
+
+  .mock-windows {
+    height: 140px;
+  }
+
+  .mock-win {
+    width: 170px;
+    font-size: 10px;
+  }
+
+  .mock-win--1 {
+    width: 170px;
+  }
+
+  .mock-win--2 {
+    width: 170px;
+    left: 60px;
+  }
+
+  /* Compare */
+  .compare-before,
+  .compare-after {
+    padding: 36px 20px;
+  }
+
+  .compare-title {
+    font-size: 22px;
+  }
+
+  .compare-desc {
+    font-size: 14px;
+  }
+
+  .mock-windows-enhanced {
+    height: 160px;
+  }
+
+  .mock-windows-enhanced .mock-win-e {
+    width: 150px;
+    font-size: 9px;
+  }
+
+  .mock-windows-enhanced .mock-win-2 {
+    left: 70px;
+  }
+
+  .mock-windows-enhanced .mock-win-4 {
+    left: 100px;
+  }
+
+  .mock-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mock-skill-market {
+    grid-template-columns: 1fr;
+  }
+
+  .mock-github-search .gh-repo-meta {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* Panorama */
+  .panorama {
+    padding: 64px 0;
+  }
+
+  .panorama-header h2 {
+    font-size: 28px;
+  }
+
+  .panorama-frame {
+    width: 95vw;
+  }
+
+  .p-main {
+    grid-template-columns: 1fr;
+  }
+
+  .p-sidebar {
+    flex-direction: column;
+  }
+
+  /* CTA */
+  .cta-section {
+    padding: 80px 24px;
+  }
+
+  .cta-headline {
+    font-size: 32px;
+  }
+
+  .cta-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cta-buttons .btn-amber-lg,
+  .cta-buttons .btn-ghost {
+    width: 100%;
+  }
+
+  /* Footer */
+  .footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ============================================================
+   REDUCED MOTION (all animations)
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .hero-divider-dot {
+    animation: none;
+  }
+
+  .typing-cursor {
+    animation: none;
+    opacity: 1;
+  }
+
+  .hero-divider {
+    transform: translateX(-50%) scaleY(1);
+    animation: none;
+  }
+
+  .fade-left,
+  .fade-right,
+  .fade-up,
+  .stagger > * {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     NAVIGATION
+     ============================================================ -->
+<nav class="nav" id="mainNav">
+  <div class="nav-inner">
+    <div class="nav-brand">
+      <span class="nav-logo">Muxvo</span>
+      <span class="nav-tagline">不是终端，是工作台</span>
+    </div>
+    <button class="nav-hamburger" id="hamburgerBtn" aria-label="Toggle menu">&#9776;</button>
+    <div class="nav-links" id="navLinks">
+      <a href="#features">Features</a>
+      <a href="#product">Product</a>
+      <a href="#download">Download</a>
+      <button class="btn-amber">Download</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ============================================================
+     HERO: Split Screen
+     ============================================================ -->
+<main>
+<section class="hero-split">
+
+  <!-- LEFT: Before side -->
+  <div class="hero-before">
+    <div class="hero-content">
+      <div class="label-before">WITHOUT MUXVO</div>
+      <h2 class="hero-title-before">散落的终端。<br>丢失的对话。<br>无尽的切换。</h2>
+      <p class="hero-desc-before">6个窗口 / 3个项目 / 无数次 Cmd+Tab</p>
+
+      <div class="mock-windows">
+        <div class="mock-win mock-win--1">
+          <div class="mock-win-titlebar">
+            <span class="mock-win-dot"></span>
+            <span class="mock-win-dot"></span>
+            <span class="mock-win-dot"></span>
+          </div>
+          <div class="mock-win-path">~/project-a</div>
+          <div class="mock-win-line">$ claude "fix the bug"</div>
+          <div class="mock-win-line">Analyzing codebase...</div>
+        </div>
+
+        <div class="mock-win mock-win--2">
+          <div class="mock-win-titlebar">
+            <span class="mock-win-dot"></span>
+            <span class="mock-win-dot"></span>
+            <span class="mock-win-dot"></span>
+          </div>
+          <div class="mock-win-path">~/project-b</div>
+          <div class="mock-win-line">$ codex --task refactor</div>
+          <div class="mock-win-line">Processing...</div>
+          <div class="mock-win-line">3 files changed</div>
+        </div>
+
+        <div class="mock-win mock-win--3">
+          <div class="mock-win-titlebar">
+            <span class="mock-win-dot"></span>
+            <span class="mock-win-dot"></span>
+            <span class="mock-win-dot"></span>
+          </div>
+          <div class="mock-win-path">~/project-c</div>
+          <div class="mock-win-line">$ gemini chat</div>
+          <div class="mock-win-line">How can I help?</div>
+        </div>
+
+        <div class="mock-win mock-win--4">
+          <div class="mock-win-titlebar">
+            <span class="mock-win-dot"></span>
+            <span class="mock-win-dot"></span>
+            <span class="mock-win-dot"></span>
+          </div>
+          <div class="mock-win-path">~/project-a</div>
+          <div class="mock-win-line">$ npm run dev</div>
+          <div class="mock-win-line">Server on :3000</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIVIDER: Vertical amber line -->
+  <div class="hero-divider" id="heroDivider">
+    <div class="hero-divider-dot"></div>
+  </div>
+
+  <!-- RIGHT: After side -->
+  <div class="hero-after">
+    <div class="hero-content">
+      <div class="label-after">WITH MUXVO</div>
+      <h2 class="hero-title-after">一个指挥中心。<br>尽在掌控。<br>一目了然。</h2>
+
+      <div class="after-screenshot">
+        <div class="after-grid">
+          <div class="after-pane">
+            <div class="after-pane-title">CLAUDE CODE</div>
+            <span class="after-pane-prompt">$</span> claude<br>
+            <span class="after-pane-success">Ready.</span> Analyzing src/...
+          </div>
+          <div class="after-pane">
+            <div class="after-pane-title">CODEX</div>
+            <span class="after-pane-prompt">$</span> codex<br>
+            <span class="after-pane-success">Connected.</span> Listening...
+          </div>
+          <div class="after-pane">
+            <div class="after-pane-title">GEMINI CLI</div>
+            <span class="after-pane-prompt">$</span> gemini chat<br>
+            Session active. How can I help?
+          </div>
+          <div class="after-pane">
+            <div class="after-pane-title">NPM RUN</div>
+            <span class="after-pane-prompt">$</span> npm run dev<br>
+            <span class="after-pane-success">Server on :3000</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="typing-block" id="typingBlock">
+        <div><span class="typing-prompt">$ </span><span class="typing-cmd" id="typingCmd"></span><span class="typing-cursor" id="typingCursor"></span></div>
+        <div class="typing-feedback" id="typingFeedback">&#10003; Workbench ready. 3 CLIs connected.</div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ============================================================
+     COMPARE SECTION 1: Terminal Chaos
+     ============================================================ -->
+<section class="compare-section" id="features">
+  <div class="compare-before">
+    <div class="compare-inner fade-left">
+      <span class="compare-label label-problem">// THE PROBLEM</span>
+      <h3 class="compare-title">终端窗口地狱</h3>
+      <p class="compare-desc">6 个终端窗口，3 个项目，无数次 Cmd+Tab。你知道 Claude Code 在哪个窗口里跑着，但找到它需要 15 秒。</p>
+      <div class="mock-windows-enhanced">
+        <div class="mock-win-e mock-win-1">
+          <div class="mock-titlebar">
+            <span class="mock-dot"></span>
+            <span class="mock-dot"></span>
+            <span class="mock-dot"></span>
+            <span class="mock-titlebar-text">~/project-a</span>
+          </div>
+          <div class="mock-cmd">$ claude "review this code"</div>
+          <div class="mock-output">Analyzing 12 files...</div>
+          <div class="mock-output">Processing src/main...</div>
+        </div>
+        <div class="mock-win-e mock-win-2">
+          <div class="mock-titlebar">
+            <span class="mock-dot"></span>
+            <span class="mock-dot"></span>
+            <span class="mock-dot"></span>
+            <span class="mock-titlebar-text">~/project-b</span>
+          </div>
+          <div class="mock-cmd">$ codex --model o3</div>
+          <div class="mock-output">Generating tests...</div>
+        </div>
+        <div class="mock-win-e mock-win-3">
+          <div class="mock-titlebar">
+            <span class="mock-dot"></span>
+            <span class="mock-dot"></span>
+            <span class="mock-dot"></span>
+            <span class="mock-titlebar-text">~/project-c/api</span>
+          </div>
+          <div class="mock-cmd">$ gemini chat</div>
+          <div class="mock-output">What would you like to discuss?</div>
+        </div>
+        <div class="mock-win-e mock-win-4">
+          <div class="mock-titlebar">
+            <span class="mock-dot"></span>
+            <span class="mock-dot"></span>
+            <span class="mock-dot"></span>
+            <span class="mock-titlebar-text">~/project-a/src</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="compare-divider"></div>
+  <div class="compare-after">
+    <div class="compare-inner fade-right">
+      <span class="compare-label label-solution">// THE SOLUTION</span>
+      <h3 class="compare-title">平铺终端管理</h3>
+      <p class="compare-desc">全屏网格布局。每个终端有固定位置，一眼看到所有 AI CLI 工具的运行状态。不再切换——因为管理界面让一切都在视野中。</p>
+      <div class="mock-grid">
+        <div class="grid-pane">
+          <div class="grid-pane-title">CLAUDE CODE</div>
+          <div class="grid-pane-path">~/project-a</div>
+          <div class="grid-pane-output">Analyzing 12 files...</div>
+          <div class="grid-pane-output grid-pane-success">&#10003; Found 3 issues</div>
+        </div>
+        <div class="grid-pane">
+          <div class="grid-pane-title">CODEX</div>
+          <div class="grid-pane-path">~/project-b</div>
+          <div class="grid-pane-output">Generating tests...</div>
+          <div class="grid-pane-output grid-pane-success">Created 5 test files</div>
+        </div>
+        <div class="grid-pane">
+          <div class="grid-pane-title">GEMINI CLI</div>
+          <div class="grid-pane-path">~/project-c</div>
+          <div class="grid-pane-output">Ready for input...</div>
+        </div>
+        <div class="grid-pane">
+          <div class="grid-pane-title">NPM RUN</div>
+          <div class="grid-pane-path">~/project-a</div>
+          <div class="grid-pane-output">dev server on :3000</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     COMPARE SECTION 2: Lost Conversations (reversed)
+     ============================================================ -->
+<section class="compare-section compare-section--reversed" id="lost-conversations">
+  <div class="compare-before">
+    <div class="compare-inner fade-right">
+      <span class="compare-label label-problem">// THE PROBLEM</span>
+      <h3 class="compare-title">对话记录去哪了？</h3>
+      <p class="compare-desc">Claude 三天前建议了一个架构方案，但你不记得在哪个 session 里。打开 ~/.claude/history，翻了 20 个 JSON 文件。放弃了。</p>
+      <div class="mock-file-list">
+        <div class="file-path-header">~/.claude/projects/</div>
+        <div class="file-item">
+          <span class="file-name">session_2026-02-18_143022.json</span>
+          <span class="file-size">2.3 KB</span>
+        </div>
+        <div class="file-item">
+          <span class="file-name">session_2026-02-17_091544.json</span>
+          <span class="file-size">5.1 KB</span>
+        </div>
+        <div class="file-item">
+          <span class="file-name">session_2026-02-16_220318.json</span>
+          <span class="file-size">1.8 KB</span>
+        </div>
+        <div class="file-item">
+          <span class="file-name">session_2026-02-15_103655.json</span>
+          <span class="file-size">8.4 KB<span class="file-unknown">?</span></span>
+        </div>
+        <div class="file-item">
+          <span class="file-name">session_2026-02-14_184201.json</span>
+          <span class="file-size">3.7 KB</span>
+        </div>
+        <div class="file-item">
+          <span class="file-name">session_2026-02-13_072910.json</span>
+          <span class="file-size">4.2 KB</span>
+        </div>
+        <div class="file-item">
+          <span class="file-name">session_2026-02-12_155447.json</span>
+          <span class="file-size">6.0 KB</span>
+        </div>
+        <div class="file-more">...还有 47 个文件</div>
+      </div>
+    </div>
+  </div>
+  <div class="compare-divider"></div>
+  <div class="compare-after">
+    <div class="compare-inner fade-left">
+      <span class="compare-label label-solution">// THE SOLUTION</span>
+      <h3 class="compare-title">聊天历史搜索</h3>
+      <p class="compare-desc">全文搜索所有 AI CLI 对话记录。输入关键词，跨 session、跨工具，秒级返回。</p>
+      <div class="mock-search-ui">
+        <div class="search-input-row">
+          <span class="search-icon">&#128269;</span>
+          <span class="search-text">"架构方案"</span>
+        </div>
+        <div class="search-result-item">
+          <div class="search-result-header">Session #42 &middot; Claude Code &middot; project-a</div>
+          <div class="search-result-snippet">建议采用微服务<span class="search-highlight">架构方案</span>，将核心模块拆分为独立服务...</div>
+        </div>
+        <div class="search-result-item">
+          <div class="search-result-header">Session #38 &middot; Claude Code &middot; project-b</div>
+          <div class="search-result-snippet">对比了三种<span class="search-highlight">架构方案</span>后，推荐六边形架构...</div>
+        </div>
+        <div class="search-result-item">
+          <div class="search-result-header">Session #31 &middot; Gemini CLI &middot; project-c</div>
+          <div class="search-result-snippet">这个<span class="search-highlight">架构方案</span>的优势在于松耦合和可测试性...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     COMPARE SECTION 3: Skill Discovery
+     ============================================================ -->
+<section class="compare-section" id="skill-discovery">
+  <div class="compare-before">
+    <div class="compare-inner fade-left">
+      <span class="compare-label label-problem">// THE PROBLEM</span>
+      <h3 class="compare-title">Skill 靠口口相传</h3>
+      <p class="compare-desc">GitHub 上搜 "Claude Code skill"，翻了 5 页。不知道质量如何。手动 clone，手动配置。下载了一个有 bug 的 skill，debug 了两小时。</p>
+      <div class="mock-github-search">
+        <div class="gh-search-bar">
+          <span class="gh-search-icon">&#128269;</span>
+          <span class="gh-search-text">claude code skill</span>
+        </div>
+        <div class="gh-results-count">About 1,240 results</div>
+        <div class="gh-repo-item">
+          <div class="gh-repo-name">random-user/my-awesome-skill</div>
+          <div class="gh-repo-meta">
+            <span>&#9733; 3</span>
+            <span>Updated 8 months ago</span>
+            <span class="gh-quality-unknown">Quality: ???</span>
+          </div>
+        </div>
+        <div class="gh-repo-item">
+          <div class="gh-repo-name">another-dev/code-helper</div>
+          <div class="gh-repo-meta">
+            <span>&#9733; 12</span>
+            <span>Updated 2 months ago</span>
+            <span class="gh-quality-unknown">Quality: ???</span>
+          </div>
+        </div>
+        <div class="gh-repo-item">
+          <div class="gh-repo-name">test-account/untested-skill</div>
+          <div class="gh-repo-meta">
+            <span>&#9733; 0</span>
+            <span>Updated 1 year ago</span>
+            <span class="gh-quality-unknown">Quality: ???</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="compare-divider"></div>
+  <div class="compare-after">
+    <div class="compare-inner fade-right">
+      <span class="compare-label label-solution">// THE SOLUTION</span>
+      <h3 class="compare-title">AI 评分的 Skill 市场</h3>
+      <p class="compare-desc">社区驱动的 Skill 市场。每个包经 AI 自动评分（代码清晰度、设计巧思、实用性等 6 维度），质量一目了然。一键安装，版本管理，自动更新。</p>
+      <div class="mock-skill-market">
+        <div class="skill-card">
+          <div class="skill-name">Code Review Pro</div>
+          <div class="skill-score">AI Score: 9.2</div>
+          <div class="skill-installs">1.2k installs</div>
+          <span class="skill-btn">Install</span>
+        </div>
+        <div class="skill-card">
+          <div class="skill-name">Test Generator</div>
+          <div class="skill-score">AI Score: 8.7</div>
+          <div class="skill-installs">850 installs</div>
+          <span class="skill-btn">Install</span>
+        </div>
+        <div class="skill-card">
+          <div class="skill-name">Architecture Advisor</div>
+          <div class="skill-score">AI Score: 9.0</div>
+          <div class="skill-installs">2.1k installs</div>
+          <span class="skill-btn skill-btn--installed">Installed &#10003;</span>
+        </div>
+        <div class="skill-card">
+          <div class="skill-name">Bug Hunter</div>
+          <div class="skill-score">AI Score: 7.8</div>
+          <div class="skill-installs">430 installs</div>
+          <span class="skill-btn">Install</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     PANORAMA: Full product showcase
+     ============================================================ -->
+<section class="panorama" id="product">
+  <div class="panorama-header fade-up">
+    <h2>一个工作台，<span class="text-amber">管理</span>一切。</h2>
+    <p>终端、对话、配置、Skill — AI CLI 工作流的一切所需。</p>
+  </div>
+
+  <div class="panorama-frame fade-up">
+    <span class="blueprint-corner blueprint-corner--tl">+</span>
+    <span class="blueprint-corner blueprint-corner--tr">+</span>
+    <span class="blueprint-corner blueprint-corner--bl">+</span>
+    <span class="blueprint-corner blueprint-corner--br">+</span>
+
+    <div class="panorama-shot">
+      <div class="p-main">
+        <div class="p-pane">
+          <div class="p-pane-title">CLAUDE CODE</div>
+          <div class="p-pane-path">~/project-a</div>
+          <span class="p-pane-prompt">$</span> claude "review PR #42"<br>
+          <span class="p-pane-success">Reading diff...</span><br>
+          Found 3 issues in src/auth.ts<br>
+          Suggesting fixes...
+        </div>
+        <div class="p-pane">
+          <div class="p-pane-title">CODEX</div>
+          <div class="p-pane-path">~/project-b</div>
+          <span class="p-pane-prompt">$</span> codex "generate tests"<br>
+          <span class="p-pane-success">Creating test suite...</span><br>
+          12 tests generated<br>
+          Coverage: 94%
+        </div>
+        <div class="p-pane">
+          <div class="p-pane-title">GEMINI CLI</div>
+          <div class="p-pane-path">~/project-c</div>
+          <span class="p-pane-prompt">$</span> gemini chat<br>
+          How can I help you today?<br>
+          <span class="p-pane-prompt">&gt;</span> Explain the auth flow
+        </div>
+        <div class="p-pane">
+          <div class="p-pane-title">BUILD</div>
+          <div class="p-pane-path">~/project-a</div>
+          <span class="p-pane-prompt">$</span> npm run build<br>
+          <span class="p-pane-success">Build complete.</span><br>
+          dist/main.js  48.2 kB<br>
+          dist/style.css  6.1 kB
+        </div>
+      </div>
+
+      <div class="p-sidebar">
+        <div class="p-pane p-pane--sidebar">
+          <div class="p-sidebar-title">Chat History</div>
+          <div class="p-sidebar-meta">12 sessions across 3 projects</div>
+          <div class="p-sidebar-item">Today &middot; project-a &middot; PR Review</div>
+          <div class="p-sidebar-item">Today &middot; project-b &middot; Test Gen</div>
+          <div class="p-sidebar-item">Yesterday &middot; project-c &middot; Auth Flow</div>
+          <div class="p-sidebar-item p-sidebar-item-dim">+ 9 more sessions</div>
+        </div>
+        <div class="p-pane p-pane--sidebar">
+          <div class="p-sidebar-title">Skill Market</div>
+          <div class="p-sidebar-meta">8 installed &middot; 3 updates</div>
+          <div class="p-sidebar-item"><span class="p-sidebar-item-amber">commit-msg</span> v2.1</div>
+          <div class="p-sidebar-item"><span class="p-sidebar-item-amber">code-review</span> v1.4</div>
+          <div class="p-sidebar-item"><span class="p-sidebar-item-amber">test-gen</span> v3.0</div>
+        </div>
+        <div class="p-pane p-pane--sidebar">
+          <div class="p-sidebar-title">Config</div>
+          <div class="p-sidebar-meta">3 CLIs configured</div>
+          <div class="p-sidebar-item">Claude Code &middot; opus-4</div>
+          <div class="p-sidebar-item">Codex &middot; o3</div>
+          <div class="p-sidebar-item">Gemini CLI &middot; 2.5-pro</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     CTA: Download call-to-action
+     ============================================================ -->
+<section class="cta-section" id="download">
+  <div class="cta-glow"></div>
+  <p class="cta-before-text fade-up">还在 6 个终端窗口之间切换？</p>
+  <h2 class="cta-headline fade-up">掌控全局。</h2>
+  <div class="cta-buttons fade-up">
+    <button class="btn-amber btn-amber-lg">Download for macOS</button>
+    <button class="btn-ghost">View on GitHub</button>
+  </div>
+  <p class="cta-note fade-up">免费开源 / macOS / MIT License</p>
+</section>
+</main>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer>
+  <div class="footer-divider"></div>
+  <div class="footer-grid">
+    <div class="footer-column">
+      <h5>Product</h5>
+      <a href="#features">Features</a>
+      <a href="#">Pricing</a>
+      <a href="#download">Download</a>
+      <a href="#">Changelog</a>
+    </div>
+    <div class="footer-column">
+      <h5>Resources</h5>
+      <a href="#">Documentation</a>
+      <a href="#">GitHub</a>
+      <a href="#">Blog</a>
+      <a href="#">API</a>
+    </div>
+    <div class="footer-column">
+      <h5>Community</h5>
+      <a href="#">Discord</a>
+      <a href="#">Twitter</a>
+      <a href="#">Contributing</a>
+      <a href="#">Discussions</a>
+    </div>
+    <div class="footer-column">
+      <h5>Legal</h5>
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
+      <a href="#">License (MIT)</a>
+      <a href="#">Security</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-logo">Muxvo</span>
+    <span class="footer-tagline">不是终端，不是 IDE — 是<span class="text-amber">工作台</span>。</span>
+    <span class="footer-copyright">&copy; 2026 Muxvo. MIT License.</span>
+  </div>
+</footer>
+
+<!-- ============================================================
+     SEO: JSON-LD Structured Data
+     ============================================================ -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Muxvo",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "macOS",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "description": "Desktop workbench for managing AI CLI tools (Claude Code, Codex, Gemini CLI)"
+}
+</script>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+(function() {
+  var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* -----------------------------------------------------------
+     Nav: scroll detection
+     ----------------------------------------------------------- */
+  var nav = document.getElementById('mainNav');
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 80) {
+      nav.classList.add('nav--scrolled');
+    } else {
+      nav.classList.remove('nav--scrolled');
+    }
+  });
+
+  /* -----------------------------------------------------------
+     Nav: hamburger menu toggle
+     ----------------------------------------------------------- */
+  var hamburger = document.getElementById('hamburgerBtn');
+  var navLinks = document.getElementById('navLinks');
+
+  hamburger.addEventListener('click', function() {
+    navLinks.classList.toggle('nav-links--open');
+  });
+
+  navLinks.querySelectorAll('a').forEach(function(link) {
+    link.addEventListener('click', function() {
+      navLinks.classList.remove('nav-links--open');
+    });
+  });
+
+  /* -----------------------------------------------------------
+     Divider: grow animation on load
+     ----------------------------------------------------------- */
+  var divider = document.getElementById('heroDivider');
+
+  if (reducedMotion) {
+    divider.classList.add('hero-divider--visible');
+  } else {
+    setTimeout(function() {
+      divider.classList.add('hero-divider--visible');
+    }, 200);
+  }
+
+  /* -----------------------------------------------------------
+     Typing animation (micro, below screenshot)
+     ----------------------------------------------------------- */
+  var CMD = 'muxvo';
+  var cmdEl = document.getElementById('typingCmd');
+  var cursorEl = document.getElementById('typingCursor');
+  var feedbackEl = document.getElementById('typingFeedback');
+  var done = false;
+
+  function skipToEnd() {
+    if (done) return;
+    done = true;
+    cmdEl.textContent = CMD;
+    cursorEl.style.display = 'none';
+    feedbackEl.classList.add('typing-feedback--visible');
+    localStorage.setItem('muxvo-visited', '1');
+  }
+
+  function onSkip() {
+    skipToEnd();
+    window.removeEventListener('scroll', onSkip);
+    document.removeEventListener('keydown', onSkip);
+    document.removeEventListener('click', onSkipClick);
+  }
+
+  function onSkipClick(e) {
+    if (e.target.closest('.hero-split')) {
+      onSkip();
+    }
+  }
+
+  window.addEventListener('scroll', onSkip, { once: true });
+  document.addEventListener('keydown', onSkip, { once: true });
+  document.addEventListener('click', onSkipClick);
+
+  if (localStorage.getItem('muxvo-visited') || reducedMotion) {
+    skipToEnd();
+  } else {
+    var charIndex = 0;
+    setTimeout(function typeChar() {
+      if (done) return;
+      if (charIndex < CMD.length) {
+        cmdEl.textContent += CMD[charIndex];
+        charIndex++;
+        setTimeout(typeChar, 100);
+      } else {
+        cursorEl.style.animation = 'none';
+        cursorEl.style.opacity = '1';
+        setTimeout(function() {
+          if (done) return;
+          cursorEl.style.display = 'none';
+          feedbackEl.classList.add('typing-feedback--visible');
+          done = true;
+          localStorage.setItem('muxvo-visited', '1');
+          window.removeEventListener('scroll', onSkip);
+          document.removeEventListener('keydown', onSkip);
+          document.removeEventListener('click', onSkipClick);
+        }, 300);
+      }
+    }, 500);
+  }
+
+  /* -----------------------------------------------------------
+     Intersection Observer: scroll animations
+     ----------------------------------------------------------- */
+  document.addEventListener('DOMContentLoaded', function() {
+    if (reducedMotion) {
+      document.querySelectorAll('.fade-left, .fade-right, .fade-up, .stagger').forEach(function(el) {
+        el.classList.add('visible');
+      });
+      return;
+    }
+
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.fade-left, .fade-right, .fade-up, .stagger').forEach(function(el) {
+      observer.observe(el);
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

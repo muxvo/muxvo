@@ -16,25 +16,8 @@ import { FilePanel } from './components/file/FilePanel';
 import { FileTempView } from './components/file/FileTempView';
 import { PanelProvider, usePanelContext } from './contexts/PanelContext';
 import { I18nProvider, useI18n, type Locale } from './i18n';
+import { mapExtToFileType, toLocalFileUrl } from './utils/file-tree';
 import './App.css';
-
-/** Image extensions */
-const IMAGE_EXTS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico'];
-
-/** Map file extension to display type */
-function mapExtToFileType(ext: string): 'markdown' | 'code' | 'text' | 'image' {
-  if (['md', 'mdx', 'markdown'].includes(ext)) return 'markdown';
-  if (IMAGE_EXTS.includes(ext)) return 'image';
-  if (['ts', 'tsx', 'js', 'jsx', 'json', 'css', 'html', 'py', 'swift',
-       'rs', 'go', 'java', 'c', 'cpp', 'h', 'sh', 'yaml', 'yml',
-       'toml', 'xml', 'sql', 'rb', 'php', 'vue', 'svelte'].includes(ext)) return 'code';
-  return 'text';
-}
-
-/** Build local-file:// URL for serving images via custom protocol */
-function toLocalFileUrl(filePath: string): string {
-  return `local-file://${encodeURIComponent(filePath)}`;
-}
 
 const MAX_TERMINALS = 20;
 
