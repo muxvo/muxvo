@@ -1,12 +1,14 @@
 /**
  * FileTempView Component
  *
- * Three-column temporary view: terminal list | file content | file tree.
+ * Three-column temporary view: file tree | file content | terminal sidebar.
  * Overlays the terminal grid when a file is opened for viewing.
+ * Left column slides in from right on mount for a smooth transition from FilePanel.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { MarkdownPreview } from '@/renderer/components/markdown/MarkdownPreview';
+import { TerminalTile } from '@/renderer/components/terminal/TerminalTile';
 import { FileItem } from './FileItem';
 import type { FileEntry as IpcFileEntry } from '@/shared/types/fs.types';
 import './FileTempView.css';
@@ -16,7 +18,8 @@ interface FileTempViewProps {
   filePath: string;
   content: string;
   fileType: 'markdown' | 'code' | 'text' | 'image';
-  terminals: Array<{ id: string; cwd: string }>;
+  terminals: Array<{ id: string; state: string; cwd: string }>;
+  sourceTerminalId: string;
   onClose: () => void;
   onSelectFile: (filePath: string, ext: string) => void;
   onSelectTerminal: (terminalId: string) => void;
@@ -30,7 +33,7 @@ interface TreeEntry {
   path?: string;
 }
 
-const DEFAULT_LEFT_WIDTH = 250;
+const DEFAULT_LEFT_WIDTH = 280;
 const DEFAULT_RIGHT_WIDTH = 280;
 const MIN_WIDTH = 150;
 const MAX_WIDTH = 500;
@@ -114,22 +117,30 @@ export function FileTempView({
   content,
   fileType,
   terminals,
+  sourceTerminalId,
   onClose,
   onSelectFile,
   onSelectTerminal,
 }: FileTempViewProps) {
   const [leftWidth, setLeftWidth] = useState(DEFAULT_LEFT_WIDTH);
   const [rightWidth, setRightWidth] = useState(DEFAULT_RIGHT_WIDTH);
-  const [activeTerminal, setActiveTerminal] = useState<string | null>(
-    terminals.length > 0 ? terminals[0].id : null
-  );
   const draggingRef = useRef<'left' | 'right' | null>(null);
   const startXRef = useRef(0);
   const startWidthRef = useRef(0);
 
+  // Entrance animation state
+  const [entered, setEntered] = useState(false);
+
   // File tree state
   const [treeFiles, setTreeFiles] = useState<TreeEntry[]>([]);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+
+  // Entrance animation trigger
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setEntered(true));
+    });
+  }, []);
 
   // Load file tree
   useEffect(() => {
@@ -185,14 +196,6 @@ export function FileTempView({
     [leftWidth, rightWidth]
   );
 
-  const handleTerminalClick = useCallback(
-    (terminalId: string) => {
-      setActiveTerminal(terminalId);
-      onSelectTerminal(terminalId);
-    },
-    [onSelectTerminal]
-  );
-
   // Folder toggle (expand/collapse)
   const handleFolderToggle = useCallback(async (entry: TreeEntry) => {
     const folderPath = entry.path;
@@ -235,37 +238,39 @@ export function FileTempView({
   );
 
   const fileName = getDisplayName(filePath);
+  const sidebarTerminals = terminals.filter(t => t.id !== sourceTerminalId);
 
   return (
-    <div className="file-temp-view">
+    <div className={`file-temp-view ${entered ? 'file-temp-view--entered' : ''}`}>
       {/* Close button */}
       <button className="file-temp-view__close" onClick={onClose}>
         &#x2715;
       </button>
 
-      {/* Left column: terminal list */}
+      {/* Left column: file tree */}
       <div
-        className="file-temp-view__terminals"
+        className={`file-temp-view__files ${entered ? 'file-temp-view__files--entered' : ''}`}
         style={{ width: leftWidth }}
       >
-        {terminals.map((t) => (
-          <div
-            key={t.id}
-            className={`file-temp-view__terminal-item ${
-              activeTerminal === t.id
-                ? 'file-temp-view__terminal-item--active'
-                : ''
-            }`}
-            onClick={() => handleTerminalClick(t.id)}
-          >
-            <div className="file-temp-view__terminal-header">
-              <span className="file-temp-view__terminal-status" />
-              <span className="file-temp-view__terminal-cwd">
-                {getDisplayName(t.cwd)}
-              </span>
-            </div>
-          </div>
-        ))}
+        <div className="file-temp-view__files-header">
+          <span className="file-temp-view__files-title">
+            {getDisplayName(projectCwd)}
+          </span>
+        </div>
+        <div className="file-temp-view__files-content">
+          {treeFiles.map((entry) => (
+            <FileItem
+              key={entry.path || `${entry.indent}-${entry.name}`}
+              name={entry.name}
+              type={entry.type}
+              indent={entry.indent}
+              ext={entry.ext}
+              isActive={entry.path === filePath || entry.name === fileName}
+              expanded={entry.type === 'folder' && entry.path ? expandedFolders.has(entry.path) : undefined}
+              onClick={() => handleTreeFileClick(entry)}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Left resize handle */}
@@ -304,30 +309,20 @@ export function FileTempView({
         onMouseDown={(e) => handleMouseDown('right', e)}
       />
 
-      {/* Right column: file tree */}
+      {/* Right column: terminal sidebar */}
       <div
-        className="file-temp-view__files"
+        className="file-temp-view__sidebar"
         style={{ width: rightWidth }}
       >
-        <div className="file-temp-view__files-header">
-          <span className="file-temp-view__files-title">
-            {getDisplayName(projectCwd)}
-          </span>
-        </div>
-        <div className="file-temp-view__files-content">
-          {treeFiles.map((entry) => (
-            <FileItem
-              key={entry.path || `${entry.indent}-${entry.name}`}
-              name={entry.name}
-              type={entry.type}
-              indent={entry.indent}
-              ext={entry.ext}
-              isActive={entry.path === filePath || entry.name === fileName}
-              expanded={entry.type === 'folder' && entry.path ? expandedFolders.has(entry.path) : undefined}
-              onClick={() => handleTreeFileClick(entry)}
-            />
-          ))}
-        </div>
+        {sidebarTerminals.map((t) => (
+          <div
+            key={t.id}
+            className="file-temp-view__sidebar-item"
+            onClick={() => onSelectTerminal(t.id)}
+          >
+            <TerminalTile id={t.id} state={t.state} cwd={t.cwd} compact />
+          </div>
+        ))}
       </div>
     </div>
   );

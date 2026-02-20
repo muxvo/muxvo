@@ -342,25 +342,30 @@ function AppContent({
           projectCwd={filePanelCwd}
           onClose={() => dispatch({ type: 'CLOSE_FILE_PANEL' })}
           onOpenFile={(filePath, ext) => {
+            const tid = state.filePanel.terminalId || '';
             dispatch({ type: 'CLOSE_FILE_PANEL' });
-            dispatch({ type: 'OPEN_TEMP_VIEW', contentKey: filePath, projectCwd: filePanelCwd });
+            dispatch({ type: 'OPEN_TEMP_VIEW', contentKey: filePath, projectCwd: filePanelCwd, terminalId: tid });
           }}
         />
       )}
 
-      {/* File temp view (three-column: terminals | content | file tree) */}
+      {/* File temp view (three-column: file tree | content | terminal sidebar) */}
       {state.tempView.active && state.tempView.contentKey && (
         <FileTempView
           projectCwd={state.tempView.projectCwd || '/'}
           filePath={state.tempView.contentKey}
           content={fileContent}
           fileType={fileType}
-          terminals={terminals.filter(t => t.cwd === (state.tempView.projectCwd || '/'))}
+          terminals={terminals}
+          sourceTerminalId={state.tempView.terminalId || ''}
           onClose={() => dispatch({ type: 'CLOSE_TEMP_VIEW' })}
           onSelectFile={(newFilePath, ext) => {
-            dispatch({ type: 'OPEN_TEMP_VIEW', contentKey: newFilePath, projectCwd: state.tempView.projectCwd || '/' });
+            dispatch({ type: 'OPEN_TEMP_VIEW', contentKey: newFilePath, projectCwd: state.tempView.projectCwd || '/', terminalId: state.tempView.terminalId || '' });
           }}
-          onSelectTerminal={() => {}}
+          onSelectTerminal={(id) => {
+            dispatch({ type: 'CLOSE_TEMP_VIEW' });
+            onDoubleClick(id);
+          }}
         />
       )}
 
