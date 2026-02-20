@@ -249,9 +249,9 @@ function AppContent({
 }): JSX.Element {
   const { state, dispatch } = usePanelContext();
 
-  // Compute FilePanel projectCwd from filePanel.projectIndex
-  const filePanelCwd = state.filePanel.projectIndex !== null
-    ? terminals[state.filePanel.projectIndex]?.cwd || '/'
+  // Compute FilePanel projectCwd from filePanel.terminalId
+  const filePanelCwd = state.filePanel.terminalId !== null
+    ? terminals.find(t => t.id === state.filePanel.terminalId)?.cwd || '/'
     : '/';
 
   return (

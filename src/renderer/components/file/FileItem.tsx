@@ -14,11 +14,12 @@ interface FileItemProps {
   meta?: string;
   isNew?: boolean;
   isActive?: boolean;
+  expanded?: boolean;
   onClick?: () => void;
 }
 
-function getFileIcon(type: 'file' | 'folder', ext?: string): string {
-  if (type === 'folder') return '\u{1F4C2}';
+function getFileIcon(type: 'file' | 'folder', ext?: string, expanded?: boolean): string {
+  if (type === 'folder') return expanded ? '\u{1F4C2}' : '\u{1F4C1}';
   switch (ext) {
     case 'md':
       return '\u{1F4DD}';
@@ -37,6 +38,7 @@ export function FileItem({
   meta,
   isNew,
   isActive,
+  expanded,
   onClick,
 }: FileItemProps) {
   const classList = [
@@ -54,7 +56,7 @@ export function FileItem({
       style={{ paddingLeft: 8 + indent * 20 }}
       onClick={onClick}
     >
-      <span className="file-item__icon">{getFileIcon(type, ext)}</span>
+      <span className="file-item__icon">{getFileIcon(type, ext, expanded)}</span>
       <span className="file-item__name">{name}</span>
       {meta && <span className="file-item__meta">{meta}</span>}
       {isNew && <span className="file-item__badge">NEW</span>}
