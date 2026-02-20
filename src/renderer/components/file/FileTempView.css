@@ -179,6 +179,22 @@
   font-family: var(--font-mono);
   font-size: 12px;
 }
+.file-temp-view__image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+.file-temp-view__image img {
+  max-width: 100%;
+  max-height: calc(100vh - 150px);
+  object-fit: contain;
+  border-radius: 4px;
+}
+.file-temp-view__content-tag--image {
+  background: var(--accent-glow);
+  color: var(--success);
+}
 
 /* === Right column: file tree === */
 .file-temp-view__files {

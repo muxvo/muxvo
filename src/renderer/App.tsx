@@ -17,13 +17,27 @@ import { FileTempView } from './components/file/FileTempView';
 import { PanelProvider, usePanelContext } from './contexts/PanelContext';
 import './App.css';
 
+/** Image extensions */
+const IMAGE_EXTS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico'];
+
 /** Map file extension to display type */
-function mapExtToFileType(ext: string): 'markdown' | 'code' | 'text' {
+function mapExtToFileType(ext: string): 'markdown' | 'code' | 'text' | 'image' {
   if (['md', 'mdx', 'markdown'].includes(ext)) return 'markdown';
+  if (IMAGE_EXTS.includes(ext)) return 'image';
   if (['ts', 'tsx', 'js', 'jsx', 'json', 'css', 'html', 'py', 'swift',
        'rs', 'go', 'java', 'c', 'cpp', 'h', 'sh', 'yaml', 'yml',
        'toml', 'xml', 'sql', 'rb', 'php', 'vue', 'svelte'].includes(ext)) return 'code';
   return 'text';
+}
+
+/** Map extension to MIME type for data URI */
+function extToMime(ext: string): string {
+  const map: Record<string, string> = {
+    png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg',
+    gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml',
+    bmp: 'image/bmp', ico: 'image/x-icon',
+  };
+  return map[ext] || 'image/png';
 }
 
 const MAX_TERMINALS = 20;
@@ -261,19 +275,30 @@ function AppContent({
 
   // File content loading for FileTempView
   const [fileContent, setFileContent] = useState('');
-  const [fileType, setFileType] = useState<'markdown' | 'code' | 'text'>('text');
+  const [fileType, setFileType] = useState<'markdown' | 'code' | 'text' | 'image'>('text');
 
   useEffect(() => {
     if (!state.tempView.active || !state.tempView.contentKey) return;
     const filePath = state.tempView.contentKey;
-    const ext = filePath.split('.').pop() || '';
-    setFileType(mapExtToFileType(ext));
+    const ext = (filePath.split('.').pop() || '').toLowerCase();
+    const detectedType = mapExtToFileType(ext);
+    setFileType(detectedType);
     setFileContent('');
-    window.api.fs.readFile(filePath).then((result: { success: boolean; data?: { content: string } }) => {
-      if (result?.success && result.data) {
-        setFileContent(result.data.content);
-      }
-    }).catch(() => {});
+
+    if (detectedType === 'image') {
+      // Read image as base64, build data URI
+      window.api.fs.readFile(filePath, 'base64').then((result: { success: boolean; data?: { content: string } }) => {
+        if (result?.success && result.data) {
+          setFileContent(`data:${extToMime(ext)};base64,${result.data.content}`);
+        }
+      }).catch(() => {});
+    } else {
+      window.api.fs.readFile(filePath).then((result: { success: boolean; data?: { content: string } }) => {
+        if (result?.success && result.data) {
+          setFileContent(result.data.content);
+        }
+      }).catch(() => {});
+    }
   }, [state.tempView.active, state.tempView.contentKey]);
 
   // Compute FilePanel projectCwd from filePanel.terminalId

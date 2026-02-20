@@ -52,6 +52,10 @@ export function createFsHandlers() {
 
     async readFile(params: ReadFileRequest): Promise<Record<string, unknown>> {
       try {
+        if (params.encoding === 'base64') {
+          const buffer = await fsp.readFile(params.path);
+          return { success: true, data: { content: buffer.toString('base64'), encoding: 'base64' } };
+        }
         const content = await fsp.readFile(params.path, 'utf-8');
         return { success: true, data: { content, encoding: 'utf-8' } };
       } catch (err: unknown) {

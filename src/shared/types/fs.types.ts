@@ -25,6 +25,8 @@ export interface ReadDirRequest {
 /** fs:read-file 请求参数 */
 export interface ReadFileRequest {
   path: string;
+  /** 编码方式，默认 utf-8；base64 用于读取二进制文件（如图片） */
+  encoding?: 'utf-8' | 'base64';
 }
 
 /** fs:read-file 返回值 */
