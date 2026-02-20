@@ -139,7 +139,7 @@ export function FileTempView({
   // Editing state
   const [editContent, setEditContent] = useState('');
   const [isDirty, setIsDirty] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [mdPreview, setMdPreview] = useState(true); // markdown: true=rendered, false=raw
   const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
   const pendingActionRef = useRef<(() => void) | null>(null);
 
@@ -147,7 +147,7 @@ export function FileTempView({
   useEffect(() => {
     setEditContent(content);
     setIsDirty(false);
-    setIsEditing(false);
+    setMdPreview(true); // reset markdown to rendered view
   }, [filePath]);
 
   // Also sync when content prop updates (initial load)
@@ -193,12 +193,19 @@ export function FileTempView({
     }).catch(() => {});
   }, [projectCwd]);
 
-  // Keyboard shortcuts: Cmd+S save, Esc close
+  // Keyboard shortcuts: Cmd+S save, Cmd+/ toggle markdown preview, Esc close
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
         handleSave();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+        e.preventDefault();
+        if (fileType === 'markdown') {
+          setMdPreview(prev => !prev);
+        }
         return;
       }
       if (e.key === 'Escape' && !showUnsavedPrompt) {
@@ -207,7 +214,7 @@ export function FileTempView({
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSave, handleCloseRequest, showUnsavedPrompt]);
+  }, [handleSave, handleCloseRequest, showUnsavedPrompt, fileType]);
 
   // Resize handle logic
   const handleMouseDown = useCallback(
@@ -362,12 +369,13 @@ export function FileTempView({
             {isDirty && <span className="file-temp-view__dirty-dot" />}
             {fileName}
           </span>
-          {fileType !== 'image' && (
+          {fileType === 'markdown' && (
             <button
-              className={`file-temp-view__mode-btn ${isEditing ? 'file-temp-view__mode-btn--active' : ''}`}
-              onClick={() => setIsEditing(!isEditing)}
+              className={`file-temp-view__mode-btn ${!mdPreview ? 'file-temp-view__mode-btn--active' : ''}`}
+              onClick={() => setMdPreview(prev => !prev)}
+              title="⌘/"
             >
-              {isEditing ? 'Preview' : 'Edit'}
+              {mdPreview ? 'Source' : 'Preview'}
             </button>
           )}
           <span
@@ -377,7 +385,27 @@ export function FileTempView({
           </span>
         </div>
         <div className="file-temp-view__content-body">
-          {isEditing ? (
+          {fileType === 'image' && content && (
+            <div className="file-temp-view__image">
+              <img src={content} alt={fileName} />
+            </div>
+          )}
+          {fileType === 'markdown' && (
+            mdPreview ? (
+              <MarkdownPreview content={displayContent} />
+            ) : (
+              <textarea
+                className="file-temp-view__editor"
+                value={editContent}
+                onChange={(e) => {
+                  setEditContent(e.target.value);
+                  setIsDirty(true);
+                }}
+                spellCheck={false}
+              />
+            )
+          )}
+          {(fileType === 'code' || fileType === 'text') && (
             <textarea
               className="file-temp-view__editor"
               value={editContent}
@@ -386,21 +414,7 @@ export function FileTempView({
                 setIsDirty(true);
               }}
               spellCheck={false}
-              autoFocus
             />
-          ) : (
-            <>
-              {fileType === 'markdown' && <MarkdownPreview content={displayContent} />}
-              {fileType === 'code' && <CodeView content={displayContent} />}
-              {fileType === 'image' && content && (
-                <div className="file-temp-view__image">
-                  <img src={content} alt={fileName} />
-                </div>
-              )}
-              {fileType === 'text' && (
-                <div className="file-temp-view__text">{displayContent}</div>
-              )}
-            </>
           )}
         </div>
       </div>
