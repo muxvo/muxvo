@@ -32,6 +32,7 @@ export function XTermRenderer({ terminalId }: Props): JSX.Element {
       fontSize: DEFAULT_TERMINAL_CONFIG.fontSize,
       fontFamily: DEFAULT_TERMINAL_CONFIG.fontFamily,
       theme: resolveTerminalTheme(DEFAULT_TERMINAL_CONFIG.themeName),
+      allowProposedApi: true, // Required by Unicode11Addon and ImageAddon
     });
 
     term.open(containerRef.current);

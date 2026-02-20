@@ -2021,6 +2021,13 @@ const DEFAULT_CONFIG = {
   gridLayout: { columnRatios: [1, 1], rowRatios: [1, 1] },
   theme: "dark",
   fontSize: 14,
+  terminal: {
+    themeName: "dark",
+    fontFamily: "'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace",
+    fontSize: 13,
+    cursorStyle: "block",
+    cursorBlink: true
+  },
   ftvLeftWidth: 250,
   ftvRightWidth: 300
 };
@@ -2050,7 +2057,11 @@ function createConfigManager(deps) {
       }
       const raw = fsAdapter.readFileSync(configPath, "utf-8");
       const parsed = JSON.parse(raw);
-      return { ...DEFAULT_CONFIG, ...parsed };
+      const merged = { ...DEFAULT_CONFIG, ...parsed };
+      if (parsed.terminal) {
+        merged.terminal = { ...DEFAULT_CONFIG.terminal, ...parsed.terminal };
+      }
+      return merged;
     } catch {
       return { ...DEFAULT_CONFIG };
     }
