@@ -19,12 +19,17 @@ interface MarkdownWysiwygProps {
 export function MarkdownWysiwyg({ content, onChange }: MarkdownWysiwygProps) {
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const initializedRef = useRef(false);
 
   const editor = useEditor({
     extensions: [StarterKit, Markdown],
     content,
     contentType: 'markdown',
+    onCreate: () => {
+      requestAnimationFrame(() => { initializedRef.current = true; });
+    },
     onUpdate: ({ editor }) => {
+      if (!initializedRef.current) return;
       onChangeRef.current(editor.getMarkdown());
     },
   });
@@ -32,10 +37,9 @@ export function MarkdownWysiwyg({ content, onChange }: MarkdownWysiwygProps) {
   // Sync external content changes (file switch)
   useEffect(() => {
     if (editor && !editor.isDestroyed) {
-      const cur = editor.getMarkdown();
-      if (cur !== content) {
-        editor.commands.setContent(content, { contentType: 'markdown' });
-      }
+      initializedRef.current = false;
+      editor.commands.setContent(content, { contentType: 'markdown' });
+      requestAnimationFrame(() => { initializedRef.current = true; });
     }
   }, [content, editor]);
 
