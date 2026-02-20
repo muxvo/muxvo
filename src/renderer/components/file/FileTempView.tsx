@@ -139,7 +139,7 @@ export function FileTempView({
   // Editing state
   const [editContent, setEditContent] = useState('');
   const [isDirty, setIsDirty] = useState(false);
-  const [mdPreview, setMdPreview] = useState(true); // markdown: true=rendered, false=raw
+  const [mdPreview, setMdPreview] = useState(false); // markdown: false=raw(editable), true=rendered
   const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
   const pendingActionRef = useRef<(() => void) | null>(null);
 
@@ -147,7 +147,7 @@ export function FileTempView({
   useEffect(() => {
     setEditContent(content);
     setIsDirty(false);
-    setMdPreview(true); // reset markdown to rendered view
+    setMdPreview(false); // reset markdown to raw editable view
   }, [filePath]);
 
   // Also sync when content prop updates (initial load)
@@ -371,7 +371,7 @@ export function FileTempView({
           </span>
           {fileType === 'markdown' && (
             <button
-              className={`file-temp-view__mode-btn ${!mdPreview ? 'file-temp-view__mode-btn--active' : ''}`}
+              className={`file-temp-view__mode-btn ${mdPreview ? 'file-temp-view__mode-btn--active' : ''}`}
               onClick={() => setMdPreview(prev => !prev)}
               title="⌘/"
             >
@@ -384,16 +384,14 @@ export function FileTempView({
             {getTagLabel(fileType)}
           </span>
         </div>
-        <div className="file-temp-view__content-body">
+        <div className={`file-temp-view__content-body ${fileType === 'markdown' && mdPreview ? 'file-temp-view__content-body--split' : ''}`}>
           {fileType === 'image' && content && (
             <div className="file-temp-view__image">
               <img src={content} alt={fileName} />
             </div>
           )}
           {fileType === 'markdown' && (
-            mdPreview ? (
-              <MarkdownPreview content={displayContent} />
-            ) : (
+            <>
               <textarea
                 className="file-temp-view__editor"
                 value={editContent}
@@ -403,7 +401,12 @@ export function FileTempView({
                 }}
                 spellCheck={false}
               />
-            )
+              {mdPreview && (
+                <div className="file-temp-view__md-preview">
+                  <MarkdownPreview content={displayContent} />
+                </div>
+              )}
+            </>
           )}
           {(fileType === 'code' || fileType === 'text') && (
             <textarea
