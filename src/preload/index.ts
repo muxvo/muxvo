@@ -113,8 +113,8 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_PROJECTS),
     getSessions: (projectHash: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_SESSIONS, { projectHash }),
-    getSession: (projectHash: string, sessionId: string) =>
-      ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_SESSION, { projectHash, sessionId }),
+    getSession: (projectHash: string, sessionId: string, limit?: number) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_SESSION, { projectHash, sessionId, limit }),
     search: (query: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.SEARCH, { query }),
     export: (projectHash: string, sessionId: string, format: string) =>

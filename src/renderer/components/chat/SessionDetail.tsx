@@ -88,7 +88,7 @@ interface MessageBubbleProps {
   message: SessionMessage;
 }
 
-function MessageBubble({ message }: MessageBubbleProps) {
+const MessageBubble = React.memo(function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.type === 'user';
 
   return (
@@ -112,7 +112,7 @@ function MessageBubble({ message }: MessageBubbleProps) {
       </div>
     </div>
   );
-}
+});
 
 const MESSAGE_PAGE_SIZE = 50;
 

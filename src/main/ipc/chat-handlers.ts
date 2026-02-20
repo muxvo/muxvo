@@ -31,8 +31,9 @@ export function createChatHandlers() {
       return { sessions };
     },
 
-    async getSession(params: { projectHash: string; sessionId: string }) {
-      const messages = await reader.readSession(params.projectHash, params.sessionId);
+    async getSession(params: { projectHash: string; sessionId: string; limit?: number }) {
+      const options = params.limit !== undefined ? { limit: params.limit } : { limit: 100 };
+      const messages = await reader.readSession(params.projectHash, params.sessionId, options);
       return { messages };
     },
 
@@ -43,6 +44,7 @@ export function createChatHandlers() {
 
     async export(params: { projectHash: string; sessionId: string; format: string }) {
       const { promises: fsp } = await import('fs');
+      // Export needs ALL messages, no limit
       const messages = await reader.readSession(params.projectHash, params.sessionId);
 
       let content: string;

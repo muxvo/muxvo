@@ -13,7 +13,7 @@ interface MarkdownPreviewProps {
   content: string;
 }
 
-export function MarkdownPreview({ content }: MarkdownPreviewProps) {
+export const MarkdownPreview = React.memo(function MarkdownPreview({ content }: MarkdownPreviewProps) {
   const renderer = getMarkdownRenderer();
   const html = renderer.render(content);
 
@@ -23,4 +23,4 @@ export function MarkdownPreview({ content }: MarkdownPreviewProps) {
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );
-}
+});
