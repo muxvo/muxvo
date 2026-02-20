@@ -688,7 +688,17 @@ function createChatProjectReader(opts) {
           let normalizedContent;
           if (type === "user") {
             const msgContent = entry.message?.content;
-            normalizedContent = typeof msgContent === "string" ? msgContent : typeof entry.content === "string" ? entry.content : "";
+            if (typeof msgContent === "string") {
+              normalizedContent = msgContent;
+            } else if (Array.isArray(msgContent)) {
+              normalizedContent = msgContent;
+            } else if (typeof entry.content === "string") {
+              normalizedContent = entry.content;
+            } else if (Array.isArray(entry.content)) {
+              normalizedContent = entry.content;
+            } else {
+              normalizedContent = "";
+            }
           } else {
             const msgContent = entry.message?.content;
             if (Array.isArray(msgContent)) {
