@@ -11,13 +11,15 @@ export interface PanelState {
   filePanel: { open: boolean; terminalId: string | null };
   tempView: { active: boolean; contentKey: string | null; projectCwd: string | null; terminalId: string | null };
   chatHistory: { open: boolean };
-  menuDropdown: { open: boolean; type: 'skills' | 'mcp' | null };
+  skillsPanel: { open: boolean };
+  menuDropdown: { open: boolean; type: 'mcp' | null };
 }
 
 const initialState: PanelState = {
   filePanel: { open: false, terminalId: null },
   tempView: { active: false, contentKey: null, projectCwd: null, terminalId: null },
   chatHistory: { open: false },
+  skillsPanel: { open: false },
   menuDropdown: { open: false, type: null },
 };
 
@@ -30,7 +32,9 @@ type PanelAction =
   | { type: 'CLOSE_TEMP_VIEW' }
   | { type: 'OPEN_CHAT_HISTORY' }
   | { type: 'CLOSE_CHAT_HISTORY' }
-  | { type: 'TOGGLE_MENU_DROPDOWN'; dropdownType: 'skills' | 'mcp' }
+  | { type: 'OPEN_SKILLS_PANEL' }
+  | { type: 'CLOSE_SKILLS_PANEL' }
+  | { type: 'TOGGLE_MENU_DROPDOWN'; dropdownType: 'mcp' }
   | { type: 'CLOSE_ALL' };
 
 // ── Reducer ──
@@ -66,6 +70,16 @@ function panelReducer(state: PanelState, action: PanelAction): PanelState {
       return {
         ...state,
         chatHistory: { open: false },
+      };
+    case 'OPEN_SKILLS_PANEL':
+      return {
+        ...state,
+        skillsPanel: { open: true },
+      };
+    case 'CLOSE_SKILLS_PANEL':
+      return {
+        ...state,
+        skillsPanel: { open: false },
       };
     case 'TOGGLE_MENU_DROPDOWN': {
       const isOpen =

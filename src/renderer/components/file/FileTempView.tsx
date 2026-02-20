@@ -12,7 +12,7 @@ import { MarkdownWysiwyg } from '@/renderer/components/markdown/MarkdownWysiwyg'
 import { TerminalTile } from '@/renderer/components/terminal/TerminalTile';
 import { UnsavedPromptDialog } from './UnsavedPromptDialog';
 import { FileItem } from './FileItem';
-import type { FileEntry as IpcFileEntry } from '@/shared/types/fs.types';
+import { type TreeEntry, mapIpcToTree, insertAfter, removeChildren } from '@/renderer/utils/file-tree';
 import './FileTempView.css';
 
 interface FileTempViewProps {
@@ -25,14 +25,6 @@ interface FileTempViewProps {
   onClose: () => void;
   onSelectFile: (filePath: string, ext: string) => void;
   onSelectTerminal: (terminalId: string) => void;
-}
-
-interface TreeEntry {
-  name: string;
-  type: 'file' | 'folder';
-  ext?: string;
-  indent: number;
-  path?: string;
 }
 
 const DEFAULT_LEFT_WIDTH = 280;
@@ -56,47 +48,6 @@ function getTagLabel(fileType: 'markdown' | 'code' | 'text' | 'image'): string {
     case 'text':
       return 'TXT';
   }
-}
-
-/** Map IPC entries to tree entries */
-function mapIpcToTree(entries: IpcFileEntry[], indent: number): TreeEntry[] {
-  return [...entries]
-    .sort((a, b) => {
-      if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1;
-      return a.name.localeCompare(b.name);
-    })
-    .filter(e => !e.name.startsWith('.'))
-    .map(e => ({
-      name: e.name,
-      type: (e.isDirectory ? 'folder' : 'file') as 'file' | 'folder',
-      ext: e.isDirectory ? undefined : (e.name.includes('.') ? e.name.split('.').pop() : undefined),
-      indent,
-      path: e.path,
-    }));
-}
-
-/** Insert children after a parent entry in the flat list */
-function insertAfter(list: TreeEntry[], parent: TreeEntry, children: TreeEntry[]): TreeEntry[] {
-  const idx = list.findIndex(f => f.path === parent.path);
-  if (idx === -1) return list;
-  const cleaned = removeChildren(list, parent.path!, parent.indent);
-  const insertIdx = cleaned.findIndex(f => f.path === parent.path);
-  return [
-    ...cleaned.slice(0, insertIdx + 1),
-    ...children,
-    ...cleaned.slice(insertIdx + 1),
-  ];
-}
-
-/** Remove all entries that are children of the given parent (deeper indent) */
-function removeChildren(list: TreeEntry[], parentPath: string, parentIndent: number): TreeEntry[] {
-  const parentIdx = list.findIndex(f => f.path === parentPath);
-  if (parentIdx === -1) return list;
-  let endIdx = parentIdx + 1;
-  while (endIdx < list.length && list[endIdx].indent > parentIndent) {
-    endIdx++;
-  }
-  return [...list.slice(0, parentIdx + 1), ...list.slice(endIdx)];
 }
 
 function CodeView({ content }: { content: string }) {
