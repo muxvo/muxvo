@@ -275,16 +275,23 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
           // Normalize content
           let normalizedContent: string | SessionMessage['content'];
           if (type === 'user') {
-            // User content: string for normal input, array for tool_result/interrupted messages
             const msgContent = (entry.message as Record<string, unknown>)?.content;
             if (typeof msgContent === 'string') {
               normalizedContent = msgContent;
             } else if (Array.isArray(msgContent)) {
-              normalizedContent = msgContent as SessionMessage['content'];
+              // Check if this is a pure tool_result array (API internal, not user input)
+              const blocks = msgContent as Array<Record<string, unknown>>;
+              const hasOnlyToolResults = blocks.length > 0 && blocks.every(b => b.type === 'tool_result');
+              if (hasOnlyToolResults) {
+                continue; // Skip — not real user input
+              }
+              // Extract text from text blocks (interrupted messages, text+image, etc.)
+              const textParts = blocks
+                .filter(b => b.type === 'text' && typeof b.text === 'string')
+                .map(b => b.text as string);
+              normalizedContent = textParts.join('\n') || '';
             } else if (typeof entry.content === 'string') {
               normalizedContent = entry.content;
-            } else if (Array.isArray(entry.content)) {
-              normalizedContent = entry.content as SessionMessage['content'];
             } else {
               normalizedContent = '';
             }
