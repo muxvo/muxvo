@@ -7,7 +7,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { MarkdownPreview } from '@/renderer/components/markdown/MarkdownPreview';
+import { MarkdownWysiwyg } from '@/renderer/components/markdown/MarkdownWysiwyg';
 import { TerminalTile } from '@/renderer/components/terminal/TerminalTile';
 import { UnsavedPromptDialog } from './UnsavedPromptDialog';
 import { FileItem } from './FileItem';
@@ -139,7 +139,7 @@ export function FileTempView({
   // Editing state
   const [editContent, setEditContent] = useState('');
   const [isDirty, setIsDirty] = useState(false);
-  const [mdPreview, setMdPreview] = useState(false); // markdown: false=raw(editable), true=rendered
+  const [sourceMode, setSourceMode] = useState(false); // false=WYSIWYG, true=raw source textarea
   const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
   const pendingActionRef = useRef<(() => void) | null>(null);
 
@@ -147,7 +147,7 @@ export function FileTempView({
   useEffect(() => {
     setEditContent(content);
     setIsDirty(false);
-    setMdPreview(false); // reset markdown to raw editable view
+    setSourceMode(false); // reset to WYSIWYG mode
   }, [filePath]);
 
   // Also sync when content prop updates (initial load)
@@ -204,7 +204,7 @@ export function FileTempView({
       if ((e.metaKey || e.ctrlKey) && e.key === '/') {
         e.preventDefault();
         if (fileType === 'markdown') {
-          setMdPreview(prev => !prev);
+          setSourceMode(prev => !prev);
         }
         return;
       }
@@ -371,11 +371,11 @@ export function FileTempView({
           </span>
           {fileType === 'markdown' && (
             <button
-              className={`file-temp-view__mode-btn ${mdPreview ? 'file-temp-view__mode-btn--active' : ''}`}
-              onClick={() => setMdPreview(prev => !prev)}
+              className={`file-temp-view__mode-btn ${sourceMode ? 'file-temp-view__mode-btn--active' : ''}`}
+              onClick={() => setSourceMode(prev => !prev)}
               title="⌘/"
             >
-              {mdPreview ? 'Source' : 'Preview'}
+              {sourceMode ? 'WYSIWYG' : 'Source'}
             </button>
           )}
           <span
@@ -384,14 +384,14 @@ export function FileTempView({
             {getTagLabel(fileType)}
           </span>
         </div>
-        <div className={`file-temp-view__content-body ${fileType === 'markdown' && mdPreview ? 'file-temp-view__content-body--split' : ''}`}>
+        <div className="file-temp-view__content-body">
           {fileType === 'image' && content && (
             <div className="file-temp-view__image">
               <img src={content} alt={fileName} />
             </div>
           )}
           {fileType === 'markdown' && (
-            <>
+            sourceMode ? (
               <textarea
                 className="file-temp-view__editor"
                 value={editContent}
@@ -401,12 +401,15 @@ export function FileTempView({
                 }}
                 spellCheck={false}
               />
-              {mdPreview && (
-                <div className="file-temp-view__md-preview">
-                  <MarkdownPreview content={displayContent} />
-                </div>
-              )}
-            </>
+            ) : (
+              <MarkdownWysiwyg
+                content={editContent}
+                onChange={(md) => {
+                  setEditContent(md);
+                  setIsDirty(true);
+                }}
+              />
+            )
           )}
           {(fileType === 'code' || fileType === 'text') && (
             <textarea
