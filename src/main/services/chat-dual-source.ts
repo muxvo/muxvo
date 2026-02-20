@@ -4,7 +4,8 @@
  * Scans ~/.claude/projects/ to build project/session/message data.
  */
 
-import { promises as fsp } from 'fs';
+import { promises as fsp, createReadStream } from 'fs';
+import { createInterface } from 'readline';
 import { join, basename } from 'path';
 import { parseJsonl } from './jsonl-parser';
 import type {
@@ -21,41 +22,54 @@ interface ChatProjectReaderOpts {
 export function createChatProjectReader(opts: ChatProjectReaderOpts) {
   const projectsDir = join(opts.ccBasePath, 'projects');
 
-  /**
-   * Read the first N lines of a file (without reading the entire file for large ones).
-   */
-  async function readFirstLines(filePath: string, maxLines: number): Promise<string[]> {
-    const content = await fsp.readFile(filePath, 'utf-8');
-    const lines = content.split('\n');
-    return lines.slice(0, maxLines);
+  // Memory cache
+  const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  const projectsCache = { data: null as ProjectInfo[] | null, expiry: 0 };
+  const summaryCache = new Map<string, { data: SessionSummary; expiry: number }>();
+
+  function clearProjectsCache() {
+    projectsCache.data = null;
+    projectsCache.expiry = 0;
+  }
+
+  function clearSummaryCache(projectHash?: string) {
+    if (projectHash) {
+      // Clear only matching entries
+      for (const [key] of summaryCache) {
+        if (key.startsWith(projectHash + '/')) {
+          summaryCache.delete(key);
+        }
+      }
+    } else {
+      summaryCache.clear();
+    }
   }
 
   /**
-   * Find the cwd from the first user message in a JSONL file.
+   * Read the first N lines of a file using streaming (without reading the entire file).
    */
-  async function extractCwdFromFile(filePath: string): Promise<string> {
-    try {
-      const lines = await readFirstLines(filePath, 20);
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed) continue;
-        try {
-          const obj = JSON.parse(trimmed);
-          if (obj.type === 'user' && obj.cwd) {
-            return obj.cwd;
-          }
-        } catch {
-          // skip malformed line
+  async function readFirstLines(filePath: string, maxLines: number): Promise<string[]> {
+    return new Promise((resolve) => {
+      const lines: string[] = [];
+      const stream = createReadStream(filePath, { encoding: 'utf-8' });
+      const rl = createInterface({ input: stream, crlfDelay: Infinity });
+
+      rl.on('line', (line) => {
+        lines.push(line);
+        if (lines.length >= maxLines) {
+          rl.close();
+          stream.destroy();
         }
-      }
-    } catch {
-      // file read error
-    }
-    return '';
+      });
+
+      rl.on('close', () => resolve(lines));
+      stream.on('error', () => resolve(lines));
+    });
   }
 
   /**
    * Extract a SessionSummary from a single .jsonl file.
+   * Uses streaming for title/startedAt and file size estimation for messageCount.
    */
   async function extractSessionSummary(
     projectHash: string,
@@ -68,39 +82,28 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
 
     let title = '';
     let startedAt = '';
-    let messageCount = 0;
+    // Estimate message count from file size (~2KB per message on average)
+    const messageCount = Math.max(1, Math.round(stat.size / 2048));
 
     try {
-      const content = await fsp.readFile(filePath, 'utf-8');
-      const contentLines = content.split('\n');
-
-      // Count messages and find first user message
-      let foundFirstUser = false;
-      for (const line of contentLines) {
+      const lines = await readFirstLines(filePath, 20);
+      for (const line of lines) {
         const trimmed = line.trim();
         if (!trimmed) continue;
-
-        if (trimmed.includes('"type":"user"') || trimmed.includes('"type": "user"')) {
-          messageCount++;
-          if (!foundFirstUser) {
-            try {
-              const obj = JSON.parse(trimmed);
-              if (obj.type === 'user') {
-                const rawContent = typeof obj.message?.content === 'string'
-                  ? obj.message.content
-                  : typeof obj.content === 'string'
-                    ? obj.content
-                    : '';
-                title = rawContent.slice(0, 100);
-                startedAt = obj.timestamp || '';
-                foundFirstUser = true;
-              }
-            } catch {
-              // skip
-            }
+        try {
+          const obj = JSON.parse(trimmed);
+          if (obj.type === 'user') {
+            const rawContent = typeof obj.message?.content === 'string'
+              ? obj.message.content
+              : typeof obj.content === 'string'
+                ? obj.content
+                : '';
+            title = rawContent.slice(0, 100);
+            startedAt = obj.timestamp || '';
+            break;
           }
-        } else if (trimmed.includes('"type":"assistant"') || trimmed.includes('"type": "assistant"')) {
-          messageCount++;
+        } catch {
+          // skip malformed line
         }
       }
     } catch {
@@ -122,6 +125,11 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
      * Scan all projects under ~/.claude/projects/
      */
     async getProjects(): Promise<ProjectInfo[]> {
+      // Return cached data if still valid
+      if (projectsCache.data && Date.now() < projectsCache.expiry) {
+        return projectsCache.data;
+      }
+
       try {
         const dirs = await fsp.readdir(projectsDir, { withFileTypes: true });
         const projects: ProjectInfo[] = [];
@@ -138,22 +146,23 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
 
             if (jsonlFiles.length === 0) continue;
 
-            // Get lastActivity from most recent file
-            let lastActivity = 0;
-            for (const f of jsonlFiles) {
-              try {
-                const stat = await fsp.stat(join(projectPath, f));
-                if (stat.mtimeMs > lastActivity) {
-                  lastActivity = stat.mtimeMs;
+            // Parallel stat for all jsonl files
+            const statResults = await Promise.all(
+              jsonlFiles.map(async (f) => {
+                try {
+                  const stat = await fsp.stat(join(projectPath, f));
+                  return stat.mtimeMs;
+                } catch {
+                  return 0;
                 }
-              } catch {
-                // skip unreadable file
-              }
-            }
+              })
+            );
+            const lastActivity = Math.max(...statResults, 0);
 
-            // Get displayPath from first user message in the first jsonl file
-            const displayPath = await extractCwdFromFile(join(projectPath, jsonlFiles[0]));
-            const displayName = displayPath ? basename(displayPath) : projectHash;
+            // Extract last meaningful segment from hash like "-Users-rl-...-muxvo"
+            const segments = projectHash.split('-').filter(s => s.length > 0);
+            const displayName = segments.length > 0 ? segments[segments.length - 1] : projectHash;
+            const displayPath = ''; // No longer reading file for this
 
             projects.push({
               projectHash,
@@ -169,6 +178,11 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
 
         // Sort by lastActivity descending
         projects.sort((a, b) => b.lastActivity - a.lastActivity);
+
+        // Update cache
+        projectsCache.data = projects;
+        projectsCache.expiry = Date.now() + CACHE_TTL;
+
         return projects;
       } catch {
         // projectsDir doesn't exist or is unreadable
@@ -188,8 +202,16 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
 
         const sessions: SessionSummary[] = [];
         for (const f of jsonlFiles) {
+          const cacheKey = projectHash + '/' + f;
+          const cached = summaryCache.get(cacheKey);
+          if (cached && Date.now() < cached.expiry) {
+            sessions.push(cached.data);
+            continue;
+          }
+
           try {
             const summary = await extractSessionSummary(projectHash, join(projectPath, f), f);
+            summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
             sessions.push(summary);
           } catch {
             // skip unreadable file
@@ -240,11 +262,19 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
         allFiles.sort((a, b) => b.mtime - a.mtime);
         const topFiles = allFiles.slice(0, limit);
 
-        // Extract summaries
+        // Extract summaries (use cache where possible)
         const sessions: SessionSummary[] = [];
         for (const file of topFiles) {
+          const cacheKey = file.projectHash + '/' + file.fileName;
+          const cached = summaryCache.get(cacheKey);
+          if (cached && Date.now() < cached.expiry) {
+            sessions.push(cached.data);
+            continue;
+          }
+
           try {
             const summary = await extractSessionSummary(file.projectHash, file.filePath, file.fileName);
+            summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
             sessions.push(summary);
           } catch {
             // skip
@@ -258,69 +288,91 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
     },
 
     /**
-     * Read and normalize all messages from a session file.
+     * Read and normalize all messages from a session file using streaming.
      */
     async readSession(projectHash: string, sessionId: string): Promise<SessionMessage[]> {
       const filePath = join(projectsDir, projectHash, `${sessionId}.jsonl`);
 
       try {
-        const content = await fsp.readFile(filePath, 'utf-8');
-        const parsed = parseJsonl(content);
+        // Check file exists before creating stream to avoid uncaught ENOENT
+        await fsp.access(filePath);
+
         const messages: SessionMessage[] = [];
 
-        for (const entry of parsed.entries) {
-          const type = entry.type as string;
-          if (type !== 'user' && type !== 'assistant') continue;
+        await new Promise<void>((resolve) => {
+          const stream = createReadStream(filePath, { encoding: 'utf-8' });
 
-          // Normalize content
-          let normalizedContent: string | SessionMessage['content'];
-          if (type === 'user') {
-            const msgContent = (entry.message as Record<string, unknown>)?.content;
-            if (typeof msgContent === 'string') {
-              normalizedContent = msgContent;
-            } else if (Array.isArray(msgContent)) {
-              // Check if this is a pure tool_result array (API internal, not user input)
-              const blocks = msgContent as Array<Record<string, unknown>>;
-              const hasOnlyToolResults = blocks.length > 0 && blocks.every(b => b.type === 'tool_result');
-              if (hasOnlyToolResults) {
-                continue; // Skip — not real user input
-              }
-              // Extract text from text blocks (interrupted messages, text+image, etc.)
-              const textParts = blocks
-                .filter(b => b.type === 'text' && typeof b.text === 'string')
-                .map(b => b.text as string);
-              normalizedContent = textParts.join('\n') || '';
-            } else if (typeof entry.content === 'string') {
-              normalizedContent = entry.content;
-            } else {
-              normalizedContent = '';
-            }
-          } else {
-            // Assistant content: prefer message.content (array), fallback to entry.content
-            const msgContent = (entry.message as Record<string, unknown>)?.content;
-            if (Array.isArray(msgContent)) {
-              normalizedContent = msgContent as SessionMessage['content'];
-            } else if (Array.isArray(entry.content)) {
-              normalizedContent = entry.content as SessionMessage['content'];
-            } else if (typeof msgContent === 'string') {
-              normalizedContent = msgContent;
-            } else if (typeof entry.content === 'string') {
-              normalizedContent = entry.content;
-            } else {
-              normalizedContent = '';
-            }
-          }
-
-          messages.push({
-            uuid: (entry.uuid as string) || '',
-            type: type as 'user' | 'assistant',
-            sessionId: (entry.sessionId as string) || sessionId,
-            cwd: (entry.cwd as string) || '',
-            gitBranch: entry.gitBranch as string | undefined,
-            timestamp: (entry.timestamp as string) || '',
-            content: normalizedContent,
+          // Register error handler immediately to prevent uncaught exceptions
+          stream.on('error', () => {
+            resolve();
           });
-        }
+
+          const rl = createInterface({ input: stream, crlfDelay: Infinity });
+
+          rl.on('line', (line) => {
+            const trimmed = line.trim();
+            if (!trimmed) return;
+
+            try {
+              const entry = JSON.parse(trimmed);
+              const type = entry.type as string;
+              if (type !== 'user' && type !== 'assistant') return;
+
+              // Normalize content
+              let normalizedContent: string | SessionMessage['content'];
+              if (type === 'user') {
+                const msgContent = (entry.message as Record<string, unknown>)?.content;
+                if (typeof msgContent === 'string') {
+                  normalizedContent = msgContent;
+                } else if (Array.isArray(msgContent)) {
+                  // Check if this is a pure tool_result array (API internal, not user input)
+                  const blocks = msgContent as Array<Record<string, unknown>>;
+                  const hasOnlyToolResults = blocks.length > 0 && blocks.every(b => b.type === 'tool_result');
+                  if (hasOnlyToolResults) {
+                    return; // Skip — not real user input
+                  }
+                  // Extract text from text blocks (interrupted messages, text+image, etc.)
+                  const textParts = blocks
+                    .filter(b => b.type === 'text' && typeof b.text === 'string')
+                    .map(b => b.text as string);
+                  normalizedContent = textParts.join('\n') || '';
+                } else if (typeof entry.content === 'string') {
+                  normalizedContent = entry.content;
+                } else {
+                  normalizedContent = '';
+                }
+              } else {
+                // Assistant content: prefer message.content (array), fallback to entry.content
+                const msgContent = (entry.message as Record<string, unknown>)?.content;
+                if (Array.isArray(msgContent)) {
+                  normalizedContent = msgContent as SessionMessage['content'];
+                } else if (Array.isArray(entry.content)) {
+                  normalizedContent = entry.content as SessionMessage['content'];
+                } else if (typeof msgContent === 'string') {
+                  normalizedContent = msgContent;
+                } else if (typeof entry.content === 'string') {
+                  normalizedContent = entry.content;
+                } else {
+                  normalizedContent = '';
+                }
+              }
+
+              messages.push({
+                uuid: (entry.uuid as string) || '',
+                type: type as 'user' | 'assistant',
+                sessionId: (entry.sessionId as string) || sessionId,
+                cwd: (entry.cwd as string) || '',
+                gitBranch: entry.gitBranch as string | undefined,
+                timestamp: (entry.timestamp as string) || '',
+                content: normalizedContent,
+              });
+            } catch {
+              // skip malformed line
+            }
+          });
+
+          rl.on('close', () => resolve());
+        });
 
         return messages;
       } catch {
@@ -393,6 +445,14 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
       }
 
       return results;
+    },
+
+    /**
+     * Clear cached data. Optionally scope to a specific project.
+     */
+    clearCache(projectHash?: string) {
+      clearProjectsCache();
+      clearSummaryCache(projectHash);
     },
   };
 }

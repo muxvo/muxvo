@@ -25,20 +25,26 @@ export function ChatHistoryPanel() {
   const [messages, setMessages] = useState<SessionMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [sortMode, setSortMode] = useState<SortMode>('time');
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
 
   // Fetch projects on mount
   useEffect(() => {
+    setProjectsLoading(true);
     window.api.chat.getProjects().then((result: { projects?: ProjectInfo[] }) => {
       setProjects(result?.projects || []);
-    }).catch(() => setProjects([]));
+    }).catch(() => setProjects([]))
+    .finally(() => setProjectsLoading(false));
   }, []);
 
   // Fetch sessions when project changes
   useEffect(() => {
+    setSessionsLoading(true);
     const hash = selectedProjectHash || '__all__';
     window.api.chat.getSessions(hash).then((result: { sessions?: SessionSummary[] }) => {
       setSessions(result?.sessions || []);
-    }).catch(() => setSessions([]));
+    }).catch(() => setSessions([]))
+    .finally(() => setSessionsLoading(false));
   }, [selectedProjectHash]);
 
   const handleSelectProject = useCallback((projectHash: string | null) => {
@@ -92,22 +98,48 @@ export function ChatHistoryPanel() {
   return (
     <div className="chat-history-panel">
       <div className="chat-history-panel__left">
-        <ProjectList
-          projects={projects}
-          selectedProjectHash={selectedProjectHash}
-          onSelectProject={handleSelectProject}
-          totalSessionCount={totalSessionCount}
-        />
+        {projectsLoading && projects.length === 0 ? (
+          <div className="panel-skeleton">
+            <div className="panel-skeleton__header" />
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="panel-skeleton__item">
+                <div className="panel-skeleton__dot" />
+                <div className="panel-skeleton__text" />
+                <div className="panel-skeleton__badge" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <ProjectList
+            projects={projects}
+            selectedProjectHash={selectedProjectHash}
+            onSelectProject={handleSelectProject}
+            totalSessionCount={totalSessionCount}
+          />
+        )}
       </div>
 
       <div className="chat-history-panel__middle">
-        <SessionList
-          sessions={sessions}
-          selectedId={selectedSessionId}
-          onSelect={setSelectedSessionId}
-          sortMode={sortMode}
-          onSortChange={setSortMode}
-        />
+        {sessionsLoading && sessions.length === 0 ? (
+          <div className="panel-skeleton">
+            <div className="panel-skeleton__header" />
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="panel-skeleton__card">
+                <div className="panel-skeleton__title" />
+                <div className="panel-skeleton__preview" />
+                <div className="panel-skeleton__footer" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <SessionList
+            sessions={sessions}
+            selectedId={selectedSessionId}
+            onSelect={setSelectedSessionId}
+            sortMode={sortMode}
+            onSortChange={setSortMode}
+          />
+        )}
       </div>
 
       <div className="chat-history-panel__right">
