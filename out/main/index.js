@@ -543,9 +543,60 @@ function createChatProjectReader(opts) {
       messageCount
     };
   }
+  function parseMessageLine(line, sessionId) {
+    const trimmed = line.trim();
+    if (!trimmed) return null;
+    try {
+      const entry = JSON.parse(trimmed);
+      const type = entry.type;
+      if (type !== "user" && type !== "assistant") return null;
+      let normalizedContent;
+      if (type === "user") {
+        const msgContent = entry.message?.content;
+        if (typeof msgContent === "string") {
+          normalizedContent = msgContent;
+        } else if (Array.isArray(msgContent)) {
+          const blocks = msgContent;
+          const hasOnlyToolResults = blocks.length > 0 && blocks.every((b) => b.type === "tool_result");
+          if (hasOnlyToolResults) return null;
+          const textParts = blocks.filter((b) => b.type === "text" && typeof b.text === "string").map((b) => b.text);
+          normalizedContent = textParts.join("\n") || "";
+        } else if (typeof entry.content === "string") {
+          normalizedContent = entry.content;
+        } else {
+          normalizedContent = "";
+        }
+      } else {
+        const msgContent = entry.message?.content;
+        if (Array.isArray(msgContent)) {
+          normalizedContent = msgContent;
+        } else if (Array.isArray(entry.content)) {
+          normalizedContent = entry.content;
+        } else if (typeof msgContent === "string") {
+          normalizedContent = msgContent;
+        } else if (typeof entry.content === "string") {
+          normalizedContent = entry.content;
+        } else {
+          normalizedContent = "";
+        }
+      }
+      return {
+        uuid: entry.uuid || "",
+        type,
+        sessionId: entry.sessionId || sessionId,
+        cwd: entry.cwd || "",
+        gitBranch: entry.gitBranch,
+        timestamp: entry.timestamp || "",
+        content: normalizedContent
+      };
+    } catch {
+      return null;
+    }
+  }
   return {
     /**
      * Scan all projects under ~/.claude/projects/
+     * Uses directory stat for lastActivity (avoids stating every file).
      */
     async getProjects() {
       if (projectsCache.data && Date.now() < projectsCache.expiry) {
@@ -553,39 +604,33 @@ function createChatProjectReader(opts) {
       }
       try {
         const dirs = await fs.promises.readdir(projectsDir, { withFileTypes: true });
-        const projects = [];
-        for (const dir of dirs) {
-          if (!dir.isDirectory()) continue;
-          const projectHash = dir.name;
-          const projectPath = path.join(projectsDir, projectHash);
-          try {
-            const files = await fs.promises.readdir(projectPath);
-            const jsonlFiles = files.filter((f) => f.endsWith(".jsonl"));
-            if (jsonlFiles.length === 0) continue;
-            const statResults = await Promise.all(
-              jsonlFiles.map(async (f) => {
-                try {
-                  const stat = await fs.promises.stat(path.join(projectPath, f));
-                  return stat.mtimeMs;
-                } catch {
-                  return 0;
-                }
-              })
-            );
-            const lastActivity = Math.max(...statResults, 0);
-            const segments = projectHash.split("-").filter((s) => s.length > 0);
-            const displayName = segments.length > 0 ? segments[segments.length - 1] : projectHash;
-            const displayPath = "";
-            projects.push({
-              projectHash,
-              displayPath,
-              displayName,
-              sessionCount: jsonlFiles.length,
-              lastActivity
-            });
-          } catch {
-          }
-        }
+        const projectDirs = dirs.filter((d) => d.isDirectory());
+        const projectResults = await Promise.all(
+          projectDirs.map(async (dir) => {
+            const projectHash = dir.name;
+            const projectPath = path.join(projectsDir, projectHash);
+            try {
+              const [files, dirStat] = await Promise.all([
+                fs.promises.readdir(projectPath),
+                fs.promises.stat(projectPath)
+              ]);
+              const jsonlCount = files.filter((f) => f.endsWith(".jsonl")).length;
+              if (jsonlCount === 0) return null;
+              const segments = projectHash.split("-").filter((s) => s.length > 0);
+              const displayName = segments.length > 0 ? segments[segments.length - 1] : projectHash;
+              return {
+                projectHash,
+                displayPath: "",
+                displayName,
+                sessionCount: jsonlCount,
+                lastActivity: dirStat.mtimeMs
+              };
+            } catch {
+              return null;
+            }
+          })
+        );
+        const projects = projectResults.filter((p) => p !== null);
         projects.sort((a, b) => b.lastActivity - a.lastActivity);
         projectsCache.data = projects;
         projectsCache.expiry = Date.now() + CACHE_TTL;
@@ -596,28 +641,41 @@ function createChatProjectReader(opts) {
     },
     /**
      * List sessions for a specific project.
+     * Stats files first, sorts by mtime, then only extracts summaries for top N.
      */
-    async getSessionsForProject(projectHash) {
+    async getSessionsForProject(projectHash, limit = 50) {
       const projectPath = path.join(projectsDir, projectHash);
       try {
         const files = await fs.promises.readdir(projectPath);
         const jsonlFiles = files.filter((f) => f.endsWith(".jsonl"));
+        const fileStats = await Promise.all(
+          jsonlFiles.map(async (f) => {
+            try {
+              const stat = await fs.promises.stat(path.join(projectPath, f));
+              return { fileName: f, mtime: stat.mtimeMs };
+            } catch {
+              return null;
+            }
+          })
+        );
+        const validStats = fileStats.filter((s) => s !== null);
+        validStats.sort((a, b) => b.mtime - a.mtime);
+        const topFiles = validStats.slice(0, limit);
         const sessions = [];
-        for (const f of jsonlFiles) {
-          const cacheKey = projectHash + "/" + f;
+        for (const file of topFiles) {
+          const cacheKey = projectHash + "/" + file.fileName;
           const cached = summaryCache.get(cacheKey);
           if (cached && Date.now() < cached.expiry) {
             sessions.push(cached.data);
             continue;
           }
           try {
-            const summary = await extractSessionSummary(projectHash, path.join(projectPath, f), f);
+            const summary = await extractSessionSummary(projectHash, path.join(projectPath, file.fileName), file.fileName);
             summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
             sessions.push(summary);
           } catch {
           }
         }
-        sessions.sort((a, b) => b.lastModified - a.lastModified);
         return sessions;
       } catch {
         return [];
@@ -625,29 +683,51 @@ function createChatProjectReader(opts) {
     },
     /**
      * Get recent sessions across all projects.
+     * Only scans the most recently active project directories to avoid stating all files.
      */
     async getAllRecentSessions(limit) {
       try {
         const dirs = await fs.promises.readdir(projectsDir, { withFileTypes: true });
-        const allFiles = [];
-        for (const dir of dirs) {
-          if (!dir.isDirectory()) continue;
-          const projectHash = dir.name;
-          const projectPath = path.join(projectsDir, projectHash);
-          try {
-            const files = await fs.promises.readdir(projectPath);
-            for (const f of files) {
-              if (!f.endsWith(".jsonl")) continue;
-              try {
-                const filePath = path.join(projectPath, f);
-                const stat = await fs.promises.stat(filePath);
-                allFiles.push({ projectHash, fileName: f, filePath, mtime: stat.mtimeMs });
-              } catch {
-              }
+        const projectDirs = dirs.filter((d) => d.isDirectory());
+        const dirStats = await Promise.all(
+          projectDirs.map(async (dir) => {
+            try {
+              const projectPath = path.join(projectsDir, dir.name);
+              const stat = await fs.promises.stat(projectPath);
+              return { projectHash: dir.name, projectPath, mtime: stat.mtimeMs };
+            } catch {
+              return null;
             }
-          } catch {
-          }
-        }
+          })
+        );
+        const validDirs = dirStats.filter((d) => d !== null);
+        validDirs.sort((a, b) => b.mtime - a.mtime);
+        const maxProjectsToScan = Math.min(validDirs.length, Math.max(10, Math.ceil(limit / 5)));
+        const topProjects = validDirs.slice(0, maxProjectsToScan);
+        const allFiles = [];
+        await Promise.all(
+          topProjects.map(async (proj) => {
+            try {
+              const files = await fs.promises.readdir(proj.projectPath);
+              const jsonlFiles = files.filter((f) => f.endsWith(".jsonl"));
+              const fileStats = await Promise.all(
+                jsonlFiles.map(async (f) => {
+                  try {
+                    const filePath = path.join(proj.projectPath, f);
+                    const stat = await fs.promises.stat(filePath);
+                    return { projectHash: proj.projectHash, fileName: f, filePath, mtime: stat.mtimeMs };
+                  } catch {
+                    return null;
+                  }
+                })
+              );
+              for (const fs2 of fileStats) {
+                if (fs2) allFiles.push(fs2);
+              }
+            } catch {
+            }
+          })
+        );
         allFiles.sort((a, b) => b.mtime - a.mtime);
         const topFiles = allFiles.slice(0, limit);
         const sessions = [];
@@ -671,72 +751,40 @@ function createChatProjectReader(opts) {
       }
     },
     /**
-     * Read and normalize all messages from a session file using streaming.
+     * Read and normalize messages from a session file.
+     * When limit is set, reads only the tail of large files for speed.
      */
-    async readSession(projectHash, sessionId) {
+    async readSession(projectHash, sessionId, options) {
       const filePath = path.join(projectsDir, projectHash, `${sessionId}.jsonl`);
+      const limit = options?.limit;
       try {
         await fs.promises.access(filePath);
+        const stat = await fs.promises.stat(filePath);
+        const TAIL_BYTES = 2 * 1024 * 1024;
+        const readFromTail = limit && stat.size > TAIL_BYTES;
+        const startPos = readFromTail ? stat.size - TAIL_BYTES : 0;
         const messages = [];
+        let skipFirstLine = readFromTail;
         await new Promise((resolve) => {
-          const stream = fs.createReadStream(filePath, { encoding: "utf-8" });
-          stream.on("error", () => {
-            resolve();
+          const stream = fs.createReadStream(filePath, {
+            encoding: "utf-8",
+            start: startPos
           });
+          stream.on("error", () => resolve());
           const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
           rl.on("line", (line) => {
-            const trimmed = line.trim();
-            if (!trimmed) return;
-            try {
-              const entry = JSON.parse(trimmed);
-              const type = entry.type;
-              if (type !== "user" && type !== "assistant") return;
-              let normalizedContent;
-              if (type === "user") {
-                const msgContent = entry.message?.content;
-                if (typeof msgContent === "string") {
-                  normalizedContent = msgContent;
-                } else if (Array.isArray(msgContent)) {
-                  const blocks = msgContent;
-                  const hasOnlyToolResults = blocks.length > 0 && blocks.every((b) => b.type === "tool_result");
-                  if (hasOnlyToolResults) {
-                    return;
-                  }
-                  const textParts = blocks.filter((b) => b.type === "text" && typeof b.text === "string").map((b) => b.text);
-                  normalizedContent = textParts.join("\n") || "";
-                } else if (typeof entry.content === "string") {
-                  normalizedContent = entry.content;
-                } else {
-                  normalizedContent = "";
-                }
-              } else {
-                const msgContent = entry.message?.content;
-                if (Array.isArray(msgContent)) {
-                  normalizedContent = msgContent;
-                } else if (Array.isArray(entry.content)) {
-                  normalizedContent = entry.content;
-                } else if (typeof msgContent === "string") {
-                  normalizedContent = msgContent;
-                } else if (typeof entry.content === "string") {
-                  normalizedContent = entry.content;
-                } else {
-                  normalizedContent = "";
-                }
-              }
-              messages.push({
-                uuid: entry.uuid || "",
-                type,
-                sessionId: entry.sessionId || sessionId,
-                cwd: entry.cwd || "",
-                gitBranch: entry.gitBranch,
-                timestamp: entry.timestamp || "",
-                content: normalizedContent
-              });
-            } catch {
+            if (skipFirstLine) {
+              skipFirstLine = false;
+              return;
             }
+            const msg = parseMessageLine(line, sessionId);
+            if (msg) messages.push(msg);
           });
           rl.on("close", () => resolve());
         });
+        if (limit && messages.length > limit) {
+          return messages.slice(-limit);
+        }
         return messages;
       } catch {
         return [];
@@ -816,7 +864,8 @@ function createChatHandlers() {
       return { sessions };
     },
     async getSession(params) {
-      const messages = await reader.readSession(params.projectHash, params.sessionId);
+      const options = params.limit !== void 0 ? { limit: params.limit } : { limit: 100 };
+      const messages = await reader.readSession(params.projectHash, params.sessionId, options);
       return { messages };
     },
     async search(params) {

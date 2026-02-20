@@ -69,21 +69,12 @@ export function ChatHistoryPanel() {
       .finally(() => setLoading(false));
   }, [selectedSessionId, sessions]);
 
-  // Listen for real-time session updates
+  // Listen for real-time session updates — only refresh the active session
+  // Projects and sessions lists rely on cache + initial fetch; no need to re-scan
+  // 128K files on every CC write event.
   useEffect(() => {
     const unsub = window.api.chat.onSessionUpdate?.((data: { projectHash: string; sessionId: string }) => {
-      // Refresh project list (sessionCount / lastActivity may have changed)
-      window.api.chat.getProjects()
-        .then((result: { projects?: ProjectInfo[] }) => setProjects(result?.projects || []))
-        .catch(() => {});
-
-      // Refresh session list
-      const hash = selectedProjectHash || '__all__';
-      window.api.chat.getSessions(hash)
-        .then((result: { sessions?: SessionSummary[] }) => setSessions(result?.sessions || []))
-        .catch(() => {});
-
-      // Refresh messages if the updated session is currently selected
+      // Only refresh messages if the updated session is currently selected
       if (data.sessionId === selectedSessionId) {
         window.api.chat.getSession(data.projectHash, data.sessionId)
           .then((result: { messages?: SessionMessage[] }) => setMessages(result?.messages || []))
@@ -91,7 +82,7 @@ export function ChatHistoryPanel() {
       }
     });
     return () => { unsub?.(); };
-  }, [selectedProjectHash, selectedSessionId]);
+  }, [selectedSessionId]);
 
   const totalSessionCount = projects.reduce((sum, p) => sum + p.sessionCount, 0);
 

@@ -162,7 +162,7 @@ const api = {
   chat: {
     getProjects: () => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_PROJECTS),
     getSessions: (projectHash) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_SESSIONS, { projectHash }),
-    getSession: (projectHash, sessionId) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_SESSION, { projectHash, sessionId }),
+    getSession: (projectHash, sessionId, limit) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_SESSION, { projectHash, sessionId, limit }),
     search: (query) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.SEARCH, { query }),
     export: (projectHash, sessionId, format) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.EXPORT, { projectHash, sessionId, format }),
     onSessionUpdate: (callback) => {

@@ -120,9 +120,69 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
     };
   }
 
+  /**
+   * Parse a single JSONL line into a SessionMessage (or null if not user/assistant).
+   */
+  function parseMessageLine(line: string, sessionId: string): SessionMessage | null {
+    const trimmed = line.trim();
+    if (!trimmed) return null;
+
+    try {
+      const entry = JSON.parse(trimmed);
+      const type = entry.type as string;
+      if (type !== 'user' && type !== 'assistant') return null;
+
+      let normalizedContent: string | SessionMessage['content'];
+      if (type === 'user') {
+        const msgContent = (entry.message as Record<string, unknown>)?.content;
+        if (typeof msgContent === 'string') {
+          normalizedContent = msgContent;
+        } else if (Array.isArray(msgContent)) {
+          const blocks = msgContent as Array<Record<string, unknown>>;
+          const hasOnlyToolResults = blocks.length > 0 && blocks.every(b => b.type === 'tool_result');
+          if (hasOnlyToolResults) return null;
+          const textParts = blocks
+            .filter(b => b.type === 'text' && typeof b.text === 'string')
+            .map(b => b.text as string);
+          normalizedContent = textParts.join('\n') || '';
+        } else if (typeof entry.content === 'string') {
+          normalizedContent = entry.content;
+        } else {
+          normalizedContent = '';
+        }
+      } else {
+        const msgContent = (entry.message as Record<string, unknown>)?.content;
+        if (Array.isArray(msgContent)) {
+          normalizedContent = msgContent as SessionMessage['content'];
+        } else if (Array.isArray(entry.content)) {
+          normalizedContent = entry.content as SessionMessage['content'];
+        } else if (typeof msgContent === 'string') {
+          normalizedContent = msgContent;
+        } else if (typeof entry.content === 'string') {
+          normalizedContent = entry.content;
+        } else {
+          normalizedContent = '';
+        }
+      }
+
+      return {
+        uuid: (entry.uuid as string) || '',
+        type: type as 'user' | 'assistant',
+        sessionId: (entry.sessionId as string) || sessionId,
+        cwd: (entry.cwd as string) || '',
+        gitBranch: entry.gitBranch as string | undefined,
+        timestamp: (entry.timestamp as string) || '',
+        content: normalizedContent,
+      };
+    } catch {
+      return null;
+    }
+  }
+
   return {
     /**
      * Scan all projects under ~/.claude/projects/
+     * Uses directory stat for lastActivity (avoids stating every file).
      */
     async getProjects(): Promise<ProjectInfo[]> {
       // Return cached data if still valid
@@ -132,49 +192,39 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
 
       try {
         const dirs = await fsp.readdir(projectsDir, { withFileTypes: true });
-        const projects: ProjectInfo[] = [];
+        const projectDirs = dirs.filter(d => d.isDirectory());
 
-        for (const dir of dirs) {
-          if (!dir.isDirectory()) continue;
+        // Parallel: readdir + stat each project directory
+        const projectResults = await Promise.all(
+          projectDirs.map(async (dir) => {
+            const projectHash = dir.name;
+            const projectPath = join(projectsDir, projectHash);
+            try {
+              const [files, dirStat] = await Promise.all([
+                fsp.readdir(projectPath),
+                fsp.stat(projectPath),
+              ]);
+              const jsonlCount = files.filter((f) => f.endsWith('.jsonl')).length;
+              if (jsonlCount === 0) return null;
 
-          const projectHash = dir.name;
-          const projectPath = join(projectsDir, projectHash);
+              // Extract last meaningful segment from hash like "-Users-rl-...-muxvo"
+              const segments = projectHash.split('-').filter(s => s.length > 0);
+              const displayName = segments.length > 0 ? segments[segments.length - 1] : projectHash;
 
-          try {
-            const files = await fsp.readdir(projectPath);
-            const jsonlFiles = files.filter((f) => f.endsWith('.jsonl'));
+              return {
+                projectHash,
+                displayPath: '',
+                displayName,
+                sessionCount: jsonlCount,
+                lastActivity: dirStat.mtimeMs,
+              } as ProjectInfo;
+            } catch {
+              return null;
+            }
+          })
+        );
 
-            if (jsonlFiles.length === 0) continue;
-
-            // Parallel stat for all jsonl files
-            const statResults = await Promise.all(
-              jsonlFiles.map(async (f) => {
-                try {
-                  const stat = await fsp.stat(join(projectPath, f));
-                  return stat.mtimeMs;
-                } catch {
-                  return 0;
-                }
-              })
-            );
-            const lastActivity = Math.max(...statResults, 0);
-
-            // Extract last meaningful segment from hash like "-Users-rl-...-muxvo"
-            const segments = projectHash.split('-').filter(s => s.length > 0);
-            const displayName = segments.length > 0 ? segments[segments.length - 1] : projectHash;
-            const displayPath = ''; // No longer reading file for this
-
-            projects.push({
-              projectHash,
-              displayPath,
-              displayName,
-              sessionCount: jsonlFiles.length,
-              lastActivity,
-            });
-          } catch {
-            // skip unreadable project dir
-          }
-        }
+        const projects = projectResults.filter((p): p is ProjectInfo => p !== null);
 
         // Sort by lastActivity descending
         projects.sort((a, b) => b.lastActivity - a.lastActivity);
@@ -192,17 +242,36 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
 
     /**
      * List sessions for a specific project.
+     * Stats files first, sorts by mtime, then only extracts summaries for top N.
      */
-    async getSessionsForProject(projectHash: string): Promise<SessionSummary[]> {
+    async getSessionsForProject(projectHash: string, limit = 50): Promise<SessionSummary[]> {
       const projectPath = join(projectsDir, projectHash);
 
       try {
         const files = await fsp.readdir(projectPath);
         const jsonlFiles = files.filter((f) => f.endsWith('.jsonl'));
 
+        // Parallel stat all files (lightweight — only mtime, no content read)
+        const fileStats = await Promise.all(
+          jsonlFiles.map(async (f) => {
+            try {
+              const stat = await fsp.stat(join(projectPath, f));
+              return { fileName: f, mtime: stat.mtimeMs };
+            } catch {
+              return null;
+            }
+          })
+        );
+
+        // Sort by mtime descending, take top N for summary extraction
+        const validStats = fileStats.filter((s): s is { fileName: string; mtime: number } => s !== null);
+        validStats.sort((a, b) => b.mtime - a.mtime);
+        const topFiles = validStats.slice(0, limit);
+
+        // Extract summaries only for top N (use cache where possible)
         const sessions: SessionSummary[] = [];
-        for (const f of jsonlFiles) {
-          const cacheKey = projectHash + '/' + f;
+        for (const file of topFiles) {
+          const cacheKey = projectHash + '/' + file.fileName;
           const cached = summaryCache.get(cacheKey);
           if (cached && Date.now() < cached.expiry) {
             sessions.push(cached.data);
@@ -210,7 +279,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
           }
 
           try {
-            const summary = await extractSessionSummary(projectHash, join(projectPath, f), f);
+            const summary = await extractSessionSummary(projectHash, join(projectPath, file.fileName), file.fileName);
             summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
             sessions.push(summary);
           } catch {
@@ -218,8 +287,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
           }
         }
 
-        // Sort by lastModified descending
-        sessions.sort((a, b) => b.lastModified - a.lastModified);
+        // Already sorted by mtime
         return sessions;
       } catch {
         return [];
@@ -228,35 +296,63 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
 
     /**
      * Get recent sessions across all projects.
+     * Only scans the most recently active project directories to avoid stating all files.
      */
     async getAllRecentSessions(limit: number): Promise<SessionSummary[]> {
       try {
         const dirs = await fsp.readdir(projectsDir, { withFileTypes: true });
+        const projectDirs = dirs.filter(d => d.isDirectory());
 
-        // Collect all jsonl files with their mtime
+        // Phase 1: Stat project directories to find most active ones
+        const dirStats = await Promise.all(
+          projectDirs.map(async (dir) => {
+            try {
+              const projectPath = join(projectsDir, dir.name);
+              const stat = await fsp.stat(projectPath);
+              return { projectHash: dir.name, projectPath, mtime: stat.mtimeMs };
+            } catch {
+              return null;
+            }
+          })
+        );
+
+        const validDirs = dirStats.filter((d): d is { projectHash: string; projectPath: string; mtime: number } => d !== null);
+        validDirs.sort((a, b) => b.mtime - a.mtime);
+
+        // Phase 2: Only scan top N projects (most likely to contain recent sessions)
+        // Scan more projects than limit to ensure we get enough files
+        const maxProjectsToScan = Math.min(validDirs.length, Math.max(10, Math.ceil(limit / 5)));
+        const topProjects = validDirs.slice(0, maxProjectsToScan);
+
+        // Phase 3: Stat files within selected projects
         const allFiles: { projectHash: string; fileName: string; filePath: string; mtime: number }[] = [];
 
-        for (const dir of dirs) {
-          if (!dir.isDirectory()) continue;
-          const projectHash = dir.name;
-          const projectPath = join(projectsDir, projectHash);
+        await Promise.all(
+          topProjects.map(async (proj) => {
+            try {
+              const files = await fsp.readdir(proj.projectPath);
+              const jsonlFiles = files.filter((f) => f.endsWith('.jsonl'));
 
-          try {
-            const files = await fsp.readdir(projectPath);
-            for (const f of files) {
-              if (!f.endsWith('.jsonl')) continue;
-              try {
-                const filePath = join(projectPath, f);
-                const stat = await fsp.stat(filePath);
-                allFiles.push({ projectHash, fileName: f, filePath, mtime: stat.mtimeMs });
-              } catch {
-                // skip
+              const fileStats = await Promise.all(
+                jsonlFiles.map(async (f) => {
+                  try {
+                    const filePath = join(proj.projectPath, f);
+                    const stat = await fsp.stat(filePath);
+                    return { projectHash: proj.projectHash, fileName: f, filePath, mtime: stat.mtimeMs };
+                  } catch {
+                    return null;
+                  }
+                })
+              );
+
+              for (const fs of fileStats) {
+                if (fs) allFiles.push(fs);
               }
+            } catch {
+              // skip unreadable dir
             }
-          } catch {
-            // skip unreadable dir
-          }
-        }
+          })
+        );
 
         // Sort by mtime descending, take top N
         allFiles.sort((a, b) => b.mtime - a.mtime);
@@ -288,91 +384,52 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
     },
 
     /**
-     * Read and normalize all messages from a session file using streaming.
+     * Read and normalize messages from a session file.
+     * When limit is set, reads only the tail of large files for speed.
      */
-    async readSession(projectHash: string, sessionId: string): Promise<SessionMessage[]> {
+    async readSession(projectHash: string, sessionId: string, options?: { limit?: number }): Promise<SessionMessage[]> {
       const filePath = join(projectsDir, projectHash, `${sessionId}.jsonl`);
+      const limit = options?.limit;
 
       try {
-        // Check file exists before creating stream to avoid uncaught ENOENT
         await fsp.access(filePath);
+        const stat = await fsp.stat(filePath);
+
+        // Tail-read optimization: for large files with a limit, read from end
+        const TAIL_BYTES = 2 * 1024 * 1024; // 2MB — enough for ~200+ messages
+        const readFromTail = limit && stat.size > TAIL_BYTES;
+        const startPos = readFromTail ? stat.size - TAIL_BYTES : 0;
 
         const messages: SessionMessage[] = [];
+        let skipFirstLine = readFromTail; // First line from mid-file may be incomplete
 
         await new Promise<void>((resolve) => {
-          const stream = createReadStream(filePath, { encoding: 'utf-8' });
-
-          // Register error handler immediately to prevent uncaught exceptions
-          stream.on('error', () => {
-            resolve();
+          const stream = createReadStream(filePath, {
+            encoding: 'utf-8',
+            start: startPos,
           });
+
+          stream.on('error', () => resolve());
 
           const rl = createInterface({ input: stream, crlfDelay: Infinity });
 
           rl.on('line', (line) => {
-            const trimmed = line.trim();
-            if (!trimmed) return;
-
-            try {
-              const entry = JSON.parse(trimmed);
-              const type = entry.type as string;
-              if (type !== 'user' && type !== 'assistant') return;
-
-              // Normalize content
-              let normalizedContent: string | SessionMessage['content'];
-              if (type === 'user') {
-                const msgContent = (entry.message as Record<string, unknown>)?.content;
-                if (typeof msgContent === 'string') {
-                  normalizedContent = msgContent;
-                } else if (Array.isArray(msgContent)) {
-                  // Check if this is a pure tool_result array (API internal, not user input)
-                  const blocks = msgContent as Array<Record<string, unknown>>;
-                  const hasOnlyToolResults = blocks.length > 0 && blocks.every(b => b.type === 'tool_result');
-                  if (hasOnlyToolResults) {
-                    return; // Skip — not real user input
-                  }
-                  // Extract text from text blocks (interrupted messages, text+image, etc.)
-                  const textParts = blocks
-                    .filter(b => b.type === 'text' && typeof b.text === 'string')
-                    .map(b => b.text as string);
-                  normalizedContent = textParts.join('\n') || '';
-                } else if (typeof entry.content === 'string') {
-                  normalizedContent = entry.content;
-                } else {
-                  normalizedContent = '';
-                }
-              } else {
-                // Assistant content: prefer message.content (array), fallback to entry.content
-                const msgContent = (entry.message as Record<string, unknown>)?.content;
-                if (Array.isArray(msgContent)) {
-                  normalizedContent = msgContent as SessionMessage['content'];
-                } else if (Array.isArray(entry.content)) {
-                  normalizedContent = entry.content as SessionMessage['content'];
-                } else if (typeof msgContent === 'string') {
-                  normalizedContent = msgContent;
-                } else if (typeof entry.content === 'string') {
-                  normalizedContent = entry.content;
-                } else {
-                  normalizedContent = '';
-                }
-              }
-
-              messages.push({
-                uuid: (entry.uuid as string) || '',
-                type: type as 'user' | 'assistant',
-                sessionId: (entry.sessionId as string) || sessionId,
-                cwd: (entry.cwd as string) || '',
-                gitBranch: entry.gitBranch as string | undefined,
-                timestamp: (entry.timestamp as string) || '',
-                content: normalizedContent,
-              });
-            } catch {
-              // skip malformed line
+            if (skipFirstLine) {
+              skipFirstLine = false;
+              return;
             }
+
+            const msg = parseMessageLine(line, sessionId);
+            if (msg) messages.push(msg);
           });
 
           rl.on('close', () => resolve());
         });
+
+        // Return only the last N messages when limit is set
+        if (limit && messages.length > limit) {
+          return messages.slice(-limit);
+        }
 
         return messages;
       } catch {
