@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-02-19T17:13:07.673Z",
+  "generatedAt": "2026-02-19T17:17:28.140Z",
   "projectPath": "/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo",
-  "totalApis": 10,
+  "totalApis": 11,
   "scannedFiles": 236,
   "categories": {
     "main": [
@@ -33,6 +33,26 @@
         "file": "main/services/analytics/tracker.ts",
         "line": 39,
         "functionName": "grouped.get",
+        "params": [],
+        "responseFields": [],
+        "category": "API 服务"
+      },
+      {
+        "path": "{变量:key}",
+        "method": "GET",
+        "file": "main/services/chat-watcher.ts",
+        "line": 24,
+        "functionName": "pendingTimers.get",
+        "params": [],
+        "responseFields": [],
+        "category": "API 服务"
+      },
+      {
+        "path": "{变量:key}",
+        "method": "DELETE",
+        "file": "main/services/chat-watcher.ts",
+        "line": 27,
+        "functionName": "pendingTimers.delete",
         "params": [],
         "responseFields": [],
         "category": "API 服务"
@@ -88,16 +108,6 @@
         "params": [],
         "responseFields": [],
         "category": "modules"
-      },
-      {
-        "path": "{变量:key}",
-        "method": "GET",
-        "file": "modules/score/cache.ts",
-        "line": 37,
-        "functionName": "store.get",
-        "params": [],
-        "responseFields": [],
-        "category": "modules"
       }
     ],
     "组件": [
@@ -140,6 +150,26 @@
       "file": "main/services/analytics/tracker.ts",
       "line": 39,
       "functionName": "grouped.get",
+      "params": [],
+      "responseFields": [],
+      "category": "API 服务"
+    },
+    {
+      "path": "{变量:key}",
+      "method": "GET",
+      "file": "main/services/chat-watcher.ts",
+      "line": 24,
+      "functionName": "pendingTimers.get",
+      "params": [],
+      "responseFields": [],
+      "category": "API 服务"
+    },
+    {
+      "path": "{变量:key}",
+      "method": "DELETE",
+      "file": "main/services/chat-watcher.ts",
+      "line": 27,
+      "functionName": "pendingTimers.delete",
       "params": [],
       "responseFields": [],
       "category": "API 服务"
@@ -190,16 +220,6 @@
       "file": "modules/marketplace/directory-watcher.ts",
       "line": 28,
       "functionName": "listeners.get",
-      "params": [],
-      "responseFields": [],
-      "category": "modules"
-    },
-    {
-      "path": "{变量:key}",
-      "method": "GET",
-      "file": "modules/score/cache.ts",
-      "line": 37,
-      "functionName": "store.get",
       "params": [],
       "responseFields": [],
       "category": "modules"

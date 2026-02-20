@@ -66,16 +66,26 @@ export function ChatHistoryPanel() {
   // Listen for real-time session updates
   useEffect(() => {
     const unsub = window.api.chat.onSessionUpdate?.((data: { projectHash: string; sessionId: string }) => {
+      // Refresh project list (sessionCount / lastActivity may have changed)
+      window.api.chat.getProjects()
+        .then((result: { projects?: ProjectInfo[] }) => setProjects(result?.projects || []))
+        .catch(() => {});
+
+      // Refresh session list
+      const hash = selectedProjectHash || '__all__';
+      window.api.chat.getSessions(hash)
+        .then((result: { sessions?: SessionSummary[] }) => setSessions(result?.sessions || []))
+        .catch(() => {});
+
+      // Refresh messages if the updated session is currently selected
       if (data.sessionId === selectedSessionId) {
-        const session = sessions.find(s => s.sessionId === selectedSessionId);
-        if (session) {
-          window.api.chat.getSession(session.projectHash, data.sessionId)
-            .then((result: { messages?: SessionMessage[] }) => setMessages(result?.messages || []));
-        }
+        window.api.chat.getSession(data.projectHash, data.sessionId)
+          .then((result: { messages?: SessionMessage[] }) => setMessages(result?.messages || []))
+          .catch(() => {});
       }
     });
     return () => { unsub?.(); };
-  }, [selectedSessionId, sessions]);
+  }, [selectedProjectHash, selectedSessionId]);
 
   const totalSessionCount = projects.reduce((sum, p) => sum + p.sessionCount, 0);
 
