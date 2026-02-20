@@ -1,10 +1,10 @@
 # API 接口契约文档
 
 > 此文档由 Claude Code Hook 自动生成（AST 解析版）
-> 生成时间: 2026-02-20T04:13:50.997Z
+> 生成时间: 2026-02-20T04:42:59.656Z
 > 项目路径: /Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo
 > 扫描文件数: 236
-> 接口总数: 11
+> 接口总数: 12
 
 ## 基础信息
 
@@ -35,16 +35,22 @@
 - **调用函数**: `grouped.get()`
 - **请求参数**: 无额外参数
 
+#### `DELETE {变量:key}`
+
+- **位置**: `main/services/chat-dual-source.ts:40`
+- **调用函数**: `summaryCache.delete()`
+- **请求参数**: 无额外参数
+
+#### `GET {变量:cacheKey}`
+
+- **位置**: `main/services/chat-dual-source.ts:206`
+- **调用函数**: `summaryCache.get()`
+- **请求参数**: 无额外参数
+
 #### `GET {变量:key}`
 
 - **位置**: `main/services/chat-watcher.ts:24`
 - **调用函数**: `pendingTimers.get()`
-- **请求参数**: 无额外参数
-
-#### `DELETE {变量:key}`
-
-- **位置**: `main/services/chat-watcher.ts:27`
-- **调用函数**: `pendingTimers.delete()`
 - **请求参数**: 无额外参数
 
 #### `GET {变量:path}`
@@ -96,8 +102,9 @@
 | GET | `{成员访问}` | main | main/ipc/fs-watcher-handlers.ts:32 |
 | DELETE | `{成员访问}` | main | main/ipc/fs-watcher-handlers.ts:76 |
 | GET | `{变量:date}` | API 服务 | main/services/analytics/tracker.ts:39 |
+| DELETE | `{变量:key}` | API 服务 | main/services/chat-dual-source.ts:40 |
+| GET | `{变量:cacheKey}` | API 服务 | main/services/chat-dual-source.ts:206 |
 | GET | `{变量:key}` | API 服务 | main/services/chat-watcher.ts:24 |
-| DELETE | `{变量:key}` | API 服务 | main/services/chat-watcher.ts:27 |
 | GET | `{变量:path}` | API 服务 | main/services/data-sync/sync-manager.ts:99 |
 | GET | `{变量:id}` | API 服务 | main/services/terminal/manager.ts:96 |
 | DELETE | `{变量:id}` | API 服务 | main/services/terminal/manager.ts:138 |

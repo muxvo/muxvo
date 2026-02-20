@@ -28,6 +28,7 @@ const child_process = require("child_process");
 const pty = require("node-pty");
 const os = require("os");
 const fs = require("fs");
+const readline = require("readline");
 const promises = require("fs/promises");
 function _interopNamespaceDefault(e) {
   const n = Object.create(null, { [Symbol.toStringTag]: { value: "Module" } });
@@ -472,57 +473,41 @@ function registerTerminalHandlers(manager, onTerminalChange) {
     return { success: ok };
   });
 }
-function parseJsonl(input) {
-  const entries = [];
-  let skippedLines = 0;
-  let incompleteTailIgnored = false;
-  const endsWithNewline = input.endsWith("\n");
-  const lines = input.split("\n");
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (line === "") continue;
-    if (i === lines.length - 1 && !endsWithNewline && line !== "") {
-      incompleteTailIgnored = true;
-      continue;
-    }
-    try {
-      const parsed = JSON.parse(line);
-      entries.push(parsed);
-    } catch {
-      skippedLines++;
-    }
-  }
-  return {
-    entries,
-    skippedLines,
-    errors: [],
-    incompleteTailIgnored
-  };
-}
 function createChatProjectReader(opts) {
   const projectsDir = path.join(opts.ccBasePath, "projects");
-  async function readFirstLines(filePath, maxLines) {
-    const content = await fs.promises.readFile(filePath, "utf-8");
-    const lines = content.split("\n");
-    return lines.slice(0, maxLines);
+  const CACHE_TTL = 5 * 60 * 1e3;
+  const projectsCache = { data: null, expiry: 0 };
+  const summaryCache = /* @__PURE__ */ new Map();
+  function clearProjectsCache() {
+    projectsCache.data = null;
+    projectsCache.expiry = 0;
   }
-  async function extractCwdFromFile(filePath) {
-    try {
-      const lines = await readFirstLines(filePath, 20);
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed) continue;
-        try {
-          const obj = JSON.parse(trimmed);
-          if (obj.type === "user" && obj.cwd) {
-            return obj.cwd;
-          }
-        } catch {
+  function clearSummaryCache(projectHash) {
+    if (projectHash) {
+      for (const [key] of summaryCache) {
+        if (key.startsWith(projectHash + "/")) {
+          summaryCache.delete(key);
         }
       }
-    } catch {
+    } else {
+      summaryCache.clear();
     }
-    return "";
+  }
+  async function readFirstLines(filePath, maxLines) {
+    return new Promise((resolve) => {
+      const lines = [];
+      const stream = fs.createReadStream(filePath, { encoding: "utf-8" });
+      const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
+      rl.on("line", (line) => {
+        lines.push(line);
+        if (lines.length >= maxLines) {
+          rl.close();
+          stream.destroy();
+        }
+      });
+      rl.on("close", () => resolve(lines));
+      stream.on("error", () => resolve(lines));
+    });
   }
   async function extractSessionSummary(projectHash, filePath, fileName) {
     const sessionId = fileName.replace(/\.jsonl$/, "");
@@ -530,30 +515,21 @@ function createChatProjectReader(opts) {
     const lastModified = stat.mtimeMs;
     let title = "";
     let startedAt = "";
-    let messageCount = 0;
+    const messageCount = Math.max(1, Math.round(stat.size / 2048));
     try {
-      const content = await fs.promises.readFile(filePath, "utf-8");
-      const contentLines = content.split("\n");
-      let foundFirstUser = false;
-      for (const line of contentLines) {
+      const lines = await readFirstLines(filePath, 20);
+      for (const line of lines) {
         const trimmed = line.trim();
         if (!trimmed) continue;
-        if (trimmed.includes('"type":"user"') || trimmed.includes('"type": "user"')) {
-          messageCount++;
-          if (!foundFirstUser) {
-            try {
-              const obj = JSON.parse(trimmed);
-              if (obj.type === "user") {
-                const rawContent = typeof obj.message?.content === "string" ? obj.message.content : typeof obj.content === "string" ? obj.content : "";
-                title = rawContent.slice(0, 100);
-                startedAt = obj.timestamp || "";
-                foundFirstUser = true;
-              }
-            } catch {
-            }
+        try {
+          const obj = JSON.parse(trimmed);
+          if (obj.type === "user") {
+            const rawContent = typeof obj.message?.content === "string" ? obj.message.content : typeof obj.content === "string" ? obj.content : "";
+            title = rawContent.slice(0, 100);
+            startedAt = obj.timestamp || "";
+            break;
           }
-        } else if (trimmed.includes('"type":"assistant"') || trimmed.includes('"type": "assistant"')) {
-          messageCount++;
+        } catch {
         }
       }
     } catch {
@@ -572,6 +548,9 @@ function createChatProjectReader(opts) {
      * Scan all projects under ~/.claude/projects/
      */
     async getProjects() {
+      if (projectsCache.data && Date.now() < projectsCache.expiry) {
+        return projectsCache.data;
+      }
       try {
         const dirs = await fs.promises.readdir(projectsDir, { withFileTypes: true });
         const projects = [];
@@ -583,18 +562,20 @@ function createChatProjectReader(opts) {
             const files = await fs.promises.readdir(projectPath);
             const jsonlFiles = files.filter((f) => f.endsWith(".jsonl"));
             if (jsonlFiles.length === 0) continue;
-            let lastActivity = 0;
-            for (const f of jsonlFiles) {
-              try {
-                const stat = await fs.promises.stat(path.join(projectPath, f));
-                if (stat.mtimeMs > lastActivity) {
-                  lastActivity = stat.mtimeMs;
+            const statResults = await Promise.all(
+              jsonlFiles.map(async (f) => {
+                try {
+                  const stat = await fs.promises.stat(path.join(projectPath, f));
+                  return stat.mtimeMs;
+                } catch {
+                  return 0;
                 }
-              } catch {
-              }
-            }
-            const displayPath = await extractCwdFromFile(path.join(projectPath, jsonlFiles[0]));
-            const displayName = displayPath ? path.basename(displayPath) : projectHash;
+              })
+            );
+            const lastActivity = Math.max(...statResults, 0);
+            const segments = projectHash.split("-").filter((s) => s.length > 0);
+            const displayName = segments.length > 0 ? segments[segments.length - 1] : projectHash;
+            const displayPath = "";
             projects.push({
               projectHash,
               displayPath,
@@ -606,6 +587,8 @@ function createChatProjectReader(opts) {
           }
         }
         projects.sort((a, b) => b.lastActivity - a.lastActivity);
+        projectsCache.data = projects;
+        projectsCache.expiry = Date.now() + CACHE_TTL;
         return projects;
       } catch {
         return [];
@@ -621,8 +604,15 @@ function createChatProjectReader(opts) {
         const jsonlFiles = files.filter((f) => f.endsWith(".jsonl"));
         const sessions = [];
         for (const f of jsonlFiles) {
+          const cacheKey = projectHash + "/" + f;
+          const cached = summaryCache.get(cacheKey);
+          if (cached && Date.now() < cached.expiry) {
+            sessions.push(cached.data);
+            continue;
+          }
           try {
             const summary = await extractSessionSummary(projectHash, path.join(projectPath, f), f);
+            summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
             sessions.push(summary);
           } catch {
           }
@@ -662,8 +652,15 @@ function createChatProjectReader(opts) {
         const topFiles = allFiles.slice(0, limit);
         const sessions = [];
         for (const file of topFiles) {
+          const cacheKey = file.projectHash + "/" + file.fileName;
+          const cached = summaryCache.get(cacheKey);
+          if (cached && Date.now() < cached.expiry) {
+            sessions.push(cached.data);
+            continue;
+          }
           try {
             const summary = await extractSessionSummary(file.projectHash, file.filePath, file.fileName);
+            summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
             sessions.push(summary);
           } catch {
           }
@@ -674,59 +671,72 @@ function createChatProjectReader(opts) {
       }
     },
     /**
-     * Read and normalize all messages from a session file.
+     * Read and normalize all messages from a session file using streaming.
      */
     async readSession(projectHash, sessionId) {
       const filePath = path.join(projectsDir, projectHash, `${sessionId}.jsonl`);
       try {
-        const content = await fs.promises.readFile(filePath, "utf-8");
-        const parsed = parseJsonl(content);
+        await fs.promises.access(filePath);
         const messages = [];
-        for (const entry of parsed.entries) {
-          const type = entry.type;
-          if (type !== "user" && type !== "assistant") continue;
-          let normalizedContent;
-          if (type === "user") {
-            const msgContent = entry.message?.content;
-            if (typeof msgContent === "string") {
-              normalizedContent = msgContent;
-            } else if (Array.isArray(msgContent)) {
-              const blocks = msgContent;
-              const hasOnlyToolResults = blocks.length > 0 && blocks.every((b) => b.type === "tool_result");
-              if (hasOnlyToolResults) {
-                continue;
-              }
-              const textParts = blocks.filter((b) => b.type === "text" && typeof b.text === "string").map((b) => b.text);
-              normalizedContent = textParts.join("\n") || "";
-            } else if (typeof entry.content === "string") {
-              normalizedContent = entry.content;
-            } else {
-              normalizedContent = "";
-            }
-          } else {
-            const msgContent = entry.message?.content;
-            if (Array.isArray(msgContent)) {
-              normalizedContent = msgContent;
-            } else if (Array.isArray(entry.content)) {
-              normalizedContent = entry.content;
-            } else if (typeof msgContent === "string") {
-              normalizedContent = msgContent;
-            } else if (typeof entry.content === "string") {
-              normalizedContent = entry.content;
-            } else {
-              normalizedContent = "";
-            }
-          }
-          messages.push({
-            uuid: entry.uuid || "",
-            type,
-            sessionId: entry.sessionId || sessionId,
-            cwd: entry.cwd || "",
-            gitBranch: entry.gitBranch,
-            timestamp: entry.timestamp || "",
-            content: normalizedContent
+        await new Promise((resolve) => {
+          const stream = fs.createReadStream(filePath, { encoding: "utf-8" });
+          stream.on("error", () => {
+            resolve();
           });
-        }
+          const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
+          rl.on("line", (line) => {
+            const trimmed = line.trim();
+            if (!trimmed) return;
+            try {
+              const entry = JSON.parse(trimmed);
+              const type = entry.type;
+              if (type !== "user" && type !== "assistant") return;
+              let normalizedContent;
+              if (type === "user") {
+                const msgContent = entry.message?.content;
+                if (typeof msgContent === "string") {
+                  normalizedContent = msgContent;
+                } else if (Array.isArray(msgContent)) {
+                  const blocks = msgContent;
+                  const hasOnlyToolResults = blocks.length > 0 && blocks.every((b) => b.type === "tool_result");
+                  if (hasOnlyToolResults) {
+                    return;
+                  }
+                  const textParts = blocks.filter((b) => b.type === "text" && typeof b.text === "string").map((b) => b.text);
+                  normalizedContent = textParts.join("\n") || "";
+                } else if (typeof entry.content === "string") {
+                  normalizedContent = entry.content;
+                } else {
+                  normalizedContent = "";
+                }
+              } else {
+                const msgContent = entry.message?.content;
+                if (Array.isArray(msgContent)) {
+                  normalizedContent = msgContent;
+                } else if (Array.isArray(entry.content)) {
+                  normalizedContent = entry.content;
+                } else if (typeof msgContent === "string") {
+                  normalizedContent = msgContent;
+                } else if (typeof entry.content === "string") {
+                  normalizedContent = entry.content;
+                } else {
+                  normalizedContent = "";
+                }
+              }
+              messages.push({
+                uuid: entry.uuid || "",
+                type,
+                sessionId: entry.sessionId || sessionId,
+                cwd: entry.cwd || "",
+                gitBranch: entry.gitBranch,
+                timestamp: entry.timestamp || "",
+                content: normalizedContent
+              });
+            } catch {
+            }
+          });
+          rl.on("close", () => resolve());
+        });
         return messages;
       } catch {
         return [];
@@ -779,6 +789,13 @@ function createChatProjectReader(opts) {
       } catch {
       }
       return results;
+    },
+    /**
+     * Clear cached data. Optionally scope to a specific project.
+     */
+    clearCache(projectHash) {
+      clearProjectsCache();
+      clearSummaryCache(projectHash);
     }
   };
 }

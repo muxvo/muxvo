@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-02-20T04:13:50.997Z",
+  "generatedAt": "2026-02-20T04:42:59.656Z",
   "projectPath": "/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo",
-  "totalApis": 11,
+  "totalApis": 12,
   "scannedFiles": 236,
   "categories": {
     "main": [
@@ -39,20 +39,30 @@
       },
       {
         "path": "{变量:key}",
+        "method": "DELETE",
+        "file": "main/services/chat-dual-source.ts",
+        "line": 40,
+        "functionName": "summaryCache.delete",
+        "params": [],
+        "responseFields": [],
+        "category": "API 服务"
+      },
+      {
+        "path": "{变量:cacheKey}",
         "method": "GET",
-        "file": "main/services/chat-watcher.ts",
-        "line": 24,
-        "functionName": "pendingTimers.get",
+        "file": "main/services/chat-dual-source.ts",
+        "line": 206,
+        "functionName": "summaryCache.get",
         "params": [],
         "responseFields": [],
         "category": "API 服务"
       },
       {
         "path": "{变量:key}",
-        "method": "DELETE",
+        "method": "GET",
         "file": "main/services/chat-watcher.ts",
-        "line": 27,
-        "functionName": "pendingTimers.delete",
+        "line": 24,
+        "functionName": "pendingTimers.get",
         "params": [],
         "responseFields": [],
         "category": "API 服务"
@@ -156,20 +166,30 @@
     },
     {
       "path": "{变量:key}",
+      "method": "DELETE",
+      "file": "main/services/chat-dual-source.ts",
+      "line": 40,
+      "functionName": "summaryCache.delete",
+      "params": [],
+      "responseFields": [],
+      "category": "API 服务"
+    },
+    {
+      "path": "{变量:cacheKey}",
       "method": "GET",
-      "file": "main/services/chat-watcher.ts",
-      "line": 24,
-      "functionName": "pendingTimers.get",
+      "file": "main/services/chat-dual-source.ts",
+      "line": 206,
+      "functionName": "summaryCache.get",
       "params": [],
       "responseFields": [],
       "category": "API 服务"
     },
     {
       "path": "{变量:key}",
-      "method": "DELETE",
+      "method": "GET",
       "file": "main/services/chat-watcher.ts",
-      "line": 27,
-      "functionName": "pendingTimers.delete",
+      "line": 24,
+      "functionName": "pendingTimers.get",
       "params": [],
       "responseFields": [],
       "category": "API 服务"

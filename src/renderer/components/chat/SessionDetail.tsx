@@ -9,7 +9,8 @@
  * - 代码块: 复制按钮
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { MarkdownPreview } from '@/renderer/components/markdown/MarkdownPreview';
 import type { SessionMessage, AssistantContentBlock } from '@/shared/types/chat.types';
 import './SessionDetail.css';
@@ -117,8 +118,7 @@ const MESSAGE_PAGE_SIZE = 50;
 
 export function SessionDetail({ messages, loading }: SessionDetailProps) {
   const [visibleCount, setVisibleCount] = useState(MESSAGE_PAGE_SIZE);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
 
   // Reset visible count when a different session is selected
   const messageKey = messages.length > 0 ? messages[0].uuid : '';
@@ -127,14 +127,25 @@ export function SessionDetail({ messages, loading }: SessionDetailProps) {
   // Auto-scroll to bottom when messages change (new session or real-time update)
   useEffect(() => {
     if (messages.length > 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+      // Small delay to let Virtuoso mount
+      setTimeout(() => {
+        virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
+      }, 50);
     }
   }, [messages]);
 
   if (loading) {
     return (
       <div className="session-detail">
-        <div className="session-detail__loading">加载中...</div>
+        <div className="session-detail__skeleton">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className={`skeleton-bubble ${i % 2 === 0 ? 'skeleton-bubble--right' : 'skeleton-bubble--left'}`}>
+              <div className="skeleton-bubble__label" />
+              <div className="skeleton-bubble__content" />
+              <div className="skeleton-bubble__meta" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -152,22 +163,31 @@ export function SessionDetail({ messages, loading }: SessionDetailProps) {
   const visibleMessages = messages.slice(startIndex);
   const hasEarlier = startIndex > 0;
 
+  const headerContent = hasEarlier ? (
+    <button
+      className="session-detail__load-more"
+      onClick={() => setVisibleCount(prev => prev + MESSAGE_PAGE_SIZE)}
+    >
+      加载更早消息 ({startIndex} 条)
+    </button>
+  ) : null;
+
   return (
-    <div className="session-detail" ref={containerRef}>
-      <div className="session-detail__messages">
-        {hasEarlier && (
-          <button
-            className="session-detail__load-more"
-            onClick={() => setVisibleCount(prev => prev + MESSAGE_PAGE_SIZE)}
-          >
-            加载更早消息 ({startIndex} 条)
-          </button>
-        )}
-        {visibleMessages.map((message) => (
+    <div className="session-detail">
+      <Virtuoso
+        ref={virtuosoRef}
+        data={visibleMessages}
+        components={{
+          Header: headerContent ? () => headerContent : undefined,
+        }}
+        itemContent={(_index, message) => (
           <MessageBubble key={message.uuid} message={message} />
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
+        )}
+        initialTopMostItemIndex={visibleMessages.length - 1}
+        followOutput="auto"
+        style={{ height: '100%' }}
+        overscan={200}
+      />
     </div>
   );
 }
