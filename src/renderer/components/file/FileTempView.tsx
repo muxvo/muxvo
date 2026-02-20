@@ -8,6 +8,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { MarkdownPreview } from '@/renderer/components/markdown/MarkdownPreview';
 import { FileItem } from './FileItem';
+import type { FileEntry as IpcFileEntry } from '@/shared/types/fs.types';
 import './FileTempView.css';
 
 interface FileTempViewProps {
@@ -19,6 +20,14 @@ interface FileTempViewProps {
   onClose: () => void;
   onSelectFile: (filePath: string, ext: string) => void;
   onSelectTerminal: (terminalId: string) => void;
+}
+
+interface TreeEntry {
+  name: string;
+  type: 'file' | 'folder';
+  ext?: string;
+  indent: number;
+  path?: string;
 }
 
 const DEFAULT_LEFT_WIDTH = 250;
@@ -40,6 +49,47 @@ function getTagLabel(fileType: 'markdown' | 'code' | 'text'): string {
     case 'text':
       return 'TXT';
   }
+}
+
+/** Map IPC entries to tree entries */
+function mapIpcToTree(entries: IpcFileEntry[], indent: number): TreeEntry[] {
+  return [...entries]
+    .sort((a, b) => {
+      if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    })
+    .filter(e => !e.name.startsWith('.'))
+    .map(e => ({
+      name: e.name,
+      type: (e.isDirectory ? 'folder' : 'file') as 'file' | 'folder',
+      ext: e.isDirectory ? undefined : (e.name.includes('.') ? e.name.split('.').pop() : undefined),
+      indent,
+      path: e.path,
+    }));
+}
+
+/** Insert children after a parent entry in the flat list */
+function insertAfter(list: TreeEntry[], parent: TreeEntry, children: TreeEntry[]): TreeEntry[] {
+  const idx = list.findIndex(f => f.path === parent.path);
+  if (idx === -1) return list;
+  const cleaned = removeChildren(list, parent.path!, parent.indent);
+  const insertIdx = cleaned.findIndex(f => f.path === parent.path);
+  return [
+    ...cleaned.slice(0, insertIdx + 1),
+    ...children,
+    ...cleaned.slice(insertIdx + 1),
+  ];
+}
+
+/** Remove all entries that are children of the given parent (deeper indent) */
+function removeChildren(list: TreeEntry[], parentPath: string, parentIndent: number): TreeEntry[] {
+  const parentIdx = list.findIndex(f => f.path === parentPath);
+  if (parentIdx === -1) return list;
+  let endIdx = parentIdx + 1;
+  while (endIdx < list.length && list[endIdx].indent > parentIndent) {
+    endIdx++;
+  }
+  return [...list.slice(0, parentIdx + 1), ...list.slice(endIdx)];
 }
 
 function CodeView({ content }: { content: string }) {
@@ -74,6 +124,20 @@ export function FileTempView({
   const draggingRef = useRef<'left' | 'right' | null>(null);
   const startXRef = useRef(0);
   const startWidthRef = useRef(0);
+
+  // File tree state
+  const [treeFiles, setTreeFiles] = useState<TreeEntry[]>([]);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+
+  // Load file tree
+  useEffect(() => {
+    setExpandedFolders(new Set());
+    window.api.fs.readDir(projectCwd).then((result: { success: boolean; data?: IpcFileEntry[] }) => {
+      if (result?.success && result.data) {
+        setTreeFiles(mapIpcToTree(result.data, 0));
+      }
+    }).catch(() => {});
+  }, [projectCwd]);
 
   // Esc to close
   useEffect(() => {
@@ -127,14 +191,46 @@ export function FileTempView({
     [onSelectTerminal]
   );
 
-  // Mock file tree entries (same as FilePanel)
-  const mockFiles = [
-    { name: 'src', type: 'folder' as const, indent: 0 },
-    { name: 'index.ts', type: 'file' as const, ext: 'ts', indent: 1 },
-    { name: 'app.tsx', type: 'file' as const, ext: 'tsx', indent: 1 },
-    { name: 'README.md', type: 'file' as const, ext: 'md', indent: 0 },
-    { name: 'package.json', type: 'file' as const, ext: 'json', indent: 0 },
-  ];
+  // Folder toggle (expand/collapse)
+  const handleFolderToggle = useCallback(async (entry: TreeEntry) => {
+    const folderPath = entry.path;
+    if (!folderPath) return;
+
+    if (expandedFolders.has(folderPath)) {
+      setExpandedFolders(prev => {
+        const next = new Set(prev);
+        for (const p of prev) {
+          if (p.startsWith(folderPath + '/')) next.delete(p);
+        }
+        next.delete(folderPath);
+        return next;
+      });
+      setTreeFiles(current => removeChildren(current, folderPath, entry.indent));
+    } else {
+      setExpandedFolders(prev => new Set(prev).add(folderPath));
+      try {
+        const result = await window.api.fs.readDir(folderPath);
+        if (result?.success && result.data) {
+          const children = mapIpcToTree(result.data as IpcFileEntry[], entry.indent + 1);
+          setTreeFiles(current => insertAfter(current, entry, children));
+        }
+      } catch {
+        // Silently fail
+      }
+    }
+  }, [expandedFolders]);
+
+  const handleTreeFileClick = useCallback(
+    (entry: TreeEntry) => {
+      if (entry.type === 'folder') {
+        handleFolderToggle(entry);
+      } else {
+        const path = entry.path || `${projectCwd}/${entry.name}`;
+        onSelectFile(path, entry.ext || entry.name.split('.').pop() || '');
+      }
+    },
+    [projectCwd, onSelectFile, handleFolderToggle]
+  );
 
   const fileName = getDisplayName(filePath);
 
@@ -212,22 +308,16 @@ export function FileTempView({
           </span>
         </div>
         <div className="file-temp-view__files-content">
-          {mockFiles.map((entry) => (
+          {treeFiles.map((entry) => (
             <FileItem
-              key={`${entry.indent}-${entry.name}`}
+              key={entry.path || `${entry.indent}-${entry.name}`}
               name={entry.name}
               type={entry.type}
               indent={entry.indent}
               ext={entry.ext}
-              isActive={entry.name === fileName}
-              onClick={() => {
-                if (entry.type === 'file') {
-                  onSelectFile(
-                    `${projectCwd}/${entry.name}`,
-                    entry.ext || ''
-                  );
-                }
-              }}
+              isActive={entry.path === filePath || entry.name === fileName}
+              expanded={entry.type === 'folder' && entry.path ? expandedFolders.has(entry.path) : undefined}
+              onClick={() => handleTreeFileClick(entry)}
             />
           ))}
         </div>
