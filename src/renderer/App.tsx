@@ -13,8 +13,18 @@ import { TerminalGrid } from './components/terminal/TerminalGrid';
 import { CloseConfirmDialog } from './components/terminal/CloseConfirmDialog';
 import { ChatHistoryPanel } from './components/chat/ChatHistoryPanel';
 import { FilePanel } from './components/file/FilePanel';
+import { FileTempView } from './components/file/FileTempView';
 import { PanelProvider, usePanelContext } from './contexts/PanelContext';
 import './App.css';
+
+/** Map file extension to display type */
+function mapExtToFileType(ext: string): 'markdown' | 'code' | 'text' {
+  if (['md', 'mdx', 'markdown'].includes(ext)) return 'markdown';
+  if (['ts', 'tsx', 'js', 'jsx', 'json', 'css', 'html', 'py', 'swift',
+       'rs', 'go', 'java', 'c', 'cpp', 'h', 'sh', 'yaml', 'yml',
+       'toml', 'xml', 'sql', 'rb', 'php', 'vue', 'svelte'].includes(ext)) return 'code';
+  return 'text';
+}
 
 const MAX_TERMINALS = 20;
 
@@ -249,6 +259,23 @@ function AppContent({
 }): JSX.Element {
   const { state, dispatch } = usePanelContext();
 
+  // File content loading for FileTempView
+  const [fileContent, setFileContent] = useState('');
+  const [fileType, setFileType] = useState<'markdown' | 'code' | 'text'>('text');
+
+  useEffect(() => {
+    if (!state.tempView.active || !state.tempView.contentKey) return;
+    const filePath = state.tempView.contentKey;
+    const ext = filePath.split('.').pop() || '';
+    setFileType(mapExtToFileType(ext));
+    setFileContent('');
+    window.api.fs.readFile(filePath).then((result: { success: boolean; data?: { content: string } }) => {
+      if (result?.success && result.data) {
+        setFileContent(result.data.content);
+      }
+    }).catch(() => {});
+  }, [state.tempView.active, state.tempView.contentKey]);
+
   // Compute FilePanel projectCwd from filePanel.terminalId
   const filePanelCwd = state.filePanel.terminalId !== null
     ? terminals.find(t => t.id === state.filePanel.terminalId)?.cwd || '/'
@@ -299,9 +326,25 @@ function AppContent({
           projectCwd={filePanelCwd}
           onClose={() => dispatch({ type: 'CLOSE_FILE_PANEL' })}
           onOpenFile={(filePath, ext) => {
-            // Open temp view with file (to be wired when tempView state is expanded)
-            dispatch({ type: 'OPEN_TEMP_VIEW', contentKey: filePath });
+            dispatch({ type: 'CLOSE_FILE_PANEL' });
+            dispatch({ type: 'OPEN_TEMP_VIEW', contentKey: filePath, projectCwd: filePanelCwd });
           }}
+        />
+      )}
+
+      {/* File temp view (three-column: terminals | content | file tree) */}
+      {state.tempView.active && state.tempView.contentKey && (
+        <FileTempView
+          projectCwd={state.tempView.projectCwd || '/'}
+          filePath={state.tempView.contentKey}
+          content={fileContent}
+          fileType={fileType}
+          terminals={terminals.filter(t => t.cwd === (state.tempView.projectCwd || '/'))}
+          onClose={() => dispatch({ type: 'CLOSE_TEMP_VIEW' })}
+          onSelectFile={(newFilePath, ext) => {
+            dispatch({ type: 'OPEN_TEMP_VIEW', contentKey: newFilePath, projectCwd: state.tempView.projectCwd || '/' });
+          }}
+          onSelectTerminal={() => {}}
         />
       )}
 
