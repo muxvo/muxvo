@@ -3,12 +3,13 @@
  *
  * Three-column temporary view: file tree | file content | terminal sidebar.
  * Overlays the terminal grid when a file is opened for viewing.
- * Left column slides in from right on mount for a smooth transition from FilePanel.
+ * Supports editing with Cmd+S save and unsaved changes confirmation.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { MarkdownPreview } from '@/renderer/components/markdown/MarkdownPreview';
 import { TerminalTile } from '@/renderer/components/terminal/TerminalTile';
+import { UnsavedPromptDialog } from './UnsavedPromptDialog';
 import { FileItem } from './FileItem';
 import type { FileEntry as IpcFileEntry } from '@/shared/types/fs.types';
 import './FileTempView.css';
@@ -135,6 +136,46 @@ export function FileTempView({
   const [treeFiles, setTreeFiles] = useState<TreeEntry[]>([]);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
+  // Editing state
+  const [editContent, setEditContent] = useState('');
+  const [isDirty, setIsDirty] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
+  const pendingActionRef = useRef<(() => void) | null>(null);
+
+  // Sync content prop to editContent when file changes
+  useEffect(() => {
+    setEditContent(content);
+    setIsDirty(false);
+    setIsEditing(false);
+  }, [filePath]);
+
+  // Also sync when content prop updates (initial load)
+  useEffect(() => {
+    if (!isDirty) {
+      setEditContent(content);
+    }
+  }, [content]);
+
+  // Save handler
+  const handleSave = useCallback(async () => {
+    if (!isDirty) return;
+    const result = await window.api.fs.writeFile(filePath, editContent);
+    if (result?.success) {
+      setIsDirty(false);
+    }
+  }, [filePath, editContent, isDirty]);
+
+  // Close with unsaved check
+  const handleCloseRequest = useCallback(() => {
+    if (isDirty) {
+      pendingActionRef.current = onClose;
+      setShowUnsavedPrompt(true);
+    } else {
+      onClose();
+    }
+  }, [isDirty, onClose]);
+
   // Entrance animation trigger
   useEffect(() => {
     requestAnimationFrame(() => {
@@ -152,14 +193,21 @@ export function FileTempView({
     }).catch(() => {});
   }, [projectCwd]);
 
-  // Esc to close
+  // Keyboard shortcuts: Cmd+S save, Esc close
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+        return;
+      }
+      if (e.key === 'Escape' && !showUnsavedPrompt) {
+        handleCloseRequest();
+      }
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, [handleSave, handleCloseRequest, showUnsavedPrompt]);
 
   // Resize handle logic
   const handleMouseDown = useCallback(
@@ -225,25 +273,53 @@ export function FileTempView({
     }
   }, [expandedFolders]);
 
+  // File click with unsaved check
   const handleTreeFileClick = useCallback(
     (entry: TreeEntry) => {
       if (entry.type === 'folder') {
         handleFolderToggle(entry);
+        return;
+      }
+      const path = entry.path || `${projectCwd}/${entry.name}`;
+      const ext = entry.ext || entry.name.split('.').pop() || '';
+      if (isDirty) {
+        pendingActionRef.current = () => onSelectFile(path, ext);
+        setShowUnsavedPrompt(true);
       } else {
-        const path = entry.path || `${projectCwd}/${entry.name}`;
-        onSelectFile(path, entry.ext || entry.name.split('.').pop() || '');
+        onSelectFile(path, ext);
       }
     },
-    [projectCwd, onSelectFile, handleFolderToggle]
+    [projectCwd, onSelectFile, handleFolderToggle, isDirty]
   );
+
+  // Unsaved prompt handlers
+  const handlePromptSave = useCallback(async () => {
+    await handleSave();
+    setShowUnsavedPrompt(false);
+    pendingActionRef.current?.();
+    pendingActionRef.current = null;
+  }, [handleSave]);
+
+  const handlePromptDiscard = useCallback(() => {
+    setIsDirty(false);
+    setShowUnsavedPrompt(false);
+    pendingActionRef.current?.();
+    pendingActionRef.current = null;
+  }, []);
+
+  const handlePromptCancel = useCallback(() => {
+    setShowUnsavedPrompt(false);
+    pendingActionRef.current = null;
+  }, []);
 
   const fileName = getDisplayName(filePath);
   const sidebarTerminals = terminals.filter(t => t.id !== sourceTerminalId);
+  const displayContent = isDirty ? editContent : content;
 
   return (
     <div className={`file-temp-view ${entered ? 'file-temp-view--entered' : ''}`}>
       {/* Close button */}
-      <button className="file-temp-view__close" onClick={onClose}>
+      <button className="file-temp-view__close" onClick={handleCloseRequest}>
         &#x2715;
       </button>
 
@@ -282,7 +358,18 @@ export function FileTempView({
       {/* Middle column: file content */}
       <div className="file-temp-view__content">
         <div className="file-temp-view__content-header">
-          <span className="file-temp-view__content-filename">{fileName}</span>
+          <span className="file-temp-view__content-filename">
+            {isDirty && <span className="file-temp-view__dirty-dot" />}
+            {fileName}
+          </span>
+          {fileType !== 'image' && (
+            <button
+              className={`file-temp-view__mode-btn ${isEditing ? 'file-temp-view__mode-btn--active' : ''}`}
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              {isEditing ? 'Preview' : 'Edit'}
+            </button>
+          )}
           <span
             className={`file-temp-view__content-tag file-temp-view__content-tag--${fileType}`}
           >
@@ -290,15 +377,30 @@ export function FileTempView({
           </span>
         </div>
         <div className="file-temp-view__content-body">
-          {fileType === 'markdown' && <MarkdownPreview content={content} />}
-          {fileType === 'code' && <CodeView content={content} />}
-          {fileType === 'image' && content && (
-            <div className="file-temp-view__image">
-              <img src={content} alt={fileName} />
-            </div>
-          )}
-          {fileType === 'text' && (
-            <div className="file-temp-view__text">{content}</div>
+          {isEditing ? (
+            <textarea
+              className="file-temp-view__editor"
+              value={editContent}
+              onChange={(e) => {
+                setEditContent(e.target.value);
+                setIsDirty(true);
+              }}
+              spellCheck={false}
+              autoFocus
+            />
+          ) : (
+            <>
+              {fileType === 'markdown' && <MarkdownPreview content={displayContent} />}
+              {fileType === 'code' && <CodeView content={displayContent} />}
+              {fileType === 'image' && content && (
+                <div className="file-temp-view__image">
+                  <img src={content} alt={fileName} />
+                </div>
+              )}
+              {fileType === 'text' && (
+                <div className="file-temp-view__text">{displayContent}</div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -324,6 +426,16 @@ export function FileTempView({
           </div>
         ))}
       </div>
+
+      {/* Unsaved changes dialog */}
+      {showUnsavedPrompt && (
+        <UnsavedPromptDialog
+          fileName={fileName}
+          onSave={handlePromptSave}
+          onDiscard={handlePromptDiscard}
+          onCancel={handlePromptCancel}
+        />
+      )}
     </div>
   );
 }
