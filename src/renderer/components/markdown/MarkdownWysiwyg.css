@@ -1,0 +1,155 @@
+/**
+ * MarkdownWysiwyg Styles
+ *
+ * Reuses MarkdownPreview dark theme styling for TipTap's .tiptap container.
+ */
+
+.markdown-wysiwyg {
+  height: 100%;
+  overflow-y: auto;
+  background: var(--bg-primary);
+}
+
+.markdown-wysiwyg .tiptap {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--text-primary);
+  padding: 24px 32px;
+  outline: none;
+  min-height: 100%;
+}
+
+/* Headings */
+.markdown-wysiwyg .tiptap h1 {
+  font-size: 1.8em;
+  font-weight: bold;
+  color: #ffffff;
+  border-bottom: 1px solid var(--bg-elevated);
+  padding-bottom: 0.3em;
+  margin: 1em 0 0.5em;
+}
+
+.markdown-wysiwyg .tiptap h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #ffffff;
+  margin: 0.8em 0 0.4em;
+}
+
+.markdown-wysiwyg .tiptap h3 {
+  font-size: 1.25em;
+  font-weight: bold;
+  color: #ffffff;
+  margin: 0.6em 0 0.3em;
+}
+
+.markdown-wysiwyg .tiptap h4,
+.markdown-wysiwyg .tiptap h5,
+.markdown-wysiwyg .tiptap h6 {
+  font-size: 1em;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+/* Bold & Italic */
+.markdown-wysiwyg .tiptap strong {
+  color: #ffffff;
+}
+
+.markdown-wysiwyg .tiptap em {
+  font-style: italic;
+}
+
+.markdown-wysiwyg .tiptap del {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* Links */
+.markdown-wysiwyg .tiptap a {
+  color: var(--info);
+  text-decoration: none;
+}
+
+.markdown-wysiwyg .tiptap a:hover {
+  text-decoration: underline;
+}
+
+/* Code */
+.markdown-wysiwyg .tiptap code {
+  background: rgba(248, 165, 194, 0.15);
+  color: #f8a5c2;
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  font-size: 0.9em;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.markdown-wysiwyg .tiptap pre {
+  background: var(--bg-elevated);
+  border-radius: 8px;
+  padding: 1em;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.markdown-wysiwyg .tiptap pre code {
+  background: none;
+  color: var(--text-primary);
+  padding: 0;
+  font-size: 1em;
+}
+
+/* Blockquotes */
+.markdown-wysiwyg .tiptap blockquote {
+  border-left: 4px solid var(--border);
+  padding-left: 1em;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin: 1em 0;
+}
+
+/* Lists */
+.markdown-wysiwyg .tiptap ul,
+.markdown-wysiwyg .tiptap ol {
+  padding-left: 2em;
+  margin: 0.5em 0;
+}
+
+.markdown-wysiwyg .tiptap li {
+  margin: 0.25em 0;
+}
+
+/* Tables */
+.markdown-wysiwyg .tiptap table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+
+.markdown-wysiwyg .tiptap th {
+  background: var(--bg-elevated);
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.markdown-wysiwyg .tiptap th,
+.markdown-wysiwyg .tiptap td {
+  border: 1px solid var(--bg-elevated);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+/* Horizontal rule */
+.markdown-wysiwyg .tiptap hr {
+  border: none;
+  border-top: 1px solid var(--bg-elevated);
+  margin: 1.5em 0;
+}
+
+/* Images */
+.markdown-wysiwyg .tiptap img {
+  max-width: 100%;
+  border-radius: 8px;
+}

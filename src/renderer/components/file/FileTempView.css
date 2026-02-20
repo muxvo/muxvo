@@ -142,22 +142,6 @@
   line-height: 1.8;
   background: var(--bg-primary);
 }
-.file-temp-view__content-body--split {
-  display: flex;
-  gap: 0;
-  padding: 0;
-  overflow: hidden;
-}
-.file-temp-view__content-body--split .file-temp-view__editor {
-  flex: 1;
-  border-right: 1px solid var(--border);
-}
-.file-temp-view__md-preview {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
-}
-
 /* Code view inside temp view */
 .file-temp-view__code {
   font-family: var(--font-mono);
