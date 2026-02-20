@@ -1,0 +1,668 @@
+<!-- ============================================================
+     PART 3: Panorama + CTA + Footer + Global Animations + SEO
+     Depends on CSS variables defined in Part 1 (:root)
+     ============================================================ -->
+
+<style>
+/* ============================================================
+   UTILITY: Text highlight
+   ============================================================ */
+.text-amber {
+  color: var(--amber);
+}
+
+/* ============================================================
+   PANORAMA SECTION
+   ============================================================ */
+.panorama {
+  padding: 120px 0;
+  text-align: center;
+  position: relative;
+  background: var(--bg-after);
+}
+
+.panorama-header {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.panorama-header h2 {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--text-after);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.panorama-header p {
+  font-size: 18px;
+  color: var(--text-after-sec);
+  margin-top: 12px;
+}
+
+/* ============================================================
+   PANORAMA FRAME (Product screenshot container)
+   ============================================================ */
+.panorama-frame {
+  position: relative;
+  max-width: 1100px;
+  width: 90vw;
+  margin: 48px auto 0;
+}
+
+/* Cinematic amber glow behind screenshot */
+.panorama-frame::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  left: -40px;
+  right: -40px;
+  bottom: -60px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(232,167,72,0.12),
+    rgba(232,167,72,0.04) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ============================================================
+   PANORAMA SHOT (the mock product UI)
+   ============================================================ */
+.panorama-shot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 7fr 3fr;
+  gap: 2px;
+  background: var(--bg-after-card);
+  border: 1px solid rgba(232,167,72,0.25);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    0 0 80px rgba(232,167,72,0.12),
+    0 4px 32px rgba(0,0,0,0.4);
+}
+
+/* Main area: 2x2 terminal grid */
+.p-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+}
+
+/* Sidebar: 3 stacked panels */
+.p-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Individual pane — 12px font (not 9px!) */
+.p-pane {
+  background: var(--bg-after);
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-after-sec);
+  line-height: 1.5;
+}
+
+.p-pane-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--amber);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.p-pane-path {
+  font-size: 10px;
+  color: var(--border-after);
+  margin-bottom: 4px;
+}
+
+.p-pane-prompt {
+  color: var(--amber);
+}
+
+.p-pane-success {
+  color: var(--success);
+}
+
+/* Sidebar panel titles use display font */
+.p-pane--sidebar {
+  font-family: var(--font-display);
+  font-size: 12px;
+}
+
+.p-pane--sidebar .p-sidebar-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--amber);
+  margin-bottom: 6px;
+}
+
+.p-pane--sidebar .p-sidebar-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-after-sec);
+  margin-bottom: 8px;
+}
+
+.p-pane--sidebar .p-sidebar-item {
+  font-size: 11px;
+  color: var(--text-after-sec);
+  padding: 2px 0;
+  line-height: 1.5;
+}
+
+.p-pane--sidebar .p-sidebar-item-amber {
+  color: var(--amber);
+  font-size: 10px;
+}
+
+.p-pane--sidebar .p-sidebar-item-dim {
+  color: var(--text-before-dim);
+}
+
+/* ============================================================
+   BLUEPRINT CORNERS
+   ============================================================ */
+.blueprint-corner {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(232,167,72,0.35);
+  z-index: 2;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.blueprint-corner--tl {
+  top: -16px;
+  left: -8px;
+}
+
+.blueprint-corner--tr {
+  top: -16px;
+  right: -8px;
+}
+
+.blueprint-corner--bl {
+  bottom: -16px;
+  left: -8px;
+}
+
+.blueprint-corner--br {
+  bottom: -16px;
+  right: -8px;
+}
+
+/* ============================================================
+   CTA SECTION
+   ============================================================ */
+.cta-section {
+  text-align: center;
+  padding: 120px 24px;
+  position: relative;
+  background: linear-gradient(
+    180deg,
+    var(--bg-before) 0%,
+    #0e1018 25%,
+    var(--bg-after) 50%
+  );
+}
+
+/* Amber glow behind CTA */
+.cta-glow {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 400px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(232,167,72,0.1),
+    rgba(232,167,72,0.03) 50%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.cta-before-text {
+  font-size: 16px;
+  color: var(--text-before-dim);
+  position: relative;
+  z-index: 1;
+}
+
+.cta-headline {
+  font-size: 56px;
+  font-weight: 700;
+  color: var(--text-after);
+  margin-top: 16px;
+  position: relative;
+  z-index: 1;
+  letter-spacing: -0.02em;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 32px;
+  position: relative;
+  z-index: 1;
+  flex-wrap: wrap;
+}
+
+.cta-note {
+  font-size: 14px;
+  color: var(--text-after-sec);
+  margin-top: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+footer {
+  background: var(--bg-after);
+  padding: 0 24px 48px;
+}
+
+.footer-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--amber), transparent);
+  margin-bottom: 48px;
+}
+
+.footer-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+}
+
+.footer-column h5 {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-after);
+  margin-bottom: 12px;
+}
+
+.footer-column a {
+  display: block;
+  font-size: 13px;
+  color: var(--text-after-sec);
+  padding: 4px 0;
+  transition: color 0.15s;
+}
+
+.footer-column a:hover {
+  color: var(--amber);
+}
+
+.footer-bottom {
+  max-width: 1200px;
+  margin: 32px auto 0;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-after);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.footer-logo {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--amber);
+}
+
+.footer-tagline {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-after-sec);
+}
+
+.footer-copyright {
+  font-size: 13px;
+  color: var(--text-after-sec);
+}
+
+/* ============================================================
+   SCROLL ANIMATIONS
+   ============================================================ */
+.fade-up {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.fade-up.visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Stagger children */
+.stagger > *:nth-child(1) { transition-delay: 0ms; }
+.stagger > *:nth-child(2) { transition-delay: 80ms; }
+.stagger > *:nth-child(3) { transition-delay: 160ms; }
+.stagger > *:nth-child(4) { transition-delay: 240ms; }
+.stagger > *:nth-child(5) { transition-delay: 320ms; }
+.stagger > *:nth-child(6) { transition-delay: 400ms; }
+.stagger > *:nth-child(7) { transition-delay: 480ms; }
+.stagger > *:nth-child(8) { transition-delay: 560ms; }
+
+/* Stagger: children also use fade-up pattern */
+.stagger > * {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.stagger.visible > * {
+  opacity: 1;
+  transform: none;
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .fade-up,
+  .stagger > * {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE: Tablet (<=1023px)
+   ============================================================ */
+@media (max-width: 1023px) {
+  .panorama {
+    padding: 80px 0;
+  }
+
+  .panorama-header h2 {
+    font-size: 36px;
+  }
+
+  .panorama-shot {
+    grid-template-columns: 1fr;
+  }
+
+  .p-sidebar {
+    flex-direction: row;
+  }
+
+  .blueprint-corner {
+    display: none;
+  }
+
+  .cta-headline {
+    font-size: 40px;
+  }
+
+  .footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE: Mobile (<=767px)
+   ============================================================ */
+@media (max-width: 767px) {
+  .panorama {
+    padding: 64px 0;
+  }
+
+  .panorama-header h2 {
+    font-size: 28px;
+  }
+
+  .panorama-frame {
+    width: 95vw;
+  }
+
+  .p-main {
+    grid-template-columns: 1fr;
+  }
+
+  .p-sidebar {
+    flex-direction: column;
+  }
+
+  .cta-section {
+    padding: 80px 24px;
+  }
+
+  .cta-headline {
+    font-size: 32px;
+  }
+
+  .cta-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cta-buttons .btn-amber-lg,
+  .cta-buttons .btn-ghost {
+    width: 100%;
+  }
+
+  .footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+</style>
+
+<!-- ============================================================
+     PANORAMA: Full product showcase
+     ============================================================ -->
+<section class="panorama" id="product">
+  <div class="panorama-header fade-up">
+    <h2>一个工作台，<span class="text-amber">管理</span>一切。</h2>
+    <p>终端、对话、配置、Skill — AI CLI 工作流的一切所需。</p>
+  </div>
+
+  <div class="panorama-frame fade-up">
+    <!-- Blueprint corners -->
+    <span class="blueprint-corner blueprint-corner--tl">+</span>
+    <span class="blueprint-corner blueprint-corner--tr">+</span>
+    <span class="blueprint-corner blueprint-corner--bl">+</span>
+    <span class="blueprint-corner blueprint-corner--br">+</span>
+
+    <div class="panorama-shot">
+      <!-- Left: 2x2 terminal grid (70%) -->
+      <div class="p-main">
+        <div class="p-pane">
+          <div class="p-pane-title">CLAUDE CODE</div>
+          <div class="p-pane-path">~/project-a</div>
+          <span class="p-pane-prompt">$</span> claude "review PR #42"<br>
+          <span class="p-pane-success">Reading diff...</span><br>
+          Found 3 issues in src/auth.ts<br>
+          Suggesting fixes...
+        </div>
+        <div class="p-pane">
+          <div class="p-pane-title">CODEX</div>
+          <div class="p-pane-path">~/project-b</div>
+          <span class="p-pane-prompt">$</span> codex "generate tests"<br>
+          <span class="p-pane-success">Creating test suite...</span><br>
+          12 tests generated<br>
+          Coverage: 94%
+        </div>
+        <div class="p-pane">
+          <div class="p-pane-title">GEMINI CLI</div>
+          <div class="p-pane-path">~/project-c</div>
+          <span class="p-pane-prompt">$</span> gemini chat<br>
+          How can I help you today?<br>
+          <span class="p-pane-prompt">&gt;</span> Explain the auth flow
+        </div>
+        <div class="p-pane">
+          <div class="p-pane-title">BUILD</div>
+          <div class="p-pane-path">~/project-a</div>
+          <span class="p-pane-prompt">$</span> npm run build<br>
+          <span class="p-pane-success">Build complete.</span><br>
+          dist/main.js  48.2 kB<br>
+          dist/style.css  6.1 kB
+        </div>
+      </div>
+
+      <!-- Right: 3 sidebar panels (30%) -->
+      <div class="p-sidebar">
+        <div class="p-pane p-pane--sidebar">
+          <div class="p-sidebar-title">Chat History</div>
+          <div class="p-sidebar-meta">12 sessions across 3 projects</div>
+          <div class="p-sidebar-item">Today &middot; project-a &middot; PR Review</div>
+          <div class="p-sidebar-item">Today &middot; project-b &middot; Test Gen</div>
+          <div class="p-sidebar-item">Yesterday &middot; project-c &middot; Auth Flow</div>
+          <div class="p-sidebar-item p-sidebar-item-dim">+ 9 more sessions</div>
+        </div>
+        <div class="p-pane p-pane--sidebar">
+          <div class="p-sidebar-title">Skill Market</div>
+          <div class="p-sidebar-meta">8 installed &middot; 3 updates</div>
+          <div class="p-sidebar-item"><span class="p-sidebar-item-amber">commit-msg</span> v2.1</div>
+          <div class="p-sidebar-item"><span class="p-sidebar-item-amber">code-review</span> v1.4</div>
+          <div class="p-sidebar-item"><span class="p-sidebar-item-amber">test-gen</span> v3.0</div>
+        </div>
+        <div class="p-pane p-pane--sidebar">
+          <div class="p-sidebar-title">Config</div>
+          <div class="p-sidebar-meta">3 CLIs configured</div>
+          <div class="p-sidebar-item">Claude Code &middot; opus-4</div>
+          <div class="p-sidebar-item">Codex &middot; o3</div>
+          <div class="p-sidebar-item">Gemini CLI &middot; 2.5-pro</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     CTA: Download call-to-action
+     ============================================================ -->
+<section class="cta-section" id="download">
+  <div class="cta-glow"></div>
+  <p class="cta-before-text fade-up">还在 6 个终端窗口之间切换？</p>
+  <h2 class="cta-headline fade-up">掌控全局。</h2>
+  <div class="cta-buttons fade-up">
+    <button class="btn-amber btn-amber-lg">Download for macOS</button>
+    <button class="btn-ghost">View on GitHub</button>
+  </div>
+  <p class="cta-note fade-up">免费开源 / macOS / MIT License</p>
+</section>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer>
+  <div class="footer-divider"></div>
+  <div class="footer-grid">
+    <div class="footer-column">
+      <h5>Product</h5>
+      <a href="#features">Features</a>
+      <a href="#">Pricing</a>
+      <a href="#download">Download</a>
+      <a href="#">Changelog</a>
+    </div>
+    <div class="footer-column">
+      <h5>Resources</h5>
+      <a href="#">Documentation</a>
+      <a href="#">GitHub</a>
+      <a href="#">Blog</a>
+      <a href="#">API</a>
+    </div>
+    <div class="footer-column">
+      <h5>Community</h5>
+      <a href="#">Discord</a>
+      <a href="#">Twitter</a>
+      <a href="#">Contributing</a>
+      <a href="#">Discussions</a>
+    </div>
+    <div class="footer-column">
+      <h5>Legal</h5>
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
+      <a href="#">License (MIT)</a>
+      <a href="#">Security</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-logo">Muxvo</span>
+    <span class="footer-tagline">不是终端，不是 IDE — 是<span class="text-amber">工作台</span>。</span>
+    <span class="footer-copyright">&copy; 2026 Muxvo. MIT License.</span>
+  </div>
+</footer>
+
+<!-- ============================================================
+     SEO: JSON-LD Structured Data
+     ============================================================ -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Muxvo",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "macOS",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "description": "Desktop workbench for managing AI CLI tools (Claude Code, Codex, Gemini CLI)"
+}
+</script>
+
+<!-- ============================================================
+     JAVASCRIPT: Intersection Observer for scroll animations
+     ============================================================ -->
+<script>
+(function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    /* Respect prefers-reduced-motion in JS layer */
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      /* Make everything visible immediately */
+      document.querySelectorAll('.fade-left, .fade-right, .fade-up, .stagger').forEach(function(el) {
+        el.classList.add('visible');
+      });
+      return;
+    }
+
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+
+    /* Observe all animatable elements */
+    document.querySelectorAll('.fade-left, .fade-right, .fade-up, .stagger').forEach(function(el) {
+      observer.observe(el);
+    });
+  });
+})();
+</script>

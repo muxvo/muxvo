@@ -16,6 +16,13 @@ const DEFAULT_CONFIG: MuxvoConfig = {
   gridLayout: { columnRatios: [1, 1], rowRatios: [1, 1] },
   theme: 'dark',
   fontSize: 14,
+  terminal: {
+    themeName: 'dark',
+    fontFamily: "'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace",
+    fontSize: 13,
+    cursorStyle: 'block',
+    cursorBlink: true,
+  },
   ftvLeftWidth: 250,
   ftvRightWidth: 300,
 };
@@ -74,7 +81,12 @@ export function createConfigManager(deps?: ConfigManagerDeps) {
       const raw = fsAdapter.readFileSync(configPath, 'utf-8');
       const parsed = JSON.parse(raw);
       // Merge with defaults to handle missing fields
-      return { ...DEFAULT_CONFIG, ...parsed };
+      // Deep merge terminal config to preserve defaults for missing sub-fields
+      const merged = { ...DEFAULT_CONFIG, ...parsed };
+      if (parsed.terminal) {
+        merged.terminal = { ...DEFAULT_CONFIG.terminal, ...parsed.terminal };
+      }
+      return merged;
     } catch {
       return { ...DEFAULT_CONFIG };
     }

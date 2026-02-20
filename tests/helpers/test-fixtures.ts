@@ -142,4 +142,10 @@ export const defaultConfig = {
     columnRatios: [1, 1],
     rowRatios: [1, 1],
   },
+  terminal: {
+    themeName: 'dark' as const,
+    fontSize: 13,
+    cursorStyle: 'block' as const,
+    cursorBlink: true,
+  },
 };

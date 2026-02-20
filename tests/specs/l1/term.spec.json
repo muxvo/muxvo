@@ -3,7 +3,7 @@
   "layer": "L1",
   "source": "tests/l1/term.test.ts",
   "docSource": "docs/Muxvo_测试_v2/02_modules/test_TERM.md",
-  "totalCases": 15,
+  "totalCases": 19,
   "cases": [
     {
       "id": "TERM_L1_01",
@@ -170,6 +170,38 @@
         "placeholderText": "命名...",
         "style": "gray italic"
       },
+      "priority": "P1"
+    },
+    {
+      "id": "TERM_L1_16",
+      "description": "默认终端主题 -- 首次启动 terminal.themeName='dark'",
+      "type": "default-value",
+      "target": "terminal.themeName",
+      "expectedValue": "dark",
+      "priority": "P1"
+    },
+    {
+      "id": "TERM_L1_17",
+      "description": "默认终端字体大小 -- 首次启动 terminal.fontSize=13",
+      "type": "default-value",
+      "target": "terminal.fontSize",
+      "expectedValue": 13,
+      "priority": "P1"
+    },
+    {
+      "id": "TERM_L1_18",
+      "description": "默认游标样式 -- 首次启动 terminal.cursorStyle='block'",
+      "type": "default-value",
+      "target": "terminal.cursorStyle",
+      "expectedValue": "block",
+      "priority": "P1"
+    },
+    {
+      "id": "TERM_L1_19",
+      "description": "默认游标闪烁 -- 首次启动 terminal.cursorBlink=true",
+      "type": "default-value",
+      "target": "terminal.cursorBlink",
+      "expectedValue": true,
       "priority": "P1"
     }
   ]

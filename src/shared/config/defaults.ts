@@ -7,5 +7,12 @@ export function getDefaultConfig() {
       columnRatios: [1, 1],
       rowRatios: [1, 1],
     },
+    terminal: {
+      themeName: 'dark' as const,
+      fontFamily: "'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace",
+      fontSize: 13,
+      cursorStyle: 'block' as const,
+      cursorBlink: true,
+    },
   };
 }
