@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muxvo — Terminal Native v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --amber:#e8a748;--amber-dim:rgba(232,167,72,.5);--amber-glow:rgba(232,167,72,.15);
+  --bg:#0a0e14;--bg-panel:#0d1117;--bg-surface:#161b22;--border:#1e2530;
+  --text-out:#d4d4d8;--text-dim:#71717a;--text-bright:#f5f5f5;--success:#4ade80;
+  --font-mono:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-mono);background:var(--bg);color:var(--text-out);line-height:1.6;overflow-x:hidden}
+
+/* === CRT Scanline Overlay === */
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
+}
+/* === Screen Vignette === */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;
+  background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,0.35) 100%);
+}
+
+/* === Phosphor Glow on key elements === */
+.prompt,.cmd,.ascii-art,.tool-name,.man-title,.man-header{
+  text-shadow:0 0 4px rgba(232,167,72,0.4),0 0 12px rgba(232,167,72,0.15);
+}
+
+/* Terminal Chrome Bar */
+.chrome{position:fixed;top:0;left:0;right:0;z-index:100;height:36px;background:var(--bg-surface);display:flex;align-items:center;padding:0 16px;border-bottom:1px solid var(--border);user-select:none}
+.chrome-dots{display:flex;gap:6px}
+.chrome-dots span{width:12px;height:12px;border-radius:50%;position:relative;cursor:default}
+.chrome-dots .r{background:#ff5f57}.chrome-dots .y{background:#febc2e}.chrome-dots .g{background:#28c840}
+.chrome-dots span::after{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;opacity:0;transition:opacity .15s;color:#000}
+.chrome-dots .r:hover::after{content:'×';opacity:1}
+.chrome-dots .y:hover::after{content:'−';opacity:1}
+.chrome-dots .g:hover::after{content:'+';opacity:1}
+.chrome-title{flex:1;text-align:center;font-size:12px;color:var(--text-dim);cursor:pointer;position:relative;transition:opacity .15s}
+.chrome-nav{display:none;position:absolute;top:100%;left:50%;transform:translateX(-50%);background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;padding:8px 0;min-width:200px;margin-top:8px;z-index:200}
+.chrome-nav.open{display:block}
+.chrome-nav a{display:block;padding:6px 20px;font-size:14px;color:var(--text-dim);transition:color .15s,background .15s}
+.chrome-nav a:hover{color:var(--amber);background:rgba(232,167,72,.08)}
+.chrome-nav a::before{content:'> ';color:var(--text-dim);transition:color .15s}
+.chrome-nav a:hover::before{color:var(--amber)}
+a{color:inherit;text-decoration:none}
+
+/* Content */
+.term-content{max-width:900px;margin:0 auto;padding:0 24px}
+.prompt{color:var(--amber);font-weight:700}
+.cmd{color:var(--text-bright)}
+.comment{color:var(--text-dim)}
+.success-text{color:var(--success)}
+.cursor{display:inline-block;width:10px;height:1.2em;background:var(--amber);animation:blink 1s step-end infinite;vertical-align:text-bottom}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* Section command header */
+.section-cmd{padding:16px 0 24px;font-size:18px}
+.section-cmd .cmd{opacity:0}
+.section-cmd.typed .cmd{opacity:1}
+.section-cmd .type-cursor{display:inline-block;width:10px;height:1.2em;background:var(--amber);animation:blink 1s step-end infinite;vertical-align:text-bottom;margin-left:2px}
+.output-line{border-left:2px solid var(--border);padding-left:20px;margin-left:8px}
+
+/* === Man Page (Features) === */
+.man-page{font-size:15px;line-height:1.8}
+.man-header{color:var(--text-dim);font-size:13px;letter-spacing:.05em}
+.man-title{color:var(--amber);font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.08em;margin-top:20px}
+.man-name{color:var(--text-bright);font-weight:700}
+.man-indent{padding-left:7ch}
+.man-sub-indent{padding-left:14ch}
+.man-synopsis{color:var(--text-bright)}
+.man-synopsis .optional{color:var(--text-dim)}
+.man-desc-title{color:var(--text-bright);font-weight:700;padding-left:7ch}
+.man-desc-body{padding-left:14ch;color:var(--text-out)}
+
+/* === Neofetch (Tools) === */
+.neofetch{display:flex;gap:40px;align-items:flex-start;font-size:15px;line-height:1.9}
+.neofetch-logo{color:var(--amber);font-size:14px;line-height:1.3;flex-shrink:0;white-space:pre}
+.neofetch-info{flex:1;min-width:0}
+.neofetch-info .nf-title{color:var(--text-bright);font-weight:700}
+.neofetch-info .nf-sep{color:var(--border)}
+.neofetch-info .nf-key{color:var(--amber)}
+.neofetch-info .nf-val{color:var(--text-out)}
+.neofetch-info .nf-joke{color:var(--text-dim);font-style:italic}
+
+/* === Skills Table === */
+.skills-table{font-size:14px;line-height:1.9}
+.skills-table .table-header{color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em}
+.skills-table .table-sep{color:var(--border)}
+.skills-table .sk-name{color:var(--text-bright);display:inline-block;min-width:22ch}
+.skills-table .sk-ver{color:var(--text-out);display:inline-block;min-width:10ch}
+.skills-table .sk-score{color:var(--amber);display:inline-block;min-width:10ch}
+.skills-table .sk-dl{color:var(--text-dim);display:inline-block;min-width:12ch}
+.skills-table .sk-status{display:inline-block}
+.skills-table .sk-installed{color:var(--success)}
+.skills-table .sk-available{color:var(--text-dim)}
+.skills-table .table-footer{color:var(--text-dim);margin-top:8px}
+.skills-install{margin-top:16px}
+.skills-install .install-step{color:var(--text-out)}
+.skills-install .install-bar{color:var(--amber)}
+
+/* === Install Multi-stage === */
+.install-steps{font-size:15px;line-height:1.9}
+.install-steps .step{opacity:0;transition:opacity .2s}
+.install-steps .step.show{opacity:1}
+.install-steps .step-check{color:var(--success)}
+.install-steps .step-label{color:var(--text-out)}
+.install-steps .step-status{color:var(--success)}
+.install-steps .progress-line{color:var(--amber)}
+.install-steps .spinner-char{color:var(--amber);display:inline-block;width:1.5ch}
+.install-btn{display:inline-block;background:var(--amber);color:#06080c;font-family:var(--font-mono);font-size:15px;font-weight:700;padding:12px 32px;border-radius:4px;border:none;cursor:pointer;margin-top:24px;transition:opacity .2s,box-shadow .3s;opacity:.3;pointer-events:none}
+.install-btn.ready{opacity:1;pointer-events:auto;box-shadow:0 0 20px rgba(232,167,72,.25)}
+.install-btn:hover{opacity:.9}
+
+/* Tree cascade */
+.tree{font-size:16px;line-height:1.8}
+.tree .tool-name{color:var(--amber)}
+.tree .dots{color:var(--text-dim)}
+.tree .desc{color:var(--text-out)}
+.tree .branch{color:var(--text-dim)}
+.tree .sub{color:var(--text-out);padding-left:0}
+.tree > div{opacity:0;transform:translateX(-8px);transition:opacity .25s ease-out,transform .25s ease-out}
+.tree > div.line-visible{opacity:1;transform:none}
+
+/* Links */
+.link-cmd{display:block;padding:4px 0;transition:color .15s}
+.link-cmd:hover .comment{color:var(--text-out)}
+
+/* Footer */
+.footer-sep{color:var(--border);overflow:hidden;white-space:nowrap;margin:0;padding:0}
+.session-stats{font-size:14px;line-height:2;margin:16px 0}
+.stat-dots{color:var(--text-dim)}
+.stat-value{color:var(--amber);font-variant-numeric:tabular-nums}
+
+/* Fade in for sections */
+.fade-section{opacity:0;transition:opacity .4s ease-out}
+.fade-section.visible{opacity:1}
+
+/* Responsive */
+@media(max-width:767px){
+  .chrome-dots span{width:8px;height:8px}
+  .chrome .size-info{display:none}
+  .ascii-art{display:none}
+  .ascii-fallback{display:block!important}
+  .tree{font-size:14px}
+  .section-cmd{font-size:15px}
+  .neofetch{flex-direction:column;gap:16px}
+  .neofetch-logo{display:none}
+  .man-page{font-size:13px}
+  .man-indent{padding-left:4ch}
+  .man-sub-indent,.man-desc-body{padding-left:8ch}
+  .man-desc-title{padding-left:4ch}
+  .skills-table{font-size:12px;overflow-x:auto}
+}
+@media(prefers-reduced-motion:reduce){
+  .cursor,.section-cmd .type-cursor{animation:none}
+  .fade-section{opacity:1;transition:none}
+  .tree > div{opacity:1;transform:none;transition:none}
+  .install-steps .step{opacity:1}
+}
+</style>
+</head>
+<body>
+
+<!-- Terminal Chrome Bar -->
+<div class="chrome">
+  <div class="chrome-dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+  <div class="chrome-title" onclick="document.querySelector('.chrome-nav').classList.toggle('open')">
+    <span id="chrome-title-text">muxvo — zsh — 120×40</span>
+    <div class="chrome-nav" id="chrome-nav">
+      <a href="#features">man muxvo</a>
+      <a href="#demo">muxvo start</a>
+      <a href="#tools">muxvo neofetch</a>
+      <a href="#skills">muxvo skills</a>
+      <a href="#install">muxvo install</a>
+    </div>
+  </div>
+</div>
+
+<!-- Hero -->
+<section style="min-height:100vh;padding:72px 24px 60px;display:flex;align-items:center">
+  <div class="term-content" id="hero-content">
+    <pre class="ascii-art" style="color:var(--amber);font-size:13px;line-height:1.15;margin-bottom:24px;overflow-x:auto"> ███╗   ███╗██╗   ██╗██╗  ██╗██╗   ██╗ ██████╗
+ ████╗ ████║██║   ██║╚██╗██╔╝██║   ██║██╔═══██╗
+ ██╔████╔██║██║   ██║ ╚███╔╝ ██║   ██║██║   ██║
+ ██║╚██╔╝██║██║   ██║ ██╔██╗ ╚██╗ ██╔╝██║   ██║
+ ██║ ╚═╝ ██║╚██████╔╝██╔╝ ██╗ ╚████╔╝ ╚██████╔╝
+ ╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═╝  ╚═══╝   ╚═════╝</pre>
+    <div class="ascii-fallback" style="display:none;color:var(--amber);font-size:36px;font-weight:700;margin-bottom:24px">MUXVO</div>
+
+    <div class="hero-lines">
+      <div class="hero-line"><span class="prompt">$</span> <span class="cmd">muxvo --version</span></div>
+      <div class="hero-line" style="margin-top:4px">v1.0.0</div>
+      <div class="hero-line" style="margin-top:16px"><span class="prompt">$</span> <span class="cmd">muxvo --what</span></div>
+      <div class="hero-line" style="margin-top:4px">AI CLI 工具的桌面工作台。</div>
+      <div class="hero-line">平铺终端 / 聊天历史搜索 / Skill 市场。</div>
+      <div class="hero-line" style="margin-top:16px"><span class="prompt">$</span> <span class="cmd">muxvo --supports</span></div>
+      <div class="hero-line" style="margin-top:4px"><span style="color:var(--amber)">claude-code</span>  <span style="color:var(--amber)">codex</span>  <span style="color:var(--amber)">gemini-cli</span></div>
+      <div class="hero-line" style="margin-top:16px"><span class="prompt">$</span> <span class="cursor"></span></div>
+    </div>
+    <a href="#install" class="install-btn ready" style="margin-top:32px">$ muxvo install</a>
+  </div>
+</section>
+
+<!-- Features: Man Page -->
+<section style="padding:40px 24px 80px" id="features" data-chrome-title="man muxvo — zsh — [reading]">
+  <div class="term-content">
+    <div class="section-cmd" data-cmd="man muxvo"><span class="prompt">$</span> <span class="cmd">man muxvo</span></div>
+    <div class="output-line fade-section">
+      <div class="man-page">
+        <div class="man-header">MUXVO(1)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AI CLI Workbench&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MUXVO(1)</div>
+        <div style="margin-top:20px">
+          <div class="man-title">NAME</div>
+          <div class="man-indent"><span class="man-name">muxvo</span> — desktop workbench for AI CLI tools</div>
+        </div>
+        <div>
+          <div class="man-title">SYNOPSIS</div>
+          <div class="man-indent man-synopsis">muxvo <span class="optional">[--claude-code | --codex | --gemini-cli]</span> <span class="optional">[options]</span></div>
+        </div>
+        <div>
+          <div class="man-title">DESCRIPTION</div>
+          <div class="man-desc-title">Tiling Terminals</div>
+          <div class="man-desc-body">全屏网格布局，多终端并行运行。拖拽调整大小，每个面板独立运行不同的 CLI 工具。</div>
+          <div style="height:8px"></div>
+          <div class="man-desc-title">Chat History Search</div>
+          <div class="man-desc-body">跨 session 全文搜索所有 AI CLI 对话记录。输入关键词，跨工具秒级返回。</div>
+          <div style="height:8px"></div>
+          <div class="man-desc-title">Config Editor</div>
+          <div class="man-desc-body">可视化管理所有 AI CLI 配置文件。告别手动编辑 JSON/YAML，所见即所得。</div>
+          <div style="height:8px"></div>
+          <div class="man-desc-title">Skill Marketplace</div>
+          <div class="man-desc-body">社区驱动的 Skill 包生态。每个 Skill 经 AI 自动评分，质量一目了然。</div>
+        </div>
+        <div>
+          <div class="man-title">SEE ALSO</div>
+          <div class="man-indent"><span style="color:var(--amber)">claude-code</span>(1), <span style="color:var(--amber)">codex</span>(1), <span style="color:var(--amber)">gemini-cli</span>(1)</div>
+        </div>
+        <div style="margin-top:20px">
+          <div class="man-header">MUXVO(1)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MUXVO(1)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Demo: ASCII Tiling Terminal -->
+<section style="padding:40px 24px 80px" id="demo" data-chrome-title="muxvo start — zsh — [3 terminals]">
+  <div class="term-content">
+    <div class="section-cmd" data-cmd="muxvo start --layout=3x1"><span class="prompt">$</span> <span class="cmd">muxvo start --layout=3x1</span></div>
+    <div class="output-line fade-section">
+      <pre style="font-size:14px;line-height:1.5;color:var(--text-out);overflow-x:auto" id="demo-pre">
+  ┌─── claude-code ───┬──── codex ────┬── gemini-cli ──┐
+  │ <span class="prompt">$</span> claude           │ <span class="prompt">$</span> codex       │ <span class="prompt">$</span> gemini       │
+  │ <span style="color:var(--text-dim)">></span> Fix the auth bug │ <span style="color:var(--text-dim)">></span> Write tests │ <span style="color:var(--text-dim)">></span> Review PR    │
+  │ <span style="color:var(--text-dim)">...</span>                │ <span style="color:var(--text-dim)">...</span>           │ <span style="color:var(--text-dim)">...</span>            │
+  └────────────────────┴───────────────┴────────────────┘
+  <span class="success-text">3 terminals running.</span></pre>
+
+      <div style="margin-top:24px" id="demo-search">
+        <div><span class="prompt">$</span> <span class="cmd">muxvo chat search "auth bug fix"</span></div>
+        <div style="margin-top:4px">Found <span style="color:var(--amber)">3</span> results across <span style="color:var(--amber)">2</span> tools:</div>
+        <div style="padding-left:2ch;margin-top:4px">
+          <div><span style="color:var(--amber)">[claude-code]</span> session-042: <span style="color:var(--text-dim)">"Fixed JWT validation..."</span></div>
+          <div><span style="color:var(--amber)">[claude-code]</span> session-039: <span style="color:var(--text-dim)">"Auth middleware refactor..."</span></div>
+          <div><span style="color:var(--amber)">[codex]</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; session-017: <span style="color:var(--text-dim)">"Token refresh bug..."</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Tools: Neofetch -->
+<section style="padding:40px 24px 80px" id="tools" data-chrome-title="muxvo neofetch — zsh — [running]">
+  <div class="term-content">
+    <div class="section-cmd" data-cmd="muxvo neofetch"><span class="prompt">$</span> <span class="cmd">muxvo neofetch</span></div>
+    <div class="output-line fade-section">
+      <div class="neofetch">
+        <div class="neofetch-logo">
+  ╔══════╗
+  ║ <span style="font-weight:700">MXVO</span> ║
+  ╚══════╝</div>
+        <div class="neofetch-info">
+          <div><span class="nf-title">user@muxvo</span></div>
+          <div><span class="nf-sep">──────────────────</span></div>
+          <div><span class="nf-key">OS:</span> <span class="nf-val">macOS + Electron</span></div>
+          <div><span class="nf-key">Shell:</span> <span class="nf-val">AI CLI Workbench v1.0.0</span></div>
+          <div><span class="nf-key">Terminals:</span> <span class="nf-val">8 (tiling grid)</span></div>
+          <div><span class="nf-sep">──────────────────</span></div>
+          <div><span class="nf-key">Tools:</span> <span class="nf-val">claude-code, codex, gemini-cli</span></div>
+          <div><span class="nf-key">Integrations:</span> <span class="nf-val">9 (3 per tool)</span></div>
+          <div><span class="nf-key">Chat Sessions:</span> <span class="nf-val">1,247 indexed</span></div>
+          <div><span class="nf-key">Skills Installed:</span> <span class="nf-val">12</span></div>
+          <div><span class="nf-sep">──────────────────</span></div>
+          <div><span class="nf-key">Uptime:</span> <span class="nf-joke">since you got tired of switching between terminals</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Skills: Terminal Table -->
+<section style="padding:40px 24px 80px" id="skills" data-chrome-title="muxvo skills — zsh — [5 results]">
+  <div class="term-content">
+    <div class="section-cmd" data-cmd="muxvo skills --list --sort=score --limit=5"><span class="prompt">$</span> <span class="cmd">muxvo skills --list --sort=score --limit=5</span></div>
+    <div class="output-line fade-section">
+      <div class="skills-table">
+        <div class="table-header">
+          <span class="sk-name">NAME</span><span class="sk-ver">VERSION</span><span class="sk-score">SCORE</span><span class="sk-dl">DOWNLOADS</span><span class="sk-status">STATUS</span>
+        </div>
+        <div class="table-sep">────────────────────────────────────────────────────────────────────</div>
+        <div>
+          <span class="sk-name">code-review-pro</span><span class="sk-ver">2.1.0</span><span class="sk-score">★ 4.8</span><span class="sk-dl">12.4k</span><span class="sk-status sk-installed">installed</span>
+        </div>
+        <div>
+          <span class="sk-name">doc-generator</span><span class="sk-ver">1.3.2</span><span class="sk-score">★ 4.2</span><span class="sk-dl">8.7k</span><span class="sk-status sk-installed">installed</span>
+        </div>
+        <div>
+          <span class="sk-name">test-writer</span><span class="sk-ver">3.0.1</span><span class="sk-score">★ 4.0</span><span class="sk-dl">6.2k</span><span class="sk-status sk-available">available</span>
+        </div>
+        <div>
+          <span class="sk-name">refactor-assist</span><span class="sk-ver">1.0.0</span><span class="sk-score">★ 3.9</span><span class="sk-dl">4.1k</span><span class="sk-status sk-available">available</span>
+        </div>
+        <div>
+          <span class="sk-name">security-scan</span><span class="sk-ver">0.9.3</span><span class="sk-score">★ 3.7</span><span class="sk-dl">3.8k</span><span class="sk-status sk-available">available</span>
+        </div>
+        <div class="table-footer">Showing 5 of 127 skills. Run <span style="color:var(--text-bright)">muxvo skills --browse</span> for more.</div>
+      </div>
+
+      <div class="skills-install">
+        <div><span class="prompt">$</span> <span class="cmd">muxvo skills install test-writer</span></div>
+        <div class="install-step" style="margin-top:4px">Resolving dependencies... <span class="success-text">done</span></div>
+        <div class="install-step"><span class="install-bar">Installing test-writer@3.0.1... ████████████████████</span> <span style="color:var(--text-dim)">100%</span></div>
+        <div class="install-step"><span class="success-text">✓ test-writer installed successfully.</span></div>
+        <div class="install-step" style="color:var(--text-dim)">Run <span style="color:var(--text-bright)">muxvo skills run test-writer</span> to get started.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Install CTA: Multi-stage -->
+<section style="padding:60px 24px 80px" id="install" data-chrome-title="muxvo install — zsh — [downloading...]">
+  <div class="term-content" style="max-width:700px">
+    <div class="section-cmd" data-cmd="muxvo install"><span class="prompt">$</span> <span class="cmd">muxvo install</span></div>
+    <div class="install-steps" id="install-steps">
+      <div class="step" style="margin-top:8px">
+        <span class="step-label">Detecting system...</span>
+      </div>
+      <div class="step">
+        <span class="step-label">OS: </span><span id="detected-os">macOS (arm64)</span><span class="step-status">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;✓ supported</span>
+      </div>
+      <div class="step">
+        <span class="step-label">Node: v22.4.0</span><span class="step-status">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;✓ compatible</span>
+      </div>
+      <div class="step">
+        <span class="step-label">Disk: 42GB free</span><span class="step-status">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;✓ sufficient</span>
+      </div>
+      <div class="step" style="margin-top:8px">
+        <span class="step-label">Downloading Muxvo v1.0.0...</span>
+      </div>
+      <div class="step">
+        <span class="progress-line" id="install-progress">████████████████████████████████████████</span> <span id="install-pct" style="color:var(--text-dim)">100%</span>
+      </div>
+      <div class="step">
+        <span class="spinner-char" id="verify-spinner"></span> <span class="step-label">Verifying checksum...</span> <span class="step-status" id="verify-ok" style="visibility:hidden">OK</span>
+      </div>
+      <div class="step">
+        <span class="step-check">✓</span> <span class="success-text">Installation complete.</span>
+      </div>
+      <div class="step" style="margin-top:4px">
+        <span class="step-label">Run </span><span class="cmd">$ muxvo</span><span class="step-label"> to get started.</span>
+      </div>
+    </div>
+    <button class="install-btn" id="download-btn">Download for macOS</button>
+    <div style="margin-top:24px">
+      <a href="#" class="link-cmd"><span class="prompt">$</span> <span class="cmd">open</span> https://github.com/user/muxvo &nbsp;<span class="comment"># View source</span></a>
+      <a href="#" class="link-cmd"><span class="prompt">$</span> <span class="cmd">open</span> https://docs.muxvo.dev &nbsp;<span class="comment"># Read docs</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer with Session Stats -->
+<footer style="padding:40px 24px 32px">
+  <div class="term-content" style="max-width:700px">
+    <div class="footer-sep">────────────────────────────────────────────────────────────────</div>
+    <div style="margin-top:16px"><span class="prompt">$</span> <span class="cmd">muxvo --session-stats</span></div>
+    <div class="session-stats">
+      <div>Uptime <span class="stat-dots">..............</span> <span class="stat-value" id="stat-uptime">0m 00s</span></div>
+      <div>Sections viewed <span class="stat-dots">....</span> <span class="stat-value" id="stat-sections">0/6</span></div>
+      <div>Features <span class="stat-dots">............</span> <span class="stat-value">4</span></div>
+      <div>Skills available <span class="stat-dots">...</span> <span class="stat-value">127</span></div>
+      <div>CLI tools <span class="stat-dots">...........</span> <span class="stat-value">3</span></div>
+    </div>
+    <div style="margin-top:8px"><span class="prompt">$</span> <span class="cmd">muxvo --links</span></div>
+    <div style="margin-top:8px">
+      <a href="#" class="link-cmd"><span style="color:var(--amber)">docs</span> &nbsp;&nbsp;&nbsp; <span class="comment">https://docs.muxvo.dev</span></a>
+      <a href="#" class="link-cmd"><span style="color:var(--amber)">github</span> &nbsp; <span class="comment">https://github.com/user/muxvo</span></a>
+      <a href="#" class="link-cmd"><span style="color:var(--amber)">twitter</span> <span class="comment">https://twitter.com/muxvo</span></a>
+    </div>
+    <div style="margin-top:24px"><span class="prompt">$</span> <span class="cmd">exit</span></div>
+    <div style="margin-top:4px;color:var(--text-dim)">muxvo session ended. &copy; 2026 Muxvo.</div>
+  </div>
+</footer>
+
+<script>
+// ===== Close nav on click outside =====
+document.addEventListener('click',e=>{
+  const nav=document.getElementById('chrome-nav');
+  if(!e.target.closest('.chrome-title'))nav.classList.remove('open');
+});
+
+// ===== Hero typewriter =====
+const heroLines=document.querySelectorAll('.hero-line');
+heroLines.forEach((l,i)=>{l.style.opacity='0';l.style.transition='opacity .3s ease-out';
+  setTimeout(()=>{l.style.opacity='1'},300+i*150)});
+const skipAnim=()=>{heroLines.forEach(l=>{l.style.opacity='1';l.style.transition='none'});
+  document.removeEventListener('click',skipAnim);document.removeEventListener('keydown',skipAnim)};
+document.addEventListener('click',skipAnim,{once:true});
+document.addEventListener('keydown',skipAnim,{once:true});
+
+// ===== Command Typing on Scroll =====
+function typeCommand(el){
+  const cmdText=el.getAttribute('data-cmd');
+  if(!cmdText)return;
+  const cmdSpan=el.querySelector('.cmd');
+  const fullText=cmdSpan.textContent;
+  cmdSpan.textContent='';
+  cmdSpan.style.opacity='1';
+  el.classList.add('typed');
+
+  const cursor=document.createElement('span');
+  cursor.className='type-cursor';
+  cmdSpan.after(cursor);
+
+  let i=0;
+  const interval=setInterval(()=>{
+    cmdSpan.textContent+=fullText[i];
+    i++;
+    if(i>=fullText.length){
+      clearInterval(interval);
+      setTimeout(()=>{
+        cursor.style.transition='opacity .3s';
+        cursor.style.opacity='0';
+        setTimeout(()=>cursor.remove(),300);
+      },800);
+    }
+  },45);
+}
+const cmdObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){typeCommand(e.target);cmdObs.unobserve(e.target)}
+  });
+},{threshold:.5});
+document.querySelectorAll('.section-cmd[data-cmd]').forEach(el=>cmdObs.observe(el));
+
+// ===== Fade-in for output sections =====
+const fadeObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');fadeObs.unobserve(e.target)}});
+},{threshold:.15});
+document.querySelectorAll('.fade-section').forEach(el=>fadeObs.observe(el));
+
+// ===== Dynamic Chrome Bar Title =====
+const sections=document.querySelectorAll('section[data-chrome-title]');
+const chromeTitleEl=document.getElementById('chrome-title-text');
+const defaultTitle='muxvo — zsh — 120×40';
+let currentTitle=defaultTitle;
+
+const titleObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting&&e.intersectionRatio>=0.3){
+      const newTitle=e.target.getAttribute('data-chrome-title');
+      if(newTitle&&newTitle!==currentTitle){
+        chromeTitleEl.style.opacity='0';
+        setTimeout(()=>{
+          chromeTitleEl.textContent=newTitle;
+          chromeTitleEl.style.opacity='1';
+          currentTitle=newTitle;
+        },150);
+      }
+    }
+  });
+},{threshold:.3});
+sections.forEach(s=>titleObs.observe(s));
+
+// Reset to default when hero is visible
+const heroObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting&&currentTitle!==defaultTitle){
+      chromeTitleEl.style.opacity='0';
+      setTimeout(()=>{
+        chromeTitleEl.textContent=defaultTitle;
+        chromeTitleEl.style.opacity='1';
+        currentTitle=defaultTitle;
+      },150);
+    }
+  });
+},{threshold:.3});
+heroObs.observe(document.getElementById('hero-content'));
+
+// ===== Tree Cascade Animation =====
+const treeObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const lines=e.target.querySelectorAll('.tree > div');
+      lines.forEach((line,i)=>{
+        setTimeout(()=>line.classList.add('line-visible'),i*80);
+      });
+      treeObs.unobserve(e.target);
+    }
+  });
+},{threshold:.2});
+document.querySelectorAll('.tree').forEach(el=>{
+  const parent=el.closest('.output-line')||el.closest('section');
+  if(parent)treeObs.observe(parent);
+});
+
+// ===== Multi-stage Install Animation =====
+const installObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const steps=e.target.querySelectorAll('.step');
+      const delays=[0,400,700,1000,1400,1700,2200,2800,3200];
+
+      steps.forEach((step,i)=>{
+        setTimeout(()=>{
+          step.classList.add('show');
+          // Spinner for verify step
+          if(i===6){
+            const spinChars=['|','/','-','\\'];
+            const spinEl=document.getElementById('verify-spinner');
+            let si=0;
+            const spinInt=setInterval(()=>{
+              spinEl.textContent=spinChars[si%4];si++;
+            },100);
+            setTimeout(()=>{
+              clearInterval(spinInt);
+              spinEl.textContent='✓';
+              spinEl.style.color='var(--success)';
+              document.getElementById('verify-ok').style.visibility='visible';
+            },600);
+          }
+        },delays[i]||i*400);
+      });
+
+      // Activate download button after all steps
+      setTimeout(()=>{
+        document.getElementById('download-btn').classList.add('ready');
+        // Update chrome title
+        const section=document.getElementById('install');
+        if(section)section.setAttribute('data-chrome-title','muxvo install — zsh — [complete ✓]');
+        chromeTitleEl.style.opacity='0';
+        setTimeout(()=>{
+          chromeTitleEl.textContent='muxvo install — zsh — [complete ✓]';
+          chromeTitleEl.style.opacity='1';
+          currentTitle='muxvo install — zsh — [complete ✓]';
+        },150);
+      },3600);
+
+      installObs.unobserve(e.target);
+    }
+  });
+},{threshold:.3});
+installObs.observe(document.getElementById('install-steps'));
+
+// ===== OS Detection for Install =====
+(function(){
+  const ua=navigator.userAgent;
+  const osEl=document.getElementById('detected-os');
+  const btn=document.getElementById('download-btn');
+  if(/Mac/.test(ua)){
+    osEl.textContent=ua.includes('ARM')||ua.includes('Apple')?'macOS (arm64)':'macOS (x86_64)';
+    btn.textContent='Download for macOS';
+  }else if(/Win/.test(ua)){
+    osEl.textContent='Windows (x64)';
+    btn.textContent='Download for Windows';
+  }else if(/Linux/.test(ua)){
+    osEl.textContent='Linux (x86_64)';
+    btn.textContent='Download for Linux';
+  }
+})();
+
+// ===== Footer: Session Stats =====
+const startTime=Date.now();
+const sectionsViewed=new Set();
+setInterval(()=>{
+  const elapsed=Math.floor((Date.now()-startTime)/1000);
+  const m=Math.floor(elapsed/60);
+  const s=elapsed%60;
+  document.getElementById('stat-uptime').textContent=`${m}m ${s.toString().padStart(2,'0')}s`;
+},1000);
+
+const statsObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting&&e.target.id){
+      sectionsViewed.add(e.target.id);
+      document.getElementById('stat-sections').textContent=`${sectionsViewed.size}/6`;
+    }
+  });
+},{threshold:.3});
+['features','demo','tools','skills','install'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el)statsObs.observe(el);
+});
+// Count hero as viewed
+sectionsViewed.add('hero');
+document.getElementById('stat-sections').textContent='1/6';
+
+// ===== Keyboard Easter Eggs =====
+let keyBuffer='';
+let keyTimer=null;
+const eggEl=document.createElement('div');
+eggEl.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:13px;padding:8px 16px;background:rgba(13,17,23,.95);border:1px solid var(--border);border-radius:4px;color:var(--text-dim);opacity:0;transition:opacity .3s;z-index:10000;pointer-events:none;white-space:nowrap';
+document.body.appendChild(eggEl);
+
+function showEgg(msg,color){
+  eggEl.textContent=msg;
+  eggEl.style.color=color||'var(--text-dim)';
+  eggEl.style.opacity='1';
+  setTimeout(()=>{eggEl.style.opacity='0'},2500);
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
+  if(e.key.length===1){
+    keyBuffer+=e.key.toLowerCase();
+    clearTimeout(keyTimer);
+    keyTimer=setTimeout(()=>{keyBuffer=''},1500);
+
+    if(keyBuffer.endsWith('help')){showEgg('$ help → features | demo | tools | skills | install','var(--amber)');keyBuffer=''}
+    else if(keyBuffer.endsWith('vim')){showEgg("you're already in the right tool.",'var(--success)');keyBuffer=''}
+    else if(keyBuffer.endsWith('sudo')){showEgg('[sudo] nice try.','#ff5f57');keyBuffer=''}
+    else if(keyBuffer.endsWith('clear')){window.scrollTo({top:0,behavior:'smooth'});showEgg('$ clear','var(--text-dim)');keyBuffer=''}
+    else if(keyBuffer.endsWith('ls')){showEgg('features/  demo/  tools/  skills/  install/','var(--amber)');keyBuffer=''}
+    else if(keyBuffer.endsWith('exit')){showEgg('logout','var(--text-dim)');keyBuffer=''}
+  }
+});
+</script>
+</body>
+</html>
