@@ -88,8 +88,8 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.FS.SELECT_DIRECTORY, defaultPath ? { defaultPath } : undefined),
     readDir: (dirPath: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.FS.READ_DIR, { path: dirPath }),
-    readFile: (filePath: string) =>
-      ipcRenderer.invoke(IPC_CHANNELS.FS.READ_FILE, { path: filePath }),
+    readFile: (filePath: string, encoding?: 'utf-8' | 'base64') =>
+      ipcRenderer.invoke(IPC_CHANNELS.FS.READ_FILE, { path: filePath, encoding }),
     writeFile: (filePath: string, content: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.FS.WRITE_FILE, { path: filePath, content }),
     watchStart: (id: string, paths: string[]) =>

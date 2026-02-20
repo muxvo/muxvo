@@ -15,7 +15,7 @@ interface FileTempViewProps {
   projectCwd: string;
   filePath: string;
   content: string;
-  fileType: 'markdown' | 'code' | 'text';
+  fileType: 'markdown' | 'code' | 'text' | 'image';
   terminals: Array<{ id: string; cwd: string }>;
   onClose: () => void;
   onSelectFile: (filePath: string, ext: string) => void;
@@ -40,12 +40,14 @@ function getDisplayName(path: string): string {
   return path.split('/').pop() || '~';
 }
 
-function getTagLabel(fileType: 'markdown' | 'code' | 'text'): string {
+function getTagLabel(fileType: 'markdown' | 'code' | 'text' | 'image'): string {
   switch (fileType) {
     case 'markdown':
       return 'MD';
     case 'code':
       return 'CODE';
+    case 'image':
+      return 'IMG';
     case 'text':
       return 'TXT';
   }
@@ -285,6 +287,11 @@ export function FileTempView({
         <div className="file-temp-view__content-body">
           {fileType === 'markdown' && <MarkdownPreview content={content} />}
           {fileType === 'code' && <CodeView content={content} />}
+          {fileType === 'image' && content && (
+            <div className="file-temp-view__image">
+              <img src={content} alt={fileName} />
+            </div>
+          )}
           {fileType === 'text' && (
             <div className="file-temp-view__text">{content}</div>
           )}
