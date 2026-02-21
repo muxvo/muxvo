@@ -2131,7 +2131,7 @@ function createWindow(windowConfig) {
     if (mainWindow && !mainWindow.isDestroyed()) {
       lastBounds = mainWindow.getBounds();
     }
-    saveWindowBounds();
+    saveWindowBoundsAndClearTerminals();
   });
   mainWindow.webContents.setWindowOpenHandler((details) => {
     electron.shell.openExternal(details.url);
@@ -2191,19 +2191,23 @@ electron.app.whenReady().then(() => {
   function launchWindowWithTerminals() {
     const config = configManager.loadConfig();
     createWindow(config.window);
-    if (config.openTerminals && config.openTerminals.length > 0 && mainWindow) {
-      const terminalsToRestore = config.openTerminals;
+    if (mainWindow) {
+      const terminalsToRestore = config.openTerminals && config.openTerminals.length > 0 ? config.openTerminals : null;
       mainWindow.webContents.once("did-finish-load", () => {
-        console.log("[MUXVO:restore] did-finish-load, scheduling restore in 500ms");
         setTimeout(() => {
           if (!terminalManager) return;
-          const restoredIds = [];
-          for (const terminal of terminalsToRestore) {
-            const result = terminalManager.spawn({ cwd: terminal.cwd });
-            if (result.success && result.id) {
-              console.log("[MUXVO:restore] spawned id=" + result.id + " cwd=" + terminal.cwd);
-              restoredIds.push(result.id);
+          if (terminalsToRestore) {
+            console.log("[MUXVO:restore] did-finish-load, restoring " + terminalsToRestore.length + " terminals");
+            for (const terminal of terminalsToRestore) {
+              const result = terminalManager.spawn({ cwd: terminal.cwd });
+              if (result.success && result.id) {
+                console.log("[MUXVO:restore] spawned id=" + result.id + " cwd=" + terminal.cwd);
+              }
             }
+          } else {
+            const homePath = require("os").homedir();
+            terminalManager.spawn({ cwd: homePath });
+            console.log("[MUXVO] fresh start, created terminal at " + homePath);
           }
           const win = electron.BrowserWindow.getAllWindows()[0];
           if (win) {
@@ -2213,7 +2217,6 @@ electron.app.whenReady().then(() => {
               state: t.state,
               cwd: t.cwd
             })));
-            console.log("[MUXVO:restore] sent list-updated, count=" + restoredIds.length);
           }
         }, 500);
       });
@@ -2235,12 +2238,13 @@ function saveTerminalConfig(configManager) {
     openTerminals: terminals.map((t) => ({ cwd: t.cwd }))
   });
 }
-function saveWindowBounds() {
+function saveWindowBoundsAndClearTerminals() {
   if (!lastBounds) return;
   const configManager = createConfigManager();
   const existing = configManager.loadConfig();
   configManager.saveConfig({
     ...existing,
+    openTerminals: [],
     window: {
       width: lastBounds.width,
       height: lastBounds.height,

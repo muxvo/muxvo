@@ -92,8 +92,10 @@ function createWindow(windowConfig?: WindowConfig): void {
     if (mainWindow && !mainWindow.isDestroyed()) {
       lastBounds = mainWindow.getBounds();
     }
-    // Save window bounds only — terminal list already saved in real-time
-    saveWindowBounds();
+    // Save window bounds and clear terminal list on normal close.
+    // On crash/kill the close event won't fire, so openTerminals stays
+    // intact from real-time saves, enabling restore on next launch.
+    saveWindowBoundsAndClearTerminals();
   });
 
   // Open external links in default browser
@@ -182,22 +184,33 @@ app.whenReady().then(() => {
     const config = configManager.loadConfig();
     createWindow(config.window);
 
-    // Restore terminals after renderer is ready (so output events are received)
-    if (config.openTerminals && config.openTerminals.length > 0 && mainWindow) {
-      const terminalsToRestore = config.openTerminals;
+    // Restore terminals or create a fresh one after renderer is ready
+    if (mainWindow) {
+      const terminalsToRestore = config.openTerminals && config.openTerminals.length > 0
+        ? config.openTerminals
+        : null;
+
       mainWindow.webContents.once('did-finish-load', () => {
-        console.log('[MUXVO:restore] did-finish-load, scheduling restore in 500ms');
         // Delay to ensure React has mounted and xterm useEffect listeners are active
         setTimeout(() => {
           if (!terminalManager) return;
-          const restoredIds: string[] = [];
-          for (const terminal of terminalsToRestore) {
-            const result = terminalManager.spawn({ cwd: terminal.cwd });
-            if (result.success && result.id) {
-              console.log('[MUXVO:restore] spawned id=' + result.id + ' cwd=' + terminal.cwd);
-              restoredIds.push(result.id);
+
+          if (terminalsToRestore) {
+            // Crash recovery: restore previous terminals
+            console.log('[MUXVO:restore] did-finish-load, restoring ' + terminalsToRestore.length + ' terminals');
+            for (const terminal of terminalsToRestore) {
+              const result = terminalManager.spawn({ cwd: terminal.cwd });
+              if (result.success && result.id) {
+                console.log('[MUXVO:restore] spawned id=' + result.id + ' cwd=' + terminal.cwd);
+              }
             }
+          } else {
+            // Normal start: create one fresh terminal at home directory
+            const homePath = require('os').homedir();
+            terminalManager.spawn({ cwd: homePath });
+            console.log('[MUXVO] fresh start, created terminal at ' + homePath);
           }
+
           // Notify renderer to refresh terminal list
           const win = BrowserWindow.getAllWindows()[0];
           if (win) {
@@ -205,7 +218,6 @@ app.whenReady().then(() => {
             win.webContents.send(IPC_CHANNELS.TERMINAL.LIST_UPDATED, list.map((t) => ({
               id: t.id, state: t.state, cwd: t.cwd,
             })));
-            console.log('[MUXVO:restore] sent list-updated, count=' + restoredIds.length);
           }
         }, 500);
       });
@@ -232,16 +244,18 @@ function saveTerminalConfig(configManager: ReturnType<typeof createConfigManager
   });
 }
 
-/** Save window bounds to config before closing (terminals saved in real-time via onTerminalChange) */
-function saveWindowBounds(): void {
+/** Save window bounds and clear terminal list on normal close.
+ *  Clearing openTerminals ensures a fresh start on next launch.
+ *  If the app crashes, this function never runs, so the real-time
+ *  saved terminal list remains and will be restored on next launch. */
+function saveWindowBoundsAndClearTerminals(): void {
   if (!lastBounds) return;
 
   const configManager = createConfigManager();
-  // Only save window bounds — terminal list is already saved in real-time
-  // by onTerminalChange callback whenever terminals are created/closed
   const existing = configManager.loadConfig();
   configManager.saveConfig({
     ...existing,
+    openTerminals: [],
     window: {
       width: lastBounds.width,
       height: lastBounds.height,
