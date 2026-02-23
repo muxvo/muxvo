@@ -13,6 +13,8 @@ import { TerminalGrid } from './components/terminal/TerminalGrid';
 import { CloseConfirmDialog } from './components/terminal/CloseConfirmDialog';
 import { ChatHistoryPanel } from './components/chat/ChatHistoryPanel';
 import { SkillsPanel } from './components/skill/SkillsPanel';
+import { McpPanel } from './components/mcp/McpPanel';
+import { HooksPanel } from './components/hook/HooksPanel';
 import { FilePanel } from './components/file/FilePanel';
 import { FileTempView } from './components/file/FileTempView';
 import { PanelProvider, usePanelContext } from './contexts/PanelContext';
@@ -337,6 +339,20 @@ function AppContent({
       {state.skillsPanel.open && (
         <div className="skills-panel-overlay">
           <SkillsPanel />
+        </div>
+      )}
+
+      {/* MCP panel overlay (two-column: server list | detail/form) */}
+      {state.mcpPanel.open && (
+        <div className="mcp-panel-overlay">
+          <McpPanel />
+        </div>
+      )}
+
+      {/* Hooks panel overlay (two-column: hook list | detail/form) */}
+      {state.hooksPanel.open && (
+        <div className="hooks-panel-overlay">
+          <HooksPanel />
         </div>
       )}
 

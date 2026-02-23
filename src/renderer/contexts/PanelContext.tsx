@@ -12,6 +12,8 @@ export interface PanelState {
   tempView: { active: boolean; contentKey: string | null; projectCwd: string | null; terminalId: string | null };
   chatHistory: { open: boolean };
   skillsPanel: { open: boolean };
+  mcpPanel: { open: boolean };
+  hooksPanel: { open: boolean };
   menuDropdown: { open: boolean; type: 'mcp' | null };
 }
 
@@ -20,6 +22,8 @@ const initialState: PanelState = {
   tempView: { active: false, contentKey: null, projectCwd: null, terminalId: null },
   chatHistory: { open: false },
   skillsPanel: { open: false },
+  mcpPanel: { open: false },
+  hooksPanel: { open: false },
   menuDropdown: { open: false, type: null },
 };
 
@@ -34,6 +38,10 @@ type PanelAction =
   | { type: 'CLOSE_CHAT_HISTORY' }
   | { type: 'OPEN_SKILLS_PANEL' }
   | { type: 'CLOSE_SKILLS_PANEL' }
+  | { type: 'OPEN_MCP_PANEL' }
+  | { type: 'CLOSE_MCP_PANEL' }
+  | { type: 'OPEN_HOOKS_PANEL' }
+  | { type: 'CLOSE_HOOKS_PANEL' }
   | { type: 'TOGGLE_MENU_DROPDOWN'; dropdownType: 'mcp' }
   | { type: 'CLOSE_ALL' };
 
@@ -80,6 +88,26 @@ function panelReducer(state: PanelState, action: PanelAction): PanelState {
       return {
         ...state,
         skillsPanel: { open: false },
+      };
+    case 'OPEN_MCP_PANEL':
+      return {
+        ...state,
+        mcpPanel: { open: true },
+      };
+    case 'CLOSE_MCP_PANEL':
+      return {
+        ...state,
+        mcpPanel: { open: false },
+      };
+    case 'OPEN_HOOKS_PANEL':
+      return {
+        ...state,
+        hooksPanel: { open: true },
+      };
+    case 'CLOSE_HOOKS_PANEL':
+      return {
+        ...state,
+        hooksPanel: { open: false },
       };
     case 'TOGGLE_MENU_DROPDOWN': {
       const isOpen =
