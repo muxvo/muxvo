@@ -24,7 +24,7 @@ protocol.registerSchemesAsPrivileged([
 import { createTerminalManager } from './services/terminal/manager';
 import { createRealPtyAdapter } from './services/terminal/pty-adapter';
 import { registerTerminalHandlers } from './ipc/terminal-handlers';
-import { registerChatHandlers } from './ipc/chat-handlers';
+import { registerChatHandlers, registerChatArchiveHandlers } from './ipc/chat-handlers';
 import { registerConfigHandlers } from './ipc/config-handlers';
 import { registerFsHandlers } from './ipc/fs-handlers';
 import { registerAppHandlers } from './ipc/app-handlers';
@@ -160,6 +160,7 @@ app.whenReady().then(() => {
 
   chatWatcher = createChatWatcher();
   chatArchive = createChatArchiveManager();
+  registerChatArchiveHandlers(chatArchive);
   chatWatcher.onSessionUpdate((projectHash, sessionId) => {
     chatArchive?.onSessionUpdate(projectHash, sessionId);
   });

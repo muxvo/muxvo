@@ -19,6 +19,7 @@ import './ChatHistoryPanel.css';
 export type SortMode = 'time' | 'project';
 
 export function ChatHistoryPanel() {
+  const { t } = useI18n();
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
   const [selectedProjectHash, setSelectedProjectHash] = useState<string | null>(null);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
@@ -28,6 +29,32 @@ export function ChatHistoryPanel() {
   const [sortMode, setSortMode] = useState<SortMode>('time');
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [sessionsLoading, setSessionsLoading] = useState(true);
+  const [bannerDismissed, setBannerDismissed] = useState(
+    () => localStorage.getItem('muxvo-archive-notice-dismissed') === 'true'
+  );
+  const [archiveEnabled, setArchiveEnabled] = useState(true);
+
+  // Load archive enabled state
+  useEffect(() => {
+    const chatApi = window.api.chat as any;
+    if (chatApi.getArchiveEnabled) {
+      chatApi.getArchiveEnabled().then((v: boolean) => setArchiveEnabled(v)).catch(() => {});
+    }
+  }, []);
+
+  const handleDismissBanner = useCallback(() => {
+    localStorage.setItem('muxvo-archive-notice-dismissed', 'true');
+    setBannerDismissed(true);
+  }, []);
+
+  const handleToggleArchive = useCallback(() => {
+    const next = !archiveEnabled;
+    setArchiveEnabled(next);
+    const chatApi = window.api.chat as any;
+    if (chatApi.setArchiveEnabled) {
+      chatApi.setArchiveEnabled(next).catch(() => {});
+    }
+  }, [archiveEnabled]);
 
   // Fetch projects on mount
   useEffect(() => {
@@ -86,9 +113,32 @@ export function ChatHistoryPanel() {
   }, [selectedSessionId]);
 
   const totalSessionCount = projects.reduce((sum, p) => sum + p.sessionCount, 0);
+  const selectedSession = sessions.find(s => s.sessionId === selectedSessionId);
+  const sessionTitle = selectedSession?.title;
 
   return (
     <div className="chat-history-panel">
+      {!bannerDismissed && (
+        <div className="chat-archive-banner">
+          <span className="chat-archive-banner__text">
+            {t('chat.archiveNotice' as any)}
+          </span>
+          <div className="chat-archive-banner__actions">
+            <label className="chat-archive-toggle">
+              <input
+                type="checkbox"
+                checked={archiveEnabled}
+                onChange={handleToggleArchive}
+              />
+              <span>{archiveEnabled ? t('chat.archiveOn' as any) : t('chat.archiveOff' as any)}</span>
+            </label>
+            <button className="chat-archive-banner__close" onClick={handleDismissBanner}>
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
+      <div className="chat-history-panel__columns">
       <div className="chat-history-panel__left">
         {projectsLoading && projects.length === 0 ? (
           <div className="panel-skeleton">
@@ -138,7 +188,9 @@ export function ChatHistoryPanel() {
         <SessionDetail
           messages={messages}
           loading={loading}
+          sessionTitle={sessionTitle}
         />
+      </div>
       </div>
     </div>
   );

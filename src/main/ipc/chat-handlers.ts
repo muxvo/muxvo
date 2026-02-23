@@ -9,6 +9,7 @@ import { ipcMain } from 'electron';
 import { homedir } from 'os';
 import { join } from 'path';
 import { createChatProjectReader } from '../services/chat-dual-source';
+import { createChatArchiveManager } from '../services/chat-archive';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 
 const CC_BASE_PATH = join(homedir(), '.claude');
@@ -84,4 +85,16 @@ export function registerChatHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.CHAT.GET_SESSION, async (_e, p) => handlers.getSession(p));
   ipcMain.handle(IPC_CHANNELS.CHAT.SEARCH, async (_e, p) => handlers.search(p));
   ipcMain.handle(IPC_CHANNELS.CHAT.EXPORT, async (_e, p) => handlers.export(p));
+}
+
+export function registerChatArchiveHandlers(
+  archiveManager: ReturnType<typeof createChatArchiveManager>
+): void {
+  ipcMain.handle(IPC_CHANNELS.CHAT.GET_ARCHIVE_ENABLED, async () => {
+    return archiveManager.getEnabled();
+  });
+  ipcMain.handle(IPC_CHANNELS.CHAT.SET_ARCHIVE_ENABLED, async (_e, p: { enabled: boolean }) => {
+    await archiveManager.setEnabled(p.enabled);
+    return { success: true };
+  });
 }
