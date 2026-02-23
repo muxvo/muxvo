@@ -460,7 +460,7 @@ function registerTerminalHandlers(manager, onTerminalChange) {
 }
 function createChatProjectReader(opts) {
   const projectsDir = path.join(opts.ccBasePath, "projects");
-  const archiveProjectsDir = opts.archivePath ? path.join(opts.archivePath, "projects") : null;
+  const archiveProjectsDir = opts.archivePath || null;
   const CACHE_TTL = 5 * 60 * 1e3;
   const projectsCache = { data: null, expiry: 0 };
   const summaryCache = /* @__PURE__ */ new Map();
@@ -510,7 +510,13 @@ function createChatProjectReader(opts) {
         try {
           const obj = JSON.parse(trimmed);
           if (obj.type === "user") {
-            const rawContent = typeof obj.message?.content === "string" ? obj.message.content : typeof obj.content === "string" ? obj.content : "";
+            let rawContent = "";
+            const msgContent = obj.message?.content ?? obj.content;
+            if (typeof msgContent === "string") {
+              rawContent = msgContent;
+            } else if (Array.isArray(msgContent)) {
+              rawContent = msgContent.filter((b) => b.type === "text" && typeof b.text === "string").map((b) => b.text).join("\n");
+            }
             title = rawContent.slice(0, 100);
             startedAt = obj.timestamp || "";
             break;
@@ -659,9 +665,11 @@ function createChatProjectReader(opts) {
       if (projectsCache.data && Date.now() < projectsCache.expiry) {
         return projectsCache.data;
       }
-      const ccProjects = await scanProjectsFromDir(projectsDir);
-      if (archiveProjectsDir) {
-        const archiveProjects = await scanProjectsFromDir(archiveProjectsDir);
+      const [ccProjects, archiveProjects] = await Promise.all([
+        scanProjectsFromDir(projectsDir),
+        archiveProjectsDir ? scanProjectsFromDir(archiveProjectsDir) : Promise.resolve([])
+      ]);
+      if (archiveProjects.length > 0) {
         const ccHashSet = new Set(ccProjects.map((p) => p.projectHash));
         for (const ap of archiveProjects) {
           if (ccHashSet.has(ap.projectHash)) {
@@ -684,16 +692,15 @@ function createChatProjectReader(opts) {
      */
     async getSessionsForProject(projectHash, limit = 50) {
       const ccProjectPath = path.join(projectsDir, projectHash);
-      const ccStats = await scanSessionFilesFromDir(ccProjectPath);
+      const [ccStats, archiveStats] = await Promise.all([
+        scanSessionFilesFromDir(ccProjectPath),
+        archiveProjectsDir ? scanSessionFilesFromDir(path.join(archiveProjectsDir, projectHash)) : Promise.resolve([])
+      ]);
       const ccFileNames = new Set(ccStats.map((s) => s.fileName));
       let allStats = [...ccStats];
-      if (archiveProjectsDir) {
-        const archiveProjectPath = path.join(archiveProjectsDir, projectHash);
-        const archiveStats = await scanSessionFilesFromDir(archiveProjectPath);
-        for (const archiveStat of archiveStats) {
-          if (!ccFileNames.has(archiveStat.fileName)) {
-            allStats.push(archiveStat);
-          }
+      for (const archiveStat of archiveStats) {
+        if (!ccFileNames.has(archiveStat.fileName)) {
+          allStats.push(archiveStat);
         }
       }
       allStats.sort((a, b) => b.mtime - a.mtime);
@@ -768,14 +775,14 @@ function createChatProjectReader(opts) {
         }
         return collected;
       }
-      const ccFiles = await collectFilesFromBase(projectsDir);
-      if (archiveProjectsDir) {
-        const archiveFiles = await collectFilesFromBase(archiveProjectsDir);
-        const ccKeySet = new Set(ccFiles.map((f) => f.projectHash + "/" + f.fileName));
-        for (const af of archiveFiles) {
-          if (!ccKeySet.has(af.projectHash + "/" + af.fileName)) {
-            ccFiles.push(af);
-          }
+      const [ccFiles, archiveFiles] = await Promise.all([
+        collectFilesFromBase(projectsDir),
+        archiveProjectsDir ? collectFilesFromBase(archiveProjectsDir) : Promise.resolve([])
+      ]);
+      const ccKeySet = new Set(ccFiles.map((f) => f.projectHash + "/" + f.fileName));
+      for (const af of archiveFiles) {
+        if (!ccKeySet.has(af.projectHash + "/" + af.fileName)) {
+          ccFiles.push(af);
         }
       }
       ccFiles.sort((a, b) => b.mtime - a.mtime);
@@ -806,15 +813,14 @@ function createChatProjectReader(opts) {
       const ccFilePath = path.join(projectsDir, projectHash, `${sessionId}.jsonl`);
       const limit = options?.limit;
       let filePath = ccFilePath;
-      try {
-        await fs.promises.access(ccFilePath);
-      } catch {
+      let resolvedStat = await fs.promises.stat(ccFilePath).catch(() => null);
+      if (!resolvedStat) {
         if (archiveProjectsDir) {
           const archiveFilePath = path.join(archiveProjectsDir, projectHash, `${sessionId}.jsonl`);
-          try {
-            await fs.promises.access(archiveFilePath);
+          resolvedStat = await fs.promises.stat(archiveFilePath).catch(() => null);
+          if (resolvedStat) {
             filePath = archiveFilePath;
-          } catch {
+          } else {
             return [];
           }
         } else {
@@ -822,7 +828,7 @@ function createChatProjectReader(opts) {
         }
       }
       try {
-        const stat = await fs.promises.stat(filePath);
+        const stat = resolvedStat;
         const TAIL_BYTES = 2 * 1024 * 1024;
         const readFromTail = limit && stat.size > TAIL_BYTES;
         const startPos = readFromTail ? stat.size - TAIL_BYTES : 0;
@@ -2163,6 +2169,8 @@ function createChatArchiveManager() {
       running = true;
       enabled = await readEnabled();
       if (enabled) {
+        await new Promise((r) => setTimeout(r, 3e3));
+        if (!running) return;
         await fullScan(onProgress);
       }
     },
@@ -2470,7 +2478,11 @@ electron.app.whenReady().then(() => {
     chatArchive?.onSessionUpdate(projectHash, sessionId);
   });
   chatWatcher.start();
+  let lastProgressPush = 0;
   chatArchive.start((synced, total) => {
+    const now = Date.now();
+    if (now - lastProgressPush < 1e3 && synced < total) return;
+    lastProgressPush = now;
     electron.BrowserWindow.getAllWindows().forEach((win) => {
       if (!win.isDestroyed()) {
         win.webContents.send(IPC_CHANNELS.CHAT.ARCHIVE_PROGRESS, { synced, total });
