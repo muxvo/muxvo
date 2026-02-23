@@ -706,23 +706,24 @@ function createChatProjectReader(opts) {
       }
       allStats.sort((a, b) => b.mtime - a.mtime);
       const topFiles = allStats.slice(0, limit);
-      const sessions = [];
-      for (const file of topFiles) {
-        const cacheKey = projectHash + "/" + file.fileName;
-        const cached = summaryCache.get(cacheKey);
-        if (cached && Date.now() < cached.expiry) {
-          if (cached.data.title) sessions.push(cached.data);
-          continue;
-        }
-        const filePath = ccFileNames.has(file.fileName) ? path.join(ccProjectPath, file.fileName) : path.join(archiveProjectsDir, projectHash, file.fileName);
-        try {
-          const summary = await extractSessionSummary(projectHash, filePath, file.fileName);
-          summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
-          if (summary.title) sessions.push(summary);
-        } catch {
-        }
-      }
-      return sessions;
+      const results = await Promise.all(
+        topFiles.map(async (file) => {
+          const cacheKey = projectHash + "/" + file.fileName;
+          const cached = summaryCache.get(cacheKey);
+          if (cached && Date.now() < cached.expiry) {
+            return cached.data.title ? cached.data : null;
+          }
+          const filePath = ccFileNames.has(file.fileName) ? path.join(ccProjectPath, file.fileName) : path.join(archiveProjectsDir, projectHash, file.fileName);
+          try {
+            const summary = await extractSessionSummary(projectHash, filePath, file.fileName);
+            summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
+            return summary.title ? summary : null;
+          } catch {
+            return null;
+          }
+        })
+      );
+      return results.filter((s) => s !== null);
     },
     /**
      * Get recent sessions across all projects.
@@ -788,22 +789,23 @@ function createChatProjectReader(opts) {
       }
       ccFiles.sort((a, b) => b.mtime - a.mtime);
       const topFiles = ccFiles.slice(0, limit);
-      const sessions = [];
-      for (const file of topFiles) {
-        const cacheKey = file.projectHash + "/" + file.fileName;
-        const cached = summaryCache.get(cacheKey);
-        if (cached && Date.now() < cached.expiry) {
-          if (cached.data.title) sessions.push(cached.data);
-          continue;
-        }
-        try {
-          const summary = await extractSessionSummary(file.projectHash, file.filePath, file.fileName);
-          summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
-          if (summary.title) sessions.push(summary);
-        } catch {
-        }
-      }
-      return sessions;
+      const results = await Promise.all(
+        topFiles.map(async (file) => {
+          const cacheKey = file.projectHash + "/" + file.fileName;
+          const cached = summaryCache.get(cacheKey);
+          if (cached && Date.now() < cached.expiry) {
+            return cached.data.title ? cached.data : null;
+          }
+          try {
+            const summary = await extractSessionSummary(file.projectHash, file.filePath, file.fileName);
+            summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
+            return summary.title ? summary : null;
+          } catch {
+            return null;
+          }
+        })
+      );
+      return results.filter((s) => s !== null);
     },
     /**
      * Read and normalize messages from a session file.
