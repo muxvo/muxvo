@@ -47,8 +47,7 @@ export function createChatHandlers() {
       return { results };
     },
 
-    async export(params: { projectHash: string; sessionId: string; format: string }) {
-      const { promises: fsp } = await import('fs');
+    async export(params: { projectHash: string; sessionId: string; format: string; title?: string }) {
       // Export needs ALL messages, no limit
       const messages = await reader.readSession(params.projectHash, params.sessionId);
 
@@ -58,7 +57,8 @@ export function createChatHandlers() {
         content = JSON.stringify(messages, null, 2);
         ext = 'json';
       } else {
-        const lines: string[] = [`# Session Export: ${params.sessionId}`, ''];
+        const displayTitle = params.title || params.sessionId;
+        const lines: string[] = [`# ${displayTitle}`, ''];
         for (const msg of messages) {
           const role = msg.type;
           const body = typeof msg.content === 'string'
@@ -70,9 +70,15 @@ export function createChatHandlers() {
         ext = 'md';
       }
 
+      // Sanitize title for filename: keep first 50 chars, remove invalid chars
+      const rawName = params.title
+        ? params.title.slice(0, 50).replace(/[\/\\:*?"<>|]/g, '_').trim()
+        : params.sessionId;
+      const fileName = rawName || params.sessionId;
+
       const exportDir = join(homedir(), '.muxvo', 'exports');
       await fsp.mkdir(exportDir, { recursive: true });
-      const filePath = join(exportDir, `${params.sessionId}.${ext}`);
+      const filePath = join(exportDir, `${fileName}.${ext}`);
       await fsp.writeFile(filePath, content, 'utf-8');
       return { outputPath: filePath };
     },

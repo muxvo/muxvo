@@ -197,7 +197,12 @@ app.whenReady().then(() => {
     chatArchive?.onSessionUpdate(projectHash, sessionId);
   });
   chatWatcher.start();
+  let lastProgressPush = 0;
   chatArchive.start((synced, total) => {
+    const now = Date.now();
+    // Throttle: push at most once per second, always push final progress
+    if (now - lastProgressPush < 1000 && synced < total) return;
+    lastProgressPush = now;
     BrowserWindow.getAllWindows().forEach((win) => {
       if (!win.isDestroyed()) {
         win.webContents.send(IPC_CHANNELS.CHAT.ARCHIVE_PROGRESS, { synced, total });

@@ -287,11 +287,14 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
         return projectsCache.data;
       }
 
-      const ccProjects = await scanProjectsFromDir(projectsDir);
+      // Parallel scan both sources
+      const [ccProjects, archiveProjects] = await Promise.all([
+        scanProjectsFromDir(projectsDir),
+        archiveProjectsDir ? scanProjectsFromDir(archiveProjectsDir) : Promise.resolve([]),
+      ]);
 
       // Merge archive projects (archive supplements CC, does not override)
-      if (archiveProjectsDir) {
-        const archiveProjects = await scanProjectsFromDir(archiveProjectsDir);
+      if (archiveProjects.length > 0) {
         const ccHashSet = new Set(ccProjects.map(p => p.projectHash));
 
         for (const ap of archiveProjects) {
@@ -323,19 +326,18 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
     async getSessionsForProject(projectHash: string, limit = 50): Promise<SessionSummary[]> {
       const ccProjectPath = join(projectsDir, projectHash);
 
-      // Scan CC source
-      const ccStats = await scanSessionFilesFromDir(ccProjectPath);
+      // Parallel scan both sources
+      const [ccStats, archiveStats] = await Promise.all([
+        scanSessionFilesFromDir(ccProjectPath),
+        archiveProjectsDir ? scanSessionFilesFromDir(join(archiveProjectsDir, projectHash)) : Promise.resolve([]),
+      ]);
       const ccFileNames = new Set(ccStats.map(s => s.fileName));
 
-      // Scan archive source, add files not already in CC
+      // Merge: CC takes priority for duplicate sessions
       let allStats = [...ccStats];
-      if (archiveProjectsDir) {
-        const archiveProjectPath = join(archiveProjectsDir, projectHash);
-        const archiveStats = await scanSessionFilesFromDir(archiveProjectPath);
-        for (const archiveStat of archiveStats) {
-          if (!ccFileNames.has(archiveStat.fileName)) {
-            allStats.push(archiveStat);
-          }
+      for (const archiveStat of archiveStats) {
+        if (!ccFileNames.has(archiveStat.fileName)) {
+          allStats.push(archiveStat);
         }
       }
 
@@ -435,16 +437,17 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
         return collected;
       }
 
-      const ccFiles = await collectFilesFromBase(projectsDir);
+      // Parallel scan both sources
+      const [ccFiles, archiveFiles] = await Promise.all([
+        collectFilesFromBase(projectsDir),
+        archiveProjectsDir ? collectFilesFromBase(archiveProjectsDir) : Promise.resolve([]),
+      ]);
 
-      // Merge archive files (CC takes priority for same projectHash+fileName)
-      if (archiveProjectsDir) {
-        const archiveFiles = await collectFilesFromBase(archiveProjectsDir);
-        const ccKeySet = new Set(ccFiles.map(f => f.projectHash + '/' + f.fileName));
-        for (const af of archiveFiles) {
-          if (!ccKeySet.has(af.projectHash + '/' + af.fileName)) {
-            ccFiles.push(af);
-          }
+      // Merge: CC takes priority for same projectHash+fileName
+      const ccKeySet = new Set(ccFiles.map(f => f.projectHash + '/' + f.fileName));
+      for (const af of archiveFiles) {
+        if (!ccKeySet.has(af.projectHash + '/' + af.fileName)) {
+          ccFiles.push(af);
         }
       }
 
@@ -483,18 +486,16 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
       const ccFilePath = join(projectsDir, projectHash, `${sessionId}.jsonl`);
       const limit = options?.limit;
 
-      // Determine which file to read: CC first, then archive fallback
+      // Determine which file to read: stat doubles as existence check (1 syscall instead of access+stat)
       let filePath = ccFilePath;
-      try {
-        await fsp.access(ccFilePath);
-      } catch {
-        // CC file not found, try archive
+      let resolvedStat = await fsp.stat(ccFilePath).catch(() => null);
+      if (!resolvedStat) {
         if (archiveProjectsDir) {
           const archiveFilePath = join(archiveProjectsDir, projectHash, `${sessionId}.jsonl`);
-          try {
-            await fsp.access(archiveFilePath);
+          resolvedStat = await fsp.stat(archiveFilePath).catch(() => null);
+          if (resolvedStat) {
             filePath = archiveFilePath;
-          } catch {
+          } else {
             return [];
           }
         } else {
@@ -503,7 +504,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
       }
 
       try {
-        const stat = await fsp.stat(filePath);
+        const stat = resolvedStat;
 
         // Tail-read optimization: for large files with a limit, read from end
         const TAIL_BYTES = 2 * 1024 * 1024; // 2MB — enough for ~200+ messages
@@ -619,9 +620,11 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
         }
       }
 
-      // Search CC source first (so CC sessions get priority in seenSessions)
+      // Search CC source first (so CC sessions get priority in seenSessions),
+      // then archive in parallel for non-overlapping sessions
       await searchInDir(projectsDir);
       if (archiveProjectsDir) {
+        // Sequential here because seenSessions dedup depends on CC finishing first
         await searchInDir(archiveProjectsDir);
       }
 

@@ -132,6 +132,9 @@ export function createChatArchiveManager() {
       running = true;
       enabled = await readEnabled();
       if (enabled) {
+        // Delay 3s to avoid competing with chat list loading for I/O at startup
+        await new Promise(r => setTimeout(r, 3000));
+        if (!running) return; // may have been stopped during delay
         await fullScan(onProgress);
       }
     },

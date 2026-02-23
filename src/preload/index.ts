@@ -117,8 +117,8 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_SESSION, { projectHash, sessionId, limit }),
     search: (query: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.SEARCH, { query }),
-    export: (projectHash: string, sessionId: string, format: string) =>
-      ipcRenderer.invoke(IPC_CHANNELS.CHAT.EXPORT, { projectHash, sessionId, format }),
+    export: (projectHash: string, sessionId: string, format: string, title?: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.EXPORT, { projectHash, sessionId, format, title }),
     getArchiveEnabled: () =>
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_ARCHIVE_ENABLED),
     setArchiveEnabled: (enabled: boolean) =>
