@@ -12,6 +12,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ProjectList } from './ProjectList';
 import { SessionList } from './SessionList';
 import { SessionDetail } from './SessionDetail';
+import { useI18n } from '@/renderer/i18n';
 import type { ProjectInfo, SessionSummary, SessionMessage } from '@/shared/types/chat.types';
 import './ChatHistoryPanel.css';
 

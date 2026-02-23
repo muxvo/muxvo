@@ -6,15 +6,32 @@
  * - Incremental archive: copies individual files on session-update events
  */
 
-import { readdir, stat, copyFile, mkdir } from 'fs/promises';
+import { readdir, stat, copyFile, mkdir, readFile, writeFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { homedir } from 'os';
 
 const CC_PROJECTS_DIR = join(homedir(), '.claude', 'projects');
 const ARCHIVE_DIR = join(homedir(), '.muxvo', 'chat-archive');
+const CONFIG_PATH = join(homedir(), '.muxvo', 'chat-archive-config.json');
 
 export function createChatArchiveManager() {
   let running = false;
+  let enabled = true;
+
+  async function readEnabled(): Promise<boolean> {
+    try {
+      const raw = await readFile(CONFIG_PATH, 'utf-8');
+      const config = JSON.parse(raw);
+      return config.enabled !== false;
+    } catch {
+      return true; // default enabled
+    }
+  }
+
+  async function writeEnabled(value: boolean): Promise<void> {
+    await mkdir(dirname(CONFIG_PATH), { recursive: true });
+    await writeFile(CONFIG_PATH, JSON.stringify({ enabled: value }), 'utf-8');
+  }
 
   /**
    * Full scan: walk CC projects directory, compare mtime, copy changed JSONL files.
@@ -101,7 +118,10 @@ export function createChatArchiveManager() {
     async start(): Promise<void> {
       if (running) return;
       running = true;
-      await fullScan();
+      enabled = await readEnabled();
+      if (enabled) {
+        await fullScan();
+      }
     },
 
     stop(): void {
@@ -112,8 +132,20 @@ export function createChatArchiveManager() {
      * Called when chat watcher detects a session update.
      */
     onSessionUpdate(projectHash: string, sessionId: string): void {
-      if (!running) return;
+      if (!running || !enabled) return;
       archiveSession(projectHash, sessionId);
+    },
+
+    async getEnabled(): Promise<boolean> {
+      return readEnabled();
+    },
+
+    async setEnabled(value: boolean): Promise<void> {
+      await writeEnabled(value);
+      enabled = value;
+      if (value && running) {
+        await fullScan();
+      }
     },
   };
 }

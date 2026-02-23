@@ -19,6 +19,7 @@ import './SessionDetail.css';
 interface SessionDetailProps {
   messages: SessionMessage[];
   loading?: boolean;
+  sessionTitle?: string;
 }
 
 interface ToolCallBlockProps {
@@ -125,9 +126,38 @@ const MessageBubble = React.memo(function MessageBubble({ message }: MessageBubb
   );
 });
 
+function formatMessagesAsMarkdown(messages: SessionMessage[]): string {
+  const parts: string[] = [];
+  for (const msg of messages) {
+    if (msg.type === 'system') continue;
+    if (msg.type === 'user') {
+      parts.push(`## You\n\n${msg.content as string}\n\n`);
+    } else if (msg.type === 'assistant') {
+      const blocks = Array.isArray(msg.content) ? msg.content as AssistantContentBlock[] : [];
+      const textParts = blocks
+        .filter((b) => b.type === 'text')
+        .map((b) => b.text || '');
+      if (textParts.length > 0) {
+        parts.push(`## Claude\n\n${textParts.join('\n\n')}\n\n`);
+      }
+    }
+  }
+  return parts.join('').trimEnd();
+}
+
 const MESSAGE_PAGE_SIZE = 50;
 
-export function SessionDetail({ messages, loading }: SessionDetailProps) {
+export function SessionDetail({ messages, loading, sessionTitle }: SessionDetailProps) {
+  const { t } = useI18n();
+  const [copyLabel, setCopyLabel] = useState<string | null>(null);
+
+  const handleCopy = useCallback(() => {
+    const markdown = formatMessagesAsMarkdown(messages);
+    navigator.clipboard.writeText(markdown).then(() => {
+      setCopyLabel(t('chat.copied' as any));
+      setTimeout(() => setCopyLabel(null), 2000);
+    }).catch(() => {});
+  }, [messages, t]);
   const [visibleCount, setVisibleCount] = useState(MESSAGE_PAGE_SIZE);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
@@ -185,6 +215,13 @@ export function SessionDetail({ messages, loading }: SessionDetailProps) {
 
   return (
     <div className="session-detail">
+      {messages.length > 0 && (
+        <div className="session-detail__toolbar">
+          <button className="session-detail__copy-btn" onClick={handleCopy}>
+            {copyLabel || t('chat.copyToClipboard' as any)}
+          </button>
+        </div>
+      )}
       <Virtuoso
         ref={virtuosoRef}
         data={visibleMessages}
