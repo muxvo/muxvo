@@ -349,32 +349,31 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
       allStats.sort((a, b) => b.mtime - a.mtime);
       const topFiles = allStats.slice(0, limit);
 
-      // Extract summaries only for top N (use cache where possible)
-      const sessions: SessionSummary[] = [];
-      for (const file of topFiles) {
-        const cacheKey = projectHash + '/' + file.fileName;
-        const cached = summaryCache.get(cacheKey);
-        if (cached && Date.now() < cached.expiry) {
-          if (cached.data.title) sessions.push(cached.data);
-          continue;
-        }
+      // Extract summaries for top N in parallel (use cache where possible)
+      const results = await Promise.all(
+        topFiles.map(async (file) => {
+          const cacheKey = projectHash + '/' + file.fileName;
+          const cached = summaryCache.get(cacheKey);
+          if (cached && Date.now() < cached.expiry) {
+            return cached.data.title ? cached.data : null;
+          }
 
-        // Determine which directory this file comes from
-        const filePath = ccFileNames.has(file.fileName)
-          ? join(ccProjectPath, file.fileName)
-          : join(archiveProjectsDir!, projectHash, file.fileName);
+          const filePath = ccFileNames.has(file.fileName)
+            ? join(ccProjectPath, file.fileName)
+            : join(archiveProjectsDir!, projectHash, file.fileName);
 
-        try {
-          const summary = await extractSessionSummary(projectHash, filePath, file.fileName);
-          summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
-          if (summary.title) sessions.push(summary);
-        } catch {
-          // skip unreadable file
-        }
-      }
+          try {
+            const summary = await extractSessionSummary(projectHash, filePath, file.fileName);
+            summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
+            return summary.title ? summary : null;
+          } catch {
+            return null;
+          }
+        })
+      );
 
-      // Already sorted by mtime
-      return sessions;
+      // Already sorted by mtime (order preserved from topFiles)
+      return results.filter((s): s is SessionSummary => s !== null);
     },
 
     /**
@@ -458,26 +457,26 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
       ccFiles.sort((a, b) => b.mtime - a.mtime);
       const topFiles = ccFiles.slice(0, limit);
 
-      // Extract summaries (use cache where possible)
-      const sessions: SessionSummary[] = [];
-      for (const file of topFiles) {
-        const cacheKey = file.projectHash + '/' + file.fileName;
-        const cached = summaryCache.get(cacheKey);
-        if (cached && Date.now() < cached.expiry) {
-          if (cached.data.title) sessions.push(cached.data);
-          continue;
-        }
+      // Extract summaries in parallel (use cache where possible)
+      const results = await Promise.all(
+        topFiles.map(async (file) => {
+          const cacheKey = file.projectHash + '/' + file.fileName;
+          const cached = summaryCache.get(cacheKey);
+          if (cached && Date.now() < cached.expiry) {
+            return cached.data.title ? cached.data : null;
+          }
 
-        try {
-          const summary = await extractSessionSummary(file.projectHash, file.filePath, file.fileName);
-          summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
-          if (summary.title) sessions.push(summary);
-        } catch {
-          // skip
-        }
-      }
+          try {
+            const summary = await extractSessionSummary(file.projectHash, file.filePath, file.fileName);
+            summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
+            return summary.title ? summary : null;
+          } catch {
+            return null;
+          }
+        })
+      );
 
-      return sessions;
+      return results.filter((s): s is SessionSummary => s !== null);
     },
 
     /**
