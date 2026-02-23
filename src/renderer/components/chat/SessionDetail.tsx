@@ -9,7 +9,7 @@
  * - 代码块: 复制按钮
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { MarkdownPreview } from '@/renderer/components/markdown/MarkdownPreview';
 import { useI18n } from '@/renderer/i18n';
@@ -145,15 +145,22 @@ export function formatMessagesAsMarkdown(messages: SessionMessage[]): string {
 }
 
 const MESSAGE_PAGE_SIZE = 50;
+const FIRST_ITEM_INDEX = 100000;
 
 export function SessionDetail({ messages, loading }: SessionDetailProps) {
   const { t } = useI18n();
   const [visibleCount, setVisibleCount] = useState(MESSAGE_PAGE_SIZE);
+  const [firstItemIndex, setFirstItemIndex] = useState(FIRST_ITEM_INDEX);
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
   // Reset visible count when a different session is selected
   const messageKey = messages.length > 0 ? messages[0].uuid : '';
-  useEffect(() => { setVisibleCount(MESSAGE_PAGE_SIZE); }, [messageKey]);
+  useEffect(() => {
+    setVisibleCount(MESSAGE_PAGE_SIZE);
+    setFirstItemIndex(FIRST_ITEM_INDEX);
+    setLoadingOlder(false);
+  }, [messageKey]);
 
   // Auto-scroll to bottom when messages change (new session or real-time update)
   useEffect(() => {
@@ -164,6 +171,40 @@ export function SessionDetail({ messages, loading }: SessionDetailProps) {
       }, 50);
     }
   }, [messages]);
+
+  // Show the LAST N messages (most recent), with "load earlier" at top
+  const startIndex = Math.max(0, messages.length - visibleCount);
+  const visibleMessages = messages.slice(startIndex);
+  const hasEarlier = startIndex > 0;
+
+  const handleStartReached = useCallback(() => {
+    if (!hasEarlier || loadingOlder) return;
+    setLoadingOlder(true);
+    setTimeout(() => {
+      const increment = Math.min(MESSAGE_PAGE_SIZE, startIndex);
+      setFirstItemIndex(prev => prev - increment);
+      setVisibleCount(prev => prev + increment);
+      setLoadingOlder(false);
+    }, 300);
+  }, [hasEarlier, loadingOlder, startIndex]);
+
+  const Header = useCallback(() => {
+    if (loadingOlder) {
+      return (
+        <div className="session-detail__loading-older">
+          <span className="session-detail__spinner" />
+        </div>
+      );
+    }
+    if (!hasEarlier) {
+      return (
+        <div className="session-detail__all-loaded">
+          — 已加载全部 —
+        </div>
+      );
+    }
+    return null;
+  }, [loadingOlder, hasEarlier]);
 
   if (loading) {
     return (
@@ -189,32 +230,16 @@ export function SessionDetail({ messages, loading }: SessionDetailProps) {
     );
   }
 
-  // Show the LAST N messages (most recent), with "load earlier" at top
-  const startIndex = Math.max(0, messages.length - visibleCount);
-  const visibleMessages = messages.slice(startIndex);
-  const hasEarlier = startIndex > 0;
-
-  const headerContent = hasEarlier ? (
-    <button
-      className="session-detail__load-more"
-      onClick={() => setVisibleCount(prev => prev + MESSAGE_PAGE_SIZE)}
-    >
-      加载更早消息 ({startIndex} 条)
-    </button>
-  ) : null;
-
   return (
     <div className="session-detail">
       <Virtuoso
         ref={virtuosoRef}
         data={visibleMessages}
-        components={{
-          Header: headerContent ? () => headerContent : undefined,
-        }}
-        itemContent={(_index, message) => (
-          <MessageBubble key={message.uuid} message={message} />
-        )}
+        firstItemIndex={firstItemIndex}
+        startReached={handleStartReached}
         initialTopMostItemIndex={visibleMessages.length - 1}
+        components={{ Header }}
+        itemContent={(_index, message) => <MessageBubble key={message.uuid} message={message} />}
         followOutput="auto"
         style={{ height: '100%' }}
         overscan={200}

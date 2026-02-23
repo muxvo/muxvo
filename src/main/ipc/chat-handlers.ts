@@ -37,7 +37,7 @@ export function createChatHandlers() {
     },
 
     async getSession(params: { projectHash: string; sessionId: string; limit?: number }) {
-      const options = params.limit === 0 ? undefined : params.limit !== undefined ? { limit: params.limit } : { limit: 100 };
+      const options = params.limit && params.limit > 0 ? { limit: params.limit } : undefined;
       const messages = await reader.readSession(params.projectHash, params.sessionId, options);
       return { messages };
     },
