@@ -8,8 +8,17 @@ export function createChatWatcher() {
   let watcher: FSWatcher | null = null;
   const projectsDir = join(homedir(), '.claude', 'projects');
   const pendingTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  let sessionUpdateCallback: ((projectHash: string, sessionId: string) => void) | null = null;
 
   return {
+    /**
+     * Register a callback invoked on every debounced session-update event.
+     * Used by chat-archive to trigger incremental archive.
+     */
+    onSessionUpdate(cb: (projectHash: string, sessionId: string) => void): void {
+      sessionUpdateCallback = cb;
+    },
+
     start(): void {
       try {
         watcher = watch(projectsDir, { recursive: true }, (eventType, filename) => {
@@ -30,6 +39,7 @@ export function createChatWatcher() {
                   win.webContents.send(IPC_CHANNELS.CHAT.SESSION_UPDATE, { projectHash, sessionId });
                 }
               });
+              sessionUpdateCallback?.(projectHash, sessionId);
             }, 500));
           }
         });

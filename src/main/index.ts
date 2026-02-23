@@ -36,6 +36,7 @@ import { registerScoreHandlers } from './ipc/score-handlers';
 import { registerShowcaseHandlers } from './ipc/showcase-handlers';
 import { registerAnalyticsHandlers } from './ipc/analytics-handlers';
 import { createChatWatcher } from './services/chat-watcher';
+import { createChatArchiveManager } from './services/chat-archive';
 import { createConfigWatcher } from './services/config-watcher';
 import { createMemoryPushTimer } from './services/perf/memory-push';
 import { createSyncStatusPusher } from './services/chat-sync-push';
@@ -119,6 +120,7 @@ function createWindow(windowConfig?: WindowConfig): void {
 
 let terminalManager: ReturnType<typeof createTerminalManager> | null = null;
 let chatWatcher: ReturnType<typeof createChatWatcher> | null = null;
+let chatArchive: ReturnType<typeof createChatArchiveManager> | null = null;
 let configWatcher: ReturnType<typeof createConfigWatcher> | null = null;
 let memoryPush: ReturnType<typeof createMemoryPushTimer> | null = null;
 
@@ -157,7 +159,12 @@ app.whenReady().then(() => {
   registerAnalyticsHandlers();
 
   chatWatcher = createChatWatcher();
+  chatArchive = createChatArchiveManager();
+  chatWatcher.onSessionUpdate((projectHash, sessionId) => {
+    chatArchive?.onSessionUpdate(projectHash, sessionId);
+  });
   chatWatcher.start();
+  chatArchive.start();
 
   configWatcher = createConfigWatcher();
   configWatcher.start();
@@ -273,6 +280,9 @@ app.on('window-all-closed', () => {
   }
   if (chatWatcher) {
     chatWatcher.stop();
+  }
+  if (chatArchive) {
+    chatArchive.stop();
   }
   if (configWatcher) {
     configWatcher.stop();
