@@ -292,14 +292,11 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
         return projectsCache.data;
       }
 
-      // Parallel scan both sources
-      const [ccProjects, archiveProjects] = await Promise.all([
-        scanProjectsFromDir(projectsDir),
-        archiveProjectsDir ? scanProjectsFromDir(archiveProjectsDir) : Promise.resolve([]),
-      ]);
+      const ccProjects = await scanProjectsFromDir(projectsDir);
 
       // Merge archive projects (archive supplements CC, does not override)
-      if (archiveProjects.length > 0) {
+      if (archiveProjectsDir) {
+        const archiveProjects = await scanProjectsFromDir(archiveProjectsDir);
         const ccHashSet = new Set(ccProjects.map(p => p.projectHash));
 
         for (const ap of archiveProjects) {
@@ -331,18 +328,19 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
     async getSessionsForProject(projectHash: string, limit = 50): Promise<SessionSummary[]> {
       const ccProjectPath = join(projectsDir, projectHash);
 
-      // Parallel scan both sources
-      const [ccStats, archiveStats] = await Promise.all([
-        scanSessionFilesFromDir(ccProjectPath),
-        archiveProjectsDir ? scanSessionFilesFromDir(join(archiveProjectsDir, projectHash)) : Promise.resolve([]),
-      ]);
+      // Scan CC source
+      const ccStats = await scanSessionFilesFromDir(ccProjectPath);
       const ccFileNames = new Set(ccStats.map(s => s.fileName));
 
-      // Merge: CC takes priority for duplicate sessions
+      // Scan archive source, add files not already in CC
       let allStats = [...ccStats];
-      for (const archiveStat of archiveStats) {
-        if (!ccFileNames.has(archiveStat.fileName)) {
-          allStats.push(archiveStat);
+      if (archiveProjectsDir) {
+        const archiveProjectPath = join(archiveProjectsDir, projectHash);
+        const archiveStats = await scanSessionFilesFromDir(archiveProjectPath);
+        for (const archiveStat of archiveStats) {
+          if (!ccFileNames.has(archiveStat.fileName)) {
+            allStats.push(archiveStat);
+          }
         }
       }
 
@@ -442,17 +440,16 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
         return collected;
       }
 
-      // Parallel scan both sources
-      const [ccFiles, archiveFiles] = await Promise.all([
-        collectFilesFromBase(projectsDir),
-        archiveProjectsDir ? collectFilesFromBase(archiveProjectsDir) : Promise.resolve([]),
-      ]);
+      const ccFiles = await collectFilesFromBase(projectsDir);
 
-      // Merge: CC takes priority for same projectHash+fileName
-      const ccKeySet = new Set(ccFiles.map(f => f.projectHash + '/' + f.fileName));
-      for (const af of archiveFiles) {
-        if (!ccKeySet.has(af.projectHash + '/' + af.fileName)) {
-          ccFiles.push(af);
+      // Merge archive files (CC takes priority for same projectHash+fileName)
+      if (archiveProjectsDir) {
+        const archiveFiles = await collectFilesFromBase(archiveProjectsDir);
+        const ccKeySet = new Set(ccFiles.map(f => f.projectHash + '/' + f.fileName));
+        for (const af of archiveFiles) {
+          if (!ccKeySet.has(af.projectHash + '/' + af.fileName)) {
+            ccFiles.push(af);
+          }
         }
       }
 
