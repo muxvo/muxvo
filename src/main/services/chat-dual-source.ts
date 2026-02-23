@@ -22,7 +22,7 @@ interface ChatProjectReaderOpts {
 
 export function createChatProjectReader(opts: ChatProjectReaderOpts) {
   const projectsDir = join(opts.ccBasePath, 'projects');
-  const archiveProjectsDir = opts.archivePath ? join(opts.archivePath, 'projects') : null;
+  const archiveProjectsDir = opts.archivePath || null;
 
   // Memory cache
   const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -95,11 +95,16 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
         try {
           const obj = JSON.parse(trimmed);
           if (obj.type === 'user') {
-            const rawContent = typeof obj.message?.content === 'string'
-              ? obj.message.content
-              : typeof obj.content === 'string'
-                ? obj.content
-                : '';
+            let rawContent = '';
+            const msgContent = obj.message?.content ?? obj.content;
+            if (typeof msgContent === 'string') {
+              rawContent = msgContent;
+            } else if (Array.isArray(msgContent)) {
+              rawContent = msgContent
+                .filter((b: any) => b.type === 'text' && typeof b.text === 'string')
+                .map((b: any) => b.text)
+                .join('\n');
+            }
             title = rawContent.slice(0, 100);
             startedAt = obj.timestamp || '';
             break;
