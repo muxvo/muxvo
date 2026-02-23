@@ -89,14 +89,14 @@ export function useHookConfig(projectCwd?: string): UseHookConfigReturn {
 
     const promises: Promise<HookEntry[]>[] = [];
 
-    // Global: use config.getSettings() API for consistency
+    // Global: use config.getSettings() API — returns { settings: {...} }
     promises.push(
       window.api.config
         .getSettings()
         .then((result: any) => {
-          if (!result?.success || !result.data?.settings?.hooks) return [];
+          if (!result?.settings?.hooks) return [];
           return flattenHooks(
-            result.data.settings.hooks as Record<string, HookMatcherGroup[]>,
+            result.settings.hooks as Record<string, HookMatcherGroup[]>,
             'global',
             globalPath,
           );
@@ -133,12 +133,12 @@ export function useHookConfig(projectCwd?: string): UseHookConfigReturn {
   /** Read global settings, mutate hooks, write back */
   const mutateGlobal = useCallback(
     async (mutator: (hooks: Record<string, HookMatcherGroup[]>) => Record<string, HookMatcherGroup[]>) => {
-      // Read current settings
+      // Read current settings — getSettings() returns { settings: {...} }
       let settings: Record<string, unknown> = {};
       try {
         const result = await window.api.config.getSettings();
-        if (result?.success && result.data?.settings) {
-          settings = result.data.settings as Record<string, unknown>;
+        if (result?.settings) {
+          settings = result.settings as Record<string, unknown>;
         }
       } catch { /* may not exist */ }
 
