@@ -10,10 +10,9 @@
 
 import { usePanelContext } from '@/renderer/contexts/PanelContext';
 import { useI18n } from '@/renderer/i18n';
-import { MenuDropdown } from './MenuDropdown';
 import './MenuBar.css';
 
-type TabId = 'terminals' | 'skills' | 'mcp' | 'chat';
+type TabId = 'terminals' | 'skills' | 'mcp' | 'hooks' | 'chat';
 
 interface Props {
   viewMode?: 'Tiling' | 'Focused';
@@ -27,123 +26,119 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0
   const { state, dispatch } = usePanelContext();
   const { t, locale, setLocale } = useI18n();
 
-  const activeDropdown = state.menuDropdown.open ? state.menuDropdown.type : null;
   const chatOpen = state.chatHistory.open;
   const skillsOpen = state.skillsPanel.open;
+  const mcpOpen = state.mcpPanel.open;
+  const hooksOpen = state.hooksPanel.open;
 
   function getActiveTab(): TabId {
     if (skillsOpen) return 'skills';
-    if (activeDropdown === 'mcp') return 'mcp';
+    if (mcpOpen) return 'mcp';
+    if (hooksOpen) return 'hooks';
     if (chatOpen) return 'chat';
     return 'terminals';
   }
 
   const activeTab = getActiveTab();
 
+  /** Close all overlay panels */
+  function closeAllPanels() {
+    if (chatOpen) dispatch({ type: 'CLOSE_CHAT_HISTORY' });
+    if (skillsOpen) dispatch({ type: 'CLOSE_SKILLS_PANEL' });
+    if (mcpOpen) dispatch({ type: 'CLOSE_MCP_PANEL' });
+    if (hooksOpen) dispatch({ type: 'CLOSE_HOOKS_PANEL' });
+  }
+
   function handleTabClick(tab: TabId) {
     if (tab === 'terminals') {
-      // Close any open dropdown/panel, back to terminal grid
-      if (activeDropdown) dispatch({ type: 'TOGGLE_MENU_DROPDOWN', dropdownType: activeDropdown });
-      if (chatOpen) dispatch({ type: 'CLOSE_CHAT_HISTORY' });
-      if (skillsOpen) dispatch({ type: 'CLOSE_SKILLS_PANEL' });
+      closeAllPanels();
       return;
     }
 
     if (tab === 'skills') {
-      if (chatOpen) dispatch({ type: 'CLOSE_CHAT_HISTORY' });
-      if (activeDropdown) dispatch({ type: 'TOGGLE_MENU_DROPDOWN', dropdownType: activeDropdown });
-      if (skillsOpen) {
-        dispatch({ type: 'CLOSE_SKILLS_PANEL' });
-      } else {
-        dispatch({ type: 'OPEN_SKILLS_PANEL' });
-      }
+      closeAllPanels();
+      if (!skillsOpen) dispatch({ type: 'OPEN_SKILLS_PANEL' });
       return;
     }
 
     if (tab === 'mcp') {
-      if (chatOpen) dispatch({ type: 'CLOSE_CHAT_HISTORY' });
-      if (skillsOpen) dispatch({ type: 'CLOSE_SKILLS_PANEL' });
-      dispatch({ type: 'TOGGLE_MENU_DROPDOWN', dropdownType: 'mcp' });
+      closeAllPanels();
+      if (!mcpOpen) dispatch({ type: 'OPEN_MCP_PANEL' });
+      return;
+    }
+
+    if (tab === 'hooks') {
+      closeAllPanels();
+      if (!hooksOpen) dispatch({ type: 'OPEN_HOOKS_PANEL' });
       return;
     }
 
     if (tab === 'chat') {
-      if (activeDropdown) dispatch({ type: 'TOGGLE_MENU_DROPDOWN', dropdownType: activeDropdown });
-      if (skillsOpen) dispatch({ type: 'CLOSE_SKILLS_PANEL' });
-      if (chatOpen) {
-        dispatch({ type: 'CLOSE_CHAT_HISTORY' });
-      } else {
-        dispatch({ type: 'OPEN_CHAT_HISTORY' });
-      }
-    }
-  }
-
-  function handleDropdownClose() {
-    if (activeDropdown) {
-      dispatch({ type: 'TOGGLE_MENU_DROPDOWN', dropdownType: activeDropdown });
+      closeAllPanels();
+      if (!chatOpen) dispatch({ type: 'OPEN_CHAT_HISTORY' });
     }
   }
 
   return (
-    <>
-      <header className="menu-bar">
-        <div className="menu-bar__drag-region" />
+    <header className="menu-bar">
+      <div className="menu-bar__drag-region" />
 
-        <span className="menu-bar__title">Muxvo</span>
+      <span className="menu-bar__title">Muxvo</span>
 
-        <nav className="menu-bar__tabs">
-          <button
-            className={`menu-bar__tab${activeTab === 'terminals' ? ' menu-bar__tab--active' : ''}`}
-            onClick={() => handleTabClick('terminals')}
-          >
-            {t('menu.terminal')}{terminalCount > 0 && <span className="menu-bar__badge">{terminalCount}</span>}
-          </button>
-          <button
-            className={`menu-bar__tab${activeTab === 'skills' ? ' menu-bar__tab--active' : ''}`}
-            onClick={() => handleTabClick('skills')}
-          >
-            Skills
-          </button>
-          <button
-            className={`menu-bar__tab${activeTab === 'mcp' ? ' menu-bar__tab--active' : ''}`}
-            onClick={() => handleTabClick('mcp')}
-          >
-            MCP
-          </button>
-          <button
-            className={`menu-bar__tab${activeTab === 'chat' ? ' menu-bar__tab--active' : ''}`}
-            onClick={() => handleTabClick('chat')}
-          >
-            {t('menu.chatHistory')}
-          </button>
-        </nav>
-
-        {viewMode === 'Focused' && onBackToTiling && (
-          <button className="menu-bar__back-btn" onClick={onBackToTiling}>
-            {t('menu.backToTiling')}
-          </button>
-        )}
-
+      <nav className="menu-bar__tabs">
         <button
-          className="menu-bar__lang-btn"
-          onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')}
+          className={`menu-bar__tab${activeTab === 'terminals' ? ' menu-bar__tab--active' : ''}`}
+          onClick={() => handleTabClick('terminals')}
         >
-          {locale === 'zh' ? 'EN' : '中'}
+          {t('menu.terminal')}{terminalCount > 0 && <span className="menu-bar__badge">{terminalCount}</span>}
         </button>
-
         <button
-          className="menu-bar__add-btn"
-          onClick={onAddTerminal}
-          disabled={maxReached}
-          title={t('menu.newTerminal')}
+          className={`menu-bar__tab${activeTab === 'skills' ? ' menu-bar__tab--active' : ''}`}
+          onClick={() => handleTabClick('skills')}
         >
-          +
+          Skills
         </button>
-      </header>
+        <button
+          className={`menu-bar__tab${activeTab === 'mcp' ? ' menu-bar__tab--active' : ''}`}
+          onClick={() => handleTabClick('mcp')}
+        >
+          MCP
+        </button>
+        <button
+          className={`menu-bar__tab${activeTab === 'hooks' ? ' menu-bar__tab--active' : ''}`}
+          onClick={() => handleTabClick('hooks')}
+        >
+          Hooks
+        </button>
+        <button
+          className={`menu-bar__tab${activeTab === 'chat' ? ' menu-bar__tab--active' : ''}`}
+          onClick={() => handleTabClick('chat')}
+        >
+          {t('menu.chatHistory')}
+        </button>
+      </nav>
 
-      {activeDropdown && (
-        <MenuDropdown type={activeDropdown} onClose={handleDropdownClose} />
+      {viewMode === 'Focused' && onBackToTiling && (
+        <button className="menu-bar__back-btn" onClick={onBackToTiling}>
+          {t('menu.backToTiling')}
+        </button>
       )}
-    </>
+
+      <button
+        className="menu-bar__lang-btn"
+        onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')}
+      >
+        {locale === 'zh' ? 'EN' : '中'}
+      </button>
+
+      <button
+        className="menu-bar__add-btn"
+        onClick={onAddTerminal}
+        disabled={maxReached}
+        title={t('menu.newTerminal')}
+      >
+        +
+      </button>
+    </header>
   );
 }

@@ -37,6 +37,28 @@
   background: var(--bg-deep);
 }
 
+/* MCP panel overlay (full-screen below menu bar) */
+.mcp-panel-overlay {
+  position: fixed;
+  top: var(--menu-bar-height);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 180;
+  background: var(--bg-deep);
+}
+
+/* Hooks panel overlay (full-screen below menu bar) */
+.hooks-panel-overlay {
+  position: fixed;
+  top: var(--menu-bar-height);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 180;
+  background: var(--bg-deep);
+}
+
 /* === Ambient background glow (prototype-history-A.html) === */
 body::before {
   content: '';

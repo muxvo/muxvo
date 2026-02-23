@@ -14,3 +14,5 @@ export * from './showcase.types';
 export * from './auth.types';
 export * from './analytics.types';
 export * from './publish-draft.types';
+export * from './mcp.types';
+export * from './hook.types';
