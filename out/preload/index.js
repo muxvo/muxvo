@@ -37,7 +37,8 @@ const IPC_CHANNELS = {
     SYNC_STATUS: "chat:sync-status",
     EXPORT: "chat:export",
     GET_ARCHIVE_ENABLED: "chat:get-archive-enabled",
-    SET_ARCHIVE_ENABLED: "chat:set-archive-enabled"
+    SET_ARCHIVE_ENABLED: "chat:set-archive-enabled",
+    ARCHIVE_PROGRESS: "chat:archive-progress"
   },
   CONFIG: {
     GET_RESOURCES: "config:get-resources",
@@ -178,6 +179,11 @@ const api = {
       const handler = (_event, data) => callback(data);
       electron.ipcRenderer.on(IPC_CHANNELS.CHAT.SYNC_STATUS, handler);
       return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.CHAT.SYNC_STATUS, handler);
+    },
+    onArchiveProgress: (callback) => {
+      const handler = (_event, data) => callback(data);
+      electron.ipcRenderer.on(IPC_CHANNELS.CHAT.ARCHIVE_PROGRESS, handler);
+      return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.CHAT.ARCHIVE_PROGRESS, handler);
     }
   },
   // --- Auth domain ---

@@ -87,7 +87,8 @@ const IPC_CHANNELS = {
     SYNC_STATUS: "chat:sync-status",
     EXPORT: "chat:export",
     GET_ARCHIVE_ENABLED: "chat:get-archive-enabled",
-    SET_ARCHIVE_ENABLED: "chat:set-archive-enabled"
+    SET_ARCHIVE_ENABLED: "chat:set-archive-enabled",
+    ARCHIVE_PROGRESS: "chat:archive-progress"
   },
   CONFIG: {
     GET_RESOURCES: "config:get-resources",
@@ -2060,34 +2061,29 @@ function createChatArchiveManager() {
     await promises.mkdir(path.dirname(CONFIG_PATH), { recursive: true });
     await promises.writeFile(CONFIG_PATH, JSON.stringify({ enabled: value }), "utf-8");
   }
-  async function fullScan() {
-    let synced = 0;
-    let skipped = 0;
-    async function scanDir(ccDir, archiveDir) {
+  async function collectSyncTargets() {
+    const targets = [];
+    async function walk(ccDir, archiveDir) {
       try {
         const entries = await promises.readdir(ccDir, { withFileTypes: true });
         for (const entry of entries) {
           const ccPath = path.join(ccDir, entry.name);
-          const archivePath = path.join(archiveDir, entry.name);
+          const archPath = path.join(archiveDir, entry.name);
           if (entry.isDirectory()) {
-            await scanDir(ccPath, archivePath);
+            await walk(ccPath, archPath);
           } else if (entry.isFile() && entry.name.endsWith(".jsonl")) {
             try {
               const ccStats = await promises.stat(ccPath);
               let archiveStats;
               try {
-                archiveStats = await promises.stat(archivePath);
+                archiveStats = await promises.stat(archPath);
               } catch {
                 archiveStats = null;
               }
-              const ccMtimeSeconds = Math.floor(ccStats.mtimeMs / 1e3);
-              const archiveMtimeSeconds = archiveStats ? Math.floor(archiveStats.mtimeMs / 1e3) : 0;
-              if (ccMtimeSeconds !== archiveMtimeSeconds) {
-                await promises.mkdir(path.dirname(archivePath), { recursive: true });
-                await promises.copyFile(ccPath, archivePath);
-                synced++;
-              } else {
-                skipped++;
+              const ccMtime = Math.floor(ccStats.mtimeMs / 1e3);
+              const archMtime = archiveStats ? Math.floor(archiveStats.mtimeMs / 1e3) : 0;
+              if (ccMtime !== archMtime) {
+                targets.push({ ccPath, archivePath: archPath });
               }
             } catch {
             }
@@ -2096,8 +2092,28 @@ function createChatArchiveManager() {
       } catch {
       }
     }
-    await scanDir(CC_PROJECTS_DIR, ARCHIVE_DIR);
-    return { synced, skipped };
+    await walk(CC_PROJECTS_DIR, ARCHIVE_DIR);
+    return targets;
+  }
+  async function fullScan(onProgress) {
+    const targets = await collectSyncTargets();
+    const total = targets.length;
+    let synced = 0;
+    if (total === 0) return { synced: 0, total: 0 };
+    onProgress?.(0, total);
+    for (const target of targets) {
+      try {
+        await promises.mkdir(path.dirname(target.archivePath), { recursive: true });
+        await promises.copyFile(target.ccPath, target.archivePath);
+        synced++;
+        if (synced % 50 === 0 || synced === total) {
+          onProgress?.(synced, total);
+        }
+      } catch {
+      }
+    }
+    onProgress?.(synced, total);
+    return { synced, total };
   }
   async function archiveSession(projectHash, sessionId) {
     try {
@@ -2123,12 +2139,12 @@ function createChatArchiveManager() {
     }
   }
   return {
-    async start() {
+    async start(onProgress) {
       if (running) return;
       running = true;
       enabled = await readEnabled();
       if (enabled) {
-        await fullScan();
+        await fullScan(onProgress);
       }
     },
     stop() {
@@ -2357,6 +2373,18 @@ function createWindow(windowConfig) {
     }
     saveWindowBoundsAndClearTerminals();
   });
+  mainWindow.webContents.on("context-menu", (_event, params) => {
+    const menuItems = [];
+    if (params.selectionText) {
+      menuItems.push({ role: "copy" });
+    }
+    if (params.isEditable) {
+      menuItems.push({ role: "cut" }, { role: "paste" }, { role: "selectAll" });
+    }
+    if (menuItems.length > 0) {
+      electron.Menu.buildFromTemplate(menuItems).popup();
+    }
+  });
   mainWindow.webContents.setWindowOpenHandler((details) => {
     electron.shell.openExternal(details.url);
     return { action: "deny" };
@@ -2377,6 +2405,22 @@ let chatArchive = null;
 let configWatcher = null;
 let memoryPush = null;
 electron.app.whenReady().then(() => {
+  const template = [
+    { role: "appMenu" },
+    {
+      label: "Edit",
+      submenu: [
+        { role: "undo" },
+        { role: "redo" },
+        { type: "separator" },
+        { role: "cut" },
+        { role: "copy" },
+        { role: "paste" },
+        { role: "selectAll" }
+      ]
+    }
+  ];
+  electron.Menu.setApplicationMenu(electron.Menu.buildFromTemplate(template));
   electron.protocol.handle("local-file", (request) => {
     const filePath = decodeURIComponent(request.url.replace("local-file://", ""));
     return electron.net.fetch(url.pathToFileURL(filePath).href);
@@ -2407,7 +2451,13 @@ electron.app.whenReady().then(() => {
     chatArchive?.onSessionUpdate(projectHash, sessionId);
   });
   chatWatcher.start();
-  chatArchive.start();
+  chatArchive.start((synced, total) => {
+    electron.BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send(IPC_CHANNELS.CHAT.ARCHIVE_PROGRESS, { synced, total });
+      }
+    });
+  });
   configWatcher = createConfigWatcher();
   configWatcher.start();
   memoryPush = createMemoryPushTimer({ intervalMs: 6e4, thresholdMB: 2048 });

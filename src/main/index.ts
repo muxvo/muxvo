@@ -11,7 +11,7 @@
  * - Config persistence (save on close, restore on launch)
  */
 
-import { app, BrowserWindow, ipcMain, shell, protocol, net } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, protocol, net, Menu } from 'electron';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
 import { is } from '@electron-toolkit/utils';
@@ -99,6 +99,20 @@ function createWindow(windowConfig?: WindowConfig): void {
     saveWindowBoundsAndClearTerminals();
   });
 
+  // Right-click context menu with copy support
+  mainWindow.webContents.on('context-menu', (_event, params) => {
+    const menuItems: Electron.MenuItemConstructorOptions[] = [];
+    if (params.selectionText) {
+      menuItems.push({ role: 'copy' });
+    }
+    if (params.isEditable) {
+      menuItems.push({ role: 'cut' }, { role: 'paste' }, { role: 'selectAll' });
+    }
+    if (menuItems.length > 0) {
+      Menu.buildFromTemplate(menuItems).popup();
+    }
+  });
+
   // Open external links in default browser
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url);
@@ -125,6 +139,24 @@ let configWatcher: ReturnType<typeof createConfigWatcher> | null = null;
 let memoryPush: ReturnType<typeof createMemoryPushTimer> | null = null;
 
 app.whenReady().then(() => {
+  // Set application menu with Edit menu for copy/paste/select-all shortcuts
+  const template: Electron.MenuItemConstructorOptions[] = [
+    { role: 'appMenu' },
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'selectAll' },
+      ],
+    },
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+
   // Handle local-file:// protocol for serving local images/files to renderer
   protocol.handle('local-file', (request) => {
     const filePath = decodeURIComponent(request.url.replace('local-file://', ''));
