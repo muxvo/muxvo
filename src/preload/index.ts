@@ -119,6 +119,10 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.SEARCH, { query }),
     export: (projectHash: string, sessionId: string, format: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.EXPORT, { projectHash, sessionId, format }),
+    getArchiveEnabled: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_ARCHIVE_ENABLED),
+    setArchiveEnabled: (enabled: boolean) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.SET_ARCHIVE_ENABLED, { enabled }),
     onSessionUpdate: (callback: (data: { projectHash: string; sessionId: string }) => void) => {
       const handler = (_event: Electron.IpcRendererEvent, data: { projectHash: string; sessionId: string }) => callback(data);
       ipcRenderer.on(IPC_CHANNELS.CHAT.SESSION_UPDATE, handler);
