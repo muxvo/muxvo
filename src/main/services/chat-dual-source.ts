@@ -71,8 +71,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
 
   /**
    * Extract a SessionSummary from a single .jsonl file.
-   * Uses streaming: first 20 lines for title/startedAt, full scan with
-   * substring matching (no JSON.parse per line) for messageCount.
+   * Uses streaming for title/startedAt, stat for fileSize.
    */
   async function extractSessionSummary(
     projectHash: string,
@@ -85,66 +84,36 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
 
     let title = '';
     let startedAt = '';
-    let messageCount = 0;
 
     try {
-      await new Promise<void>((resolve) => {
-        const stream = createReadStream(filePath, { encoding: 'utf-8' });
-        const rl = createInterface({ input: stream, crlfDelay: Infinity });
-        let titleFound = false;
-        let lineIndex = 0;
-
-        rl.on('line', (line) => {
-          const trimmed = line.trim();
-          if (!trimmed) return;
-          lineIndex++;
-
-          // Count visible messages via substring matching (no JSON.parse)
-          if (trimmed.includes('"type":"user"') || trimmed.includes('"type": "user"')) {
-            // Skip system-like user entries
-            if (
-              trimmed.includes('"isCompactSummary":true') || trimmed.includes('"isCompactSummary": true') ||
-              trimmed.includes('"isMeta":true') || trimmed.includes('"isMeta": true')
-            ) {
-              // system message, don't count
-            } else {
-              messageCount++;
+      const lines = await readFirstLines(filePath, 20);
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        try {
+          const obj = JSON.parse(trimmed);
+          if (obj.type === 'user') {
+            let rawContent = '';
+            const msgContent = obj.message?.content ?? obj.content;
+            if (typeof msgContent === 'string') {
+              rawContent = msgContent;
+            } else if (Array.isArray(msgContent)) {
+              rawContent = msgContent
+                .filter((b: any) => b.type === 'text' && typeof b.text === 'string')
+                .map((b: any) => b.text)
+                .join('\n');
             }
-          } else if (trimmed.includes('"type":"assistant"') || trimmed.includes('"type": "assistant"')) {
-            messageCount++;
-          }
-
-          // Extract title/startedAt from early lines (only parse first 20)
-          if (!titleFound && lineIndex <= 20) {
-            try {
-              const obj = JSON.parse(trimmed);
-              if (obj.type === 'user') {
-                let rawContent = '';
-                const msgContent = obj.message?.content ?? obj.content;
-                if (typeof msgContent === 'string') {
-                  rawContent = msgContent;
-                } else if (Array.isArray(msgContent)) {
-                  rawContent = msgContent
-                    .filter((b: any) => b.type === 'text' && typeof b.text === 'string')
-                    .map((b: any) => b.text)
-                    .join('\n');
-                }
-                if (!startedAt) startedAt = obj.timestamp || '';
-                const trimmedContent = rawContent.trim();
-                if (trimmedContent) {
-                  title = trimmedContent.slice(0, 100);
-                  titleFound = true;
-                }
-              }
-            } catch {
-              // skip malformed line
+            if (!startedAt) startedAt = obj.timestamp || '';
+            const trimmedContent = rawContent.trim();
+            if (trimmedContent) {
+              title = trimmedContent.slice(0, 100);
+              break;
             }
           }
-        });
-
-        rl.on('close', () => resolve());
-        stream.on('error', () => resolve());
-      });
+        } catch {
+          // skip malformed line
+        }
+      }
     } catch {
       // file read error - return defaults
     }
@@ -155,7 +124,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
       title,
       startedAt,
       lastModified,
-      messageCount: Math.max(1, messageCount),
+      fileSize: stat.size,
     };
   }
 

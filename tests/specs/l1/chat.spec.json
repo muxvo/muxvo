@@ -27,7 +27,7 @@
         "projectHash": "string"
       },
       "expectedResponse": {
-        "sessions": "Array<{sessionId: string, projectHash: string, title: string, startedAt: string, lastModified: number, messageCount: number}>"
+        "sessions": "Array<{sessionId: string, projectHash: string, title: string, startedAt: string, lastModified: number, fileSize: number}>"
       },
       "priority": "P0"
     },

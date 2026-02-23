@@ -27,7 +27,7 @@ export const zh = {
   'chat.time': '时间',
   'chat.project': '项目',
   'chat.noSessions': '暂无会话记录',
-  'chat.messageCount': '{count} 条',
+  'chat.messageCount': '{count} 条', // legacy: kept for test compatibility
   'chat.loadMore': '加载更多 ({count} 条)',
   'chat.toolCall': 'Tool Call',
   'chat.toolResult': 'Tool Result',

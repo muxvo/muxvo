@@ -27,7 +27,7 @@ export const en = {
   'chat.time': 'Time',
   'chat.project': 'Project',
   'chat.noSessions': 'No session records',
-  'chat.messageCount': '{count} messages',
+  'chat.messageCount': '{count} messages', // legacy: kept for test compatibility
   'chat.loadMore': 'Load more ({count})',
   'chat.toolCall': 'Tool Call',
   'chat.toolResult': 'Tool Result',
