@@ -11,9 +11,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ProjectList } from './ProjectList';
 import { SessionList } from './SessionList';
-import { SessionDetail } from './SessionDetail';
+import { SessionDetail, formatMessagesAsMarkdown } from './SessionDetail';
 import { useI18n } from '@/renderer/i18n';
-import type { ProjectInfo, SessionSummary, SessionMessage } from '@/shared/types/chat.types';
+import type { ProjectInfo, SessionSummary, SessionMessage, AssistantContentBlock } from '@/shared/types/chat.types';
 import './ChatHistoryPanel.css';
 
 export type SortMode = 'time' | 'project';
@@ -128,8 +128,32 @@ export function ChatHistoryPanel() {
   }, [selectedSessionId]);
 
   const totalSessionCount = projects.reduce((sum, p) => sum + p.sessionCount, 0);
-  const selectedSession = sessions.find(s => s.sessionId === selectedSessionId);
-  const sessionTitle = selectedSession?.title;
+
+  // Right-click context menu on session cards
+  const handleSessionContextMenu = useCallback(async (session: SessionSummary, x: number, y: number) => {
+    const chatApi = window.api.chat as any;
+    if (!chatApi.showSessionMenu) return;
+    const action = await chatApi.showSessionMenu(x, y);
+    if (action === 'copy') {
+      try {
+        const result = await window.api.chat.getSession(session.projectHash, session.sessionId);
+        const msgs = (result as { messages?: SessionMessage[] })?.messages || [];
+        const markdown = formatMessagesAsMarkdown(msgs);
+        await navigator.clipboard.writeText(markdown);
+      } catch { /* ignore */ }
+    } else if (action === 'delete') {
+      if (!window.confirm(t('chat.deleteConfirm' as any))) return;
+      try {
+        await chatApi.deleteSession(session.projectHash, session.sessionId);
+        // Refresh session list
+        setSessions(prev => prev.filter(s => s.sessionId !== session.sessionId));
+        if (selectedSessionId === session.sessionId) {
+          setSelectedSessionId(null);
+          setMessages([]);
+        }
+      } catch { /* ignore */ }
+    }
+  }, [t, selectedSessionId]);
 
   return (
     <div className="chat-history-panel">
@@ -197,6 +221,7 @@ export function ChatHistoryPanel() {
             onSelect={setSelectedSessionId}
             sortMode={sortMode}
             onSortChange={setSortMode}
+            onSessionContextMenu={handleSessionContextMenu}
           />
         )}
       </div>
@@ -205,7 +230,6 @@ export function ChatHistoryPanel() {
         <SessionDetail
           messages={messages}
           loading={loading}
-          sessionTitle={sessionTitle}
         />
       </div>
       </div>
