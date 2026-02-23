@@ -94,15 +94,22 @@ interface MessageBubbleProps {
 const MessageBubble = React.memo(function MessageBubble({ message }: MessageBubbleProps) {
   const { t } = useI18n();
   const isUser = message.type === 'user';
+  const isSystem = message.type === 'system';
+
+  const bubbleClass = isUser
+    ? 'message-bubble--user'
+    : isSystem
+      ? 'message-bubble--system'
+      : 'message-bubble--assistant';
 
   return (
-    <div className={`message-bubble ${isUser ? 'message-bubble--user' : 'message-bubble--assistant'}`}>
+    <div className={`message-bubble ${bubbleClass}`}>
       <div className="message-bubble__label">
-        {isUser ? t('chat.you') : t('chat.claude')}
+        {isUser ? t('chat.you') : isSystem ? t('chat.system') : t('chat.claude')}
       </div>
 
       <div className="message-bubble__content">
-        {isUser ? (
+        {isUser || isSystem ? (
           <div className="message-bubble__text">{message.content as string}</div>
         ) : (
           Array.isArray(message.content)

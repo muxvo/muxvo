@@ -33,6 +33,7 @@ export const en = {
   'chat.toolResult': 'Tool Result',
   'chat.you': 'YOU',
   'chat.claude': 'CLAUDE',
+  'chat.system': 'SYSTEM',
   'cwd.title': 'Change Working Directory',
   'cwd.current': 'Current:',
   'cwd.quickPaths': 'Quick Paths',

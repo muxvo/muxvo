@@ -33,6 +33,7 @@ export const zh = {
   'chat.toolResult': 'Tool Result',
   'chat.you': 'YOU',
   'chat.claude': 'CLAUDE',
+  'chat.system': 'SYSTEM',
   'cwd.title': '切换工作目录',
   'cwd.current': '当前:',
   'cwd.quickPaths': '快捷路径',

@@ -130,10 +130,13 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
     try {
       const entry = JSON.parse(trimmed);
       const type = entry.type as string;
-      if (type !== 'user' && type !== 'assistant') return null;
+      if (type !== 'user' && type !== 'assistant' && type !== 'queue-operation') return null;
 
       let normalizedContent: string | SessionMessage['content'];
-      if (type === 'user') {
+      if (type === 'queue-operation') {
+        // queue-operation: content is at entry.content (top-level string)
+        normalizedContent = typeof entry.content === 'string' ? entry.content : '';
+      } else if (type === 'user') {
         const msgContent = (entry.message as Record<string, unknown>)?.content;
         if (typeof msgContent === 'string') {
           normalizedContent = msgContent;
@@ -165,9 +168,34 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
         }
       }
 
+      // Detect system messages and resolve type
+      let resolvedType: 'user' | 'assistant' | 'system' = type as 'user' | 'assistant';
+
+      if (type === 'queue-operation') {
+        // queue-operation is always a system message
+        resolvedType = 'system';
+      } else if (type === 'user') {
+        // Check for system message markers on user-type entries
+        if (entry.isCompactSummary === true) {
+          resolvedType = 'system';
+        } else if (entry.isMeta === true) {
+          resolvedType = 'system';
+        } else {
+          const contentStr = typeof normalizedContent === 'string' ? normalizedContent : '';
+          const trimmedContent = contentStr.trimStart();
+          if (
+            trimmedContent.startsWith('<task-notification>') ||
+            trimmedContent.startsWith('<command-message>') ||
+            trimmedContent.startsWith('<command-name>')
+          ) {
+            resolvedType = 'system';
+          }
+        }
+      }
+
       return {
         uuid: (entry.uuid as string) || '',
-        type: type as 'user' | 'assistant',
+        type: resolvedType,
         sessionId: (entry.sessionId as string) || sessionId,
         cwd: (entry.cwd as string) || '',
         gitBranch: entry.gitBranch as string | undefined,

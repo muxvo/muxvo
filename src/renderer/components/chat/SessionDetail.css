@@ -39,6 +39,22 @@
   align-items: flex-start;
 }
 
+.message-bubble--system {
+  align-items: center;
+}
+
+.message-bubble--system .message-bubble__content {
+  max-width: 85%;
+  background: var(--bg-secondary, var(--bg-hover));
+  color: var(--text-secondary);
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.message-bubble--system .message-bubble__label {
+  color: var(--text-muted);
+}
+
 .message-bubble__label {
   font-size: 10px;
   font-weight: 600;
