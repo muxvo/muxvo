@@ -1,0 +1,86 @@
+/* HooksPanel — two-column Hook management */
+
+.hooks-panel { display: flex; height: 100%; background: var(--bg-primary); color: var(--text-primary); }
+
+/* Left column: hook list */
+.hooks-panel__left { flex-shrink: 0; border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
+.hooks-panel__header { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.hooks-panel__count { font-size: 11px; font-weight: 600; color: var(--accent); background: var(--accent-glow); padding: 1px 8px; border-radius: 8px; }
+.hooks-panel__add-btn { margin-left: auto; width: 22px; height: 22px; border-radius: 4px; border: 1px solid var(--border); background: transparent; color: var(--accent); font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.hooks-panel__add-btn:hover { background: var(--accent-glow); }
+.hooks-panel__list { flex: 1; overflow-y: auto; padding: 4px; }
+.hooks-panel__loading, .hooks-panel__empty { padding: 20px 16px; color: var(--text-muted); font-size: 13px; text-align: center; }
+
+/* Event grouping */
+.hooks-panel__event-group { margin-bottom: 4px; }
+.hooks-panel__event-label { padding: 8px 12px 4px; font-size: 12px; font-weight: 700; color: var(--accent); font-family: var(--font-mono); }
+
+/* Hook list item */
+.hooks-panel__item { padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: background 0.1s; display: flex; flex-direction: column; gap: 4px; }
+.hooks-panel__item:hover { background: var(--bg-hover); }
+.hooks-panel__item--active { background: var(--accent-glow); }
+.hooks-panel__item-info { display: flex; align-items: center; gap: 6px; }
+.hooks-panel__item-matcher { font-size: 11px; font-weight: 600; color: var(--accent); background: var(--accent-glow); padding: 0 5px; border-radius: 3px; font-family: var(--font-mono); flex-shrink: 0; }
+.hooks-panel__item-command { font-size: 12px; font-family: var(--font-mono); color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hooks-panel__item-badges { display: flex; gap: 4px; }
+
+/* Handler type badge */
+.hooks-panel__handler-badge { font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; }
+.hooks-panel__handler-badge--command { background: rgba(232, 167, 72, 0.12); color: #e8a748; }
+.hooks-panel__handler-badge--prompt { background: rgba(96, 165, 250, 0.12); color: #60a5fa; }
+.hooks-panel__handler-badge--agent { background: rgba(167, 139, 250, 0.12); color: #a78bfa; }
+
+/* Scope badge */
+.hooks-panel__scope-badge { font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; }
+.hooks-panel__scope--global { background: rgba(52, 211, 153, 0.12); color: #34d399; }
+.hooks-panel__scope--project { background: rgba(96, 165, 250, 0.12); color: #60a5fa; }
+.hooks-panel__scope--local { background: rgba(167, 139, 250, 0.12); color: #a78bfa; }
+
+/* Resize handle */
+.hooks-panel__resize-handle { width: 6px; cursor: col-resize; flex-shrink: 0; transition: background 0.15s; }
+.hooks-panel__resize-handle:hover { background: var(--accent-glow); }
+
+/* Right column */
+.hooks-panel__right { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 300px; }
+.hooks-panel__placeholder { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); font-size: 13px; }
+
+/* Detail view */
+.hooks-panel__detail { display: flex; flex-direction: column; height: 100%; padding: 20px 24px; overflow-y: auto; }
+.hooks-panel__detail-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.hooks-panel__detail-event { font-size: 18px; font-weight: 700; font-family: var(--font-mono); }
+.hooks-panel__detail-body { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+.hooks-panel__detail-row { display: flex; flex-direction: column; gap: 4px; }
+.hooks-panel__detail-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+.hooks-panel__detail-value { font-size: 13px; color: var(--text-primary); word-break: break-all; }
+.hooks-panel__detail-value--mono { font-family: var(--font-mono); }
+
+.hooks-panel__detail-actions { display: flex; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+.hooks-panel__detail-hint { margin-top: 20px; padding: 10px 12px; background: rgba(96, 165, 250, 0.06); border-radius: 6px; font-size: 12px; color: var(--text-secondary); }
+
+/* Form */
+.hooks-panel__form { display: flex; flex-direction: column; height: 100%; padding: 20px 24px; overflow-y: auto; }
+.hooks-panel__form-header { font-size: 16px; font-weight: 700; margin-bottom: 20px; }
+.hooks-panel__form-body { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+.hooks-panel__form-label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.hooks-panel__form-input,
+.hooks-panel__form-select,
+.hooks-panel__form-textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-deep); color: var(--text-primary); font-size: 13px; font-family: var(--font-mono); outline: none; transition: border-color 0.15s; }
+.hooks-panel__form-input:focus,
+.hooks-panel__form-select:focus,
+.hooks-panel__form-textarea:focus { border-color: var(--accent); }
+.hooks-panel__form-textarea { resize: vertical; min-height: 60px; }
+.hooks-panel__form-select { cursor: pointer; }
+
+.hooks-panel__form-checks { display: flex; gap: 16px; }
+.hooks-panel__form-check { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); cursor: pointer; }
+.hooks-panel__form-check input[type="checkbox"] { accent-color: var(--accent); }
+
+.hooks-panel__form-actions { display: flex; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+/* Buttons */
+.hooks-panel__btn { padding: 6px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); transition: all 0.15s; }
+.hooks-panel__btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.hooks-panel__btn--primary { background: var(--accent-glow); color: var(--accent); border-color: transparent; }
+.hooks-panel__btn--primary:hover { background: var(--accent); color: var(--bg-deep); }
+.hooks-panel__btn--danger { color: #f87171; border-color: rgba(248, 113, 113, 0.2); }
+.hooks-panel__btn--danger:hover { background: rgba(248, 113, 113, 0.12); color: #f87171; }
