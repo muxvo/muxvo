@@ -71,7 +71,8 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
 
   /**
    * Extract a SessionSummary from a single .jsonl file.
-   * Uses streaming for title/startedAt and file size estimation for messageCount.
+   * Uses streaming: first 20 lines for title/startedAt, full scan with
+   * substring matching (no JSON.parse per line) for messageCount.
    */
   async function extractSessionSummary(
     projectHash: string,
@@ -84,38 +85,66 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
 
     let title = '';
     let startedAt = '';
-    // Estimate message count from file size (~2KB per message on average)
-    const messageCount = Math.max(1, Math.round(stat.size / 2048));
+    let messageCount = 0;
 
     try {
-      const lines = await readFirstLines(filePath, 20);
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed) continue;
-        try {
-          const obj = JSON.parse(trimmed);
-          if (obj.type === 'user') {
-            let rawContent = '';
-            const msgContent = obj.message?.content ?? obj.content;
-            if (typeof msgContent === 'string') {
-              rawContent = msgContent;
-            } else if (Array.isArray(msgContent)) {
-              rawContent = msgContent
-                .filter((b: any) => b.type === 'text' && typeof b.text === 'string')
-                .map((b: any) => b.text)
-                .join('\n');
+      await new Promise<void>((resolve) => {
+        const stream = createReadStream(filePath, { encoding: 'utf-8' });
+        const rl = createInterface({ input: stream, crlfDelay: Infinity });
+        let titleFound = false;
+        let lineIndex = 0;
+
+        rl.on('line', (line) => {
+          const trimmed = line.trim();
+          if (!trimmed) return;
+          lineIndex++;
+
+          // Count visible messages via substring matching (no JSON.parse)
+          if (trimmed.includes('"type":"user"') || trimmed.includes('"type": "user"')) {
+            // Skip system-like user entries
+            if (
+              trimmed.includes('"isCompactSummary":true') || trimmed.includes('"isCompactSummary": true') ||
+              trimmed.includes('"isMeta":true') || trimmed.includes('"isMeta": true')
+            ) {
+              // system message, don't count
+            } else {
+              messageCount++;
             }
-            if (!startedAt) startedAt = obj.timestamp || '';
-            const trimmedContent = rawContent.trim();
-            if (trimmedContent) {
-              title = trimmedContent.slice(0, 100);
-              break;
+          } else if (trimmed.includes('"type":"assistant"') || trimmed.includes('"type": "assistant"')) {
+            messageCount++;
+          }
+
+          // Extract title/startedAt from early lines (only parse first 20)
+          if (!titleFound && lineIndex <= 20) {
+            try {
+              const obj = JSON.parse(trimmed);
+              if (obj.type === 'user') {
+                let rawContent = '';
+                const msgContent = obj.message?.content ?? obj.content;
+                if (typeof msgContent === 'string') {
+                  rawContent = msgContent;
+                } else if (Array.isArray(msgContent)) {
+                  rawContent = msgContent
+                    .filter((b: any) => b.type === 'text' && typeof b.text === 'string')
+                    .map((b: any) => b.text)
+                    .join('\n');
+                }
+                if (!startedAt) startedAt = obj.timestamp || '';
+                const trimmedContent = rawContent.trim();
+                if (trimmedContent) {
+                  title = trimmedContent.slice(0, 100);
+                  titleFound = true;
+                }
+              }
+            } catch {
+              // skip malformed line
             }
           }
-        } catch {
-          // skip malformed line
-        }
-      }
+        });
+
+        rl.on('close', () => resolve());
+        stream.on('error', () => resolve());
+      });
     } catch {
       // file read error - return defaults
     }
@@ -126,7 +155,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
       title,
       startedAt,
       lastModified,
-      messageCount,
+      messageCount: Math.max(1, messageCount),
     };
   }
 
