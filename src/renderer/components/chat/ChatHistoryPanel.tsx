@@ -105,15 +105,16 @@ export function ChatHistoryPanel() {
     .finally(() => setProjectsLoading(false));
   }, []);
 
-  // Fetch sessions when project changes
+  // Fetch sessions after projects are loaded (progressive disclosure)
   useEffect(() => {
+    if (projectsLoading) return;
     setSessionsLoading(true);
     const hash = selectedProjectHash || '__all__';
     window.api.chat.getSessions(hash).then((result: { sessions?: SessionSummary[] }) => {
       setSessions(result?.sessions || []);
     }).catch(() => setSessions([]))
     .finally(() => setSessionsLoading(false));
-  }, [selectedProjectHash]);
+  }, [selectedProjectHash, projectsLoading]);
 
   const handleSelectProject = useCallback((projectHash: string | null) => {
     setSelectedProjectHash(projectHash);
