@@ -22,6 +22,7 @@ interface SessionListProps {
   onSelect: (sessionId: string) => void;
   sortMode?: SortMode;
   onSortChange?: (mode: SortMode) => void;
+  onSessionContextMenu?: (session: SessionSummary, x: number, y: number) => void;
 }
 
 /**
@@ -74,7 +75,7 @@ function extractTags(title: string): Array<{ label: string; color: string }> {
   return tags;
 }
 
-export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time', onSortChange }: SessionListProps) {
+export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time', onSortChange, onSessionContextMenu }: SessionListProps) {
   const { t } = useI18n();
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
@@ -143,6 +144,10 @@ export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time',
             key={session.sessionId}
             className={`session-card ${isSelected ? 'session-card--selected' : ''}`}
             onClick={() => onSelect(session.sessionId)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              onSessionContextMenu?.(session, e.clientX, e.clientY);
+            }}
           >
             <div className="session-card__header">
               <span className="session-card__title" title={session.title}>

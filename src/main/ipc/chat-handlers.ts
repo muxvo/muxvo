@@ -5,9 +5,10 @@
  * chat:search, chat:export IPC channels.
  */
 
-import { ipcMain } from 'electron';
+import { ipcMain, Menu, BrowserWindow } from 'electron';
 import { homedir } from 'os';
 import { join } from 'path';
+import { promises as fsp } from 'fs';
 import { createChatProjectReader } from '../services/chat-dual-source';
 import { createChatArchiveManager } from '../services/chat-archive';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
@@ -85,6 +86,34 @@ export function registerChatHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.CHAT.GET_SESSION, async (_e, p) => handlers.getSession(p));
   ipcMain.handle(IPC_CHANNELS.CHAT.SEARCH, async (_e, p) => handlers.search(p));
   ipcMain.handle(IPC_CHANNELS.CHAT.EXPORT, async (_e, p) => handlers.export(p));
+
+  // Right-click context menu for session cards
+  ipcMain.handle(IPC_CHANNELS.CHAT.SHOW_SESSION_MENU, async (_e, p: { x: number; y: number }) => {
+    return new Promise<string | null>((resolve) => {
+      const template: Electron.MenuItemConstructorOptions[] = [
+        { label: '📋 复制会话为 Markdown', click: () => resolve('copy') },
+        { type: 'separator' },
+        { label: '🗑 删除聊天记录', click: () => resolve('delete') },
+      ];
+      const menu = Menu.buildFromTemplate(template);
+      menu.popup({
+        x: p.x,
+        y: p.y,
+        window: BrowserWindow.getFocusedWindow() || undefined,
+        callback: () => resolve(null),
+      });
+    });
+  });
+
+  // Delete session JSONL from both CC source and archive
+  ipcMain.handle(IPC_CHANNELS.CHAT.DELETE_SESSION, async (_e, p: { projectHash: string; sessionId: string }) => {
+    const ccPath = join(homedir(), '.claude', 'projects', p.projectHash, `${p.sessionId}.jsonl`);
+    const archivePath = join(homedir(), '.muxvo', 'chat-archive', p.projectHash, `${p.sessionId}.jsonl`);
+    const deleted: string[] = [];
+    try { await fsp.unlink(ccPath); deleted.push('cc'); } catch { /* not found */ }
+    try { await fsp.unlink(archivePath); deleted.push('archive'); } catch { /* not found */ }
+    return { success: true, deleted };
+  });
 }
 
 export function registerChatArchiveHandlers(

@@ -9,7 +9,7 @@
  * - 代码块: 复制按钮
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { MarkdownPreview } from '@/renderer/components/markdown/MarkdownPreview';
 import { useI18n } from '@/renderer/i18n';
@@ -19,7 +19,6 @@ import './SessionDetail.css';
 interface SessionDetailProps {
   messages: SessionMessage[];
   loading?: boolean;
-  sessionTitle?: string;
 }
 
 interface ToolCallBlockProps {
@@ -126,7 +125,7 @@ const MessageBubble = React.memo(function MessageBubble({ message }: MessageBubb
   );
 });
 
-function formatMessagesAsMarkdown(messages: SessionMessage[]): string {
+export function formatMessagesAsMarkdown(messages: SessionMessage[]): string {
   const parts: string[] = [];
   for (const msg of messages) {
     if (msg.type === 'system') continue;
@@ -147,17 +146,8 @@ function formatMessagesAsMarkdown(messages: SessionMessage[]): string {
 
 const MESSAGE_PAGE_SIZE = 50;
 
-export function SessionDetail({ messages, loading, sessionTitle }: SessionDetailProps) {
+export function SessionDetail({ messages, loading }: SessionDetailProps) {
   const { t } = useI18n();
-  const [copyLabel, setCopyLabel] = useState<string | null>(null);
-
-  const handleCopy = useCallback(() => {
-    const markdown = formatMessagesAsMarkdown(messages);
-    navigator.clipboard.writeText(markdown).then(() => {
-      setCopyLabel(t('chat.copied' as any));
-      setTimeout(() => setCopyLabel(null), 2000);
-    }).catch(() => {});
-  }, [messages, t]);
   const [visibleCount, setVisibleCount] = useState(MESSAGE_PAGE_SIZE);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
@@ -215,18 +205,6 @@ export function SessionDetail({ messages, loading, sessionTitle }: SessionDetail
 
   return (
     <div className="session-detail">
-      {messages.length > 0 && (
-        <div className="session-detail__toolbar">
-          {sessionTitle && (
-            <span className="session-detail__toolbar-title" title={sessionTitle}>
-              {sessionTitle}
-            </span>
-          )}
-          <button className="session-detail__copy-btn" onClick={handleCopy}>
-            {copyLabel || t('chat.copyToClipboard' as any)}
-          </button>
-        </div>
-      )}
       <Virtuoso
         ref={virtuosoRef}
         data={visibleMessages}

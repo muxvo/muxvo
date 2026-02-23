@@ -88,7 +88,9 @@ const IPC_CHANNELS = {
     EXPORT: "chat:export",
     GET_ARCHIVE_ENABLED: "chat:get-archive-enabled",
     SET_ARCHIVE_ENABLED: "chat:set-archive-enabled",
-    ARCHIVE_PROGRESS: "chat:archive-progress"
+    ARCHIVE_PROGRESS: "chat:archive-progress",
+    SHOW_SESSION_MENU: "chat:show-session-menu",
+    DELETE_SESSION: "chat:delete-session"
   },
   CONFIG: {
     GET_RESOURCES: "config:get-resources",
@@ -969,7 +971,7 @@ function createChatHandlers() {
       return { results };
     },
     async export(params) {
-      const { promises: fsp } = await import("fs");
+      const { promises: fsp2 } = await import("fs");
       const messages = await reader.readSession(params.projectHash, params.sessionId);
       let content;
       let ext;
@@ -987,9 +989,9 @@ function createChatHandlers() {
         ext = "md";
       }
       const exportDir = path.join(os.homedir(), ".muxvo", "exports");
-      await fsp.mkdir(exportDir, { recursive: true });
+      await fsp2.mkdir(exportDir, { recursive: true });
       const filePath = path.join(exportDir, `${params.sessionId}.${ext}`);
-      await fsp.writeFile(filePath, content, "utf-8");
+      await fsp2.writeFile(filePath, content, "utf-8");
       return { outputPath: filePath };
     }
   };
@@ -1001,6 +1003,38 @@ function registerChatHandlers() {
   electron.ipcMain.handle(IPC_CHANNELS.CHAT.GET_SESSION, async (_e, p) => handlers.getSession(p));
   electron.ipcMain.handle(IPC_CHANNELS.CHAT.SEARCH, async (_e, p) => handlers.search(p));
   electron.ipcMain.handle(IPC_CHANNELS.CHAT.EXPORT, async (_e, p) => handlers.export(p));
+  electron.ipcMain.handle(IPC_CHANNELS.CHAT.SHOW_SESSION_MENU, async (_e, p) => {
+    return new Promise((resolve) => {
+      const template = [
+        { label: "📋 复制会话为 Markdown", click: () => resolve("copy") },
+        { type: "separator" },
+        { label: "🗑 删除聊天记录", click: () => resolve("delete") }
+      ];
+      const menu = electron.Menu.buildFromTemplate(template);
+      menu.popup({
+        x: p.x,
+        y: p.y,
+        window: electron.BrowserWindow.getFocusedWindow() || void 0,
+        callback: () => resolve(null)
+      });
+    });
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.CHAT.DELETE_SESSION, async (_e, p) => {
+    const ccPath = path.join(os.homedir(), ".claude", "projects", p.projectHash, `${p.sessionId}.jsonl`);
+    const archivePath = path.join(os.homedir(), ".muxvo", "chat-archive", p.projectHash, `${p.sessionId}.jsonl`);
+    const deleted = [];
+    try {
+      await fs.promises.unlink(ccPath);
+      deleted.push("cc");
+    } catch {
+    }
+    try {
+      await fs.promises.unlink(archivePath);
+      deleted.push("archive");
+    } catch {
+    }
+    return { success: true, deleted };
+  });
 }
 function registerChatArchiveHandlers(archiveManager) {
   electron.ipcMain.handle(IPC_CHANNELS.CHAT.GET_ARCHIVE_ENABLED, async () => {
