@@ -11,9 +11,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ProjectList } from './ProjectList';
 import { SessionList } from './SessionList';
-import { SessionDetail, formatMessagesAsMarkdown } from './SessionDetail';
+import { SessionDetail } from './SessionDetail';
 import { useI18n } from '@/renderer/i18n';
-import type { ProjectInfo, SessionSummary, SessionMessage, AssistantContentBlock } from '@/shared/types/chat.types';
+import type { ProjectInfo, SessionSummary, SessionMessage } from '@/shared/types/chat.types';
 import './ChatHistoryPanel.css';
 
 export type SortMode = 'time' | 'project';
@@ -134,12 +134,13 @@ export function ChatHistoryPanel() {
     const chatApi = window.api.chat as any;
     if (!chatApi.showSessionMenu) return;
     const action = await chatApi.showSessionMenu(x, y);
-    if (action === 'copy') {
+    if (action === 'export') {
       try {
-        const result = await window.api.chat.getSession(session.projectHash, session.sessionId);
-        const msgs = (result as { messages?: SessionMessage[] })?.messages || [];
-        const markdown = formatMessagesAsMarkdown(msgs);
-        await navigator.clipboard.writeText(markdown);
+        const result = await window.api.chat.export(session.projectHash, session.sessionId, 'markdown') as { outputPath?: string };
+        if (result?.outputPath) {
+          const chatApi = window.api.chat as any;
+          chatApi.revealFile?.(result.outputPath);
+        }
       } catch { /* ignore */ }
     } else if (action === 'delete') {
       if (!window.confirm(t('chat.deleteConfirm' as any))) return;

@@ -90,7 +90,8 @@ const IPC_CHANNELS = {
     SET_ARCHIVE_ENABLED: "chat:set-archive-enabled",
     ARCHIVE_PROGRESS: "chat:archive-progress",
     SHOW_SESSION_MENU: "chat:show-session-menu",
-    DELETE_SESSION: "chat:delete-session"
+    DELETE_SESSION: "chat:delete-session",
+    REVEAL_FILE: "chat:reveal-file"
   },
   CONFIG: {
     GET_RESOURCES: "config:get-resources",
@@ -962,7 +963,7 @@ function createChatHandlers() {
       return { sessions };
     },
     async getSession(params) {
-      const options = params.limit !== void 0 ? { limit: params.limit } : { limit: 100 };
+      const options = params.limit === 0 ? void 0 : params.limit !== void 0 ? { limit: params.limit } : { limit: 100 };
       const messages = await reader.readSession(params.projectHash, params.sessionId, options);
       return { messages };
     },
@@ -1006,7 +1007,7 @@ function registerChatHandlers() {
   electron.ipcMain.handle(IPC_CHANNELS.CHAT.SHOW_SESSION_MENU, async (_e, p) => {
     return new Promise((resolve) => {
       const template = [
-        { label: "📋 复制会话为 Markdown", click: () => resolve("copy") },
+        { label: "📄 导出为 Markdown", click: () => resolve("export") },
         { type: "separator" },
         { label: "🗑 删除聊天记录", click: () => resolve("delete") }
       ];
@@ -1034,6 +1035,10 @@ function registerChatHandlers() {
     } catch {
     }
     return { success: true, deleted };
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.CHAT.REVEAL_FILE, async (_e, p) => {
+    electron.shell.showItemInFolder(p.filePath);
+    return { success: true };
   });
 }
 function registerChatArchiveHandlers(archiveManager) {

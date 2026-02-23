@@ -127,6 +127,8 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.SHOW_SESSION_MENU, { x, y }),
     deleteSession: (projectHash: string, sessionId: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.DELETE_SESSION, { projectHash, sessionId }),
+    revealFile: (filePath: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.REVEAL_FILE, { filePath }),
     onSessionUpdate: (callback: (data: { projectHash: string; sessionId: string }) => void) => {
       const handler = (_event: Electron.IpcRendererEvent, data: { projectHash: string; sessionId: string }) => callback(data);
       ipcRenderer.on(IPC_CHANNELS.CHAT.SESSION_UPDATE, handler);

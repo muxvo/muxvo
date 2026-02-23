@@ -40,7 +40,8 @@ const IPC_CHANNELS = {
     SET_ARCHIVE_ENABLED: "chat:set-archive-enabled",
     ARCHIVE_PROGRESS: "chat:archive-progress",
     SHOW_SESSION_MENU: "chat:show-session-menu",
-    DELETE_SESSION: "chat:delete-session"
+    DELETE_SESSION: "chat:delete-session",
+    REVEAL_FILE: "chat:reveal-file"
   },
   CONFIG: {
     GET_RESOURCES: "config:get-resources",
@@ -174,6 +175,7 @@ const api = {
     setArchiveEnabled: (enabled) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.SET_ARCHIVE_ENABLED, { enabled }),
     showSessionMenu: (x, y) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.SHOW_SESSION_MENU, { x, y }),
     deleteSession: (projectHash, sessionId) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.DELETE_SESSION, { projectHash, sessionId }),
+    revealFile: (filePath) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.REVEAL_FILE, { filePath }),
     onSessionUpdate: (callback) => {
       const handler = (_event, data) => callback(data);
       electron.ipcRenderer.on(IPC_CHANNELS.CHAT.SESSION_UPDATE, handler);

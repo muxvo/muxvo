@@ -5,7 +5,7 @@
  * chat:search, chat:export IPC channels.
  */
 
-import { ipcMain, Menu, BrowserWindow } from 'electron';
+import { ipcMain, Menu, BrowserWindow, shell } from 'electron';
 import { homedir } from 'os';
 import { join } from 'path';
 import { promises as fsp } from 'fs';
@@ -37,7 +37,7 @@ export function createChatHandlers() {
     },
 
     async getSession(params: { projectHash: string; sessionId: string; limit?: number }) {
-      const options = params.limit !== undefined ? { limit: params.limit } : { limit: 100 };
+      const options = params.limit === 0 ? undefined : params.limit !== undefined ? { limit: params.limit } : { limit: 100 };
       const messages = await reader.readSession(params.projectHash, params.sessionId, options);
       return { messages };
     },
@@ -91,7 +91,7 @@ export function registerChatHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.CHAT.SHOW_SESSION_MENU, async (_e, p: { x: number; y: number }) => {
     return new Promise<string | null>((resolve) => {
       const template: Electron.MenuItemConstructorOptions[] = [
-        { label: '📋 复制会话为 Markdown', click: () => resolve('copy') },
+        { label: '📄 导出为 Markdown', click: () => resolve('export') },
         { type: 'separator' },
         { label: '🗑 删除聊天记录', click: () => resolve('delete') },
       ];
@@ -113,6 +113,12 @@ export function registerChatHandlers(): void {
     try { await fsp.unlink(ccPath); deleted.push('cc'); } catch { /* not found */ }
     try { await fsp.unlink(archivePath); deleted.push('archive'); } catch { /* not found */ }
     return { success: true, deleted };
+  });
+
+  // Reveal file in Finder/Explorer
+  ipcMain.handle(IPC_CHANNELS.CHAT.REVEAL_FILE, async (_e, p: { filePath: string }) => {
+    shell.showItemInFolder(p.filePath);
+    return { success: true };
   });
 }
 
