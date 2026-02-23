@@ -56,7 +56,7 @@ describe('CHAT L1 -- 契约层测试', () => {
         success: true,
         data: {
           sessions: [
-            { sessionId: 's1', projectHash: 'hash1', title: 'Hello', startedAt: '2024-01-01T00:00:00Z', lastModified: 1700000000000, messageCount: 5 },
+            { sessionId: 's1', projectHash: 'hash1', title: 'Hello', startedAt: '2024-01-01T00:00:00Z', lastModified: 1700000000000, fileSize: 5 },
           ],
         },
       }));
@@ -77,7 +77,7 @@ describe('CHAT L1 -- 契约层测试', () => {
         expect(s).toHaveProperty('title');
         expect(s).toHaveProperty('startedAt');
         expect(s).toHaveProperty('lastModified');
-        expect(s).toHaveProperty('messageCount');
+        expect(s).toHaveProperty('fileSize');
       }
     });
 

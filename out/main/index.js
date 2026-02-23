@@ -501,7 +501,6 @@ function createChatProjectReader(opts) {
     const lastModified = stat.mtimeMs;
     let title = "";
     let startedAt = "";
-    const messageCount = Math.max(1, Math.round(stat.size / 2048));
     try {
       const lines = await readFirstLines(filePath, 20);
       for (const line of lines) {
@@ -535,7 +534,7 @@ function createChatProjectReader(opts) {
       title,
       startedAt,
       lastModified,
-      messageCount
+      fileSize: stat.size
     };
   }
   function parseMessageLine(line, sessionId) {
