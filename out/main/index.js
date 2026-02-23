@@ -950,7 +950,7 @@ function createChatHandlers() {
       return { sessions };
     },
     async getSession(params) {
-      const options = params.limit === 0 ? void 0 : params.limit !== void 0 ? { limit: params.limit } : { limit: 100 };
+      const options = params.limit && params.limit > 0 ? { limit: params.limit } : void 0;
       const messages = await reader.readSession(params.projectHash, params.sessionId, options);
       return { messages };
     },
