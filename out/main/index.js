@@ -665,11 +665,9 @@ function createChatProjectReader(opts) {
       if (projectsCache.data && Date.now() < projectsCache.expiry) {
         return projectsCache.data;
       }
-      const [ccProjects, archiveProjects] = await Promise.all([
-        scanProjectsFromDir(projectsDir),
-        archiveProjectsDir ? scanProjectsFromDir(archiveProjectsDir) : Promise.resolve([])
-      ]);
-      if (archiveProjects.length > 0) {
+      const ccProjects = await scanProjectsFromDir(projectsDir);
+      if (archiveProjectsDir) {
+        const archiveProjects = await scanProjectsFromDir(archiveProjectsDir);
         const ccHashSet = new Set(ccProjects.map((p) => p.projectHash));
         for (const ap of archiveProjects) {
           if (ccHashSet.has(ap.projectHash)) {
@@ -692,15 +690,16 @@ function createChatProjectReader(opts) {
      */
     async getSessionsForProject(projectHash, limit = 50) {
       const ccProjectPath = path.join(projectsDir, projectHash);
-      const [ccStats, archiveStats] = await Promise.all([
-        scanSessionFilesFromDir(ccProjectPath),
-        archiveProjectsDir ? scanSessionFilesFromDir(path.join(archiveProjectsDir, projectHash)) : Promise.resolve([])
-      ]);
+      const ccStats = await scanSessionFilesFromDir(ccProjectPath);
       const ccFileNames = new Set(ccStats.map((s) => s.fileName));
       let allStats = [...ccStats];
-      for (const archiveStat of archiveStats) {
-        if (!ccFileNames.has(archiveStat.fileName)) {
-          allStats.push(archiveStat);
+      if (archiveProjectsDir) {
+        const archiveProjectPath = path.join(archiveProjectsDir, projectHash);
+        const archiveStats = await scanSessionFilesFromDir(archiveProjectPath);
+        for (const archiveStat of archiveStats) {
+          if (!ccFileNames.has(archiveStat.fileName)) {
+            allStats.push(archiveStat);
+          }
         }
       }
       allStats.sort((a, b) => b.mtime - a.mtime);
@@ -775,14 +774,14 @@ function createChatProjectReader(opts) {
         }
         return collected;
       }
-      const [ccFiles, archiveFiles] = await Promise.all([
-        collectFilesFromBase(projectsDir),
-        archiveProjectsDir ? collectFilesFromBase(archiveProjectsDir) : Promise.resolve([])
-      ]);
-      const ccKeySet = new Set(ccFiles.map((f) => f.projectHash + "/" + f.fileName));
-      for (const af of archiveFiles) {
-        if (!ccKeySet.has(af.projectHash + "/" + af.fileName)) {
-          ccFiles.push(af);
+      const ccFiles = await collectFilesFromBase(projectsDir);
+      if (archiveProjectsDir) {
+        const archiveFiles = await collectFilesFromBase(archiveProjectsDir);
+        const ccKeySet = new Set(ccFiles.map((f) => f.projectHash + "/" + f.fileName));
+        for (const af of archiveFiles) {
+          if (!ccKeySet.has(af.projectHash + "/" + af.fileName)) {
+            ccFiles.push(af);
+          }
         }
       }
       ccFiles.sort((a, b) => b.mtime - a.mtime);
