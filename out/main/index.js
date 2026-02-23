@@ -550,9 +550,11 @@ function createChatProjectReader(opts) {
     try {
       const entry = JSON.parse(trimmed);
       const type = entry.type;
-      if (type !== "user" && type !== "assistant") return null;
+      if (type !== "user" && type !== "assistant" && type !== "queue-operation") return null;
       let normalizedContent;
-      if (type === "user") {
+      if (type === "queue-operation") {
+        normalizedContent = typeof entry.content === "string" ? entry.content : "";
+      } else if (type === "user") {
         const msgContent = entry.message?.content;
         if (typeof msgContent === "string") {
           normalizedContent = msgContent;
@@ -581,9 +583,25 @@ function createChatProjectReader(opts) {
           normalizedContent = "";
         }
       }
+      let resolvedType = type;
+      if (type === "queue-operation") {
+        resolvedType = "system";
+      } else if (type === "user") {
+        if (entry.isCompactSummary === true) {
+          resolvedType = "system";
+        } else if (entry.isMeta === true) {
+          resolvedType = "system";
+        } else {
+          const contentStr = typeof normalizedContent === "string" ? normalizedContent : "";
+          const trimmedContent = contentStr.trimStart();
+          if (trimmedContent.startsWith("<task-notification>") || trimmedContent.startsWith("<command-message>") || trimmedContent.startsWith("<command-name>")) {
+            resolvedType = "system";
+          }
+        }
+      }
       return {
         uuid: entry.uuid || "",
-        type,
+        type: resolvedType,
         sessionId: entry.sessionId || sessionId,
         cwd: entry.cwd || "",
         gitBranch: entry.gitBranch,

@@ -55,7 +55,7 @@ export interface SessionMessage {
   /** 消息 UUID */
   uuid: string;
   /** 消息类型（跳过 file-history-snapshot） */
-  type: 'user' | 'assistant';
+  type: 'user' | 'assistant' | 'system';
   /** Session ID */
   sessionId: string;
   /** 工作目录 */
