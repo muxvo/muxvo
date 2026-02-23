@@ -1,26 +1,4 @@
 "use strict";
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
 const electron = require("electron");
 const path = require("path");
 const url = require("url");
@@ -972,7 +950,6 @@ function createChatHandlers() {
       return { results };
     },
     async export(params) {
-      const { promises: fsp2 } = await import("fs");
       const messages = await reader.readSession(params.projectHash, params.sessionId);
       let content;
       let ext;
@@ -980,7 +957,8 @@ function createChatHandlers() {
         content = JSON.stringify(messages, null, 2);
         ext = "json";
       } else {
-        const lines = [`# Session Export: ${params.sessionId}`, ""];
+        const displayTitle = params.title || params.sessionId;
+        const lines = [`# ${displayTitle}`, ""];
         for (const msg of messages) {
           const role = msg.type;
           const body = typeof msg.content === "string" ? msg.content : msg.content.filter((b) => b.type === "text").map((b) => b.text).join("\n");
@@ -989,10 +967,12 @@ function createChatHandlers() {
         content = lines.join("\n");
         ext = "md";
       }
+      const rawName = params.title ? params.title.slice(0, 50).replace(/[\/\\:*?"<>|]/g, "_").trim() : params.sessionId;
+      const fileName = rawName || params.sessionId;
       const exportDir = path.join(os.homedir(), ".muxvo", "exports");
-      await fsp2.mkdir(exportDir, { recursive: true });
-      const filePath = path.join(exportDir, `${params.sessionId}.${ext}`);
-      await fsp2.writeFile(filePath, content, "utf-8");
+      await fs.promises.mkdir(exportDir, { recursive: true });
+      const filePath = path.join(exportDir, `${fileName}.${ext}`);
+      await fs.promises.writeFile(filePath, content, "utf-8");
       return { outputPath: filePath };
     }
   };
