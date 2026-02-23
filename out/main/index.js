@@ -517,9 +517,12 @@ function createChatProjectReader(opts) {
             } else if (Array.isArray(msgContent)) {
               rawContent = msgContent.filter((b) => b.type === "text" && typeof b.text === "string").map((b) => b.text).join("\n");
             }
-            title = rawContent.slice(0, 100);
-            startedAt = obj.timestamp || "";
-            break;
+            if (!startedAt) startedAt = obj.timestamp || "";
+            const trimmedContent = rawContent.trim();
+            if (trimmedContent) {
+              title = trimmedContent.slice(0, 100);
+              break;
+            }
           }
         } catch {
         }
@@ -709,14 +712,14 @@ function createChatProjectReader(opts) {
         const cacheKey = projectHash + "/" + file.fileName;
         const cached = summaryCache.get(cacheKey);
         if (cached && Date.now() < cached.expiry) {
-          sessions.push(cached.data);
+          if (cached.data.title) sessions.push(cached.data);
           continue;
         }
         const filePath = ccFileNames.has(file.fileName) ? path.join(ccProjectPath, file.fileName) : path.join(archiveProjectsDir, projectHash, file.fileName);
         try {
           const summary = await extractSessionSummary(projectHash, filePath, file.fileName);
           summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
-          sessions.push(summary);
+          if (summary.title) sessions.push(summary);
         } catch {
         }
       }
@@ -791,13 +794,13 @@ function createChatProjectReader(opts) {
         const cacheKey = file.projectHash + "/" + file.fileName;
         const cached = summaryCache.get(cacheKey);
         if (cached && Date.now() < cached.expiry) {
-          sessions.push(cached.data);
+          if (cached.data.title) sessions.push(cached.data);
           continue;
         }
         try {
           const summary = await extractSessionSummary(file.projectHash, file.filePath, file.fileName);
           summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
-          sessions.push(summary);
+          if (summary.title) sessions.push(summary);
         } catch {
         }
       }
