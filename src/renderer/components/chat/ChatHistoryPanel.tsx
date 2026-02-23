@@ -33,6 +33,7 @@ export function ChatHistoryPanel() {
     () => localStorage.getItem('muxvo-archive-notice-dismissed') === 'true'
   );
   const [archiveEnabled, setArchiveEnabled] = useState(true);
+  const [archiveProgress, setArchiveProgress] = useState<{ synced: number; total: number } | null>(null);
 
   // Load archive enabled state
   useEffect(() => {
@@ -40,6 +41,20 @@ export function ChatHistoryPanel() {
     if (chatApi.getArchiveEnabled) {
       chatApi.getArchiveEnabled().then((v: boolean) => setArchiveEnabled(v)).catch(() => {});
     }
+  }, []);
+
+  // Listen for archive progress events
+  useEffect(() => {
+    const chatApi = window.api.chat as any;
+    if (!chatApi.onArchiveProgress) return;
+    const unsub = chatApi.onArchiveProgress((data: { synced: number; total: number }) => {
+      if (data.synced >= data.total) {
+        // Archive complete, clear progress after a short delay
+        setTimeout(() => setArchiveProgress(null), 2000);
+      }
+      setArchiveProgress(data);
+    });
+    return () => { unsub?.(); };
   }, []);
 
   const handleDismissBanner = useCallback(() => {
@@ -121,7 +136,9 @@ export function ChatHistoryPanel() {
       {!bannerDismissed && (
         <div className="chat-archive-banner">
           <span className="chat-archive-banner__text">
-            {t('chat.archiveNotice' as any)}
+            {archiveProgress && archiveProgress.total > 0
+              ? t('chat.archiving' as any, { synced: archiveProgress.synced, total: archiveProgress.total })
+              : t('chat.archiveNotice' as any)}
           </span>
           <div className="chat-archive-banner__actions">
             <label className="chat-archive-toggle">

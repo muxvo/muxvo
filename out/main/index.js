@@ -85,7 +85,9 @@ const IPC_CHANNELS = {
     SEARCH: "chat:search",
     SESSION_UPDATE: "chat:session-update",
     SYNC_STATUS: "chat:sync-status",
-    EXPORT: "chat:export"
+    EXPORT: "chat:export",
+    GET_ARCHIVE_ENABLED: "chat:get-archive-enabled",
+    SET_ARCHIVE_ENABLED: "chat:set-archive-enabled"
   },
   CONFIG: {
     GET_RESOURCES: "config:get-resources",
@@ -476,6 +478,7 @@ function registerTerminalHandlers(manager, onTerminalChange) {
 }
 function createChatProjectReader(opts) {
   const projectsDir = path.join(opts.ccBasePath, "projects");
+  const archiveProjectsDir = opts.archivePath ? path.join(opts.archivePath, "projects") : null;
   const CACHE_TTL = 5 * 60 * 1e3;
   const projectsCache = { data: null, expiry: 0 };
   const summaryCache = /* @__PURE__ */ new Map();
@@ -612,172 +615,231 @@ function createChatProjectReader(opts) {
       return null;
     }
   }
+  async function scanProjectsFromDir(baseDir) {
+    try {
+      const dirs = await fs.promises.readdir(baseDir, { withFileTypes: true });
+      const projectDirs = dirs.filter((d) => d.isDirectory());
+      const projectResults = await Promise.all(
+        projectDirs.map(async (dir) => {
+          const projectHash = dir.name;
+          const projectPath = path.join(baseDir, projectHash);
+          try {
+            const [files, dirStat] = await Promise.all([
+              fs.promises.readdir(projectPath),
+              fs.promises.stat(projectPath)
+            ]);
+            const jsonlCount = files.filter((f) => f.endsWith(".jsonl")).length;
+            if (jsonlCount === 0) return null;
+            const segments = projectHash.split("-").filter((s) => s.length > 0);
+            const displayName = segments.length > 0 ? segments[segments.length - 1] : projectHash;
+            return {
+              projectHash,
+              displayPath: "",
+              displayName,
+              sessionCount: jsonlCount,
+              lastActivity: dirStat.mtimeMs
+            };
+          } catch {
+            return null;
+          }
+        })
+      );
+      return projectResults.filter((p) => p !== null);
+    } catch {
+      return [];
+    }
+  }
+  async function scanSessionFilesFromDir(projectPath) {
+    try {
+      const files = await fs.promises.readdir(projectPath);
+      const jsonlFiles = files.filter((f) => f.endsWith(".jsonl"));
+      const fileStats = await Promise.all(
+        jsonlFiles.map(async (f) => {
+          try {
+            const stat = await fs.promises.stat(path.join(projectPath, f));
+            return { fileName: f, mtime: stat.mtimeMs };
+          } catch {
+            return null;
+          }
+        })
+      );
+      return fileStats.filter((s) => s !== null);
+    } catch {
+      return [];
+    }
+  }
   return {
     /**
-     * Scan all projects under ~/.claude/projects/
+     * Scan all projects under ~/.claude/projects/ and archive.
      * Uses directory stat for lastActivity (avoids stating every file).
      */
     async getProjects() {
       if (projectsCache.data && Date.now() < projectsCache.expiry) {
         return projectsCache.data;
       }
-      try {
-        const dirs = await fs.promises.readdir(projectsDir, { withFileTypes: true });
-        const projectDirs = dirs.filter((d) => d.isDirectory());
-        const projectResults = await Promise.all(
-          projectDirs.map(async (dir) => {
-            const projectHash = dir.name;
-            const projectPath = path.join(projectsDir, projectHash);
-            try {
-              const [files, dirStat] = await Promise.all([
-                fs.promises.readdir(projectPath),
-                fs.promises.stat(projectPath)
-              ]);
-              const jsonlCount = files.filter((f) => f.endsWith(".jsonl")).length;
-              if (jsonlCount === 0) return null;
-              const segments = projectHash.split("-").filter((s) => s.length > 0);
-              const displayName = segments.length > 0 ? segments[segments.length - 1] : projectHash;
-              return {
-                projectHash,
-                displayPath: "",
-                displayName,
-                sessionCount: jsonlCount,
-                lastActivity: dirStat.mtimeMs
-              };
-            } catch {
-              return null;
-            }
-          })
-        );
-        const projects = projectResults.filter((p) => p !== null);
-        projects.sort((a, b) => b.lastActivity - a.lastActivity);
-        projectsCache.data = projects;
-        projectsCache.expiry = Date.now() + CACHE_TTL;
-        return projects;
-      } catch {
-        return [];
+      const ccProjects = await scanProjectsFromDir(projectsDir);
+      if (archiveProjectsDir) {
+        const archiveProjects = await scanProjectsFromDir(archiveProjectsDir);
+        const ccHashSet = new Set(ccProjects.map((p) => p.projectHash));
+        for (const ap of archiveProjects) {
+          if (ccHashSet.has(ap.projectHash)) {
+            const existing = ccProjects.find((p) => p.projectHash === ap.projectHash);
+            existing.sessionCount = Math.max(existing.sessionCount, ap.sessionCount);
+          } else {
+            ccProjects.push(ap);
+          }
+        }
       }
+      ccProjects.sort((a, b) => b.lastActivity - a.lastActivity);
+      projectsCache.data = ccProjects;
+      projectsCache.expiry = Date.now() + CACHE_TTL;
+      return ccProjects;
     },
     /**
      * List sessions for a specific project.
      * Stats files first, sorts by mtime, then only extracts summaries for top N.
+     * Merges CC and archive sources (CC takes priority for duplicate sessions).
      */
     async getSessionsForProject(projectHash, limit = 50) {
-      const projectPath = path.join(projectsDir, projectHash);
-      try {
-        const files = await fs.promises.readdir(projectPath);
-        const jsonlFiles = files.filter((f) => f.endsWith(".jsonl"));
-        const fileStats = await Promise.all(
-          jsonlFiles.map(async (f) => {
-            try {
-              const stat = await fs.promises.stat(path.join(projectPath, f));
-              return { fileName: f, mtime: stat.mtimeMs };
-            } catch {
-              return null;
-            }
-          })
-        );
-        const validStats = fileStats.filter((s) => s !== null);
-        validStats.sort((a, b) => b.mtime - a.mtime);
-        const topFiles = validStats.slice(0, limit);
-        const sessions = [];
-        for (const file of topFiles) {
-          const cacheKey = projectHash + "/" + file.fileName;
-          const cached = summaryCache.get(cacheKey);
-          if (cached && Date.now() < cached.expiry) {
-            sessions.push(cached.data);
-            continue;
-          }
-          try {
-            const summary = await extractSessionSummary(projectHash, path.join(projectPath, file.fileName), file.fileName);
-            summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
-            sessions.push(summary);
-          } catch {
+      const ccProjectPath = path.join(projectsDir, projectHash);
+      const ccStats = await scanSessionFilesFromDir(ccProjectPath);
+      const ccFileNames = new Set(ccStats.map((s) => s.fileName));
+      let allStats = [...ccStats];
+      if (archiveProjectsDir) {
+        const archiveProjectPath = path.join(archiveProjectsDir, projectHash);
+        const archiveStats = await scanSessionFilesFromDir(archiveProjectPath);
+        for (const archiveStat of archiveStats) {
+          if (!ccFileNames.has(archiveStat.fileName)) {
+            allStats.push(archiveStat);
           }
         }
-        return sessions;
-      } catch {
-        return [];
       }
+      allStats.sort((a, b) => b.mtime - a.mtime);
+      const topFiles = allStats.slice(0, limit);
+      const sessions = [];
+      for (const file of topFiles) {
+        const cacheKey = projectHash + "/" + file.fileName;
+        const cached = summaryCache.get(cacheKey);
+        if (cached && Date.now() < cached.expiry) {
+          sessions.push(cached.data);
+          continue;
+        }
+        const filePath = ccFileNames.has(file.fileName) ? path.join(ccProjectPath, file.fileName) : path.join(archiveProjectsDir, projectHash, file.fileName);
+        try {
+          const summary = await extractSessionSummary(projectHash, filePath, file.fileName);
+          summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
+          sessions.push(summary);
+        } catch {
+        }
+      }
+      return sessions;
     },
     /**
      * Get recent sessions across all projects.
-     * Only scans the most recently active project directories to avoid stating all files.
+     * Scans both CC and archive sources, merging results.
      */
     async getAllRecentSessions(limit) {
-      try {
-        const dirs = await fs.promises.readdir(projectsDir, { withFileTypes: true });
-        const projectDirs = dirs.filter((d) => d.isDirectory());
-        const dirStats = await Promise.all(
-          projectDirs.map(async (dir) => {
-            try {
-              const projectPath = path.join(projectsDir, dir.name);
-              const stat = await fs.promises.stat(projectPath);
-              return { projectHash: dir.name, projectPath, mtime: stat.mtimeMs };
-            } catch {
-              return null;
-            }
-          })
-        );
-        const validDirs = dirStats.filter((d) => d !== null);
-        validDirs.sort((a, b) => b.mtime - a.mtime);
-        const maxProjectsToScan = Math.min(validDirs.length, Math.max(10, Math.ceil(limit / 5)));
-        const topProjects = validDirs.slice(0, maxProjectsToScan);
-        const allFiles = [];
-        await Promise.all(
-          topProjects.map(async (proj) => {
-            try {
-              const files = await fs.promises.readdir(proj.projectPath);
-              const jsonlFiles = files.filter((f) => f.endsWith(".jsonl"));
-              const fileStats = await Promise.all(
-                jsonlFiles.map(async (f) => {
-                  try {
-                    const filePath = path.join(proj.projectPath, f);
-                    const stat = await fs.promises.stat(filePath);
-                    return { projectHash: proj.projectHash, fileName: f, filePath, mtime: stat.mtimeMs };
-                  } catch {
-                    return null;
-                  }
-                })
-              );
-              for (const fs2 of fileStats) {
-                if (fs2) allFiles.push(fs2);
+      async function collectFilesFromBase(baseDir) {
+        const collected = [];
+        try {
+          const dirs = await fs.promises.readdir(baseDir, { withFileTypes: true });
+          const projectDirs = dirs.filter((d) => d.isDirectory());
+          const dirStats = await Promise.all(
+            projectDirs.map(async (dir) => {
+              try {
+                const projectPath = path.join(baseDir, dir.name);
+                const stat = await fs.promises.stat(projectPath);
+                return { projectHash: dir.name, projectPath, mtime: stat.mtimeMs };
+              } catch {
+                return null;
               }
-            } catch {
-            }
-          })
-        );
-        allFiles.sort((a, b) => b.mtime - a.mtime);
-        const topFiles = allFiles.slice(0, limit);
-        const sessions = [];
-        for (const file of topFiles) {
-          const cacheKey = file.projectHash + "/" + file.fileName;
-          const cached = summaryCache.get(cacheKey);
-          if (cached && Date.now() < cached.expiry) {
-            sessions.push(cached.data);
-            continue;
-          }
-          try {
-            const summary = await extractSessionSummary(file.projectHash, file.filePath, file.fileName);
-            summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
-            sessions.push(summary);
-          } catch {
+            })
+          );
+          const validDirs = dirStats.filter((d) => d !== null);
+          validDirs.sort((a, b) => b.mtime - a.mtime);
+          const maxProjectsToScan = Math.min(validDirs.length, Math.max(10, Math.ceil(limit / 5)));
+          const topProjects = validDirs.slice(0, maxProjectsToScan);
+          await Promise.all(
+            topProjects.map(async (proj) => {
+              try {
+                const files = await fs.promises.readdir(proj.projectPath);
+                const jsonlFiles = files.filter((f) => f.endsWith(".jsonl"));
+                const fileStats = await Promise.all(
+                  jsonlFiles.map(async (f) => {
+                    try {
+                      const filePath = path.join(proj.projectPath, f);
+                      const stat = await fs.promises.stat(filePath);
+                      return { projectHash: proj.projectHash, fileName: f, filePath, mtime: stat.mtimeMs };
+                    } catch {
+                      return null;
+                    }
+                  })
+                );
+                for (const fs2 of fileStats) {
+                  if (fs2) collected.push(fs2);
+                }
+              } catch {
+              }
+            })
+          );
+        } catch {
+        }
+        return collected;
+      }
+      const ccFiles = await collectFilesFromBase(projectsDir);
+      if (archiveProjectsDir) {
+        const archiveFiles = await collectFilesFromBase(archiveProjectsDir);
+        const ccKeySet = new Set(ccFiles.map((f) => f.projectHash + "/" + f.fileName));
+        for (const af of archiveFiles) {
+          if (!ccKeySet.has(af.projectHash + "/" + af.fileName)) {
+            ccFiles.push(af);
           }
         }
-        return sessions;
-      } catch {
-        return [];
       }
+      ccFiles.sort((a, b) => b.mtime - a.mtime);
+      const topFiles = ccFiles.slice(0, limit);
+      const sessions = [];
+      for (const file of topFiles) {
+        const cacheKey = file.projectHash + "/" + file.fileName;
+        const cached = summaryCache.get(cacheKey);
+        if (cached && Date.now() < cached.expiry) {
+          sessions.push(cached.data);
+          continue;
+        }
+        try {
+          const summary = await extractSessionSummary(file.projectHash, file.filePath, file.fileName);
+          summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
+          sessions.push(summary);
+        } catch {
+        }
+      }
+      return sessions;
     },
     /**
      * Read and normalize messages from a session file.
      * When limit is set, reads only the tail of large files for speed.
+     * Falls back to archive source if CC source doesn't have the file.
      */
     async readSession(projectHash, sessionId, options) {
-      const filePath = path.join(projectsDir, projectHash, `${sessionId}.jsonl`);
+      const ccFilePath = path.join(projectsDir, projectHash, `${sessionId}.jsonl`);
       const limit = options?.limit;
+      let filePath = ccFilePath;
       try {
-        await fs.promises.access(filePath);
+        await fs.promises.access(ccFilePath);
+      } catch {
+        if (archiveProjectsDir) {
+          const archiveFilePath = path.join(archiveProjectsDir, projectHash, `${sessionId}.jsonl`);
+          try {
+            await fs.promises.access(archiveFilePath);
+            filePath = archiveFilePath;
+          } catch {
+            return [];
+          }
+        } else {
+          return [];
+        }
+      }
+      try {
         const stat = await fs.promises.stat(filePath);
         const TAIL_BYTES = 2 * 1024 * 1024;
         const readFromTail = limit && stat.size > TAIL_BYTES;
@@ -811,49 +873,60 @@ function createChatProjectReader(opts) {
     },
     /**
      * Search across all sessions for a query string.
+     * Searches both CC and archive sources.
      */
     async search(query) {
       const results = [];
       const q = query.toLowerCase();
-      try {
-        const dirs = await fs.promises.readdir(projectsDir, { withFileTypes: true });
-        for (const dir of dirs) {
-          if (!dir.isDirectory()) continue;
-          const projectHash = dir.name;
-          const projectPath = path.join(projectsDir, projectHash);
-          try {
-            const files = await fs.promises.readdir(projectPath);
-            for (const f of files) {
-              if (!f.endsWith(".jsonl")) continue;
-              const sessionId = f.replace(/\.jsonl$/, "");
-              try {
-                const content = await fs.promises.readFile(path.join(projectPath, f), "utf-8");
-                const lines = content.split("\n");
-                for (const line of lines) {
-                  const trimmed = line.trim();
-                  if (!trimmed) continue;
-                  try {
-                    const obj = JSON.parse(trimmed);
-                    if (obj.type !== "user") continue;
-                    const text = typeof obj.message?.content === "string" ? obj.message.content : typeof obj.content === "string" ? obj.content : "";
-                    if (text.toLowerCase().includes(q)) {
-                      results.push({
-                        projectHash,
-                        sessionId,
-                        snippet: text.slice(0, 200),
-                        timestamp: obj.timestamp || ""
-                      });
+      const seenSessions = /* @__PURE__ */ new Set();
+      async function searchInDir(baseDir) {
+        try {
+          const dirs = await fs.promises.readdir(baseDir, { withFileTypes: true });
+          for (const dir of dirs) {
+            if (!dir.isDirectory()) continue;
+            const projectHash = dir.name;
+            const projectPath = path.join(baseDir, projectHash);
+            try {
+              const files = await fs.promises.readdir(projectPath);
+              for (const f of files) {
+                if (!f.endsWith(".jsonl")) continue;
+                const sessionId = f.replace(/\.jsonl$/, "");
+                const sessionKey = projectHash + "/" + sessionId;
+                if (seenSessions.has(sessionKey)) continue;
+                seenSessions.add(sessionKey);
+                try {
+                  const content = await fs.promises.readFile(path.join(projectPath, f), "utf-8");
+                  const lines = content.split("\n");
+                  for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed) continue;
+                    try {
+                      const obj = JSON.parse(trimmed);
+                      if (obj.type !== "user") continue;
+                      const text = typeof obj.message?.content === "string" ? obj.message.content : typeof obj.content === "string" ? obj.content : "";
+                      if (text.toLowerCase().includes(q)) {
+                        results.push({
+                          projectHash,
+                          sessionId,
+                          snippet: text.slice(0, 200),
+                          timestamp: obj.timestamp || ""
+                        });
+                      }
+                    } catch {
                     }
-                  } catch {
                   }
+                } catch {
                 }
-              } catch {
               }
+            } catch {
             }
-          } catch {
           }
+        } catch {
         }
-      } catch {
+      }
+      await searchInDir(projectsDir);
+      if (archiveProjectsDir) {
+        await searchInDir(archiveProjectsDir);
       }
       return results;
     },
@@ -868,7 +941,10 @@ function createChatProjectReader(opts) {
 }
 const CC_BASE_PATH = path.join(os.homedir(), ".claude");
 function createChatHandlers() {
-  const reader = createChatProjectReader({ ccBasePath: CC_BASE_PATH });
+  const reader = createChatProjectReader({
+    ccBasePath: CC_BASE_PATH,
+    archivePath: path.join(os.homedir(), ".muxvo", "chat-archive")
+  });
   return {
     async getProjects() {
       const projects = await reader.getProjects();
@@ -924,6 +1000,15 @@ function registerChatHandlers() {
   electron.ipcMain.handle(IPC_CHANNELS.CHAT.GET_SESSION, async (_e, p) => handlers.getSession(p));
   electron.ipcMain.handle(IPC_CHANNELS.CHAT.SEARCH, async (_e, p) => handlers.search(p));
   electron.ipcMain.handle(IPC_CHANNELS.CHAT.EXPORT, async (_e, p) => handlers.export(p));
+}
+function registerChatArchiveHandlers(archiveManager) {
+  electron.ipcMain.handle(IPC_CHANNELS.CHAT.GET_ARCHIVE_ENABLED, async () => {
+    return archiveManager.getEnabled();
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.CHAT.SET_ARCHIVE_ENABLED, async (_e, p) => {
+    await archiveManager.setEnabled(p.enabled);
+    return { success: true };
+  });
 }
 const CLAUDE_DIR$1 = path.join(os.homedir(), ".claude");
 const RESOURCE_TYPE_MAP = {
@@ -1914,7 +1999,15 @@ function createChatWatcher() {
   let watcher = null;
   const projectsDir = path.join(os.homedir(), ".claude", "projects");
   const pendingTimers = /* @__PURE__ */ new Map();
+  let sessionUpdateCallback = null;
   return {
+    /**
+     * Register a callback invoked on every debounced session-update event.
+     * Used by chat-archive to trigger incremental archive.
+     */
+    onSessionUpdate(cb) {
+      sessionUpdateCallback = cb;
+    },
     start() {
       try {
         watcher = fs.watch(projectsDir, { recursive: true }, (eventType, filename) => {
@@ -1933,6 +2026,7 @@ function createChatWatcher() {
                   win.webContents.send(IPC_CHANNELS.CHAT.SESSION_UPDATE, { projectHash, sessionId });
                 }
               });
+              sessionUpdateCallback?.(projectHash, sessionId);
             }, 500));
           }
         });
@@ -1944,6 +2038,118 @@ function createChatWatcher() {
       watcher = null;
       for (const timer of pendingTimers.values()) clearTimeout(timer);
       pendingTimers.clear();
+    }
+  };
+}
+const CC_PROJECTS_DIR = path.join(os.homedir(), ".claude", "projects");
+const ARCHIVE_DIR = path.join(os.homedir(), ".muxvo", "chat-archive");
+const CONFIG_PATH = path.join(os.homedir(), ".muxvo", "chat-archive-config.json");
+function createChatArchiveManager() {
+  let running = false;
+  let enabled = true;
+  async function readEnabled() {
+    try {
+      const raw = await promises.readFile(CONFIG_PATH, "utf-8");
+      const config = JSON.parse(raw);
+      return config.enabled !== false;
+    } catch {
+      return true;
+    }
+  }
+  async function writeEnabled(value) {
+    await promises.mkdir(path.dirname(CONFIG_PATH), { recursive: true });
+    await promises.writeFile(CONFIG_PATH, JSON.stringify({ enabled: value }), "utf-8");
+  }
+  async function fullScan() {
+    let synced = 0;
+    let skipped = 0;
+    async function scanDir(ccDir, archiveDir) {
+      try {
+        const entries = await promises.readdir(ccDir, { withFileTypes: true });
+        for (const entry of entries) {
+          const ccPath = path.join(ccDir, entry.name);
+          const archivePath = path.join(archiveDir, entry.name);
+          if (entry.isDirectory()) {
+            await scanDir(ccPath, archivePath);
+          } else if (entry.isFile() && entry.name.endsWith(".jsonl")) {
+            try {
+              const ccStats = await promises.stat(ccPath);
+              let archiveStats;
+              try {
+                archiveStats = await promises.stat(archivePath);
+              } catch {
+                archiveStats = null;
+              }
+              const ccMtimeSeconds = Math.floor(ccStats.mtimeMs / 1e3);
+              const archiveMtimeSeconds = archiveStats ? Math.floor(archiveStats.mtimeMs / 1e3) : 0;
+              if (ccMtimeSeconds !== archiveMtimeSeconds) {
+                await promises.mkdir(path.dirname(archivePath), { recursive: true });
+                await promises.copyFile(ccPath, archivePath);
+                synced++;
+              } else {
+                skipped++;
+              }
+            } catch {
+            }
+          }
+        }
+      } catch {
+      }
+    }
+    await scanDir(CC_PROJECTS_DIR, ARCHIVE_DIR);
+    return { synced, skipped };
+  }
+  async function archiveSession(projectHash, sessionId) {
+    try {
+      const ccPath = path.join(CC_PROJECTS_DIR, projectHash, `${sessionId}.jsonl`);
+      const archivePath = path.join(ARCHIVE_DIR, projectHash, `${sessionId}.jsonl`);
+      const ccStats = await promises.stat(ccPath);
+      let archiveStats;
+      try {
+        archiveStats = await promises.stat(archivePath);
+      } catch {
+        archiveStats = null;
+      }
+      const ccMtimeSeconds = Math.floor(ccStats.mtimeMs / 1e3);
+      const archiveMtimeSeconds = archiveStats ? Math.floor(archiveStats.mtimeMs / 1e3) : 0;
+      if (ccMtimeSeconds !== archiveMtimeSeconds) {
+        await promises.mkdir(path.dirname(archivePath), { recursive: true });
+        await promises.copyFile(ccPath, archivePath);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+  return {
+    async start() {
+      if (running) return;
+      running = true;
+      enabled = await readEnabled();
+      if (enabled) {
+        await fullScan();
+      }
+    },
+    stop() {
+      running = false;
+    },
+    /**
+     * Called when chat watcher detects a session update.
+     */
+    onSessionUpdate(projectHash, sessionId) {
+      if (!running || !enabled) return;
+      archiveSession(projectHash, sessionId);
+    },
+    async getEnabled() {
+      return readEnabled();
+    },
+    async setEnabled(value) {
+      await writeEnabled(value);
+      enabled = value;
+      if (value && running) {
+        await fullScan();
+      }
     }
   };
 }
@@ -2167,6 +2373,7 @@ function createWindow(windowConfig) {
 }
 let terminalManager = null;
 let chatWatcher = null;
+let chatArchive = null;
 let configWatcher = null;
 let memoryPush = null;
 electron.app.whenReady().then(() => {
@@ -2194,7 +2401,13 @@ electron.app.whenReady().then(() => {
   registerShowcaseHandlers();
   registerAnalyticsHandlers();
   chatWatcher = createChatWatcher();
+  chatArchive = createChatArchiveManager();
+  registerChatArchiveHandlers(chatArchive);
+  chatWatcher.onSessionUpdate((projectHash, sessionId) => {
+    chatArchive?.onSessionUpdate(projectHash, sessionId);
+  });
   chatWatcher.start();
+  chatArchive.start();
   configWatcher = createConfigWatcher();
   configWatcher.start();
   memoryPush = createMemoryPushTimer({ intervalMs: 6e4, thresholdMB: 2048 });
@@ -2277,6 +2490,9 @@ electron.app.on("window-all-closed", () => {
   }
   if (chatWatcher) {
     chatWatcher.stop();
+  }
+  if (chatArchive) {
+    chatArchive.stop();
   }
   if (configWatcher) {
     configWatcher.stop();

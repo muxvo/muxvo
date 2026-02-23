@@ -165,7 +165,13 @@ app.whenReady().then(() => {
     chatArchive?.onSessionUpdate(projectHash, sessionId);
   });
   chatWatcher.start();
-  chatArchive.start();
+  chatArchive.start((synced, total) => {
+    BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send(IPC_CHANNELS.CHAT.ARCHIVE_PROGRESS, { synced, total });
+      }
+    });
+  });
 
   configWatcher = createConfigWatcher();
   configWatcher.start();

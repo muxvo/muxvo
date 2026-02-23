@@ -133,6 +133,11 @@ const api = {
       ipcRenderer.on(IPC_CHANNELS.CHAT.SYNC_STATUS, handler);
       return () => ipcRenderer.removeListener(IPC_CHANNELS.CHAT.SYNC_STATUS, handler);
     },
+    onArchiveProgress: (callback: (data: { synced: number; total: number }) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: { synced: number; total: number }) => callback(data);
+      ipcRenderer.on(IPC_CHANNELS.CHAT.ARCHIVE_PROGRESS, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.CHAT.ARCHIVE_PROGRESS, handler);
+    },
   },
 
   // --- Auth domain ---
