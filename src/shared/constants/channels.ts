@@ -41,6 +41,7 @@ export const IPC_CHANNELS = {
     EXPORT: 'chat:export',
     GET_ARCHIVE_ENABLED: 'chat:get-archive-enabled',
     SET_ARCHIVE_ENABLED: 'chat:set-archive-enabled',
+    ARCHIVE_PROGRESS: 'chat:archive-progress',
   },
   CONFIG: {
     GET_RESOURCES: 'config:get-resources',

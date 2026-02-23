@@ -34,54 +34,66 @@ export function createChatArchiveManager() {
   }
 
   /**
-   * Full scan: walk CC projects directory, compare mtime, copy changed JSONL files.
+   * Collect all JSONL files that need syncing (mtime differs or missing in archive).
    */
-  async function fullScan(): Promise<{ synced: number; skipped: number }> {
-    let synced = 0;
-    let skipped = 0;
+  async function collectSyncTargets(): Promise<{ ccPath: string; archivePath: string }[]> {
+    const targets: { ccPath: string; archivePath: string }[] = [];
 
-    async function scanDir(ccDir: string, archiveDir: string): Promise<void> {
+    async function walk(ccDir: string, archiveDir: string): Promise<void> {
       try {
         const entries = await readdir(ccDir, { withFileTypes: true });
-
         for (const entry of entries) {
           const ccPath = join(ccDir, entry.name);
-          const archivePath = join(archiveDir, entry.name);
-
+          const archPath = join(archiveDir, entry.name);
           if (entry.isDirectory()) {
-            await scanDir(ccPath, archivePath);
+            await walk(ccPath, archPath);
           } else if (entry.isFile() && entry.name.endsWith('.jsonl')) {
             try {
               const ccStats = await stat(ccPath);
               let archiveStats;
-              try {
-                archiveStats = await stat(archivePath);
-              } catch {
-                archiveStats = null;
+              try { archiveStats = await stat(archPath); } catch { archiveStats = null; }
+              const ccMtime = Math.floor(ccStats.mtimeMs / 1000);
+              const archMtime = archiveStats ? Math.floor(archiveStats.mtimeMs / 1000) : 0;
+              if (ccMtime !== archMtime) {
+                targets.push({ ccPath, archivePath: archPath });
               }
-
-              const ccMtimeSeconds = Math.floor(ccStats.mtimeMs / 1000);
-              const archiveMtimeSeconds = archiveStats ? Math.floor(archiveStats.mtimeMs / 1000) : 0;
-
-              if (ccMtimeSeconds !== archiveMtimeSeconds) {
-                await mkdir(dirname(archivePath), { recursive: true });
-                await copyFile(ccPath, archivePath);
-                synced++;
-              } else {
-                skipped++;
-              }
-            } catch {
-              // Skip files that fail to stat or copy
-            }
+            } catch { /* skip */ }
           }
         }
-      } catch {
-        // Skip directories that fail to read
-      }
+      } catch { /* skip */ }
     }
 
-    await scanDir(CC_PROJECTS_DIR, ARCHIVE_DIR);
-    return { synced, skipped };
+    await walk(CC_PROJECTS_DIR, ARCHIVE_DIR);
+    return targets;
+  }
+
+  /**
+   * Full scan: compare mtime, copy changed JSONL files with progress callback.
+   */
+  async function fullScan(onProgress?: (synced: number, total: number) => void): Promise<{ synced: number; total: number }> {
+    const targets = await collectSyncTargets();
+    const total = targets.length;
+    let synced = 0;
+
+    if (total === 0) return { synced: 0, total: 0 };
+
+    onProgress?.(0, total);
+
+    for (const target of targets) {
+      try {
+        await mkdir(dirname(target.archivePath), { recursive: true });
+        await copyFile(target.ccPath, target.archivePath);
+        synced++;
+        // Throttle progress: report every 50 files to avoid flooding
+        if (synced % 50 === 0 || synced === total) {
+          onProgress?.(synced, total);
+        }
+      } catch { /* skip */ }
+    }
+
+    // Final progress report
+    onProgress?.(synced, total);
+    return { synced, total };
   }
 
   /**
@@ -115,12 +127,12 @@ export function createChatArchiveManager() {
   }
 
   return {
-    async start(): Promise<void> {
+    async start(onProgress?: (synced: number, total: number) => void): Promise<void> {
       if (running) return;
       running = true;
       enabled = await readEnabled();
       if (enabled) {
-        await fullScan();
+        await fullScan(onProgress);
       }
     },
 

@@ -217,6 +217,11 @@ export function SessionDetail({ messages, loading, sessionTitle }: SessionDetail
     <div className="session-detail">
       {messages.length > 0 && (
         <div className="session-detail__toolbar">
+          {sessionTitle && (
+            <span className="session-detail__toolbar-title" title={sessionTitle}>
+              {sessionTitle}
+            </span>
+          )}
           <button className="session-detail__copy-btn" onClick={handleCopy}>
             {copyLabel || t('chat.copyToClipboard' as any)}
           </button>
