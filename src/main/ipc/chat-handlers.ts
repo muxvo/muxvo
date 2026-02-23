@@ -14,7 +14,10 @@ import { IPC_CHANNELS } from '@/shared/constants/channels';
 const CC_BASE_PATH = join(homedir(), '.claude');
 
 export function createChatHandlers() {
-  const reader = createChatProjectReader({ ccBasePath: CC_BASE_PATH });
+  const reader = createChatProjectReader({
+    ccBasePath: CC_BASE_PATH,
+    archivePath: join(homedir(), '.muxvo', 'chat-archive'),
+  });
 
   return {
     async getProjects() {
