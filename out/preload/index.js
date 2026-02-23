@@ -35,7 +35,13 @@ const IPC_CHANNELS = {
     SEARCH: "chat:search",
     SESSION_UPDATE: "chat:session-update",
     SYNC_STATUS: "chat:sync-status",
-    EXPORT: "chat:export"
+    EXPORT: "chat:export",
+    GET_ARCHIVE_ENABLED: "chat:get-archive-enabled",
+    SET_ARCHIVE_ENABLED: "chat:set-archive-enabled",
+    ARCHIVE_PROGRESS: "chat:archive-progress",
+    SHOW_SESSION_MENU: "chat:show-session-menu",
+    DELETE_SESSION: "chat:delete-session",
+    REVEAL_FILE: "chat:reveal-file"
   },
   CONFIG: {
     GET_RESOURCES: "config:get-resources",
@@ -164,7 +170,12 @@ const api = {
     getSessions: (projectHash) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_SESSIONS, { projectHash }),
     getSession: (projectHash, sessionId, limit) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_SESSION, { projectHash, sessionId, limit }),
     search: (query) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.SEARCH, { query }),
-    export: (projectHash, sessionId, format) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.EXPORT, { projectHash, sessionId, format }),
+    export: (projectHash, sessionId, format, title) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.EXPORT, { projectHash, sessionId, format, title }),
+    getArchiveEnabled: () => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_ARCHIVE_ENABLED),
+    setArchiveEnabled: (enabled) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.SET_ARCHIVE_ENABLED, { enabled }),
+    showSessionMenu: (x, y) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.SHOW_SESSION_MENU, { x, y }),
+    deleteSession: (projectHash, sessionId) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.DELETE_SESSION, { projectHash, sessionId }),
+    revealFile: (filePath) => electron.ipcRenderer.invoke(IPC_CHANNELS.CHAT.REVEAL_FILE, { filePath }),
     onSessionUpdate: (callback) => {
       const handler = (_event, data) => callback(data);
       electron.ipcRenderer.on(IPC_CHANNELS.CHAT.SESSION_UPDATE, handler);
@@ -174,6 +185,11 @@ const api = {
       const handler = (_event, data) => callback(data);
       electron.ipcRenderer.on(IPC_CHANNELS.CHAT.SYNC_STATUS, handler);
       return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.CHAT.SYNC_STATUS, handler);
+    },
+    onArchiveProgress: (callback) => {
+      const handler = (_event, data) => callback(data);
+      electron.ipcRenderer.on(IPC_CHANNELS.CHAT.ARCHIVE_PROGRESS, handler);
+      return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.CHAT.ARCHIVE_PROGRESS, handler);
     }
   },
   // --- Auth domain ---

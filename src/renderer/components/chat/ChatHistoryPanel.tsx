@@ -8,16 +8,76 @@
  * - 右栏 (flex, min 400px): SessionDetail
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ProjectList } from './ProjectList';
 import { SessionList } from './SessionList';
 import { SessionDetail } from './SessionDetail';
+import { useI18n } from '@/renderer/i18n';
 import type { ProjectInfo, SessionSummary, SessionMessage } from '@/shared/types/chat.types';
 import './ChatHistoryPanel.css';
 
 export type SortMode = 'time' | 'project';
 
+/** Isolated banner component — progress updates only re-render this subtree */
+function ArchiveBanner({ onDismiss }: { onDismiss: () => void }) {
+  const { t } = useI18n();
+  const [archiveEnabled, setArchiveEnabled] = useState(true);
+  const [archiveProgress, setArchiveProgress] = useState<{ synced: number; total: number } | null>(null);
+
+  useEffect(() => {
+    const chatApi = window.api.chat as any;
+    if (chatApi.getArchiveEnabled) {
+      chatApi.getArchiveEnabled().then((v: boolean) => setArchiveEnabled(v)).catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    const chatApi = window.api.chat as any;
+    if (!chatApi.onArchiveProgress) return;
+    const unsub = chatApi.onArchiveProgress((data: { synced: number; total: number }) => {
+      if (data.synced >= data.total) {
+        setTimeout(() => setArchiveProgress(null), 2000);
+      }
+      setArchiveProgress(data);
+    });
+    return () => { unsub?.(); };
+  }, []);
+
+  const handleToggle = useCallback(() => {
+    const next = !archiveEnabled;
+    setArchiveEnabled(next);
+    const chatApi = window.api.chat as any;
+    if (chatApi.setArchiveEnabled) {
+      chatApi.setArchiveEnabled(next).catch(() => {});
+    }
+  }, [archiveEnabled]);
+
+  return (
+    <div className="chat-archive-banner">
+      <span className="chat-archive-banner__text">
+        {archiveProgress && archiveProgress.total > 0
+          ? t('chat.archiving' as any, { synced: archiveProgress.synced, total: archiveProgress.total })
+          : t('chat.archiveNotice' as any)}
+      </span>
+      <div className="chat-archive-banner__actions">
+        <label className="chat-archive-toggle">
+          <input
+            type="checkbox"
+            checked={archiveEnabled}
+            onChange={handleToggle}
+          />
+          <span>{archiveEnabled ? t('chat.archiveOn' as any) : t('chat.archiveOff' as any)}</span>
+        </label>
+        <button className="chat-archive-banner__close" onClick={onDismiss}>
+          &times;
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function ChatHistoryPanel() {
+  const { t } = useI18n();
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
   const [selectedProjectHash, setSelectedProjectHash] = useState<string | null>(null);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
@@ -27,6 +87,14 @@ export function ChatHistoryPanel() {
   const [sortMode, setSortMode] = useState<SortMode>('time');
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [sessionsLoading, setSessionsLoading] = useState(true);
+  const [bannerDismissed, setBannerDismissed] = useState(
+    () => localStorage.getItem('muxvo-archive-notice-dismissed') === 'true'
+  );
+
+  const handleDismissBanner = useCallback(() => {
+    localStorage.setItem('muxvo-archive-notice-dismissed', 'true');
+    setBannerDismissed(true);
+  }, []);
 
   // Fetch projects on mount
   useEffect(() => {
@@ -37,15 +105,16 @@ export function ChatHistoryPanel() {
     .finally(() => setProjectsLoading(false));
   }, []);
 
-  // Fetch sessions when project changes
+  // Fetch sessions after projects are loaded (progressive disclosure)
   useEffect(() => {
+    if (projectsLoading) return;
     setSessionsLoading(true);
     const hash = selectedProjectHash || '__all__';
     window.api.chat.getSessions(hash).then((result: { sessions?: SessionSummary[] }) => {
       setSessions(result?.sessions || []);
     }).catch(() => setSessions([]))
     .finally(() => setSessionsLoading(false));
-  }, [selectedProjectHash]);
+  }, [selectedProjectHash, projectsLoading]);
 
   const handleSelectProject = useCallback((projectHash: string | null) => {
     setSelectedProjectHash(projectHash);
@@ -53,13 +122,17 @@ export function ChatHistoryPanel() {
     setMessages([]);
   }, []);
 
-  // Fetch session detail
+  // Use ref to access sessions without adding it as useEffect dependency
+  const sessionsRef = useRef(sessions);
+  sessionsRef.current = sessions;
+
+  // Fetch session detail — only re-run when selectedSessionId changes
   useEffect(() => {
     if (!selectedSessionId) {
       setMessages([]);
       return;
     }
-    const session = sessions.find(s => s.sessionId === selectedSessionId);
+    const session = sessionsRef.current.find(s => s.sessionId === selectedSessionId);
     if (!session) return;
 
     setLoading(true);
@@ -67,7 +140,7 @@ export function ChatHistoryPanel() {
       .then((result: { messages?: SessionMessage[] }) => setMessages(result?.messages || []))
       .catch(() => setMessages([]))
       .finally(() => setLoading(false));
-  }, [selectedSessionId, sessions]);
+  }, [selectedSessionId]);
 
   // Listen for real-time session updates — only refresh the active session
   // Projects and sessions lists rely on cache + initial fetch; no need to re-scan
@@ -86,8 +159,39 @@ export function ChatHistoryPanel() {
 
   const totalSessionCount = projects.reduce((sum, p) => sum + p.sessionCount, 0);
 
+  // Right-click context menu on session cards
+  const handleSessionContextMenu = useCallback(async (session: SessionSummary, x: number, y: number) => {
+    const chatApi = window.api.chat as any;
+    if (!chatApi.showSessionMenu) return;
+    const action = await chatApi.showSessionMenu(x, y);
+    if (action === 'export') {
+      try {
+        const result = await window.api.chat.export(session.projectHash, session.sessionId, 'markdown', session.title) as { outputPath?: string };
+        if (result?.outputPath) {
+          const chatApi = window.api.chat as any;
+          chatApi.revealFile?.(result.outputPath);
+        }
+      } catch { /* ignore */ }
+    } else if (action === 'delete') {
+      if (!window.confirm(t('chat.deleteConfirm' as any))) return;
+      try {
+        await chatApi.deleteSession(session.projectHash, session.sessionId);
+        // Refresh session list
+        setSessions(prev => prev.filter(s => s.sessionId !== session.sessionId));
+        if (selectedSessionId === session.sessionId) {
+          setSelectedSessionId(null);
+          setMessages([]);
+        }
+      } catch { /* ignore */ }
+    }
+  }, [t, selectedSessionId]);
+
   return (
     <div className="chat-history-panel">
+      {!bannerDismissed && (
+        <ArchiveBanner onDismiss={handleDismissBanner} />
+      )}
+      <div className="chat-history-panel__columns">
       <div className="chat-history-panel__left">
         {projectsLoading && projects.length === 0 ? (
           <div className="panel-skeleton">
@@ -129,6 +233,7 @@ export function ChatHistoryPanel() {
             onSelect={setSelectedSessionId}
             sortMode={sortMode}
             onSortChange={setSortMode}
+            onSessionContextMenu={handleSessionContextMenu}
           />
         )}
       </div>
@@ -138,6 +243,7 @@ export function ChatHistoryPanel() {
           messages={messages}
           loading={loading}
         />
+      </div>
       </div>
     </div>
   );

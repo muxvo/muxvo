@@ -39,6 +39,12 @@ export const IPC_CHANNELS = {
     SESSION_UPDATE: 'chat:session-update',
     SYNC_STATUS: 'chat:sync-status',
     EXPORT: 'chat:export',
+    GET_ARCHIVE_ENABLED: 'chat:get-archive-enabled',
+    SET_ARCHIVE_ENABLED: 'chat:set-archive-enabled',
+    ARCHIVE_PROGRESS: 'chat:archive-progress',
+    SHOW_SESSION_MENU: 'chat:show-session-menu',
+    DELETE_SESSION: 'chat:delete-session',
+    REVEAL_FILE: 'chat:reveal-file',
   },
   CONFIG: {
     GET_RESOURCES: 'config:get-resources',
