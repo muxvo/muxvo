@@ -5,16 +5,21 @@
  * chat:search, chat:export IPC channels.
  */
 
-import { ipcMain } from 'electron';
+import { ipcMain, Menu, BrowserWindow, shell } from 'electron';
 import { homedir } from 'os';
 import { join } from 'path';
+import { promises as fsp } from 'fs';
 import { createChatProjectReader } from '../services/chat-dual-source';
+import { createChatArchiveManager } from '../services/chat-archive';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 
 const CC_BASE_PATH = join(homedir(), '.claude');
 
 export function createChatHandlers() {
-  const reader = createChatProjectReader({ ccBasePath: CC_BASE_PATH });
+  const reader = createChatProjectReader({
+    ccBasePath: CC_BASE_PATH,
+    archivePath: join(homedir(), '.muxvo', 'chat-archive'),
+  });
 
   return {
     async getProjects() {
@@ -32,7 +37,7 @@ export function createChatHandlers() {
     },
 
     async getSession(params: { projectHash: string; sessionId: string; limit?: number }) {
-      const options = params.limit !== undefined ? { limit: params.limit } : { limit: 100 };
+      const options = params.limit && params.limit > 0 ? { limit: params.limit } : undefined;
       const messages = await reader.readSession(params.projectHash, params.sessionId, options);
       return { messages };
     },
@@ -42,8 +47,7 @@ export function createChatHandlers() {
       return { results };
     },
 
-    async export(params: { projectHash: string; sessionId: string; format: string }) {
-      const { promises: fsp } = await import('fs');
+    async export(params: { projectHash: string; sessionId: string; format: string; title?: string }) {
       // Export needs ALL messages, no limit
       const messages = await reader.readSession(params.projectHash, params.sessionId);
 
@@ -53,7 +57,8 @@ export function createChatHandlers() {
         content = JSON.stringify(messages, null, 2);
         ext = 'json';
       } else {
-        const lines: string[] = [`# Session Export: ${params.sessionId}`, ''];
+        const displayTitle = params.title || params.sessionId;
+        const lines: string[] = [`# ${displayTitle}`, ''];
         for (const msg of messages) {
           const role = msg.type;
           const body = typeof msg.content === 'string'
@@ -65,9 +70,15 @@ export function createChatHandlers() {
         ext = 'md';
       }
 
+      // Sanitize title for filename: keep first 50 chars, remove invalid chars
+      const rawName = params.title
+        ? params.title.slice(0, 50).replace(/[\/\\:*?"<>|]/g, '_').trim()
+        : params.sessionId;
+      const fileName = rawName || params.sessionId;
+
       const exportDir = join(homedir(), '.muxvo', 'exports');
       await fsp.mkdir(exportDir, { recursive: true });
-      const filePath = join(exportDir, `${params.sessionId}.${ext}`);
+      const filePath = join(exportDir, `${fileName}.${ext}`);
       await fsp.writeFile(filePath, content, 'utf-8');
       return { outputPath: filePath };
     },
@@ -81,4 +92,50 @@ export function registerChatHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.CHAT.GET_SESSION, async (_e, p) => handlers.getSession(p));
   ipcMain.handle(IPC_CHANNELS.CHAT.SEARCH, async (_e, p) => handlers.search(p));
   ipcMain.handle(IPC_CHANNELS.CHAT.EXPORT, async (_e, p) => handlers.export(p));
+
+  // Right-click context menu for session cards
+  ipcMain.handle(IPC_CHANNELS.CHAT.SHOW_SESSION_MENU, async (_e, p: { x: number; y: number }) => {
+    return new Promise<string | null>((resolve) => {
+      const template: Electron.MenuItemConstructorOptions[] = [
+        { label: '📄 导出为 Markdown', click: () => resolve('export') },
+        { type: 'separator' },
+        { label: '🗑 删除聊天记录', click: () => resolve('delete') },
+      ];
+      const menu = Menu.buildFromTemplate(template);
+      menu.popup({
+        x: p.x,
+        y: p.y,
+        window: BrowserWindow.getFocusedWindow() || undefined,
+        callback: () => resolve(null),
+      });
+    });
+  });
+
+  // Delete session JSONL from both CC source and archive
+  ipcMain.handle(IPC_CHANNELS.CHAT.DELETE_SESSION, async (_e, p: { projectHash: string; sessionId: string }) => {
+    const ccPath = join(homedir(), '.claude', 'projects', p.projectHash, `${p.sessionId}.jsonl`);
+    const archivePath = join(homedir(), '.muxvo', 'chat-archive', p.projectHash, `${p.sessionId}.jsonl`);
+    const deleted: string[] = [];
+    try { await fsp.unlink(ccPath); deleted.push('cc'); } catch { /* not found */ }
+    try { await fsp.unlink(archivePath); deleted.push('archive'); } catch { /* not found */ }
+    return { success: true, deleted };
+  });
+
+  // Reveal file in Finder/Explorer
+  ipcMain.handle(IPC_CHANNELS.CHAT.REVEAL_FILE, async (_e, p: { filePath: string }) => {
+    shell.showItemInFolder(p.filePath);
+    return { success: true };
+  });
+}
+
+export function registerChatArchiveHandlers(
+  archiveManager: ReturnType<typeof createChatArchiveManager>
+): void {
+  ipcMain.handle(IPC_CHANNELS.CHAT.GET_ARCHIVE_ENABLED, async () => {
+    return archiveManager.getEnabled();
+  });
+  ipcMain.handle(IPC_CHANNELS.CHAT.SET_ARCHIVE_ENABLED, async (_e, p: { enabled: boolean }) => {
+    await archiveManager.setEnabled(p.enabled);
+    return { success: true };
+  });
 }

@@ -11,7 +11,7 @@
  * - Config persistence (save on close, restore on launch)
  */
 
-import { app, BrowserWindow, ipcMain, shell, protocol, net } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, protocol, net, Menu } from 'electron';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
 import { is } from '@electron-toolkit/utils';
@@ -24,7 +24,7 @@ protocol.registerSchemesAsPrivileged([
 import { createTerminalManager } from './services/terminal/manager';
 import { createRealPtyAdapter } from './services/terminal/pty-adapter';
 import { registerTerminalHandlers } from './ipc/terminal-handlers';
-import { registerChatHandlers } from './ipc/chat-handlers';
+import { registerChatHandlers, registerChatArchiveHandlers } from './ipc/chat-handlers';
 import { registerConfigHandlers } from './ipc/config-handlers';
 import { registerFsHandlers } from './ipc/fs-handlers';
 import { registerAppHandlers } from './ipc/app-handlers';
@@ -36,6 +36,7 @@ import { registerScoreHandlers } from './ipc/score-handlers';
 import { registerShowcaseHandlers } from './ipc/showcase-handlers';
 import { registerAnalyticsHandlers } from './ipc/analytics-handlers';
 import { createChatWatcher } from './services/chat-watcher';
+import { createChatArchiveManager } from './services/chat-archive';
 import { createConfigWatcher } from './services/config-watcher';
 import { createMemoryPushTimer } from './services/perf/memory-push';
 import { createSyncStatusPusher } from './services/chat-sync-push';
@@ -98,6 +99,20 @@ function createWindow(windowConfig?: WindowConfig): void {
     saveWindowBoundsAndClearTerminals();
   });
 
+  // Right-click context menu with copy support
+  mainWindow.webContents.on('context-menu', (_event, params) => {
+    const menuItems: Electron.MenuItemConstructorOptions[] = [];
+    if (params.selectionText) {
+      menuItems.push({ role: 'copy' });
+    }
+    if (params.isEditable) {
+      menuItems.push({ role: 'cut' }, { role: 'paste' }, { role: 'selectAll' });
+    }
+    if (menuItems.length > 0) {
+      Menu.buildFromTemplate(menuItems).popup();
+    }
+  });
+
   // Open external links in default browser
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url);
@@ -119,10 +134,29 @@ function createWindow(windowConfig?: WindowConfig): void {
 
 let terminalManager: ReturnType<typeof createTerminalManager> | null = null;
 let chatWatcher: ReturnType<typeof createChatWatcher> | null = null;
+let chatArchive: ReturnType<typeof createChatArchiveManager> | null = null;
 let configWatcher: ReturnType<typeof createConfigWatcher> | null = null;
 let memoryPush: ReturnType<typeof createMemoryPushTimer> | null = null;
 
 app.whenReady().then(() => {
+  // Set application menu with Edit menu for copy/paste/select-all shortcuts
+  const template: Electron.MenuItemConstructorOptions[] = [
+    { role: 'appMenu' },
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'selectAll' },
+      ],
+    },
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+
   // Handle local-file:// protocol for serving local images/files to renderer
   protocol.handle('local-file', (request) => {
     const filePath = decodeURIComponent(request.url.replace('local-file://', ''));
@@ -157,7 +191,24 @@ app.whenReady().then(() => {
   registerAnalyticsHandlers();
 
   chatWatcher = createChatWatcher();
+  chatArchive = createChatArchiveManager();
+  registerChatArchiveHandlers(chatArchive);
+  chatWatcher.onSessionUpdate((projectHash, sessionId) => {
+    chatArchive?.onSessionUpdate(projectHash, sessionId);
+  });
   chatWatcher.start();
+  let lastProgressPush = 0;
+  chatArchive.start((synced, total) => {
+    const now = Date.now();
+    // Throttle: push at most once per second, always push final progress
+    if (now - lastProgressPush < 1000 && synced < total) return;
+    lastProgressPush = now;
+    BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send(IPC_CHANNELS.CHAT.ARCHIVE_PROGRESS, { synced, total });
+      }
+    });
+  });
 
   configWatcher = createConfigWatcher();
   configWatcher.start();
@@ -273,6 +324,9 @@ app.on('window-all-closed', () => {
   }
   if (chatWatcher) {
     chatWatcher.stop();
+  }
+  if (chatArchive) {
+    chatArchive.stop();
   }
   if (configWatcher) {
     configWatcher.stop();

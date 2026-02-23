@@ -117,8 +117,18 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_SESSION, { projectHash, sessionId, limit }),
     search: (query: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.SEARCH, { query }),
-    export: (projectHash: string, sessionId: string, format: string) =>
-      ipcRenderer.invoke(IPC_CHANNELS.CHAT.EXPORT, { projectHash, sessionId, format }),
+    export: (projectHash: string, sessionId: string, format: string, title?: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.EXPORT, { projectHash, sessionId, format, title }),
+    getArchiveEnabled: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.GET_ARCHIVE_ENABLED),
+    setArchiveEnabled: (enabled: boolean) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.SET_ARCHIVE_ENABLED, { enabled }),
+    showSessionMenu: (x: number, y: number) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.SHOW_SESSION_MENU, { x, y }),
+    deleteSession: (projectHash: string, sessionId: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.DELETE_SESSION, { projectHash, sessionId }),
+    revealFile: (filePath: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.REVEAL_FILE, { filePath }),
     onSessionUpdate: (callback: (data: { projectHash: string; sessionId: string }) => void) => {
       const handler = (_event: Electron.IpcRendererEvent, data: { projectHash: string; sessionId: string }) => callback(data);
       ipcRenderer.on(IPC_CHANNELS.CHAT.SESSION_UPDATE, handler);
@@ -128,6 +138,11 @@ const api = {
       const handler = (_event: Electron.IpcRendererEvent, data: any) => callback(data);
       ipcRenderer.on(IPC_CHANNELS.CHAT.SYNC_STATUS, handler);
       return () => ipcRenderer.removeListener(IPC_CHANNELS.CHAT.SYNC_STATUS, handler);
+    },
+    onArchiveProgress: (callback: (data: { synced: number; total: number }) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: { synced: number; total: number }) => callback(data);
+      ipcRenderer.on(IPC_CHANNELS.CHAT.ARCHIVE_PROGRESS, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.CHAT.ARCHIVE_PROGRESS, handler);
     },
   },
 

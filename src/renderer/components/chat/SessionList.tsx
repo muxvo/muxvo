@@ -22,6 +22,7 @@ interface SessionListProps {
   onSelect: (sessionId: string) => void;
   sortMode?: SortMode;
   onSortChange?: (mode: SortMode) => void;
+  onSessionContextMenu?: (session: SessionSummary, x: number, y: number) => void;
 }
 
 /**
@@ -52,6 +53,16 @@ function formatTime(timestamp: number): string {
 }
 
 /**
+ * Format file size to human-readable string
+ * e.g. 512B, 2.3KB, 1.5MB
+ */
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes}B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1).replace(/\.0$/, '')}KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1).replace(/\.0$/, '')}MB`;
+}
+
+/**
  * Extract tags from title text based on keywords
  */
 function extractTags(title: string): Array<{ label: string; color: string }> {
@@ -74,7 +85,7 @@ function extractTags(title: string): Array<{ label: string; color: string }> {
   return tags;
 }
 
-export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time', onSortChange }: SessionListProps) {
+export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time', onSortChange, onSessionContextMenu }: SessionListProps) {
   const { t } = useI18n();
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
@@ -143,6 +154,10 @@ export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time',
             key={session.sessionId}
             className={`session-card ${isSelected ? 'session-card--selected' : ''}`}
             onClick={() => onSelect(session.sessionId)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              onSessionContextMenu?.(session, e.clientX, e.clientY);
+            }}
           >
             <div className="session-card__header">
               <span className="session-card__title" title={session.title}>
@@ -165,7 +180,7 @@ export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time',
                   </span>
                 ))}
               </div>
-              <span className="session-card__count">{t('chat.messageCount', { count: session.messageCount })}</span>
+              <span className="session-card__count">{formatFileSize(session.fileSize)}</span>
             </div>
           </div>
         );

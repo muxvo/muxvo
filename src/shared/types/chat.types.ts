@@ -31,8 +31,8 @@ export interface SessionSummary {
   startedAt: string;
   /** 文件修改时间（ms），用于排序 */
   lastModified: number;
-  /** 消息数量（user + assistant，不含 file-history-snapshot） */
-  messageCount: number;
+  /** 会话文件大小（字节），用于提示对话长短 */
+  fileSize: number;
 }
 
 /** Assistant 消息中的内容块 */
