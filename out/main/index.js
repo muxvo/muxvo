@@ -383,7 +383,10 @@ function createRealPtyAdapter() {
       if (process.platform === "darwin" && !env.TERM_PROGRAM) {
         env.TERM_PROGRAM = "Apple_Terminal";
       }
-      const proc = pty__namespace.spawn(shell, [], {
+      if (process.platform === "darwin" && (!env.LANG || env.LANG === "C" || env.LANG === "POSIX")) {
+        env.LANG = "en_US.UTF-8";
+      }
+      const proc = pty__namespace.spawn(shell, ["--login"], {
         cwd,
         cols,
         rows,

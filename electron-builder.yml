@@ -1,0 +1,38 @@
+appId: com.muxvo.app
+productName: Muxvo
+directories:
+  buildResources: build
+  output: dist
+
+mac:
+  category: public.app-category.developer-tools
+  target:
+    - target: dmg
+      arch:
+        - arm64
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  identity: "li rao (M7T6PJ8YJZ)"
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  notarize:
+    teamId: M7T6PJ8YJZ
+
+dmg:
+  sign: false
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+
+files:
+  - out/**/*
+  - "!node_modules/**/*"
+  - node_modules/node-pty/**/*
+
+extraResources: []
+
+npmRebuild: true

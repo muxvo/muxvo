@@ -1,0 +1,94 @@
+/* Tour popover — Muxvo amber-dark theme overrides for driver.js */
+
+.tour-popover.driver-popover {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-dialog);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  max-width: 340px;
+}
+
+.tour-popover .driver-popover-title {
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+}
+
+.tour-popover .driver-popover-description {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+  font-family: var(--font-sans);
+}
+
+/* Navigation buttons */
+.tour-popover .driver-popover-navigation-btns button {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border: 1px solid rgba(232, 167, 72, 0.3);
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 12px;
+  padding: 5px 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-shadow: none;
+}
+
+.tour-popover .driver-popover-navigation-btns button:hover {
+  background: var(--accent);
+  color: var(--bg-deep);
+}
+
+/* Previous button — more subtle */
+.tour-popover .driver-popover-prev-btn {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border) !important;
+}
+
+.tour-popover .driver-popover-prev-btn:hover {
+  background: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Progress text */
+.tour-popover .driver-popover-progress-text {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-family: var(--font-sans);
+}
+
+/* Close button */
+.tour-popover .driver-popover-close-btn {
+  color: var(--text-secondary);
+}
+
+.tour-popover .driver-popover-close-btn:hover {
+  color: var(--text-primary);
+}
+
+/* Arrow */
+.tour-popover .driver-popover-arrow {
+  border-color: var(--bg-elevated);
+}
+
+.tour-popover.driver-popover-side-bottom .driver-popover-arrow-side-top {
+  border-bottom-color: var(--bg-elevated);
+}
+
+.tour-popover.driver-popover-side-top .driver-popover-arrow-side-bottom {
+  border-top-color: var(--bg-elevated);
+}
+
+.tour-popover.driver-popover-side-left .driver-popover-arrow-side-right {
+  border-left-color: var(--bg-elevated);
+}
+
+.tour-popover.driver-popover-side-right .driver-popover-arrow-side-left {
+  border-right-color: var(--bg-elevated);
+}

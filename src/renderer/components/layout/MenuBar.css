@@ -121,7 +121,7 @@
   cursor: not-allowed;
 }
 
-.menu-bar__lang-btn {
+.menu-bar__help-btn {
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 11px;
@@ -131,6 +131,27 @@
   background: transparent;
   color: var(--text-secondary);
   margin-left: auto;
+  margin-right: 4px;
+  z-index: 2;
+  -webkit-app-region: no-drag;
+  transition: all 0.15s;
+}
+
+.menu-bar__help-btn:hover {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border-color: rgba(232, 167, 72, 0.3);
+}
+
+.menu-bar__lang-btn {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
   margin-right: 8px;
   z-index: 2;
   -webkit-app-region: no-drag;
