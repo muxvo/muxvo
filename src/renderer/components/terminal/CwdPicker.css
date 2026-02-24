@@ -27,7 +27,7 @@
 .cwd-picker-header {
   font-weight: 600;
   margin-bottom: 8px;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .cwd-picker-current {
@@ -85,7 +85,7 @@
   background: var(--bg-hover);
   border: none;
   padding: 8px 12px;
-  color: #ffffff;
+  color: var(--text-primary);
   cursor: pointer;
   border-radius: 4px;
   font-size: 13px;

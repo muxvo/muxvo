@@ -510,7 +510,7 @@
 .cwd-picker-header {
   font-weight: 600;
   margin-bottom: 8px;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .cwd-picker-current {
@@ -568,7 +568,7 @@
   background: var(--bg-hover);
   border: none;
   padding: 8px 12px;
-  color: #ffffff;
+  color: var(--text-primary);
   cursor: pointer;
   border-radius: 4px;
   font-size: 13px;
@@ -2019,7 +2019,7 @@ code.hljs {
 .markdown-wysiwyg .tiptap h1 {
   font-size: 1.8em;
   font-weight: bold;
-  color: #ffffff;
+  color: var(--text-primary);
   border-bottom: 1px solid var(--bg-elevated);
   padding-bottom: 0.3em;
   margin: 1em 0 0.5em;
@@ -2028,14 +2028,14 @@ code.hljs {
 .markdown-wysiwyg .tiptap h2 {
   font-size: 1.5em;
   font-weight: bold;
-  color: #ffffff;
+  color: var(--text-primary);
   margin: 0.8em 0 0.4em;
 }
 
 .markdown-wysiwyg .tiptap h3 {
   font-size: 1.25em;
   font-weight: bold;
-  color: #ffffff;
+  color: var(--text-primary);
   margin: 0.6em 0 0.3em;
 }
 
@@ -2044,12 +2044,12 @@ code.hljs {
 .markdown-wysiwyg .tiptap h6 {
   font-size: 1em;
   font-weight: bold;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 /* Bold & Italic */
 .markdown-wysiwyg .tiptap strong {
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .markdown-wysiwyg .tiptap em {
@@ -2073,8 +2073,8 @@ code.hljs {
 
 /* Code */
 .markdown-wysiwyg .tiptap code {
-  background: rgba(248, 165, 194, 0.15);
-  color: #f8a5c2;
+  background: var(--code-bg, rgba(248, 165, 194, 0.15));
+  color: var(--code-fg, #f8a5c2);
   font-family: 'SF Mono', Monaco, 'Courier New', monospace;
   font-size: 0.9em;
   padding: 2px 6px;
@@ -2126,7 +2126,7 @@ code.hljs {
 .markdown-wysiwyg .tiptap th {
   background: var(--bg-elevated);
   font-weight: bold;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .markdown-wysiwyg .tiptap th,
