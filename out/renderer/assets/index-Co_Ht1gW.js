@@ -28111,7 +28111,7 @@ function resolveTerminalTheme(name) {
   return TERMINAL_THEMES[name] ?? TERMINAL_THEMES.dark;
 }
 const DEFAULT_TERMINAL_CONFIG = {
-  themeName: "dark",
+  themeName: "light",
   fontFamily: "'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace",
   fontSize: 13,
   cursorStyle: "block",
@@ -118402,8 +118402,9 @@ function App() {
     processName: ""
   });
   const [initialLocale, setInitialLocale] = reactExports.useState("zh");
-  const [uiTheme, setUiTheme] = reactExports.useState("dark");
+  const [uiTheme, setUiTheme] = reactExports.useState("light");
   reactExports.useEffect(() => {
+    document.documentElement.setAttribute("data-theme", "light");
     window.api.app.getPreferences().then((result) => {
       if (result?.success && result.data?.language) {
         setInitialLocale(result.data.language);
@@ -118411,9 +118412,9 @@ function App() {
     }).catch(() => {
     });
     window.api.app.getConfig().then((result) => {
-      if (result?.data?.theme === "light") {
-        setUiTheme("light");
-        document.documentElement.setAttribute("data-theme", "light");
+      if (result?.data?.theme === "dark") {
+        setUiTheme("dark");
+        document.documentElement.setAttribute("data-theme", "dark");
       }
     }).catch(() => {
     });

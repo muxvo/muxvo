@@ -72,6 +72,29 @@
   background: var(--text-muted);
 }
 
+.tile-status--waiting {
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+  animation: statusPulse 1s ease-in-out infinite;
+}
+
+.tile-waiting-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--bg-deep);
+  background: var(--accent);
+  padding: 1px 8px;
+  border-radius: 8px;
+  margin-right: 4px;
+  animation: badgePulse 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes badgePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 /* Cwd path (clickable, subdued) */
 .tile-cwd {
   font-size: 11px;
