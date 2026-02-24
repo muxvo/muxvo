@@ -8,7 +8,9 @@
 import { ipcMain } from 'electron';
 import { homedir } from 'os';
 import { join, resolve, extname } from 'path';
-import { readdir, readFile, writeFile, rename, stat, mkdir } from 'fs/promises';
+import { readdir, readFile, writeFile, rename, stat, mkdir, open } from 'fs/promises';
+import { createReadStream } from 'fs';
+import { createInterface } from 'readline';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 import type { ResourceType, Resource, ClaudeMdScope } from '@/shared/types/config.types';
 
@@ -56,6 +58,72 @@ function inferFormat(filePath: string): string {
     '.txt': 'text',
   };
   return formatMap[ext] || 'text';
+}
+
+/** Cache for discovered project cwds (refreshed every 60s) */
+let _projectCwdCache: string[] = [];
+let _projectCwdCacheTime = 0;
+const PROJECT_CWD_CACHE_TTL = 60_000;
+
+/**
+ * Extract real cwd from first JSONL file that has a 'cwd' field.
+ * Reads at most 20 lines to find it.
+ */
+async function extractCwdFromProject(projectDir: string): Promise<string | null> {
+  try {
+    const files = await readdir(projectDir);
+    const jsonl = files.find((f) => f.endsWith('.jsonl'));
+    if (!jsonl) return null;
+
+    const filePath = join(projectDir, jsonl);
+    const rl = createInterface({
+      input: createReadStream(filePath, { encoding: 'utf-8' }),
+      crlfDelay: Infinity,
+    });
+
+    let lineCount = 0;
+    for await (const line of rl) {
+      if (++lineCount > 20) break;
+      try {
+        const obj = JSON.parse(line);
+        if (obj.cwd) {
+          rl.close();
+          return obj.cwd;
+        }
+      } catch {
+        // Skip malformed lines
+      }
+    }
+    rl.close();
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Discover all known project cwds from ~/.claude/projects/
+ */
+async function discoverProjectCwds(): Promise<string[]> {
+  const now = Date.now();
+  if (_projectCwdCache.length > 0 && now - _projectCwdCacheTime < PROJECT_CWD_CACHE_TTL) {
+    return _projectCwdCache;
+  }
+
+  const projectsDir = join(CLAUDE_DIR, 'projects');
+  try {
+    const entries = await readdir(projectsDir, { withFileTypes: true });
+    const dirs = entries.filter((e) => e.isDirectory()).map((e) => join(projectsDir, e.name));
+
+    const cwds = await Promise.all(dirs.map((d) => extractCwdFromProject(d)));
+    const uniqueCwds = [...new Set(cwds.filter((c): c is string => c !== null))];
+
+    _projectCwdCache = uniqueCwds;
+    _projectCwdCacheTime = now;
+    return uniqueCwds;
+  } catch {
+    return [];
+  }
 }
 
 export function createConfigHandlers() {
@@ -120,11 +188,15 @@ export function createConfigHandlers() {
         }
 
         // Project-level scanning (skills only)
-        if (type === 'skills' && projectPaths.length > 0) {
-          for (const projectPath of projectPaths) {
+        if (type === 'skills') {
+          // Auto-discover project cwds from ~/.claude/projects/ + merge explicit projectPaths
+          const discoveredCwds = await discoverProjectCwds();
+          const allProjectPaths = [...new Set([...discoveredCwds, ...projectPaths])];
+          for (const projectPath of allProjectPaths) {
             const projectSkillDirs = [
               { dir: join(projectPath, '.claude', 'skills'), source: 'claude' },
               { dir: join(projectPath, '.codex', 'skills'), source: 'codex' },
+              { dir: join(projectPath, 'skills'), source: 'codex' },
             ];
             for (const { dir: dirPath, source } of projectSkillDirs) {
               try {
@@ -165,7 +237,7 @@ export function createConfigHandlers() {
 
       // Security: ensure path is within allowed config directories or project-level skill dirs
       const inAllowedDir = ALLOWED_CONFIG_DIRS.some(dir => resolvedPath.startsWith(dir));
-      const inProjectSkillDir = /\/\.(claude|codex)\/skills\//.test(resolvedPath);
+      const inProjectSkillDir = /\/\.(claude|codex)\/skills\//.test(resolvedPath) || /\/skills\/[^/]+\/SKILL\.md$/.test(resolvedPath);
       if (!inAllowedDir && !inProjectSkillDir) {
         throw new Error(`Access denied: path must be within allowed directories`);
       }

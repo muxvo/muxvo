@@ -49,7 +49,7 @@ function parseFrontmatterDescription(content: string): string | null {
   return raw.trim() || null;
 }
 
-export function useSkills(projectPaths?: string[]): UseSkillsResult {
+export function useSkills(): UseSkillsResult {
   const [skills, setSkills] = useState<SkillItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +59,7 @@ export function useSkills(projectPaths?: string[]): UseSkillsResult {
     setLoading(true);
     setError(null);
     try {
-      const { resources } = await window.api.config.getResources('skills', projectPaths);
+      const { resources } = await window.api.config.getResources('skills');
 
       // Batch-read all SKILL.md files in parallel
       const settled = await Promise.allSettled(
@@ -90,7 +90,7 @@ export function useSkills(projectPaths?: string[]): UseSkillsResult {
     } finally {
       if (!abortedRef.current) setLoading(false);
     }
-  }, [projectPaths]);
+  }, []);
 
   // Initial load
   useEffect(() => {
