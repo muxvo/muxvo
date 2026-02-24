@@ -42,6 +42,8 @@ export interface SessionSummary {
   fileSize: number;
   /** 数据来源工具 */
   source?: ChatSource;
+  /** 用户自定义标题（来自终端命名） */
+  customTitle?: string;
 }
 
 /** 消息中的内容块（user 和 assistant 共用） */
