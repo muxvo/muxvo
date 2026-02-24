@@ -138,6 +138,7 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
 
     // Reset refs
     prevTerminalCountRef.current = terminalCount;
+    prevTerminalOrderRef.current = terminalOrder;
     prevViewModeRef.current = viewMode;
     prevHasNameRef.current = Object.values(terminalNames).some(n => n && n.length > 0);
     currentStepRef.current = 0;

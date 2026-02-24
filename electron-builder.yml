@@ -31,6 +31,7 @@ files:
   - out/**/*
   - "!node_modules/**/*"
   - node_modules/node-pty/**/*
+  - node_modules/@electron-toolkit/utils/**/*
 
 extraResources: []
 
