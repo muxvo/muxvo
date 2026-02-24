@@ -13,16 +13,26 @@ import { IPC_CHANNELS } from '@/shared/constants/channels';
 import type { ResourceType, Resource, ClaudeMdScope } from '@/shared/types/config.types';
 
 const CLAUDE_DIR = join(homedir(), '.claude');
+const CODEX_DIR = join(homedir(), '.codex');
 
-/** ResourceType → directory/file mapping under ~/.claude/ */
-const RESOURCE_TYPE_MAP: Record<ResourceType, { path: string; isFile: boolean }> = {
-  skills: { path: join(CLAUDE_DIR, 'skills'), isFile: false },
-  hooks: { path: join(CLAUDE_DIR, 'hooks'), isFile: false },
-  plans: { path: join(CLAUDE_DIR, 'plans'), isFile: false },
-  tasks: { path: join(CLAUDE_DIR, 'tasks'), isFile: false },
-  plugins: { path: join(CLAUDE_DIR, 'plugins'), isFile: false },
-  mcp: { path: join(CLAUDE_DIR, 'mcp.json'), isFile: true },
+/** Allowed config directories for resource content access */
+const ALLOWED_CONFIG_DIRS = [CLAUDE_DIR, CODEX_DIR];
+
+/** ResourceType → directory/file mapping (supports multiple paths per type) */
+const RESOURCE_TYPE_MAP: Record<ResourceType, { paths: string[]; isFile: boolean }> = {
+  skills: { paths: [join(CLAUDE_DIR, 'skills'), join(CODEX_DIR, 'skills')], isFile: false },
+  hooks: { paths: [join(CLAUDE_DIR, 'hooks')], isFile: false },
+  plans: { paths: [join(CLAUDE_DIR, 'plans')], isFile: false },
+  tasks: { paths: [join(CLAUDE_DIR, 'tasks')], isFile: false },
+  plugins: { paths: [join(CLAUDE_DIR, 'plugins')], isFile: false },
+  mcp: { paths: [join(CLAUDE_DIR, 'mcp.json')], isFile: true },
 };
+
+/** Derive source tool from directory path */
+function sourceFromPath(dirPath: string): string {
+  if (dirPath.startsWith(CODEX_DIR)) return 'codex';
+  return 'claude';
+}
 
 /** Files to exclude when scanning resource directories */
 const EXCLUDED_FILES = new Set([
@@ -61,40 +71,46 @@ export function createConfigHandlers() {
         const mapping = RESOURCE_TYPE_MAP[type];
         if (!mapping) continue;
 
-        if (mapping.isFile) {
-          // Single file resource (e.g., mcp.json)
-          try {
-            const fileStat = await stat(mapping.path);
-            resources.push({
-              name: mapping.path.split('/').pop()!,
-              type,
-              path: mapping.path,
-              updatedAt: fileStat.mtime.toISOString(),
-            });
-          } catch {
-            // File doesn't exist, skip
-          }
-        } else {
-          // Directory resource
-          try {
-            const entries = await readdir(mapping.path, { withFileTypes: true });
-            for (const entry of entries) {
-              if (EXCLUDED_FILES.has(entry.name)) continue;
-              const entryPath = join(mapping.path, entry.name);
-              try {
-                const entryStat = await stat(entryPath);
-                resources.push({
-                  name: entry.name,
-                  type,
-                  path: entryPath,
-                  updatedAt: entryStat.mtime.toISOString(),
-                });
-              } catch {
-                // Skip entries we can't stat
-              }
+        for (const dirPath of mapping.paths) {
+          const source = sourceFromPath(dirPath);
+
+          if (mapping.isFile) {
+            // Single file resource (e.g., mcp.json)
+            try {
+              const fileStat = await stat(dirPath);
+              resources.push({
+                name: dirPath.split('/').pop()!,
+                type,
+                path: dirPath,
+                updatedAt: fileStat.mtime.toISOString(),
+                source,
+              });
+            } catch {
+              // File doesn't exist, skip
             }
-          } catch {
-            // Directory doesn't exist, skip
+          } else {
+            // Directory resource
+            try {
+              const entries = await readdir(dirPath, { withFileTypes: true });
+              for (const entry of entries) {
+                if (EXCLUDED_FILES.has(entry.name)) continue;
+                const entryPath = join(dirPath, entry.name);
+                try {
+                  const entryStat = await stat(entryPath);
+                  resources.push({
+                    name: entry.name,
+                    type,
+                    path: entryPath,
+                    updatedAt: entryStat.mtime.toISOString(),
+                    source,
+                  });
+                } catch {
+                  // Skip entries we can't stat
+                }
+              }
+            } catch {
+              // Directory doesn't exist, skip
+            }
           }
         }
       }
@@ -108,9 +124,9 @@ export function createConfigHandlers() {
     async getResourceContent(params: { path: string }): Promise<{ content: string; format: string }> {
       const resolvedPath = resolve(params.path);
 
-      // Security: ensure path is within ~/.claude/
-      if (!resolvedPath.startsWith(CLAUDE_DIR)) {
-        throw new Error(`Access denied: path must be within ${CLAUDE_DIR}`);
+      // Security: ensure path is within allowed config directories
+      if (!ALLOWED_CONFIG_DIRS.some(dir => resolvedPath.startsWith(dir))) {
+        throw new Error(`Access denied: path must be within allowed directories`);
       }
 
       const content = await readFile(resolvedPath, 'utf-8');

@@ -10,6 +10,7 @@ export interface SkillItem {
   name: string;
   desc: string;
   path: string;
+  source?: string;
 }
 
 interface UseSkillsResult {
@@ -61,7 +62,7 @@ export function useSkills(): UseSkillsResult {
 
       // Batch-read all SKILL.md files in parallel
       const settled = await Promise.allSettled(
-        resources.map(async (r: { name: string; path: string }) => {
+        resources.map(async (r: { name: string; path: string; source?: string }) => {
           const { content } = await window.api.config.getResourceContent(r.path + '/SKILL.md');
           return { resource: r, content };
         }),
@@ -73,9 +74,9 @@ export function useSkills(): UseSkillsResult {
         const resource = resources[i];
         if (result.status === 'fulfilled') {
           const desc = parseFrontmatterDescription(result.value.content);
-          return { name: resource.name, desc: desc || resource.name, path: resource.path };
+          return { name: resource.name, desc: desc || resource.name, path: resource.path, source: resource.source };
         }
-        return { name: resource.name, desc: resource.name, path: resource.path };
+        return { name: resource.name, desc: resource.name, path: resource.path, source: resource.source };
       });
 
       items.sort((a, b) => a.name.localeCompare(b.name));

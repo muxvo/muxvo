@@ -22,6 +22,8 @@ export interface Resource {
   path: string;
   /** 最后修改时间（ISO8601） */
   updatedAt?: string;
+  /** 来源工具（'claude' | 'codex'），可选 */
+  source?: string;
 }
 
 /** config:get-settings 返回的 CC settings.json 配置 */
