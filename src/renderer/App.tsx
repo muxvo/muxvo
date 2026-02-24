@@ -423,6 +423,7 @@ function AppContent({
 
       <TourOverlay
         terminalCount={terminals.length}
+        terminalOrder={terminals.map(t => t.id)}
         viewMode={viewMode}
         terminalNames={terminalNames}
       />
