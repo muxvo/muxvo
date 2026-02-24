@@ -15,8 +15,7 @@ mac:
   identity: "li rao (M7T6PJ8YJZ)"
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
-  notarize:
-    teamId: M7T6PJ8YJZ
+  notarize: true
 
 dmg:
   sign: false

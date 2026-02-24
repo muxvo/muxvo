@@ -121,7 +121,7 @@
   cursor: not-allowed;
 }
 
-.menu-bar__lang-btn {
+.menu-bar__help-btn {
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 11px;
@@ -131,6 +131,27 @@
   background: transparent;
   color: var(--text-secondary);
   margin-left: auto;
+  margin-right: 4px;
+  z-index: 2;
+  -webkit-app-region: no-drag;
+  transition: all 0.15s;
+}
+
+.menu-bar__help-btn:hover {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border-color: rgba(232, 167, 72, 0.3);
+}
+
+.menu-bar__lang-btn {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
   margin-right: 8px;
   z-index: 2;
   -webkit-app-region: no-drag;
@@ -598,10 +619,10 @@
   background: var(--text-muted);
 }
 
-/* Cwd path (clickable, cyan) */
+/* Cwd path (clickable, subdued) */
 .tile-cwd {
   font-size: 11px;
-  color: var(--cyan);
+  color: var(--text-secondary);
   font-family: var(--font-mono);
   cursor: pointer;
   transition: all 0.15s;
@@ -614,7 +635,7 @@
 
 .tile-cwd:hover {
   text-decoration: underline;
-  color: var(--accent);
+  color: var(--cyan);
 }
 
 /* Separator between cwd and name */
@@ -627,9 +648,10 @@
 
 /* Custom name */
 .tile-custom-name {
-  font-size: 11px;
-  color: var(--text-secondary);
+  font-size: 12px;
+  color: var(--text-primary);
   font-family: var(--font-mono);
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
@@ -2703,6 +2725,111 @@ pre.mcp-panel__detail-value { background: var(--bg-deep); padding: 8px 12px; bor
   cursor: pointer;
   min-height: 150px;
   height: 33.33%;
+}
+.driver-active .driver-overlay,.driver-active *{pointer-events:none}.driver-active .driver-active-element,.driver-active .driver-active-element *,.driver-popover,.driver-popover *{pointer-events:auto}@keyframes animate-fade-in{0%{opacity:0}to{opacity:1}}.driver-fade .driver-overlay{animation:animate-fade-in .2s ease-in-out}.driver-fade .driver-popover{animation:animate-fade-in .2s}.driver-popover{all:unset;box-sizing:border-box;color:#2d2d2d;margin:0;padding:15px;border-radius:5px;min-width:250px;max-width:300px;box-shadow:0 1px 10px #0006;z-index:1000000000;position:fixed;top:0;right:0;background-color:#fff}.driver-popover *{font-family:Helvetica Neue,Inter,ui-sans-serif,"Apple Color Emoji",Helvetica,Arial,sans-serif}.driver-popover-title{font:19px/normal sans-serif;font-weight:700;display:block;position:relative;line-height:1.5;zoom:1;margin:0}.driver-popover-close-btn{all:unset;position:absolute;top:0;right:0;width:32px;height:28px;cursor:pointer;font-size:18px;font-weight:500;color:#d2d2d2;z-index:1;text-align:center;transition:color;transition-duration:.2s}.driver-popover-close-btn:hover,.driver-popover-close-btn:focus{color:#2d2d2d}.driver-popover-title[style*=block]+.driver-popover-description{margin-top:5px}.driver-popover-description{margin-bottom:0;font:14px/normal sans-serif;line-height:1.5;font-weight:400;zoom:1}.driver-popover-footer{margin-top:15px;text-align:right;zoom:1;display:flex;align-items:center;justify-content:space-between}.driver-popover-progress-text{font-size:13px;font-weight:400;color:#727272;zoom:1}.driver-popover-footer button{all:unset;display:inline-block;box-sizing:border-box;padding:3px 7px;text-decoration:none;text-shadow:1px 1px 0 #fff;background-color:#fff;color:#2d2d2d;font:12px/normal sans-serif;cursor:pointer;outline:0;zoom:1;line-height:1.3;border:1px solid #ccc;border-radius:3px}.driver-popover-footer .driver-popover-btn-disabled{opacity:.5;pointer-events:none}:not(body):has(>.driver-active-element){overflow:hidden!important}.driver-no-interaction,.driver-no-interaction *{pointer-events:none!important}.driver-popover-footer button:hover,.driver-popover-footer button:focus{background-color:#f7f7f7}.driver-popover-navigation-btns{display:flex;flex-grow:1;justify-content:flex-end}.driver-popover-navigation-btns button+button{margin-left:4px}.driver-popover-arrow{content:"";position:absolute;border:5px solid #fff}.driver-popover-arrow-side-over{display:none}.driver-popover-arrow-side-left{left:100%;border-right-color:transparent;border-bottom-color:transparent;border-top-color:transparent}.driver-popover-arrow-side-right{right:100%;border-left-color:transparent;border-bottom-color:transparent;border-top-color:transparent}.driver-popover-arrow-side-top{top:100%;border-right-color:transparent;border-bottom-color:transparent;border-left-color:transparent}.driver-popover-arrow-side-bottom{bottom:100%;border-left-color:transparent;border-top-color:transparent;border-right-color:transparent}.driver-popover-arrow-side-center{display:none}.driver-popover-arrow-side-left.driver-popover-arrow-align-start,.driver-popover-arrow-side-right.driver-popover-arrow-align-start{top:15px}.driver-popover-arrow-side-top.driver-popover-arrow-align-start,.driver-popover-arrow-side-bottom.driver-popover-arrow-align-start{left:15px}.driver-popover-arrow-align-end.driver-popover-arrow-side-left,.driver-popover-arrow-align-end.driver-popover-arrow-side-right{bottom:15px}.driver-popover-arrow-side-top.driver-popover-arrow-align-end,.driver-popover-arrow-side-bottom.driver-popover-arrow-align-end{right:15px}.driver-popover-arrow-side-left.driver-popover-arrow-align-center,.driver-popover-arrow-side-right.driver-popover-arrow-align-center{top:50%;margin-top:-5px}.driver-popover-arrow-side-top.driver-popover-arrow-align-center,.driver-popover-arrow-side-bottom.driver-popover-arrow-align-center{left:50%;margin-left:-5px}.driver-popover-arrow-none{display:none}
+/* Tour popover — Muxvo amber-dark theme overrides for driver.js */
+
+.tour-popover.driver-popover {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-dialog);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  max-width: 340px;
+}
+
+.tour-popover .driver-popover-title {
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+}
+
+.tour-popover .driver-popover-description {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+  font-family: var(--font-sans);
+}
+
+/* Navigation buttons */
+.tour-popover .driver-popover-navigation-btns button {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border: 1px solid rgba(232, 167, 72, 0.3);
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 12px;
+  padding: 5px 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-shadow: none;
+}
+
+.tour-popover .driver-popover-navigation-btns button:hover {
+  background: var(--accent);
+  color: var(--bg-deep);
+}
+
+/* Previous button — more subtle */
+.tour-popover .driver-popover-prev-btn {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border) !important;
+}
+
+.tour-popover .driver-popover-prev-btn:hover {
+  background: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Progress text */
+.tour-popover .driver-popover-progress-text {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-family: var(--font-sans);
+}
+
+/* Close button */
+.tour-popover .driver-popover-close-btn {
+  color: var(--text-secondary);
+}
+
+.tour-popover .driver-popover-close-btn:hover {
+  color: var(--text-primary);
+}
+
+/* Arrow */
+.tour-popover .driver-popover-arrow {
+  border-color: var(--bg-elevated);
+}
+
+.tour-popover.driver-popover-side-bottom .driver-popover-arrow-side-top {
+  border-bottom-color: var(--bg-elevated);
+}
+
+.tour-popover.driver-popover-side-top .driver-popover-arrow-side-bottom {
+  border-top-color: var(--bg-elevated);
+}
+
+.tour-popover.driver-popover-side-left .driver-popover-arrow-side-right {
+  border-left-color: var(--bg-elevated);
+}
+
+.tour-popover.driver-popover-side-right .driver-popover-arrow-side-left {
+  border-right-color: var(--bg-elevated);
+}
+
+/* 交互步骤的高亮元素脉冲动画 */
+.driver-active .driver-active-element {
+  animation: tour-pulse 2s ease-in-out infinite;
+}
+
+@keyframes tour-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 167, 72, 0); }
+  50% { box-shadow: 0 0 0 4px rgba(232, 167, 72, 0.3); }
 }
 /* Muxvo global styles — dark theme terminal workbench */
 

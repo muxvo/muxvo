@@ -2,6 +2,9 @@
  * Tour step definitions — maps each onboarding step to a UI element
  */
 
+export type ActionType = 'create-terminal' | 'observe' | 'focus' | 'rename' | 'open-file';
+export type AllowedButton = 'next' | 'previous' | 'close';
+
 export interface TourStep {
   id: string;
   selector: string;
@@ -10,6 +13,12 @@ export interface TourStep {
   side: 'top' | 'bottom' | 'left' | 'right';
   /** If true, this step requires at least one terminal to exist */
   needsTerminal?: boolean;
+  /** If true, user must perform an action to advance (no Next button) */
+  interactive: boolean;
+  /** What type of action this step expects */
+  actionType: ActionType;
+  /** Which popover buttons to show */
+  showButtons: AllowedButton[];
 }
 
 export const TOUR_STEPS: TourStep[] = [
@@ -19,14 +28,20 @@ export const TOUR_STEPS: TourStep[] = [
     i18nTitleKey: 'tour.step1.title',
     i18nDescKey: 'tour.step1.desc',
     side: 'bottom',
+    interactive: true,
+    actionType: 'create-terminal',
+    showButtons: ['close'],
   },
   {
     id: 'tile-view',
-    selector: '.app-content',
+    selector: '',
     i18nTitleKey: 'tour.step2.title',
     i18nDescKey: 'tour.step2.desc',
     side: 'top',
     needsTerminal: true,
+    interactive: false,
+    actionType: 'observe',
+    showButtons: ['next', 'previous', 'close'],
   },
   {
     id: 'focus-terminal',
@@ -35,6 +50,9 @@ export const TOUR_STEPS: TourStep[] = [
     i18nDescKey: 'tour.step3.desc',
     side: 'bottom',
     needsTerminal: true,
+    interactive: true,
+    actionType: 'focus',
+    showButtons: ['close'],
   },
   {
     id: 'rename-terminal',
@@ -43,6 +61,9 @@ export const TOUR_STEPS: TourStep[] = [
     i18nDescKey: 'tour.step4.desc',
     side: 'bottom',
     needsTerminal: true,
+    interactive: true,
+    actionType: 'rename',
+    showButtons: ['close'],
   },
   {
     id: 'open-files',
@@ -51,5 +72,8 @@ export const TOUR_STEPS: TourStep[] = [
     i18nDescKey: 'tour.step5.desc',
     side: 'bottom',
     needsTerminal: true,
+    interactive: true,
+    actionType: 'open-file',
+    showButtons: ['close'],
   },
 ];

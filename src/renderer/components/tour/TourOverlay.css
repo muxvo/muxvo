@@ -92,3 +92,13 @@
 .tour-popover.driver-popover-side-right .driver-popover-arrow-side-left {
   border-right-color: var(--bg-elevated);
 }
+
+/* 交互步骤的高亮元素脉冲动画 */
+.driver-active .driver-active-element {
+  animation: tour-pulse 2s ease-in-out infinite;
+}
+
+@keyframes tour-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 167, 72, 0); }
+  50% { box-shadow: 0 0 0 4px rgba(232, 167, 72, 0.3); }
+}
