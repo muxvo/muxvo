@@ -3,7 +3,7 @@
  *
  * 功能:
  * - "全部项目" 选项（默认选中）
- * - 项目列表，每项: 彩色圆点 + 项目名 + 会话数
+ * - 项目列表，每项: 彩色圆点 + 项目名 + 文件总大小
  * - 圆点颜色: 按项目名 hash 生成固定颜色
  */
 
@@ -28,8 +28,17 @@ function hashColor(str: string): string {
   return `hsl(${hue}, 65%, 55%)`;
 }
 
-export function ProjectList({ projects, selectedProjectHash, onSelectProject, totalSessionCount }: ProjectListProps) {
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes}B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1).replace(/\.0$/, '')}KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1).replace(/\.0$/, '')}MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1).replace(/\.0$/, '')}GB`;
+}
+
+export function ProjectList({ projects, selectedProjectHash, onSelectProject }: ProjectListProps) {
   const { t } = useI18n();
+
+  const totalSize = projects.reduce((sum, p) => sum + (p.totalSize || 0), 0);
 
   return (
     <div className="project-list">
@@ -41,7 +50,7 @@ export function ProjectList({ projects, selectedProjectHash, onSelectProject, to
       >
         <span className="project-list__dot" style={{ background: 'var(--accent)' }} />
         <span className="project-list__name">{t('chat.allProjects')}</span>
-        <span className="project-list__count">{totalSessionCount}</span>
+        <span className="project-list__count">{formatSize(totalSize)}</span>
       </div>
 
       {projects.map((project) => (
@@ -54,7 +63,7 @@ export function ProjectList({ projects, selectedProjectHash, onSelectProject, to
           <span className="project-list__name" title={project.displayPath}>
             {project.displayName}
           </span>
-          <span className="project-list__count">{project.sessionCount}</span>
+          <span className="project-list__count">{formatSize(project.totalSize || 0)}</span>
         </div>
       ))}
     </div>

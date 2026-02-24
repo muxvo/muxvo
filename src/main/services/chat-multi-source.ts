@@ -48,6 +48,7 @@ export function createChatMultiSource(opts: MultiSourceOpts) {
         const existing = map.get(p.projectHash);
         if (existing) {
           existing.sessionCount += p.sessionCount;
+          existing.totalSize = (existing.totalSize || 0) + (p.totalSize || 0);
           existing.lastActivity = Math.max(existing.lastActivity, p.lastActivity);
         } else {
           map.set(p.projectHash, { ...p });

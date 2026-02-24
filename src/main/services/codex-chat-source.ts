@@ -286,7 +286,7 @@ export function createCodexChatReader(opts: CodexChatReaderOpts) {
       // Group by cwd → project
       const projectMap = new Map<
         string,
-        { cwd: string; count: number; lastActivity: number }
+        { cwd: string; count: number; totalSize: number; lastActivity: number }
       >();
 
       for (const entry of entries) {
@@ -294,11 +294,13 @@ export function createCodexChatReader(opts: CodexChatReaderOpts) {
         const existing = projectMap.get(key);
         if (existing) {
           existing.count++;
+          existing.totalSize += entry.size;
           existing.lastActivity = Math.max(existing.lastActivity, entry.mtime);
         } else {
           projectMap.set(key, {
             cwd: entry.cwd,
             count: 1,
+            totalSize: entry.size,
             lastActivity: entry.mtime,
           });
         }
@@ -314,6 +316,7 @@ export function createCodexChatReader(opts: CodexChatReaderOpts) {
           displayPath,
           displayName: parts[parts.length - 1] || 'Unknown',
           sessionCount: value.count,
+          totalSize: value.totalSize,
           lastActivity: value.lastActivity,
           source: 'codex',
         });

@@ -42,10 +42,10 @@ export function createChatHandlers() {
 
     async getSessions(params: { projectHash: string }) {
       if (params.projectHash === '__all__') {
-        const sessions = await reader.getAllRecentSessions(50);
+        const sessions = await reader.getAllRecentSessions(200);
         return { sessions };
       }
-      const sessions = await reader.getSessionsForProject(params.projectHash);
+      const sessions = await reader.getSessionsForProject(params.projectHash, 500);
       return { sessions };
     },
 
