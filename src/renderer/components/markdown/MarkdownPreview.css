@@ -18,7 +18,7 @@
 .markdown-preview h1 {
   font-size: 1.8em;
   font-weight: bold;
-  color: #ffffff;
+  color: var(--text-primary);
   border-bottom: 1px solid var(--bg-elevated);
   padding-bottom: 0.3em;
   margin: 1em 0 0.5em;
@@ -27,14 +27,14 @@
 .markdown-preview h2 {
   font-size: 1.5em;
   font-weight: bold;
-  color: #ffffff;
+  color: var(--text-primary);
   margin: 0.8em 0 0.4em;
 }
 
 .markdown-preview h3 {
   font-size: 1.25em;
   font-weight: bold;
-  color: #ffffff;
+  color: var(--text-primary);
   margin: 0.6em 0 0.3em;
 }
 
@@ -43,12 +43,12 @@
 .markdown-preview h6 {
   font-size: 1em;
   font-weight: bold;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 /* Bold & Italic */
 .markdown-preview strong {
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .markdown-preview em {
@@ -72,8 +72,8 @@
 
 /* Code */
 .markdown-preview code {
-  background: rgba(248, 165, 194, 0.15);
-  color: #f8a5c2;
+  background: var(--code-bg, rgba(248, 165, 194, 0.15));
+  color: var(--code-fg, #f8a5c2);
   font-family: 'SF Mono', Monaco, 'Courier New', monospace;
   font-size: 0.9em;
   padding: 2px 6px;
@@ -135,7 +135,7 @@
 .markdown-preview th {
   background: var(--bg-elevated);
   font-weight: bold;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .markdown-preview th,
