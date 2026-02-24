@@ -12603,6 +12603,9 @@ const zh = {
   "skills.selectFile": "选择一个文件查看内容",
   "skills.loading": "加载中...",
   "skills.emptyFolder": "空目录",
+  "skills.systemGroup": "系统 Skills",
+  "skills.searchPlaceholder": "搜索技能...",
+  "skills.noResults": "无匹配结果",
   // MCP panel
   "mcp.title": "MCP Servers",
   "mcp.addServer": "添加服务器",
@@ -12730,6 +12733,9 @@ const en$2 = {
   "skills.selectFile": "Select a file to view content",
   "skills.loading": "Loading...",
   "skills.emptyFolder": "Empty folder",
+  "skills.systemGroup": "System Skills",
+  "skills.searchPlaceholder": "Search skills...",
+  "skills.noResults": "No results",
   // MCP panel
   "mcp.title": "MCP Servers",
   "mcp.addServer": "Add Server",
@@ -89908,6 +89914,13 @@ function ChatHistoryPanel() {
     ] })
   ] });
 }
+function extractProjectName(skillPath) {
+  const dotMatch = skillPath.match(/\/([^/]+)\/\.(?:claude|codex)\/skills\//);
+  if (dotMatch) return dotMatch[1];
+  const bareMatch = skillPath.match(/\/([^/]+)\/skills\//);
+  if (bareMatch) return bareMatch[1];
+  return "";
+}
 function parseFrontmatterDescription(content) {
   const fmMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
   if (!fmMatch) return null;
@@ -89933,6 +89946,10 @@ function useSkills() {
       const { resources } = await window.api.config.getResources("skills");
       const settled = await Promise.allSettled(
         resources.map(async (r10) => {
+          if (r10.path.endsWith(".md")) {
+            const { content: content2 } = await window.api.config.getResourceContent(r10.path);
+            return { resource: r10, content: content2 };
+          }
           const { content } = await window.api.config.getResourceContent(r10.path + "/SKILL.md");
           return { resource: r10, content };
         })
@@ -89940,11 +89957,13 @@ function useSkills() {
       if (abortedRef.current) return;
       const items = settled.map((result, i8) => {
         const resource = resources[i8];
+        const level = resource.level || "system";
+        const projectName = level === "project" ? extractProjectName(resource.path) : void 0;
         if (result.status === "fulfilled") {
           const desc = parseFrontmatterDescription(result.value.content);
-          return { name: resource.name, desc: desc || resource.name, path: resource.path, source: resource.source };
+          return { name: resource.name, desc: desc || resource.name, path: resource.path, source: resource.source, level, projectName };
         }
-        return { name: resource.name, desc: resource.name, path: resource.path, source: resource.source };
+        return { name: resource.name, desc: resource.name, path: resource.path, source: resource.source, level, projectName };
       });
       items.sort((a, b2) => a.name.localeCompare(b2.name));
       setSkills(items);
@@ -89977,8 +89996,50 @@ function useSkills() {
   }, [loadSkills]);
   return { skills, loading, error: error2 };
 }
+function groupSkills(skills) {
+  const systemSkills = [];
+  const projectMap = /* @__PURE__ */ new Map();
+  for (const skill of skills) {
+    if (skill.level === "project" && skill.projectName) {
+      const list2 = projectMap.get(skill.projectName) || [];
+      list2.push(skill);
+      projectMap.set(skill.projectName, list2);
+    } else {
+      systemSkills.push(skill);
+    }
+  }
+  const groups = [];
+  if (systemSkills.length > 0) {
+    groups.push({ key: "__system__", label: "系统 Skills", skills: systemSkills });
+  }
+  for (const [projectName, projectSkills] of projectMap) {
+    groups.push({ key: projectName, label: projectName, skills: projectSkills });
+  }
+  return groups;
+}
 function SkillList({ skills, loading, selectedPath, onSelect }) {
   const { t } = useI18n();
+  const [collapsed, setCollapsed] = reactExports.useState(/* @__PURE__ */ new Set());
+  const [searchQuery, setSearchQuery] = reactExports.useState("");
+  const filteredSkills = reactExports.useMemo(() => {
+    if (!searchQuery.trim()) return skills;
+    const q2 = searchQuery.toLowerCase();
+    return skills.filter(
+      (s16) => s16.name.toLowerCase().includes(q2) || s16.desc.toLowerCase().includes(q2)
+    );
+  }, [skills, searchQuery]);
+  const groups = reactExports.useMemo(() => groupSkills(filteredSkills), [filteredSkills]);
+  const toggleGroup = reactExports.useCallback((key) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }, []);
   if (loading) {
     return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "skill-list", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "skill-list__header", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "skill-list__title", children: t("skills.title") }) }),
@@ -89994,7 +90055,7 @@ function SkillList({ skills, loading, selectedPath, onSelect }) {
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "skill-list__body", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "skill-list__empty", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: t("skills.noSkills") }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "skill-list__empty-hint", children: "~/.claude/skills/" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "skill-list__empty-hint", children: "~/.codex/skills/" })
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "skill-list__empty-hint", children: "<project>/.claude/skills/" })
       ] }) })
     ] });
   }
@@ -90003,24 +90064,64 @@ function SkillList({ skills, loading, selectedPath, onSelect }) {
       /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "skill-list__title", children: t("skills.title") }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "skill-list__count", children: skills.length })
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "skill-list__body", children: skills.map((skill) => {
-      const isActive2 = skill.path === selectedPath;
-      return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        "div",
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "skill-list__search", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "input",
         {
-          className: `skill-list__item${isActive2 ? " skill-list__item--active" : ""}`,
-          onClick: () => onSelect(skill.path),
-          children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "skill-list__item-header", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "skill-list__item-name", children: skill.name }),
-              skill.source && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `skill-list__source-badge skill-list__source-badge--${skill.source === "codex" ? "cx" : "cc"}`, children: skill.source === "codex" ? "CX" : "CC" })
-            ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "skill-list__item-desc", children: skill.desc })
-          ]
-        },
-        skill.path
-      );
-    }) })
+          type: "text",
+          className: "skill-list__search-input",
+          placeholder: "Search skills...",
+          value: searchQuery,
+          onChange: (e) => setSearchQuery(e.target.value)
+        }
+      ),
+      searchQuery && /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "button",
+        {
+          className: "skill-list__search-clear",
+          onClick: () => setSearchQuery(""),
+          children: "×"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "skill-list__body", children: [
+      groups.length === 0 && searchQuery && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "skill-list__empty", children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "No matching skills" }) }),
+      groups.map((group) => {
+        const isCollapsed = collapsed.has(group.key);
+        return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "skill-list__group", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "div",
+            {
+              className: "skill-list__group-header",
+              onClick: () => toggleGroup(group.key),
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `skill-list__group-arrow${isCollapsed ? "" : " skill-list__group-arrow--open"}`, children: "▶" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "skill-list__group-label", children: group.label }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "skill-list__group-count", children: group.skills.length })
+              ]
+            }
+          ),
+          !isCollapsed && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "skill-list__group-items", children: group.skills.map((skill) => {
+            const isActive2 = skill.path === selectedPath;
+            return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "div",
+              {
+                className: `skill-list__item${isActive2 ? " skill-list__item--active" : ""}`,
+                onClick: () => onSelect(skill.path),
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "skill-list__item-header", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "skill-list__item-name", children: skill.name }),
+                    skill.source && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `skill-list__source-badge skill-list__source-badge--${skill.source === "codex" ? "cx" : "cc"}`, children: skill.source === "codex" ? "CX" : "CC" })
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "skill-list__item-desc", children: skill.desc })
+                ]
+              },
+              skill.path
+            );
+          }) })
+        ] }, group.key);
+      })
+    ] })
   ] });
 }
 const IMAGE_EXTS = ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico"];

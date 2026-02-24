@@ -1720,7 +1720,7 @@ function createConfigHandlers() {
                 const entries = await promises.readdir(dirPath, { withFileTypes: true });
                 for (const entry of entries) {
                   if (EXCLUDED_FILES.has(entry.name)) continue;
-                  if (!entry.isDirectory()) continue;
+                  if (!entry.isDirectory() && !entry.name.endsWith(".md")) continue;
                   const entryPath = path.join(dirPath, entry.name);
                   try {
                     const entryStat = await promises.stat(entryPath);

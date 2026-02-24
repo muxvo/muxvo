@@ -287,8 +287,8 @@ export function createConfigHandlers() {
                 const entries = await readdir(dirPath, { withFileTypes: true });
                 for (const entry of entries) {
                   if (EXCLUDED_FILES.has(entry.name)) continue;
-                  // Skills must be directories (containing SKILL.md), skip loose files
-                  if (!entry.isDirectory()) continue;
+                  // Skills: directories (containing SKILL.md) or standalone .md files
+                  if (!entry.isDirectory() && !entry.name.endsWith('.md')) continue;
                   const entryPath = join(dirPath, entry.name);
                   try {
                     const entryStat = await stat(entryPath);
