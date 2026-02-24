@@ -12553,6 +12553,7 @@ const zh = {
   "terminal.noTerminals": "暂无终端，点击 + 新建",
   "terminal.count": "{count} 个终端",
   "terminal.maxReached": "已达最大 20 个终端",
+  "terminal.waitingInput": "等待操作",
   "close.confirm": "确定关闭此终端？",
   "close.cancel": "取消",
   "close.ok": "确定",
@@ -12679,6 +12680,7 @@ const en$2 = {
   "terminal.noTerminals": "No terminals. Click + to create one.",
   "terminal.count": "{count} terminals",
   "terminal.maxReached": "Maximum 20 terminals reached",
+  "terminal.waitingInput": "Waiting",
   "close.confirm": "Close this terminal?",
   "close.cancel": "Cancel",
   "close.ok": "Confirm",
@@ -28625,7 +28627,7 @@ function TerminalTile({
               /* @__PURE__ */ jsxRuntimeExports.jsx(
                 "span",
                 {
-                  className: `tile-status ${state === "Running" ? "tile-status--running" : "tile-status--idle"}`
+                  className: `tile-status ${state === "WaitingInput" ? "tile-status--waiting" : state === "Running" ? "tile-status--running" : "tile-status--idle"}`
                 }
               ),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "tile-name", children: [
@@ -28662,6 +28664,7 @@ function TerminalTile({
                   )
                 ] }) })
               ] }),
+              state === "WaitingInput" && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "tile-waiting-badge", children: "1" }),
               !compact && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { className: "tile-file-btn", onClick: handleFileClick, children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx(FileIcon, {}),
@@ -29162,15 +29165,19 @@ function SessionList({ sessions, selectedId, onSelect, sortMode = "time", onSort
             ] }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "session-card__preview", children: preview }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "session-card__footer", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "session-card__tags", children: tags.map((tag) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "span",
-                {
-                  className: "session-card__tag",
-                  style: { background: tag.color },
-                  children: tag.label
-                },
-                tag.label
-              )) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "session-card__tags", children: [
+                session.source === "codex" && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "session-card__source-badge session-card__source-badge--cx", children: "CX" }),
+                session.source === "claude-code" && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "session-card__source-badge session-card__source-badge--cc", children: "CC" }),
+                tags.map((tag) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "span",
+                  {
+                    className: "session-card__tag",
+                    style: { background: tag.color },
+                    children: tag.label
+                  },
+                  tag.label
+                ))
+              ] }),
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "session-card__count", children: formatFileSize$1(session.fileSize) })
             ] })
           ]
@@ -89943,9 +89950,9 @@ function useSkills() {
         const resource = resources[i8];
         if (result.status === "fulfilled") {
           const desc = parseFrontmatterDescription(result.value.content);
-          return { name: resource.name, desc: desc || resource.name, path: resource.path };
+          return { name: resource.name, desc: desc || resource.name, path: resource.path, source: resource.source };
         }
-        return { name: resource.name, desc: resource.name, path: resource.path };
+        return { name: resource.name, desc: resource.name, path: resource.path, source: resource.source };
       });
       items.sort((a, b2) => a.name.localeCompare(b2.name));
       setSkills(items);
@@ -89994,7 +90001,8 @@ function SkillList({ skills, loading, selectedPath, onSelect }) {
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "skill-list__body", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "skill-list__empty", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: t("skills.noSkills") }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "skill-list__empty-hint", children: "~/.claude/skills/" })
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "skill-list__empty-hint", children: "~/.claude/skills/" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "skill-list__empty-hint", children: "~/.codex/skills/" })
       ] }) })
     ] });
   }
@@ -90011,7 +90019,10 @@ function SkillList({ skills, loading, selectedPath, onSelect }) {
           className: `skill-list__item${isActive2 ? " skill-list__item--active" : ""}`,
           onClick: () => onSelect(skill.path),
           children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "skill-list__item-name", children: skill.name }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "skill-list__item-header", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "skill-list__item-name", children: skill.name }),
+              skill.source && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `skill-list__source-badge skill-list__source-badge--${skill.source === "codex" ? "cx" : "cc"}`, children: skill.source === "codex" ? "CX" : "CC" })
+            ] }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "skill-list__item-desc", children: skill.desc })
           ]
         },
