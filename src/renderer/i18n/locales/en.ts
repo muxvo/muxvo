@@ -58,6 +58,9 @@ export const en = {
   'skills.selectFile': 'Select a file to view content',
   'skills.loading': 'Loading...',
   'skills.emptyFolder': 'Empty folder',
+  'skills.systemGroup': 'System Skills',
+  'skills.searchPlaceholder': 'Search skills...',
+  'skills.noResults': 'No results',
   // MCP panel
   'mcp.title': 'MCP Servers',
   'mcp.addServer': 'Add Server',

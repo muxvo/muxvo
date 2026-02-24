@@ -58,6 +58,9 @@ export const zh = {
   'skills.selectFile': '选择一个文件查看内容',
   'skills.loading': '加载中...',
   'skills.emptyFolder': '空目录',
+  'skills.systemGroup': '系统 Skills',
+  'skills.searchPlaceholder': '搜索技能...',
+  'skills.noResults': '无匹配结果',
   // MCP panel
   'mcp.title': 'MCP Servers',
   'mcp.addServer': '添加服务器',
