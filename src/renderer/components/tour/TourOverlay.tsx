@@ -70,7 +70,7 @@ export function TourOverlay({ terminalCount, viewMode, terminalNames }: Props): 
 
   // Step 1: Detect terminal created
   useEffect(() => {
-    if (!state.tour.active) return;
+    if (!state.tour.active || !driverRef.current) return;
     if (getCurrentActionType() !== 'create-terminal') return;
     if (terminalCount > prevTerminalCountRef.current) {
       moveNext();
@@ -78,19 +78,19 @@ export function TourOverlay({ terminalCount, viewMode, terminalNames }: Props): 
     prevTerminalCountRef.current = terminalCount;
   }, [state.tour.active, terminalCount, getCurrentActionType, moveNext]);
 
-  // Step 3: Detect focus mode
+  // Step 3: Detect focus mode (wait 2s for user to see focused state)
   useEffect(() => {
-    if (!state.tour.active) return;
+    if (!state.tour.active || !driverRef.current) return;
     if (getCurrentActionType() !== 'focus') return;
     if (viewMode === 'Focused' && prevViewModeRef.current === 'Tiling') {
-      moveNext();
+      setTimeout(() => moveNext(), 2000);
     }
     prevViewModeRef.current = viewMode;
   }, [state.tour.active, viewMode, getCurrentActionType, moveNext]);
 
   // Step 4: Detect rename
   useEffect(() => {
-    if (!state.tour.active) return;
+    if (!state.tour.active || !driverRef.current) return;
     if (getCurrentActionType() !== 'rename') return;
     const hasName = Object.values(terminalNames).some(n => n && n.length > 0);
     if (hasName && !prevHasNameRef.current) {
@@ -101,7 +101,7 @@ export function TourOverlay({ terminalCount, viewMode, terminalNames }: Props): 
 
   // Step 5: Detect file panel opened
   useEffect(() => {
-    if (!state.tour.active) return;
+    if (!state.tour.active || !driverRef.current) return;
     if (getCurrentActionType() !== 'open-file') return;
     if (state.filePanel.open) {
       completeTour();
@@ -172,6 +172,12 @@ export function TourOverlay({ terminalCount, viewMode, terminalNames }: Props): 
         const idx = d.getActiveIndex();
         if (idx !== undefined) {
           currentStepRef.current = idx;
+        }
+        // For observe steps (no element), make overlay pass-through so user can interact
+        const overlay = document.querySelector('.driver-overlay') as HTMLElement | null;
+        if (overlay) {
+          const step = activeSteps[idx ?? 0];
+          overlay.style.pointerEvents = step?.actionType === 'observe' ? 'none' : '';
         }
       },
       onCloseClick: () => {
