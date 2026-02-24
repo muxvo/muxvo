@@ -74,10 +74,22 @@ function ToolResultBlock({ content }: ToolResultBlockProps) {
   );
 }
 
+function ImageBlock({ source }: { source: AssistantContentBlock['source'] }) {
+  if (!source?.data) return null;
+  const src = `data:${source.media_type || 'image/png'};base64,${source.data}`;
+  return (
+    <div className="image-block">
+      <img src={src} alt="" className="image-block__img" loading="lazy" />
+    </div>
+  );
+}
+
 function renderContentBlock(block: AssistantContentBlock, index: number) {
   switch (block.type) {
     case 'text':
       return <MarkdownPreview key={index} content={block.text || ''} />;
+    case 'image':
+      return <ImageBlock key={index} source={block.source} />;
     case 'tool_use':
       return <ToolCallBlock key={index} name={block.name} input={block.input} />;
     case 'tool_result':
@@ -109,13 +121,12 @@ const MessageBubble = React.memo(function MessageBubble({ message }: MessageBubb
       </div>
 
       <div className="message-bubble__content">
-        {isUser || isSystem ? (
-          <div className="message-bubble__text">{message.content as string}</div>
-        ) : (
-          Array.isArray(message.content)
-            ? (message.content as AssistantContentBlock[]).map((block, i) => renderContentBlock(block, i))
+        {Array.isArray(message.content)
+          ? (message.content as AssistantContentBlock[]).map((block, i) => renderContentBlock(block, i))
+          : isUser || isSystem
+            ? <div className="message-bubble__text">{message.content as string}</div>
             : <MarkdownPreview content={String(message.content)} />
-        )}
+        }
       </div>
 
       <div className="message-bubble__meta">

@@ -154,10 +154,24 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
           const blocks = msgContent as Array<Record<string, unknown>>;
           const hasOnlyToolResults = blocks.length > 0 && blocks.every(b => b.type === 'tool_result');
           if (hasOnlyToolResults) return null;
-          const textParts = blocks
-            .filter(b => b.type === 'text' && typeof b.text === 'string')
-            .map(b => b.text as string);
-          normalizedContent = textParts.join('\n') || '';
+          // Check if user message contains images
+          const hasImages = blocks.some(b => b.type === 'image');
+          if (hasImages) {
+            // Preserve as content block array (text + image blocks)
+            normalizedContent = blocks
+              .filter(b => b.type === 'text' || b.type === 'image')
+              .map(b => {
+                if (b.type === 'image') {
+                  return { type: 'image', source: b.source };
+                }
+                return { type: 'text', text: b.text as string };
+              }) as SessionMessage['content'];
+          } else {
+            const textParts = blocks
+              .filter(b => b.type === 'text' && typeof b.text === 'string')
+              .map(b => b.text as string);
+            normalizedContent = textParts.join('\n') || '';
+          }
         } else if (typeof entry.content === 'string') {
           normalizedContent = entry.content;
         } else {

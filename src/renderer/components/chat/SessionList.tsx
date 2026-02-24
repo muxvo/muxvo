@@ -10,7 +10,6 @@
 
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import type { SessionSummary, ProjectInfo } from '@/shared/types/chat.types';
-import type { SortMode } from './ChatHistoryPanel';
 import { useI18n } from '@/renderer/i18n';
 import './SessionList.css';
 
@@ -20,8 +19,6 @@ interface SessionListProps {
   sessions: SessionSummary[];
   selectedId: string | null;
   onSelect: (sessionId: string) => void;
-  sortMode?: SortMode;
-  onSortChange?: (mode: SortMode) => void;
   onSessionContextMenu?: (session: SessionSummary, x: number, y: number) => void;
   projects?: ProjectInfo[];
   showProjectName?: boolean;
@@ -106,7 +103,7 @@ function LoadMoreSentinel({ onVisible }: { onVisible: () => void }) {
   return <div ref={ref} style={{ height: 1 }} />;
 }
 
-export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time', onSortChange, onSessionContextMenu, projects, showProjectName }: SessionListProps) {
+export function SessionList({ sessions, selectedId, onSelect, onSessionContextMenu, projects, showProjectName }: SessionListProps) {
   const { t } = useI18n();
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
@@ -137,18 +134,6 @@ export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time',
       <div className="session-list">
         <div className="session-list__header">
           <span>{t('chat.sessions')}</span>
-          {onSortChange && (
-            <div className="session-list__sort">
-              <button
-                className={`session-list__sort-btn ${sortMode === 'time' ? 'session-list__sort-btn--active' : ''}`}
-                onClick={() => onSortChange('time')}
-              >{t('chat.time')}</button>
-              <button
-                className={`session-list__sort-btn ${sortMode === 'project' ? 'session-list__sort-btn--active' : ''}`}
-                onClick={() => onSortChange('project')}
-              >{t('chat.project')}</button>
-            </div>
-          )}
         </div>
         <div className="session-list__empty">{t('chat.noSessions')}</div>
       </div>
@@ -159,18 +144,6 @@ export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time',
     <div className="session-list">
       <div className="session-list__header">
         <span>{t('chat.sessionsCount', { count: sortedSessions.length })}</span>
-        {onSortChange && (
-          <div className="session-list__sort">
-            <button
-              className={`session-list__sort-btn ${sortMode === 'time' ? 'session-list__sort-btn--active' : ''}`}
-              onClick={() => onSortChange('time')}
-            >{t('chat.time')}</button>
-            <button
-              className={`session-list__sort-btn ${sortMode === 'project' ? 'session-list__sort-btn--active' : ''}`}
-              onClick={() => onSortChange('project')}
-            >{t('chat.project')}</button>
-          </div>
-        )}
       </div>
 
       {visibleSessions.map((session) => {
