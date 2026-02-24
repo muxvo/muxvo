@@ -258,8 +258,15 @@ export function TerminalTile({
             {shortenPath(cwd)}
           </span>
 
-          {/* Name area (only in non-compact mode) */}
-          {!compact && (
+          {/* Name area: compact mode only shows named, full mode shows all states */}
+          {compact ? (
+            namingState === 'DisplayNamed' && (
+              <>
+                <span className="tile-separator">·</span>
+                <span className="tile-custom-name">{namingContext.displayText}</span>
+              </>
+            )
+          ) : (
             <>
               {namingState === 'Editing' ? (
                 <>

@@ -72,10 +72,10 @@
   background: var(--text-muted);
 }
 
-/* Cwd path (clickable, cyan) */
+/* Cwd path (clickable, subdued) */
 .tile-cwd {
   font-size: 11px;
-  color: var(--cyan);
+  color: var(--text-secondary);
   font-family: var(--font-mono);
   cursor: pointer;
   transition: all 0.15s;
@@ -88,7 +88,7 @@
 
 .tile-cwd:hover {
   text-decoration: underline;
-  color: var(--accent);
+  color: var(--cyan);
 }
 
 /* Separator between cwd and name */
@@ -101,9 +101,10 @@
 
 /* Custom name */
 .tile-custom-name {
-  font-size: 11px;
-  color: var(--text-secondary);
+  font-size: 12px;
+  color: var(--text-primary);
   font-family: var(--font-mono);
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
