@@ -47,8 +47,14 @@ export function OnboardingModal({ onCreateTerminal }: OnboardingModalProps): JSX
   useEffect(() => {
     if (currentStep === 2) {
       setDetecting(true);
-      window.api.app.detectCliTools().then((results) => {
-        setCliResults(results);
+      window.api.app.detectCliTools().then((result: Record<string, boolean>) => {
+        // IPC returns { claude: boolean, codex: boolean, gemini: boolean }
+        // Convert to array format for CliDetectionStep
+        const tools = ['claude', 'codex', 'gemini'].map((name) => ({
+          name,
+          installed: !!result[name],
+        }));
+        setCliResults(tools);
         setDetecting(false);
       });
     }
@@ -68,10 +74,11 @@ export function OnboardingModal({ onCreateTerminal }: OnboardingModalProps): JSX
   }, []);
 
   const handleSelectDirectory = useCallback(async () => {
-    const path = await window.api.fs.selectDirectory();
-    if (path) {
-      onCreateTerminal(path);
-      setSelectedDir(path);
+    const result = await window.api.fs.selectDirectory();
+    if (result?.success && result.data) {
+      const dir = result.data as string;
+      onCreateTerminal(dir);
+      setSelectedDir(dir);
       setTerminalCreated(true);
     }
   }, [onCreateTerminal]);
@@ -87,13 +94,12 @@ export function OnboardingModal({ onCreateTerminal }: OnboardingModalProps): JSX
   const renderStep = (): JSX.Element => {
     switch (currentStep) {
       case 1:
-        return <WelcomeStep t={t} onNext={handleNext} />;
+        return <WelcomeStep t={t} />;
       case 2:
         return (
           <CliDetectionStep
             t={t}
-            onNext={handleNext}
-            cliResults={cliResults}
+            results={cliResults}
             detecting={detecting}
           />
         );
@@ -101,7 +107,6 @@ export function OnboardingModal({ onCreateTerminal }: OnboardingModalProps): JSX
         return (
           <CreateTerminalStep
             t={t}
-            onNext={handleNext}
             onSelectDirectory={handleSelectDirectory}
             onQuickPath={handleQuickPath}
             terminalCreated={terminalCreated}
@@ -109,9 +114,9 @@ export function OnboardingModal({ onCreateTerminal }: OnboardingModalProps): JSX
           />
         );
       case 4:
-        return <FeatureTourStep t={t} onNext={handleNext} />;
+        return <FeatureTourStep t={t} />;
       case 5:
-        return <ShortcutsStep t={t} onNext={handleComplete} />;
+        return <ShortcutsStep t={t} />;
       default:
         return <WelcomeStep t={t} onNext={handleNext} />;
     }
@@ -139,21 +144,21 @@ export function OnboardingModal({ onCreateTerminal }: OnboardingModalProps): JSX
         {/* Footer buttons */}
         <div className="onboarding-footer">
           <button className="onboarding-btn-skip" onClick={handleComplete}>
-            {t('onboarding.skip')}
+            {t('onboard.skip')}
           </button>
           <div>
             {currentStep > 1 && (
               <button className="onboarding-btn-prev" onClick={handlePrev}>
-                {t('onboarding.prev')}
+                {t('onboard.prev')}
               </button>
             )}
             {currentStep < TOTAL_STEPS ? (
               <button className="onboarding-btn-next" onClick={handleNext}>
-                {t('onboarding.next')}
+                {t('onboard.next')}
               </button>
             ) : (
               <button className="onboarding-btn-done" onClick={handleComplete}>
-                {t('onboarding.done')}
+                {t('onboard.done')}
               </button>
             )}
           </div>

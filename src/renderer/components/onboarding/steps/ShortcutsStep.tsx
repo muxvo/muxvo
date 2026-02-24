@@ -8,10 +8,10 @@ interface ShortcutsStepProps {
 
 export function ShortcutsStep({ t }: ShortcutsStepProps): JSX.Element {
   const shortcuts = [
-    { key: t('onboard.shortcuts.dblClickTerminal'), desc: t('onboard.shortcuts.focusMode') },
-    { key: 'Esc', desc: t('onboard.shortcuts.tileView') },
-    { key: t('onboard.shortcuts.clickPath'), desc: t('onboard.shortcuts.switchCwd') },
-    { key: t('onboard.shortcuts.plusBtn'), desc: t('onboard.shortcuts.newTerminal') },
+    { key: 'Double Click', desc: 'Enter focus mode' },
+    { key: 'Esc', desc: 'Back to tiling view' },
+    { key: 'Click Path', desc: 'Switch working directory' },
+    { key: '+ Button', desc: 'Create new terminal' },
   ];
 
   return (
