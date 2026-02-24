@@ -14,12 +14,13 @@ export function registerAppHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.APP.DETECT_CLI_TOOLS, async () => {
     const result = await detectCliTools();
-    // 格式转换: service 返回 { tools: Array<{name, installed, path?}> }
+    // 格式转换: service 返回 { detectedTools: Array<{name, path, version?}> }
     // 前端期望 { claude: boolean; codex: boolean; gemini: boolean }
+    const detected = result.detectedTools.map((t: { name: string }) => t.name);
     return {
-      claude: result.tools.some((t) => t.name === 'claude' && t.installed),
-      codex: result.tools.some((t) => t.name === 'codex' && t.installed),
-      gemini: result.tools.some((t) => t.name === 'gemini' && t.installed),
+      claude: detected.includes('claude'),
+      codex: detected.includes('codex'),
+      gemini: detected.includes('gemini'),
     };
   });
 }

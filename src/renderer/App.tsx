@@ -17,7 +17,6 @@ import { McpPanel } from './components/mcp/McpPanel';
 import { HooksPanel } from './components/hook/HooksPanel';
 import { FilePanel } from './components/file/FilePanel';
 import { FileTempView } from './components/file/FileTempView';
-import { OnboardingModal } from './components/onboarding/OnboardingModal';
 import { PanelProvider, usePanelContext } from './contexts/PanelContext';
 import { I18nProvider, useI18n, type Locale } from './i18n';
 import { mapExtToFileType, toLocalFileUrl } from './utils/file-tree';
@@ -122,15 +121,6 @@ export function App(): JSX.Element {
     }
   }, []);
 
-  const handleCreateTerminalFromOnboarding = useCallback(async (cwd: string) => {
-    if (terminals.length >= MAX_TERMINALS) return;
-    const result = await window.api.terminal.create(cwd);
-    if (result?.success && result.data) {
-      setTerminals((prev) => [...prev, { id: result.data.id, state: 'Running', cwd }]);
-      setTerminalOrder((prev) => [...prev, result.data.id]);
-    }
-  }, [terminals.length]);
-
   const removeTerminal = useCallback(async (id: string) => {
     // Check if there's a foreground process running
     const fgResult = await window.api.terminal.getForegroundProcess(id);
@@ -234,7 +224,6 @@ export function App(): JSX.Element {
           onCloseConfirm={handleCloseConfirm}
           onCloseCancel={handleCloseCancel}
           onReorder={handleReorder}
-          onCreateTerminalFromOnboarding={handleCreateTerminalFromOnboarding}
         />
       </PanelProvider>
     </I18nProvider>
@@ -258,7 +247,6 @@ function AppContent({
   onCloseConfirm,
   onCloseCancel,
   onReorder,
-  onCreateTerminalFromOnboarding,
 }: {
   terminals: TerminalEntry[];
   viewMode: 'Tiling' | 'Focused';
@@ -275,7 +263,6 @@ function AppContent({
   onCloseConfirm: () => void;
   onCloseCancel: () => void;
   onReorder: (newOrder: string[]) => void;
-  onCreateTerminalFromOnboarding: (cwd: string) => void;
 }): JSX.Element {
   const { state, dispatch } = usePanelContext();
   const { t } = useI18n();
@@ -409,8 +396,6 @@ function AppContent({
         onConfirm={onCloseConfirm}
         onCancel={onCloseCancel}
       />
-
-      <OnboardingModal onCreateTerminal={onCreateTerminalFromOnboarding} />
     </div>
   );
 }
