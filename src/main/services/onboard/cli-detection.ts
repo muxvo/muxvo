@@ -1,20 +1,18 @@
+import { execSync } from 'child_process';
+
 const SCANNED_TOOLS = ['claude', 'codex', 'gemini'];
 
 export async function detectCliTools() {
-  const detectedTools: Array<{ name: string; path: string; version?: string }> = [];
+  const tools: Array<{ name: string; installed: boolean; path?: string }> = [];
 
   for (const tool of SCANNED_TOOLS) {
-    // In a real implementation, this would scan PATH
-    // For now, return empty detections (tools not found is valid)
     try {
-      // Placeholder: actual detection would use child_process.execSync(`which ${tool}`)
+      const toolPath = execSync(`which ${tool}`, { encoding: 'utf-8' }).trim();
+      tools.push({ name: tool, path: toolPath, installed: true });
     } catch {
-      // Tool not found, skip
+      tools.push({ name: tool, installed: false });
     }
   }
 
-  return {
-    detectedTools,
-    scannedTools: SCANNED_TOOLS,
-  };
+  return { tools };
 }
