@@ -165,6 +165,23 @@
   word-wrap: break-word;
 }
 
+/* Image block */
+.image-block {
+  margin: 8px 0;
+}
+
+.image-block__img {
+  max-width: 100%;
+  max-height: 400px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.image-block__img:hover {
+  opacity: 0.85;
+}
+
 .session-detail__loading-older {
   display: flex;
   justify-content: center;

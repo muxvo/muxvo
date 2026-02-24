@@ -44,9 +44,9 @@ export interface SessionSummary {
   source?: ChatSource;
 }
 
-/** Assistant 消息中的内容块 */
+/** 消息中的内容块（user 和 assistant 共用） */
 export interface AssistantContentBlock {
-  type: 'text' | 'tool_use' | 'tool_result';
+  type: 'text' | 'tool_use' | 'tool_result' | 'image';
   /** type='text' 时的文本内容 */
   text?: string;
   /** type='tool_use' 时的工具名称 */
@@ -57,6 +57,8 @@ export interface AssistantContentBlock {
   content?: unknown;
   /** type='tool_result' 时关联的 tool_use_id */
   tool_use_id?: string;
+  /** type='image' 时的图片源 */
+  source?: { type: string; media_type: string; data: string };
 }
 
 /** 规范化后的 session 消息，用于 UI 渲染 */

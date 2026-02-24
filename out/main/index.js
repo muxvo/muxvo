@@ -597,8 +597,18 @@ function createChatProjectReader(opts) {
           const blocks = msgContent;
           const hasOnlyToolResults = blocks.length > 0 && blocks.every((b) => b.type === "tool_result");
           if (hasOnlyToolResults) return null;
-          const textParts = blocks.filter((b) => b.type === "text" && typeof b.text === "string").map((b) => b.text);
-          normalizedContent = textParts.join("\n") || "";
+          const hasImages = blocks.some((b) => b.type === "image");
+          if (hasImages) {
+            normalizedContent = blocks.filter((b) => b.type === "text" || b.type === "image").map((b) => {
+              if (b.type === "image") {
+                return { type: "image", source: b.source };
+              }
+              return { type: "text", text: b.text };
+            });
+          } else {
+            const textParts = blocks.filter((b) => b.type === "text" && typeof b.text === "string").map((b) => b.text);
+            normalizedContent = textParts.join("\n") || "";
+          }
         } else if (typeof entry.content === "string") {
           normalizedContent = entry.content;
         } else {

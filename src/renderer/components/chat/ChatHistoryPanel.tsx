@@ -16,7 +16,6 @@ import { useI18n } from '@/renderer/i18n';
 import type { ProjectInfo, SessionSummary, SessionMessage } from '@/shared/types/chat.types';
 import './ChatHistoryPanel.css';
 
-export type SortMode = 'time' | 'project';
 
 /** Isolated banner component — progress updates only re-render this subtree */
 function ArchiveBanner({ onDismiss }: { onDismiss: () => void }) {
@@ -84,7 +83,6 @@ export function ChatHistoryPanel() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<SessionMessage[]>([]);
   const [loading, setLoading] = useState(false);
-  const [sortMode, setSortMode] = useState<SortMode>('time');
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [sessionsLoading, setSessionsLoading] = useState(true);
   const [bannerDismissed, setBannerDismissed] = useState(
@@ -231,8 +229,6 @@ export function ChatHistoryPanel() {
             sessions={sessions}
             selectedId={selectedSessionId}
             onSelect={setSelectedSessionId}
-            sortMode={sortMode}
-            onSortChange={setSortMode}
             onSessionContextMenu={handleSessionContextMenu}
             projects={projects}
             showProjectName={selectedProjectHash === null}
