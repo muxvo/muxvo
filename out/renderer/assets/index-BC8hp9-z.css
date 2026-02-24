@@ -14,6 +14,10 @@
   flex-shrink: 0;
 }
 
+[data-theme="light"] .menu-bar {
+  background: rgba(240, 240, 243, 0.7);
+}
+
 .menu-bar__drag-region {
   position: absolute;
   inset: 0;
@@ -121,6 +125,37 @@
   cursor: not-allowed;
 }
 
+.menu-bar__theme-btn {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  margin-left: auto;
+  margin-right: 4px;
+  z-index: 2;
+  -webkit-app-region: no-drag;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.menu-bar__theme-btn:hover {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border-color: rgba(232, 167, 72, 0.3);
+}
+
+.menu-bar__theme-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
 .menu-bar__help-btn {
   padding: 2px 8px;
   border-radius: 4px;
@@ -130,7 +165,6 @@
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-secondary);
-  margin-left: auto;
   margin-right: 4px;
   z-index: 2;
   -webkit-app-region: no-drag;
@@ -2822,6 +2856,16 @@ pre.mcp-panel__detail-value { background: var(--bg-deep); padding: 8px 12px; bor
   border-right-color: var(--bg-elevated);
 }
 
+/* Drag steps: override driver.js global pointer-events: none */
+body.tour-drag-active .app-content,
+body.tour-drag-active .app-content * {
+  pointer-events: auto !important;
+}
+body.tour-drag-active .driver-overlay {
+  visibility: hidden;
+  pointer-events: none !important;
+}
+
 /* 交互步骤的高亮元素脉冲动画 */
 .driver-active .driver-active-element {
   animation: tour-pulse 2s ease-in-out infinite;
@@ -2919,6 +2963,40 @@ body,
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
+}
+
+/* === Light Theme === */
+
+[data-theme="light"] {
+  --bg-deep: #e8e8ec;
+  --bg-primary: #f0f0f3;
+  --bg-card: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-hover: #e5e5ea;
+  --bg-input: #ffffff;
+  --bg-grid-gap: #d1d1d6;
+
+  --text-primary: #1c1c1e;
+  --text-secondary: #636366;
+  --text-muted: #aeaeb2;
+
+  --accent: #c87d1a;
+  --accent-hover: #a56610;
+  --accent-muted: #c87d1a30;
+  --accent-glow: #c87d1a20;
+
+  --border: #d1d1d6;
+  --border-focus: #c87d1a55;
+  --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-dialog: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #c7c7cc;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: #aeaeb2;
 }
 
 /* Muxvo Shared Animations */

@@ -2295,10 +2295,10 @@ const DEFAULT_CONFIG = {
   window: { width: 1400, height: 900, x: 100, y: 100 },
   openTerminals: [],
   gridLayout: { columnRatios: [1, 1], rowRatios: [1, 1] },
-  theme: "dark",
+  theme: "light",
   fontSize: 14,
   terminal: {
-    themeName: "dark",
+    themeName: "light",
     fontFamily: "'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace",
     fontSize: 13,
     cursorStyle: "block",

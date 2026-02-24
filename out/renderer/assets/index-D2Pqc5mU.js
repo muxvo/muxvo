@@ -12581,7 +12581,7 @@ const zh = {
   "chat.system": "SYSTEM",
   "chat.copyToClipboard": "📋 复制会话为 Markdown",
   "chat.copied": "✅ 已复制！",
-  "chat.archiveNotice": "Claude Code 本地聊天记录在未参与模型训练时仅保留约 30 天（参与训练时为 5 年），Muxvo 已自动归档到 ~/.muxvo/chat-archive/ 永久保留。",
+  "chat.archiveNotice": "Claude Code 本地聊天记录在未参与模型训练时仅保留约 30 天（参与训练时为 5 年），Muxvo 已自动归档到 ~/.muxvo/chat-archive/ 永久保留。所有数据仅保存在你的本地电脑，不会上传到任何服务器。",
   "chat.archiving": "正在归档 {synced}/{total}...",
   "chat.archiveOn": "自动归档：开启",
   "chat.archiveOff": "自动归档：关闭",
@@ -12648,14 +12648,17 @@ const zh = {
   "hooks.configPath": "配置路径",
   "hooks.readOnlyHint": "此 Hook 来自项目配置，仅可在对应配置文件中修改。",
   // Tour
+  "theme.toggle": "切换主题",
   "tour.startTour": "功能导览",
   "tour.next": "下一步",
   "tour.prev": "上一步",
   "tour.done": "完成",
   "tour.step1.title": "新建终端",
   "tour.step1.desc": "点击右上角的 + 按钮，创建你的第一个终端吧！",
-  "tour.step2.title": "平铺视图",
-  "tour.step2.desc": "这里是终端平铺视图，多个终端会以网格排列。你可以拖拽标题栏重排顺序。",
+  "tour.step2a.title": "移动终端",
+  "tour.step2a.desc": "拖拽终端的标题栏，可以调整终端的排列顺序。试试拖一下！",
+  "tour.step2b.title": "调整大小",
+  "tour.step2b.desc": "拖拽终端之间的分隔线，可以调整每个终端的大小。",
   "tour.step3.title": "聚焦终端",
   "tour.step3.desc": "试试点击这个蓝色按钮，把终端最大化为聚焦模式！",
   "tour.step4.title": "重命名终端",
@@ -12704,7 +12707,7 @@ const en$2 = {
   "chat.system": "SYSTEM",
   "chat.copyToClipboard": "📋 Copy Session as Markdown",
   "chat.copied": "✅ Copied!",
-  "chat.archiveNotice": "Claude Code retains local chat history for ~30 days when not used for training (5 years if opted in). Muxvo auto-archives to ~/.muxvo/chat-archive/ for permanent retention.",
+  "chat.archiveNotice": "Claude Code retains local chat history for ~30 days when not used for training (5 years if opted in). Muxvo auto-archives to ~/.muxvo/chat-archive/ for permanent retention. All data is stored locally on your computer and never uploaded to any server.",
   "chat.archiving": "Archiving {synced}/{total}...",
   "chat.archiveOn": "Auto-archive: On",
   "chat.archiveOff": "Auto-archive: Off",
@@ -12771,14 +12774,17 @@ const en$2 = {
   "hooks.configPath": "Config Path",
   "hooks.readOnlyHint": "This hook is from project config and can only be modified in the corresponding config file.",
   // Tour
+  "theme.toggle": "Toggle Theme",
   "tour.startTour": "Feature Tour",
   "tour.next": "Next",
   "tour.prev": "Previous",
   "tour.done": "Done",
   "tour.step1.title": "Create Terminal",
   "tour.step1.desc": "Click the + button in the top right to create your first terminal!",
-  "tour.step2.title": "Tile View",
-  "tour.step2.desc": "This is the tile view. Multiple terminals are arranged in a grid. Drag title bars to reorder.",
+  "tour.step2a.title": "Move Terminals",
+  "tour.step2a.desc": "Drag a terminal title bar to rearrange the order. Give it a try!",
+  "tour.step2b.title": "Resize Terminals",
+  "tour.step2b.desc": "Drag the divider between terminals to resize them.",
   "tour.step3.title": "Focus Terminal",
   "tour.step3.desc": "Try clicking this blue button to maximize the terminal into focus mode!",
   "tour.step4.title": "Rename Terminal",
@@ -12812,7 +12818,7 @@ function useI18n() {
   if (!ctx) throw new Error("useI18n must be used within I18nProvider");
   return ctx;
 }
-function MenuBar({ viewMode = "Tiling", onBackToTiling, terminalCount = 0, onAddTerminal, maxReached }) {
+function MenuBar({ viewMode = "Tiling", onBackToTiling, terminalCount = 0, onAddTerminal, maxReached, uiTheme = "dark", onToggleTheme }) {
   const { state, dispatch } = usePanelContext();
   const { t, locale, setLocale } = useI18n();
   const chatOpen = state.chatHistory.open;
@@ -12906,7 +12912,25 @@ function MenuBar({ viewMode = "Tiling", onBackToTiling, terminalCount = 0, onAdd
         }
       )
     ] }),
-    viewMode === "Focused" && onBackToTiling && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "menu-bar__back-btn", onClick: onBackToTiling, children: t("menu.backToTiling") }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      "button",
+      {
+        className: "menu-bar__theme-btn",
+        onClick: onToggleTheme,
+        title: t("theme.toggle"),
+        children: uiTheme === "dark" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("circle", { cx: "12", cy: "12", r: "5" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("line", { x1: "12", y1: "1", x2: "12", y2: "3" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("line", { x1: "12", y1: "21", x2: "12", y2: "23" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("line", { x1: "4.22", y1: "4.22", x2: "5.64", y2: "5.64" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("line", { x1: "18.36", y1: "18.36", x2: "19.78", y2: "19.78" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("line", { x1: "1", y1: "12", x2: "3", y2: "12" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("line", { x1: "21", y1: "12", x2: "23", y2: "12" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("line", { x1: "4.22", y1: "19.78", x2: "5.64", y2: "18.36" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("line", { x1: "18.36", y1: "5.64", x2: "19.78", y2: "4.22" })
+        ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", children: /* @__PURE__ */ jsxRuntimeExports.jsx("path", { d: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" }) })
+      }
+    ),
     /* @__PURE__ */ jsxRuntimeExports.jsx(
       "button",
       {
@@ -28224,9 +28248,16 @@ function XTermRenderer({ terminalId }) {
     term.onResize(({ cols, rows }) => {
       window.api.terminal.resize(terminalId, cols, rows);
     });
+    const onThemeChange = (e) => {
+      const theme = e.detail?.theme;
+      const terminalThemeName = theme === "light" ? "light" : "dark";
+      term.options.theme = resolveTerminalTheme(terminalThemeName);
+    };
+    window.addEventListener("muxvo:theme-change", onThemeChange);
     return () => {
       unsubOutput();
       observer.disconnect();
+      window.removeEventListener("muxvo:theme-change", onThemeChange);
       addonManager.disposeAll();
       term.dispose();
     };
@@ -118134,15 +118165,26 @@ const TOUR_STEPS = [
     showButtons: ["close"]
   },
   {
-    id: "tile-view",
-    selector: ".app-content",
-    i18nTitleKey: "tour.step2.title",
-    i18nDescKey: "tour.step2.desc",
+    id: "drag-reorder",
+    selector: "",
+    i18nTitleKey: "tour.step2a.title",
+    i18nDescKey: "tour.step2a.desc",
     side: "top",
     needsTerminal: true,
-    interactive: false,
-    actionType: "observe",
-    showButtons: ["next", "previous", "close"]
+    interactive: true,
+    actionType: "drag-reorder",
+    showButtons: ["next", "close"]
+  },
+  {
+    id: "drag-resize",
+    selector: "",
+    i18nTitleKey: "tour.step2b.title",
+    i18nDescKey: "tour.step2b.desc",
+    side: "top",
+    needsTerminal: true,
+    interactive: true,
+    actionType: "drag-resize",
+    showButtons: ["next", "close"]
   },
   {
     id: "focus-terminal",
@@ -118178,15 +118220,92 @@ const TOUR_STEPS = [
     showButtons: ["close"]
   }
 ];
-function TourOverlay({ terminalCount }) {
+function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNames }) {
   const { state, dispatch } = usePanelContext();
   const { t } = useI18n();
   const driverRef = reactExports.useRef(null);
+  const currentStepRef = reactExports.useRef(0);
+  const prevTerminalCountRef = reactExports.useRef(terminalCount);
+  const prevViewModeRef = reactExports.useRef(viewMode);
+  const prevHasNameRef = reactExports.useRef(Object.values(terminalNames).some((n) => n && n.length > 0));
+  const prevTerminalOrderRef = reactExports.useRef(terminalOrder);
   const completeTour = reactExports.useCallback(() => {
+    document.body.classList.remove("tour-drag-active");
+    if (driverRef.current) {
+      driverRef.current.destroy();
+      driverRef.current = null;
+    }
     dispatch({ type: "COMPLETE_TOUR" });
     window.api.app.savePreferences({ tourCompleted: true }).catch(() => {
     });
   }, [dispatch]);
+  const moveNext = reactExports.useCallback(() => {
+    setTimeout(() => {
+      if (driverRef.current) {
+        if (!driverRef.current.hasNextStep()) {
+          completeTour();
+        } else {
+          driverRef.current.moveNext();
+        }
+      }
+    }, 300);
+  }, [completeTour]);
+  const getActiveSteps = reactExports.useCallback((hasTerminal) => {
+    return TOUR_STEPS.filter((step) => {
+      if (step.needsTerminal && !hasTerminal) return false;
+      return true;
+    });
+  }, []);
+  const getCurrentActionType = reactExports.useCallback(() => {
+    const hasTerminal = terminalCount > 0;
+    const activeSteps = getActiveSteps(hasTerminal);
+    const idx = currentStepRef.current;
+    if (idx >= 0 && idx < activeSteps.length) {
+      return activeSteps[idx].actionType;
+    }
+    return null;
+  }, [terminalCount, getActiveSteps]);
+  reactExports.useEffect(() => {
+    if (!state.tour.active || !driverRef.current) return;
+    if (getCurrentActionType() !== "create-terminal") return;
+    if (terminalCount > prevTerminalCountRef.current) {
+      moveNext();
+    }
+    prevTerminalCountRef.current = terminalCount;
+  }, [state.tour.active, terminalCount, getCurrentActionType, moveNext]);
+  reactExports.useEffect(() => {
+    if (!state.tour.active || !driverRef.current) return;
+    if (getCurrentActionType() !== "drag-reorder") return;
+    const prev = prevTerminalOrderRef.current;
+    if (prev.length > 0 && terminalOrder.length === prev.length && terminalOrder.some((id, i8) => id !== prev[i8])) {
+      moveNext();
+    }
+    prevTerminalOrderRef.current = terminalOrder;
+  }, [state.tour.active, terminalOrder, getCurrentActionType, moveNext]);
+  reactExports.useEffect(() => {
+    if (!state.tour.active || !driverRef.current) return;
+    if (getCurrentActionType() !== "focus") return;
+    if (viewMode === "Focused" && prevViewModeRef.current === "Tiling") {
+      setTimeout(() => moveNext(), 2e3);
+    }
+    prevViewModeRef.current = viewMode;
+  }, [state.tour.active, viewMode, getCurrentActionType, moveNext]);
+  reactExports.useEffect(() => {
+    if (!state.tour.active || !driverRef.current) return;
+    if (getCurrentActionType() !== "rename") return;
+    const hasName = Object.values(terminalNames).some((n) => n && n.length > 0);
+    if (hasName && !prevHasNameRef.current) {
+      moveNext();
+    }
+    prevHasNameRef.current = hasName;
+  }, [state.tour.active, terminalNames, getCurrentActionType, moveNext]);
+  reactExports.useEffect(() => {
+    if (!state.tour.active || !driverRef.current) return;
+    if (getCurrentActionType() !== "open-file") return;
+    if (state.filePanel.open) {
+      completeTour();
+    }
+  }, [state.tour.active, state.filePanel.open, getCurrentActionType, completeTour]);
   reactExports.useEffect(() => {
     if (!state.tour.active) {
       if (driverRef.current) {
@@ -118196,26 +118315,33 @@ function TourOverlay({ terminalCount }) {
       return;
     }
     const hasTerminal = terminalCount > 0;
-    const steps = TOUR_STEPS.filter((step) => {
-      if (step.needsTerminal && !hasTerminal) return false;
-      return true;
-    }).map((step) => ({
-      element: step.selector,
+    const activeSteps = getActiveSteps(hasTerminal);
+    prevTerminalCountRef.current = terminalCount;
+    prevTerminalOrderRef.current = terminalOrder;
+    prevViewModeRef.current = viewMode;
+    prevHasNameRef.current = Object.values(terminalNames).some((n) => n && n.length > 0);
+    currentStepRef.current = 0;
+    const steps = activeSteps.map((step) => ({
+      ...step.selector ? { element: step.selector } : {},
+      disableActiveInteraction: !step.interactive,
       popover: {
         title: t(step.i18nTitleKey),
         description: t(step.i18nDescKey),
         side: step.side,
-        popoverClass: "tour-popover"
+        popoverClass: "tour-popover",
+        showButtons: step.showButtons
       }
     }));
     if (!hasTerminal) {
       steps.push({
         element: ".menu-bar__add-btn",
+        disableActiveInteraction: false,
         popover: {
           title: t("tour.noTerminal.title"),
           description: t("tour.noTerminal.desc"),
           side: "bottom",
-          popoverClass: "tour-popover"
+          popoverClass: "tour-popover",
+          showButtons: ["close"]
         }
       });
     }
@@ -118230,24 +118356,36 @@ function TourOverlay({ terminalCount }) {
       prevBtnText: t("tour.prev"),
       doneBtnText: t("tour.done"),
       progressText: "{{current}} / {{total}}",
+      allowClose: true,
+      overlayClickBehavior: () => {
+      },
+      onHighlighted: (_el, _step, { driver: d }) => {
+        const idx = d.getActiveIndex();
+        if (idx !== void 0) {
+          currentStepRef.current = idx;
+        }
+        const step = activeSteps[idx ?? 0];
+        const needsPassThrough = step?.actionType === "drag-reorder" || step?.actionType === "drag-resize";
+        document.body.classList.toggle("tour-drag-active", needsPassThrough);
+      },
       onCloseClick: () => {
-        driverInstance.destroy();
         completeTour();
       },
       onDestroyed: () => {
-        completeTour();
+        dispatch({ type: "COMPLETE_TOUR" });
       }
     });
     driverInstance.setSteps(steps);
     driverInstance.drive();
     driverRef.current = driverInstance;
     return () => {
+      document.body.classList.remove("tour-drag-active");
       if (driverRef.current) {
         driverRef.current.destroy();
         driverRef.current = null;
       }
     };
-  }, [state.tour.active, terminalCount, t, completeTour]);
+  }, [state.tour.active]);
   return null;
 }
 const MAX_TERMINALS = 20;
@@ -118264,10 +118402,18 @@ function App() {
     processName: ""
   });
   const [initialLocale, setInitialLocale] = reactExports.useState("zh");
+  const [uiTheme, setUiTheme] = reactExports.useState("dark");
   reactExports.useEffect(() => {
     window.api.app.getPreferences().then((result) => {
       if (result?.success && result.data?.language) {
         setInitialLocale(result.data.language);
+      }
+    }).catch(() => {
+    });
+    window.api.app.getConfig().then((result) => {
+      if (result?.data?.theme === "light") {
+        setUiTheme("light");
+        document.documentElement.setAttribute("data-theme", "light");
       }
     }).catch(() => {
     });
@@ -118384,6 +118530,20 @@ function App() {
       return { ...prev, [id]: name };
     });
   }, []);
+  const handleToggleTheme = reactExports.useCallback(() => {
+    setUiTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      window.api.app.getConfig().then((result) => {
+        const terminalThemeName = next === "light" ? "light" : "dark";
+        const terminal = { ...result?.data?.terminal, themeName: terminalThemeName };
+        window.api.app.saveConfig({ ...result?.data, theme: next, terminal });
+      }).catch(() => {
+      });
+      window.dispatchEvent(new CustomEvent("muxvo:theme-change", { detail: { theme: next } }));
+      return next;
+    });
+  }, []);
   reactExports.useEffect(() => {
     function handleKeyDown2(e) {
       if (e.key === "Escape" && viewMode === "Focused") {
@@ -118417,6 +118577,7 @@ function App() {
       selectedId,
       maxReached,
       closeConfirm,
+      uiTheme,
       onDoubleClick: handleDoubleClick2,
       onSidebarClick: handleSidebarClick,
       onClick: handleTileClick,
@@ -118427,6 +118588,7 @@ function App() {
       onCloseCancel: handleCloseCancel,
       onReorder: handleReorder,
       onRename: handleRename,
+      onToggleTheme: handleToggleTheme,
       terminalNames
     }
   ) }) });
@@ -118438,6 +118600,7 @@ function AppContent({
   selectedId,
   maxReached,
   closeConfirm,
+  uiTheme,
   onDoubleClick,
   onSidebarClick,
   onClick,
@@ -118448,6 +118611,7 @@ function AppContent({
   onCloseCancel,
   onReorder,
   onRename,
+  onToggleTheme,
   terminalNames
 }) {
   const { state, dispatch } = usePanelContext();
@@ -118474,7 +118638,7 @@ function AppContent({
   }, [state.tempView.active, state.tempView.contentKey]);
   const filePanelCwd = state.filePanel.terminalId !== null ? terminals.find((t2) => t2.id === state.filePanel.terminalId)?.cwd || "/" : "/";
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "app", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(MenuBar, { viewMode, onBackToTiling, terminalCount: terminals.length, onAddTerminal, maxReached }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(MenuBar, { viewMode, onBackToTiling, terminalCount: terminals.length, onAddTerminal, maxReached, uiTheme, onToggleTheme }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("main", { className: "app-content", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
       TerminalGrid,
       {
@@ -118548,6 +118712,7 @@ function AppContent({
       TourOverlay,
       {
         terminalCount: terminals.length,
+        terminalOrder: terminals.map((t2) => t2.id),
         viewMode,
         terminalNames
       }

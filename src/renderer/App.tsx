@@ -50,19 +50,22 @@ export function App(): JSX.Element {
     processName: '',
   });
   const [initialLocale, setInitialLocale] = useState<Locale>('zh');
-  const [uiTheme, setUiTheme] = useState<'dark' | 'light'>('dark');
+  const [uiTheme, setUiTheme] = useState<'dark' | 'light'>('light');
 
   useEffect(() => {
+    // Apply default light theme immediately
+    document.documentElement.setAttribute('data-theme', 'light');
+
     window.api.app.getPreferences().then((result: any) => {
       if (result?.success && result.data?.language) {
         setInitialLocale(result.data.language as Locale);
       }
     }).catch(() => {});
-    // Load theme from config
+    // Load theme from config (override default if user previously chose dark)
     window.api.app.getConfig().then((result: any) => {
-      if (result?.data?.theme === 'light') {
-        setUiTheme('light');
-        document.documentElement.setAttribute('data-theme', 'light');
+      if (result?.data?.theme === 'dark') {
+        setUiTheme('dark');
+        document.documentElement.setAttribute('data-theme', 'dark');
       }
     }).catch(() => {});
   }, []);
@@ -197,10 +200,14 @@ export function App(): JSX.Element {
     setUiTheme((prev) => {
       const next = prev === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
-      // Persist to config
+      // Persist to config and update terminal theme
       window.api.app.getConfig().then((result: any) => {
-        window.api.app.saveConfig({ ...result?.data, theme: next });
+        const terminalThemeName = next === 'light' ? 'light' : 'dark';
+        const terminal = { ...result?.data?.terminal, themeName: terminalThemeName };
+        window.api.app.saveConfig({ ...result?.data, theme: next, terminal });
       }).catch(() => {});
+      // Notify all XTermRenderer instances to update theme
+      window.dispatchEvent(new CustomEvent('muxvo:theme-change', { detail: { theme: next } }));
       return next;
     });
   }, []);

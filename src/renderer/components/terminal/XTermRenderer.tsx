@@ -126,9 +126,18 @@ export function XTermRenderer({ terminalId }: Props): JSX.Element {
       window.api.terminal.resize(terminalId, cols, rows);
     });
 
+    // Listen for UI theme changes to update xterm theme live
+    const onThemeChange = (e: Event) => {
+      const theme = (e as CustomEvent).detail?.theme;
+      const terminalThemeName = theme === 'light' ? 'light' : 'dark';
+      term.options.theme = resolveTerminalTheme(terminalThemeName);
+    };
+    window.addEventListener('muxvo:theme-change', onThemeChange);
+
     return () => {
       unsubOutput();
       observer.disconnect();
+      window.removeEventListener('muxvo:theme-change', onThemeChange);
       addonManager.disposeAll();
       term.dispose();
     };
