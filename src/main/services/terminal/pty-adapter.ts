@@ -33,7 +33,16 @@ export function createRealPtyAdapter(): PtyAdapter {
         env.TERM_PROGRAM = 'Apple_Terminal';
       }
 
-      const proc = pty.spawn(shell, [], {
+      // macOS: ensure LANG is UTF-8 for proper CJK character display in terminal.
+      // Packaged apps launched from Finder/Dock may have LANG unset or 'C',
+      // causing Chinese/Japanese/Korean characters in paths to display as \M-^Q0 etc.
+      if (process.platform === 'darwin' && (!env.LANG || env.LANG === 'C' || env.LANG === 'POSIX')) {
+        env.LANG = 'en_US.UTF-8';
+      }
+
+      // Use --login so shell loads /etc/zprofile (path_helper) and ~/.zprofile (nvm/fnm/volta/homebrew).
+      // Without this, packaged apps launched from Finder have minimal PATH and can't find node.
+      const proc = pty.spawn(shell, ['--login'], {
         cwd,
         cols,
         rows,

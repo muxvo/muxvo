@@ -42,6 +42,7 @@ export function App(): JSX.Element {
   const [viewMode, setViewMode] = useState<'Tiling' | 'Focused'>('Tiling');
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [terminalNames, setTerminalNames] = useState<Record<string, string>>({});
   const [closeConfirm, setCloseConfirm] = useState<CloseConfirmState>({
     open: false,
     terminalId: '',
@@ -76,6 +77,7 @@ export function App(): JSX.Element {
     const unsubExit = window.api.terminal.onExit((event) => {
       setTerminals((prev) => prev.filter((t) => t.id !== event.id));
       setTerminalOrder((prev) => prev.filter((id) => id !== event.id));
+      setTerminalNames((prev) => { const next = { ...prev }; delete next[event.id]; return next; });
     });
 
     // Listen for state changes to update terminal state
@@ -133,6 +135,7 @@ export function App(): JSX.Element {
     await window.api.terminal.close(id);
     setTerminals((prev) => prev.filter((t) => t.id !== id));
     setTerminalOrder((prev) => prev.filter((tid) => tid !== id));
+    setTerminalNames((prev) => { const next = { ...prev }; delete next[id]; return next; });
   }, []);
 
   const handleCloseConfirm = useCallback(async () => {
@@ -141,6 +144,7 @@ export function App(): JSX.Element {
     await window.api.terminal.close(terminalId, true);
     setTerminals((prev) => prev.filter((t) => t.id !== terminalId));
     setTerminalOrder((prev) => prev.filter((tid) => tid !== terminalId));
+    setTerminalNames((prev) => { const next = { ...prev }; delete next[terminalId]; return next; });
   }, [closeConfirm]);
 
   const handleCloseCancel = useCallback(() => {
@@ -167,6 +171,17 @@ export function App(): JSX.Element {
 
   const handleReorder = useCallback((newOrder: string[]) => {
     setTerminalOrder(newOrder);
+  }, []);
+
+  const handleRename = useCallback((id: string, name: string) => {
+    setTerminalNames((prev) => {
+      if (!name) {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      }
+      return { ...prev, [id]: name };
+    });
   }, []);
 
   // Esc key exits focused mode (only when focus is on UI, not inside terminal)
@@ -199,11 +214,12 @@ export function App(): JSX.Element {
   const maxReached = terminals.length >= MAX_TERMINALS;
 
   // Sort terminals by terminalOrder
-  const orderedTerminals = terminalOrder.length > 0
+  const orderedTerminals = (terminalOrder.length > 0
     ? terminalOrder
         .map((id) => terminals.find((t) => t.id === id))
         .filter((t): t is TerminalEntry => t !== undefined)
-    : terminals;
+    : terminals
+  ).map((t) => ({ ...t, customName: terminalNames[t.id] }));
 
   return (
     <I18nProvider initialLocale={initialLocale}>
@@ -224,6 +240,7 @@ export function App(): JSX.Element {
           onCloseConfirm={handleCloseConfirm}
           onCloseCancel={handleCloseCancel}
           onReorder={handleReorder}
+          onRename={handleRename}
         />
       </PanelProvider>
     </I18nProvider>
@@ -247,8 +264,9 @@ function AppContent({
   onCloseConfirm,
   onCloseCancel,
   onReorder,
+  onRename,
 }: {
-  terminals: TerminalEntry[];
+  terminals: (TerminalEntry & { customName?: string })[];
   viewMode: 'Tiling' | 'Focused';
   focusedId: string | null;
   selectedId: string | null;
@@ -263,6 +281,7 @@ function AppContent({
   onCloseConfirm: () => void;
   onCloseCancel: () => void;
   onReorder: (newOrder: string[]) => void;
+  onRename: (id: string, name: string) => void;
 }): JSX.Element {
   const { state, dispatch } = usePanelContext();
   const { t } = useI18n();
@@ -310,6 +329,7 @@ function AppContent({
           onClick={onClick}
           onClose={onClose}
           onReorder={onReorder}
+          onRename={onRename}
         />
       </main>
 

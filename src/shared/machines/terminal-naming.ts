@@ -7,12 +7,12 @@ interface NamingContext {
   editValue: string;
 }
 
-export function createNamingMachine() {
-  let state: NamingState = 'DisplayEmpty';
+export function createNamingMachine(initialName?: string) {
+  let state: NamingState = initialName ? 'DisplayNamed' : 'DisplayEmpty';
   let context: NamingContext = {
-    displayText: '',
+    displayText: initialName || '',
     placeholder: '命名...',
-    originalValue: '',
+    originalValue: initialName || '',
     editValue: '',
   };
 
