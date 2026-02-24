@@ -54,12 +54,6 @@ export function ProjectList({ projects, selectedProjectHash, onSelectProject, to
           <span className="project-list__name" title={project.displayPath}>
             {project.displayName}
           </span>
-          {project.source === 'codex' && (
-            <span className="project-list__source-badge project-list__source-badge--cx">CX</span>
-          )}
-          {project.source === 'claude-code' && (
-            <span className="project-list__source-badge project-list__source-badge--cc">CC</span>
-          )}
           <span className="project-list__count">{project.sessionCount}</span>
         </div>
       ))}

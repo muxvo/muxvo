@@ -170,6 +170,12 @@ export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time',
 
             <div className="session-card__footer">
               <div className="session-card__tags">
+                {session.source === 'codex' && (
+                  <span className="session-card__source-badge session-card__source-badge--cx">CX</span>
+                )}
+                {session.source === 'claude-code' && (
+                  <span className="session-card__source-badge session-card__source-badge--cc">CC</span>
+                )}
                 {tags.map((tag) => (
                   <span
                     key={tag.label}
