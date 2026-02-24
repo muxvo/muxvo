@@ -23,6 +23,7 @@ const DEFAULT_CONFIG: MuxvoConfig = {
     cursorStyle: 'block',
     cursorBlink: true,
   },
+  onboardingCompleted: false,
   ftvLeftWidth: 250,
   ftvRightWidth: 300,
 };
