@@ -285,23 +285,22 @@ export function TerminalTile({
                     autoFocus
                   />
                 </>
-              ) : namingState === 'DisplayNamed' ? (
-                <>
-                  <span className="tile-separator">·</span>
-                  <span className="tile-custom-name" onClick={handleNameClick}>
-                    {namingContext.displayText}
-                  </span>
-                </>
               ) : (
-                <>
+                <span
+                  className="tile-name-clickable"
+                  onClick={namingState === 'DisplayNamed' ? handleNameClick : handlePlaceholderClick}
+                >
                   <span className="tile-separator">·</span>
-                  <span
-                    className="tile-custom-name tile-custom-name--placeholder"
-                    onClick={handlePlaceholderClick}
-                  >
-                    {t('terminal.namePlaceholder')}
-                  </span>
-                </>
+                  {namingState === 'DisplayNamed' ? (
+                    <span className="tile-custom-name">
+                      {namingContext.displayText}
+                    </span>
+                  ) : (
+                    <span className="tile-custom-name tile-custom-name--placeholder">
+                      {t('terminal.namePlaceholder')}
+                    </span>
+                  )}
+                </span>
               )}
             </>
           )}
