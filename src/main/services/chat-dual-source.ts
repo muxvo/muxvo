@@ -105,7 +105,8 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
             }
             if (!startedAt) startedAt = obj.timestamp || '';
             const trimmedContent = rawContent.trim();
-            if (trimmedContent) {
+            // Skip internal command messages (e.g. /commit skill)
+            if (trimmedContent && !trimmedContent.startsWith('<command-message>') && !trimmedContent.startsWith('<local-command-caveat>')) {
               title = trimmedContent.slice(0, 100);
               break;
             }

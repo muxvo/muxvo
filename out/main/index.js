@@ -559,7 +559,7 @@ function createChatProjectReader(opts) {
             }
             if (!startedAt) startedAt = obj.timestamp || "";
             const trimmedContent = rawContent.trim();
-            if (trimmedContent) {
+            if (trimmedContent && !trimmedContent.startsWith("<command-message>") && !trimmedContent.startsWith("<local-command-caveat>")) {
               title = trimmedContent.slice(0, 100);
               break;
             }
