@@ -22,6 +22,7 @@ interface TerminalInfo {
   id: string;
   state: string;
   cwd: string;
+  customName?: string;
 }
 
 interface Props {
@@ -34,9 +35,10 @@ interface Props {
   onClick?: (id: string) => void;
   onClose?: (id: string) => void;
   onReorder?: (newOrder: string[]) => void;
+  onRename?: (id: string, name: string) => void;
 }
 
-export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, selectedId, onDoubleClick, onSidebarClick, onClick, onClose, onReorder }: Props): JSX.Element {
+export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, selectedId, onDoubleClick, onSidebarClick, onClick, onClose, onReorder, onRename }: Props): JSX.Element {
   const { t } = useI18n();
   if (terminals.length === 0) {
     return (
@@ -69,6 +71,7 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
           onClick={onClick}
           onClose={onClose}
           onReorder={onReorder}
+          onRename={onRename}
         />
       );
     }
@@ -77,7 +80,7 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
       <div style={{ display: 'flex', width: '100%', height: '100%' }}>
         {/* Left: focused terminal 75% */}
         <div style={{ width: '75%', height: '100%' }}>
-          <TerminalTile key={focusedId} id={focusedId} state={focusedTerminal.state} cwd={focusedTerminal.cwd} focused onClose={onClose} />
+          <TerminalTile key={focusedId} id={focusedId} state={focusedTerminal.state} cwd={focusedTerminal.cwd} customName={focusedTerminal.customName} onRename={onRename} focused onClose={onClose} />
         </div>
         {/* Right: sidebar 25% */}
         <div style={{
@@ -96,7 +99,7 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
               }}
               onClick={() => onSidebarClick?.(t.id)}
             >
-              <TerminalTile id={t.id} state={t.state} cwd={t.cwd} compact />
+              <TerminalTile id={t.id} state={t.state} cwd={t.cwd} customName={t.customName} onRename={onRename} compact />
             </div>
           ))}
         </div>
@@ -113,6 +116,7 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
       onClick={onClick}
       onClose={onClose}
       onReorder={onReorder}
+      onRename={onRename}
     />
   );
 }
@@ -189,9 +193,10 @@ interface TilingGridProps {
   onClick?: (id: string) => void;
   onClose?: (id: string) => void;
   onReorder?: (newOrder: string[]) => void;
+  onRename?: (id: string, name: string) => void;
 }
 
-function TilingGrid({ terminals, selectedId, onDoubleClick, onClick, onClose, onReorder }: TilingGridProps): JSX.Element {
+function TilingGrid({ terminals, selectedId, onDoubleClick, onClick, onClose, onReorder, onRename }: TilingGridProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const layout = calculateGridLayout(terminals.length);
   const { cols, rows } = layout;
@@ -312,6 +317,8 @@ function TilingGrid({ terminals, selectedId, onDoubleClick, onClick, onClose, on
               id={t.id}
               state={t.state}
               cwd={t.cwd}
+              customName={t.customName}
+              onRename={onRename}
               selected={t.id === selectedId}
               staggerIndex={i}
               draggable
