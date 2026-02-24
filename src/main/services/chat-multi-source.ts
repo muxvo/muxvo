@@ -1,9 +1,9 @@
 /**
  * Chat Multi-Source Aggregator
  *
- * Merges Claude Code (CC) and Codex chat readers into a single API.
- * Same project directory (same projectHash) merges sessions from both sources.
- * readSession: tries CC first, falls back to Codex.
+ * Merges Claude Code (CC), Codex, and Gemini CLI chat readers into a single API.
+ * Same project directory (same projectHash) merges sessions from all sources.
+ * readSession: tries CC first, falls back to Codex, then Gemini.
  */
 
 import type {
@@ -29,15 +29,17 @@ interface ChatReader {
 interface MultiSourceOpts {
   ccReader: ChatReader;
   codexReader: ChatReader | null; // null if ~/.codex doesn't exist
+  geminiReader: ChatReader | null; // null if ~/.gemini doesn't exist
 }
 
 export function createChatMultiSource(opts: MultiSourceOpts) {
-  const { ccReader, codexReader } = opts;
+  const { ccReader, codexReader, geminiReader } = opts;
 
   return {
     async getProjects(): Promise<ProjectInfo[]> {
       const tasks: Promise<ProjectInfo[]>[] = [ccReader.getProjects()];
       if (codexReader) tasks.push(codexReader.getProjects());
+      if (geminiReader) tasks.push(geminiReader.getProjects());
 
       const results = await Promise.all(tasks);
       const all = results.flat();
@@ -64,11 +66,12 @@ export function createChatMultiSource(opts: MultiSourceOpts) {
       projectHash: string,
       limit = 50,
     ): Promise<SessionSummary[]> {
-      // Query both readers, merge sessions
+      // Query all readers, merge sessions
       const tasks: Promise<SessionSummary[]>[] = [
         ccReader.getSessionsForProject(projectHash, limit),
       ];
       if (codexReader) tasks.push(codexReader.getSessionsForProject(projectHash, limit));
+      if (geminiReader) tasks.push(geminiReader.getSessionsForProject(projectHash, limit));
 
       const results = await Promise.all(tasks);
       const merged = results.flat();
@@ -81,6 +84,7 @@ export function createChatMultiSource(opts: MultiSourceOpts) {
         ccReader.getAllRecentSessions(limit),
       ];
       if (codexReader) tasks.push(codexReader.getAllRecentSessions(limit));
+      if (geminiReader) tasks.push(geminiReader.getAllRecentSessions(limit));
 
       const results = await Promise.all(tasks);
       const merged = results.flat();
@@ -93,11 +97,15 @@ export function createChatMultiSource(opts: MultiSourceOpts) {
       sessionId: string,
       options?: { limit?: number },
     ): Promise<SessionMessage[]> {
-      // Try CC first, fall back to Codex
+      // Try CC first, fall back to Codex, then Gemini
       const ccMessages = await ccReader.readSession(projectHash, sessionId, options);
       if (ccMessages.length > 0) return ccMessages;
       if (codexReader) {
-        return codexReader.readSession(projectHash, sessionId, options);
+        const codexMessages = await codexReader.readSession(projectHash, sessionId, options);
+        if (codexMessages.length > 0) return codexMessages;
+      }
+      if (geminiReader) {
+        return geminiReader.readSession(projectHash, sessionId, options);
       }
       return [];
     },
@@ -105,6 +113,7 @@ export function createChatMultiSource(opts: MultiSourceOpts) {
     async search(query: string): Promise<SearchResult[]> {
       const tasks: Promise<SearchResult[]>[] = [ccReader.search(query)];
       if (codexReader) tasks.push(codexReader.search(query));
+      if (geminiReader) tasks.push(geminiReader.search(query));
 
       const results = await Promise.all(tasks);
       return results.flat().slice(0, 100);

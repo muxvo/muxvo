@@ -1,10 +1,10 @@
 # API 接口契约文档
 
 > 此文档由 Claude Code Hook 自动生成（AST 解析版）
-> 生成时间: 2026-02-24T14:23:34.903Z
+> 生成时间: 2026-02-24T14:29:24.505Z
 > 项目路径: /Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo
-> 扫描文件数: 261
-> 接口总数: 14
+> 扫描文件数: 262
+> 接口总数: 15
 
 ## 基础信息
 
@@ -57,6 +57,12 @@
 
 - **位置**: `main/services/data-sync/sync-manager.ts:99`
 - **调用函数**: `lockedFiles.get()`
+- **请求参数**: 无额外参数
+
+#### `DELETE {变量:terminalId}`
+
+- **位置**: `main/services/terminal/input-detector.ts:105`
+- **调用函数**: `buffers.delete()`
 - **请求参数**: 无额外参数
 
 #### `GET {变量:id}`
@@ -120,6 +126,7 @@
 | GET | `{变量:cacheKey}` | API 服务 | main/services/chat-dual-source.ts:380 |
 | GET | `{变量:key}` | API 服务 | main/services/chat-watcher.ts:33 |
 | GET | `{变量:path}` | API 服务 | main/services/data-sync/sync-manager.ts:99 |
+| DELETE | `{变量:terminalId}` | API 服务 | main/services/terminal/input-detector.ts:105 |
 | GET | `{变量:id}` | API 服务 | main/services/terminal/manager.ts:96 |
 | DELETE | `{变量:id}` | API 服务 | main/services/terminal/manager.ts:142 |
 | GET | `{变量:event}` | modules | modules/marketplace/directory-watcher.ts:23 |

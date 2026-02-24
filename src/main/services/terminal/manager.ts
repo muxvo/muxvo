@@ -141,6 +141,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
           pushStateChange(id, machine.state);
           terminals.delete(id);
           outputBuffers.delete(id);
+          resetInputDetector(id);
         });
 
         return { success: true, state: machine.state, id, pid: proc.pid };
@@ -166,7 +167,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
     if (terminal) {
       // If waiting for user input, transition back to Running
       if (terminal.machine.state === 'WaitingInput') {
-        resetInputDetector();
+        resetInputDetector(id);
         terminal.machine.send('USER_INPUT');
         pushStateChange(id, terminal.machine.state);
       }
@@ -193,6 +194,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
       terminal.process.kill();
       terminals.delete(id);
       outputBuffers.delete(id);
+      resetInputDetector(id);
       return { success: true };
     }
 
@@ -207,6 +209,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
         terminal.process.kill();
         terminals.delete(id);
         outputBuffers.delete(id);
+        resetInputDetector(id);
         resolve({ success: true });
       }, GRACEFUL_CLOSE_TIMEOUT);
 
@@ -214,6 +217,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
         clearTimeout(timeout);
         terminals.delete(id);
         outputBuffers.delete(id);
+        resetInputDetector(id);
         resolve({ success: true });
       });
     });
@@ -246,6 +250,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
       terminal.process.kill();
       terminals.delete(id);
       outputBuffers.delete(id);
+      resetInputDetector(id);
     }
   }
 

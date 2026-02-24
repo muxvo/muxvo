@@ -41,6 +41,17 @@ export const CC_PROJECTS_DIR = join(CC_DATA_DIR, 'projects');
 /** CC Plugins 目录 */
 export const CC_PLUGINS_DIR = join(CC_DATA_DIR, 'plugins');
 
+// ---- Gemini CLI 数据目录 ----
+
+/** Gemini CLI 根数据目录 ~/.gemini/ */
+export const GEMINI_DATA_DIR = join(homedir(), '.gemini');
+
+/** Gemini CLI Skills 目录 */
+export const GEMINI_SKILLS_DIR = join(GEMINI_DATA_DIR, 'skills');
+
+/** Gemini CLI 全局指令 */
+export const GEMINI_MD_PATH = join(GEMINI_DATA_DIR, 'GEMINI.md');
+
 // ---- Muxvo 数据目录子路径（相对于 app.getPath('userData')） ----
 
 /** Muxvo 聊天历史镜像子目录 */

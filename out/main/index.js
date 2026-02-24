@@ -135,9 +135,13 @@ function getForegroundProcessName(pid) {
 }
 const ANSI_RE = /\x1b\[[0-9;]*[A-Za-z]|\x1b\][^\x07\x1b]*[\x07]|\x1b\].*?\x1b\\|\x1b[()][AB012]|\x1b\[[\?]?[0-9;]*[hlm]/g;
 function stripAnsi(str) {
-  return str.replace(ANSI_RE, "");
+  const noAnsi = str.replace(ANSI_RE, "");
+  return noAnsi.replace(/\r\n/g, "\n").replace(/[^\n]*\r/g, "");
 }
-const PROMPT_PATTERNS = [
+const ESC_CANCEL_PATTERN = /Esc\s*to\s*cancel/;
+const QUESTION_LINE_PATTERN = /\?\s*$/m;
+const NUMBERED_OPTION_PATTERN = /❯\s*\d+\./;
+const GENERIC_PATTERNS = [
   // inquirer/prompts style: "? Select an option:"
   /^\s*\?\s+.+[:：]\s*$/m,
   // yes/no confirmation: "(y/n)", "(Y/n)", "[y/N]"
@@ -145,12 +149,7 @@ const PROMPT_PATTERNS = [
   /\[[yYnN]\/[yYnN]\]/,
   // "Press any key", "Enter to continue"
   /press\s*(any\s*)?key/i,
-  /enter\s*to\s*continue/i,
-  // Claude Code / AI CLI prompts (spaces may be lost due to cursor positioning)
-  /Do\s*you\s*want\s*to\s*proceed/i,
-  /Would\s*you\s*like\s*to/i,
-  // Claude Code approval: "Esc to cancel"
-  /Esc\s*to\s*cancel/
+  /enter\s*to\s*continue/i
 ];
 const EXCLUDE_PATTERNS = [
   /^\s*\d+[%％]/,
@@ -160,40 +159,49 @@ const EXCLUDE_PATTERNS = [
   /^(INFO|WARN|ERROR|DEBUG)/i
   // Log lines
 ];
-let rollingBuffer = "";
-let rollingTerminalId = "";
+const buffers = /* @__PURE__ */ new Map();
 const ROLLING_MAX = 2e3;
 function detectWaitingInput(output, terminalId) {
-  if (terminalId && terminalId !== rollingTerminalId) {
-    rollingBuffer = "";
-    rollingTerminalId = terminalId;
+  const key = terminalId ?? "__default__";
+  const prev = buffers.get(key) ?? "";
+  let updated = prev + output;
+  if (updated.length > ROLLING_MAX) {
+    updated = updated.slice(updated.length - ROLLING_MAX);
   }
-  rollingBuffer += output;
-  if (rollingBuffer.length > ROLLING_MAX) {
-    rollingBuffer = rollingBuffer.slice(rollingBuffer.length - ROLLING_MAX);
-  }
-  const clean = stripAnsi(rollingBuffer);
-  if (rollingBuffer.length > 500) {
-    const tail = clean.slice(-300).replace(/\n/g, "\\n").replace(/\r/g, "\\r");
-    console.log(`[MUXVO:detect] cleanTail(${clean.length}): ${tail}`);
-  }
+  buffers.set(key, updated);
+  const clean = stripAnsi(updated);
   for (const exclude of EXCLUDE_PATTERNS) {
     if (exclude.test(clean)) {
-      console.log(`[MUXVO:detect] EXCLUDED by: ${exclude}`);
       return false;
     }
   }
-  for (const pattern of PROMPT_PATTERNS) {
-    if (pattern.test(clean)) {
-      console.log(`[MUXVO:detect] MATCHED pattern: ${pattern}`);
-      rollingBuffer = "";
-      return true;
+  let matched = false;
+  if (ESC_CANCEL_PATTERN.test(clean)) {
+    matched = true;
+  }
+  if (!matched && QUESTION_LINE_PATTERN.test(clean) && NUMBERED_OPTION_PATTERN.test(clean)) {
+    matched = true;
+  }
+  if (!matched) {
+    for (const pattern of GENERIC_PATTERNS) {
+      if (pattern.test(clean)) {
+        matched = true;
+        break;
+      }
     }
+  }
+  if (matched) {
+    buffers.delete(key);
+    return true;
   }
   return false;
 }
-function resetInputDetector() {
-  rollingBuffer = "";
+function resetInputDetector(terminalId) {
+  if (terminalId) {
+    buffers.delete(terminalId);
+  } else {
+    buffers.clear();
+  }
 }
 const transitions = {
   Created: { SPAWN: "Starting" },
@@ -306,6 +314,7 @@ function createTerminalManager(deps) {
           pushStateChange(id, machine.state);
           terminals.delete(id);
           outputBuffers.delete(id);
+          resetInputDetector(id);
         });
         return { success: true, state: machine.state, id, pid: proc.pid };
       } catch {
@@ -326,7 +335,7 @@ function createTerminalManager(deps) {
     const terminal = terminals.get(id);
     if (terminal) {
       if (terminal.machine.state === "WaitingInput") {
-        resetInputDetector();
+        resetInputDetector(id);
         terminal.machine.send("USER_INPUT");
         pushStateChange(id, terminal.machine.state);
       }
@@ -350,6 +359,7 @@ function createTerminalManager(deps) {
       terminal.process.kill();
       terminals.delete(id);
       outputBuffers.delete(id);
+      resetInputDetector(id);
       return { success: true };
     }
     terminal.machine.send("CLOSE");
@@ -360,12 +370,14 @@ function createTerminalManager(deps) {
         terminal.process.kill();
         terminals.delete(id);
         outputBuffers.delete(id);
+        resetInputDetector(id);
         resolve({ success: true });
       }, GRACEFUL_CLOSE_TIMEOUT);
       terminal.process.onExit(() => {
         clearTimeout(timeout);
         terminals.delete(id);
         outputBuffers.delete(id);
+        resetInputDetector(id);
         resolve({ success: true });
       });
     });
@@ -394,6 +406,7 @@ function createTerminalManager(deps) {
       terminal.process.kill();
       terminals.delete(id);
       outputBuffers.delete(id);
+      resetInputDetector(id);
     }
   }
   function getBuffer(id) {
@@ -1333,11 +1346,12 @@ function createCodexChatReader(opts) {
   };
 }
 function createChatMultiSource(opts) {
-  const { ccReader, codexReader } = opts;
+  const { ccReader, codexReader, geminiReader } = opts;
   return {
     async getProjects() {
       const tasks = [ccReader.getProjects()];
       if (codexReader) tasks.push(codexReader.getProjects());
+      if (geminiReader) tasks.push(geminiReader.getProjects());
       const results = await Promise.all(tasks);
       const all = results.flat();
       const map = /* @__PURE__ */ new Map();
@@ -1360,6 +1374,7 @@ function createChatMultiSource(opts) {
         ccReader.getSessionsForProject(projectHash, limit)
       ];
       if (codexReader) tasks.push(codexReader.getSessionsForProject(projectHash, limit));
+      if (geminiReader) tasks.push(geminiReader.getSessionsForProject(projectHash, limit));
       const results = await Promise.all(tasks);
       const merged = results.flat();
       merged.sort((a, b) => b.lastModified - a.lastModified);
@@ -1370,6 +1385,7 @@ function createChatMultiSource(opts) {
         ccReader.getAllRecentSessions(limit)
       ];
       if (codexReader) tasks.push(codexReader.getAllRecentSessions(limit));
+      if (geminiReader) tasks.push(geminiReader.getAllRecentSessions(limit));
       const results = await Promise.all(tasks);
       const merged = results.flat();
       merged.sort((a, b) => b.lastModified - a.lastModified);
@@ -1379,13 +1395,18 @@ function createChatMultiSource(opts) {
       const ccMessages = await ccReader.readSession(projectHash, sessionId, options);
       if (ccMessages.length > 0) return ccMessages;
       if (codexReader) {
-        return codexReader.readSession(projectHash, sessionId, options);
+        const codexMessages = await codexReader.readSession(projectHash, sessionId, options);
+        if (codexMessages.length > 0) return codexMessages;
+      }
+      if (geminiReader) {
+        return geminiReader.readSession(projectHash, sessionId, options);
       }
       return [];
     },
     async search(query) {
       const tasks = [ccReader.search(query)];
       if (codexReader) tasks.push(codexReader.search(query));
+      if (geminiReader) tasks.push(geminiReader.search(query));
       const results = await Promise.all(tasks);
       return results.flat().slice(0, 100);
     }

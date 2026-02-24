@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-02-24T14:23:34.903Z",
+  "generatedAt": "2026-02-24T14:29:24.505Z",
   "projectPath": "/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo",
-  "totalApis": 14,
-  "scannedFiles": 261,
+  "totalApis": 15,
+  "scannedFiles": 262,
   "categories": {
     "main": [
       {
@@ -73,6 +73,16 @@
         "file": "main/services/data-sync/sync-manager.ts",
         "line": 99,
         "functionName": "lockedFiles.get",
+        "params": [],
+        "responseFields": [],
+        "category": "API 服务"
+      },
+      {
+        "path": "{变量:terminalId}",
+        "method": "DELETE",
+        "file": "main/services/terminal/input-detector.ts",
+        "line": 105,
+        "functionName": "buffers.delete",
         "params": [],
         "responseFields": [],
         "category": "API 服务"
@@ -222,6 +232,16 @@
       "file": "main/services/data-sync/sync-manager.ts",
       "line": 99,
       "functionName": "lockedFiles.get",
+      "params": [],
+      "responseFields": [],
+      "category": "API 服务"
+    },
+    {
+      "path": "{变量:terminalId}",
+      "method": "DELETE",
+      "file": "main/services/terminal/input-detector.ts",
+      "line": 105,
+      "functionName": "buffers.delete",
       "params": [],
       "responseFields": [],
       "category": "API 服务"
