@@ -42,6 +42,7 @@ export function SkillList({ skills, loading, selectedPath, onSelect }: SkillList
           <div className="skill-list__empty">
             <p>{t('skills.noSkills')}</p>
             <p className="skill-list__empty-hint">~/.claude/skills/</p>
+            <p className="skill-list__empty-hint">~/.codex/skills/</p>
           </div>
         </div>
       </div>
@@ -63,7 +64,14 @@ export function SkillList({ skills, loading, selectedPath, onSelect }: SkillList
               className={`skill-list__item${isActive ? ' skill-list__item--active' : ''}`}
               onClick={() => onSelect(skill.path)}
             >
-              <span className="skill-list__item-name">{skill.name}</span>
+              <div className="skill-list__item-header">
+                <span className="skill-list__item-name">{skill.name}</span>
+                {skill.source && (
+                  <span className={`skill-list__source-badge skill-list__source-badge--${skill.source === 'codex' ? 'cx' : 'cc'}`}>
+                    {skill.source === 'codex' ? 'CX' : 'CC'}
+                  </span>
+                )}
+              </div>
               <span className="skill-list__item-desc">{skill.desc}</span>
             </div>
           );

@@ -20,6 +20,7 @@ import type {
 const WRITABLE_ROOTS = [
   join(homedir(), '.muxvo'),
   join(homedir(), '.claude'),
+  join(homedir(), '.codex'),
   tmpdir(),
 ];
 
