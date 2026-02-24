@@ -2,8 +2,8 @@
  * Chat Multi-Source Aggregator
  *
  * Merges Claude Code (CC) and Codex chat readers into a single API.
- * Routes by projectHash prefix: "codex-" → Codex reader, else → CC reader.
- * "__all__" queries both sources in parallel.
+ * Same project directory (same projectHash) merges sessions from both sources.
+ * readSession: tries CC first, falls back to Codex.
  */
 
 import type {
@@ -31,18 +31,8 @@ interface MultiSourceOpts {
   codexReader: ChatReader | null; // null if ~/.codex doesn't exist
 }
 
-function isCodexProject(projectHash: string): boolean {
-  return projectHash.startsWith('codex-');
-}
-
 export function createChatMultiSource(opts: MultiSourceOpts) {
   const { ccReader, codexReader } = opts;
-
-  /** Route to the correct reader by projectHash */
-  function routeReader(projectHash: string): ChatReader {
-    if (isCodexProject(projectHash) && codexReader) return codexReader;
-    return ccReader;
-  }
 
   return {
     async getProjects(): Promise<ProjectInfo[]> {
@@ -50,7 +40,21 @@ export function createChatMultiSource(opts: MultiSourceOpts) {
       if (codexReader) tasks.push(codexReader.getProjects());
 
       const results = await Promise.all(tasks);
-      const merged = results.flat();
+      const all = results.flat();
+
+      // Merge projects with same projectHash (same cwd)
+      const map = new Map<string, ProjectInfo>();
+      for (const p of all) {
+        const existing = map.get(p.projectHash);
+        if (existing) {
+          existing.sessionCount += p.sessionCount;
+          existing.lastActivity = Math.max(existing.lastActivity, p.lastActivity);
+        } else {
+          map.set(p.projectHash, { ...p });
+        }
+      }
+
+      const merged = Array.from(map.values());
       merged.sort((a, b) => b.lastActivity - a.lastActivity);
       return merged;
     },
@@ -59,8 +63,16 @@ export function createChatMultiSource(opts: MultiSourceOpts) {
       projectHash: string,
       limit = 50,
     ): Promise<SessionSummary[]> {
-      const reader = routeReader(projectHash);
-      return reader.getSessionsForProject(projectHash, limit);
+      // Query both readers, merge sessions
+      const tasks: Promise<SessionSummary[]>[] = [
+        ccReader.getSessionsForProject(projectHash, limit),
+      ];
+      if (codexReader) tasks.push(codexReader.getSessionsForProject(projectHash, limit));
+
+      const results = await Promise.all(tasks);
+      const merged = results.flat();
+      merged.sort((a, b) => b.lastModified - a.lastModified);
+      return merged.slice(0, limit);
     },
 
     async getAllRecentSessions(limit: number): Promise<SessionSummary[]> {
@@ -80,8 +92,13 @@ export function createChatMultiSource(opts: MultiSourceOpts) {
       sessionId: string,
       options?: { limit?: number },
     ): Promise<SessionMessage[]> {
-      const reader = routeReader(projectHash);
-      return reader.readSession(projectHash, sessionId, options);
+      // Try CC first, fall back to Codex
+      const ccMessages = await ccReader.readSession(projectHash, sessionId, options);
+      if (ccMessages.length > 0) return ccMessages;
+      if (codexReader) {
+        return codexReader.readSession(projectHash, sessionId, options);
+      }
+      return [];
     },
 
     async search(query: string): Promise<SearchResult[]> {

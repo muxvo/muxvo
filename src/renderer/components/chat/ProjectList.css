@@ -47,25 +47,6 @@
   white-space: nowrap;
 }
 
-.project-list__source-badge {
-  font-size: 9px;
-  font-weight: 600;
-  padding: 1px 4px;
-  border-radius: 3px;
-  flex-shrink: 0;
-  line-height: 1.2;
-}
-
-.project-list__source-badge--cc {
-  background: rgba(59, 130, 246, 0.15);
-  color: rgb(59, 130, 246);
-}
-
-.project-list__source-badge--cx {
-  background: rgba(34, 197, 94, 0.15);
-  color: rgb(34, 197, 94);
-}
-
 .project-list__count {
   font-size: 11px;
   color: var(--text-secondary);

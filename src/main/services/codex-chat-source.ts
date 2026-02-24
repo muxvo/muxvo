@@ -32,18 +32,10 @@ interface SessionIndexEntry {
   title: string;
 }
 
-/** Encode a path to projectHash format: codex-{path with / → -} */
+/** Encode cwd to CC-compatible projectHash: /Users/rl/path → -Users-rl-path */
 function encodeProjectHash(cwd: string): string {
-  if (!cwd) return 'codex-unknown';
-  return 'codex-' + cwd.replace(/\//g, '-');
-}
-
-/** Decode projectHash back to display path */
-function decodeProjectHash(hash: string): string {
-  const stripped = hash.replace(/^codex-/, '');
-  if (stripped === 'unknown') return '';
-  // Restore leading / and convert - back to /
-  return stripped.replace(/^-/, '/').replace(/-/g, '/');
+  if (!cwd) return '';
+  return cwd.replace(/\//g, '-');
 }
 
 /** Extract UUID from Codex session filename: rollout-YYYY-MM-DDTHH-MM-SS-{UUID}.jsonl */
@@ -335,13 +327,9 @@ export function createCodexChatReader(opts: CodexChatReaderOpts) {
     ): Promise<SessionSummary[]> {
       const entries = await buildIndex();
       const titles = await getThreadTitles();
-      const targetCwd = decodeProjectHash(projectHash);
 
       const matching = entries
-        .filter((e) => {
-          if (targetCwd === '') return !e.cwd;
-          return e.cwd === targetCwd;
-        })
+        .filter((e) => encodeProjectHash(e.cwd) === projectHash)
         .sort((a, b) => b.mtime - a.mtime)
         .slice(0, limit);
 

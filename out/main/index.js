@@ -575,7 +575,8 @@ function createChatProjectReader(opts) {
       title,
       startedAt,
       lastModified,
-      fileSize: stat.size
+      fileSize: stat.size,
+      source: "claude-code"
     };
   }
   function parseMessageLine(line, sessionId) {
@@ -668,7 +669,8 @@ function createChatProjectReader(opts) {
               displayPath: "",
               displayName,
               sessionCount: jsonlCount,
-              lastActivity: dirStat.mtimeMs
+              lastActivity: dirStat.mtimeMs,
+              source: "claude-code"
             };
           } catch {
             return null;
@@ -971,12 +973,431 @@ function createChatProjectReader(opts) {
     }
   };
 }
+function encodeProjectHash(cwd) {
+  if (!cwd) return "";
+  return cwd.replace(/\//g, "-");
+}
+function extractSessionId(filename) {
+  const base = path.basename(filename, ".jsonl");
+  const parts = base.split("-");
+  if (parts.length >= 5) {
+    return parts.slice(-5).join("-");
+  }
+  return base;
+}
+async function readSessionMeta(filePath) {
+  try {
+    const rl = readline.createInterface({
+      input: fs.createReadStream(filePath, { encoding: "utf-8", end: 4096 }),
+      crlfDelay: Infinity
+    });
+    for await (const line of rl) {
+      if (!line.trim()) continue;
+      try {
+        const entry = JSON.parse(line);
+        if (entry.type === "session_meta" && entry.payload) {
+          rl.close();
+          return {
+            id: entry.payload.id || "",
+            cwd: entry.payload.cwd || "",
+            timestamp: entry.payload.timestamp || entry.timestamp || ""
+          };
+        }
+      } catch {
+      }
+      rl.close();
+      break;
+    }
+  } catch {
+  }
+  return null;
+}
+function parseCodexMessageLine(entry, sessionId, cwd, lineIndex) {
+  const timestamp = entry.timestamp || "";
+  const type = entry.type;
+  const payload = entry.payload;
+  if (!payload) return null;
+  const payloadType = payload.type;
+  if (type === "event_msg" && payloadType === "user_message") {
+    const message = payload.message || "";
+    if (!message) return null;
+    return {
+      uuid: `codex-${sessionId}-user-${lineIndex}`,
+      type: "user",
+      sessionId,
+      cwd,
+      timestamp,
+      content: message
+    };
+  }
+  if (type === "event_msg" && payloadType === "agent_message") {
+    const message = payload.message || "";
+    if (!message) return null;
+    return {
+      uuid: `codex-${sessionId}-agent-${lineIndex}`,
+      type: "assistant",
+      sessionId,
+      cwd,
+      timestamp,
+      content: message
+    };
+  }
+  if (type === "response_item" && (payloadType === "function_call" || payloadType === "custom_tool_call")) {
+    const name = payload.name || payloadType;
+    const input = payloadType === "function_call" ? payload.arguments : payload.input;
+    return {
+      uuid: payload.call_id || `codex-${sessionId}-tool-${lineIndex}`,
+      type: "assistant",
+      sessionId,
+      cwd,
+      timestamp,
+      content: [{ type: "tool_use", name, input }]
+    };
+  }
+  if (type === "response_item" && (payloadType === "function_call_output" || payloadType === "custom_tool_call_output")) {
+    const output = payload.output || "";
+    return {
+      uuid: `codex-${sessionId}-result-${lineIndex}`,
+      type: "assistant",
+      sessionId,
+      cwd,
+      timestamp,
+      content: [
+        {
+          type: "tool_result",
+          content: output,
+          tool_use_id: payload.call_id
+        }
+      ]
+    };
+  }
+  return null;
+}
+function createCodexChatReader(opts) {
+  const sessionsDir = path.join(opts.codexBasePath, "sessions");
+  const globalStatePath = path.join(opts.codexBasePath, ".codex-global-state.json");
+  const CACHE_TTL = 5 * 60 * 1e3;
+  let indexCache = {
+    data: [],
+    expiry: 0
+  };
+  let threadTitlesCache = { data: {}, expiry: 0 };
+  async function getThreadTitles() {
+    if (Date.now() < threadTitlesCache.expiry) return threadTitlesCache.data;
+    try {
+      const raw = await fs.promises.readFile(globalStatePath, "utf-8");
+      const state = JSON.parse(raw);
+      const titles = state?.["thread-titles"]?.titles || {};
+      threadTitlesCache = { data: titles, expiry: Date.now() + CACHE_TTL };
+      return titles;
+    } catch {
+      return {};
+    }
+  }
+  async function findAllSessionFiles() {
+    const files = [];
+    try {
+      const years = await fs.promises.readdir(sessionsDir);
+      for (const year of years) {
+        if (!/^\d{4}$/.test(year)) continue;
+        const yearDir = path.join(sessionsDir, year);
+        try {
+          const months = await fs.promises.readdir(yearDir);
+          for (const month of months) {
+            if (!/^\d{2}$/.test(month)) continue;
+            const monthDir = path.join(yearDir, month);
+            try {
+              const days = await fs.promises.readdir(monthDir);
+              for (const day of days) {
+                if (!/^\d{2}$/.test(day)) continue;
+                const dayDir = path.join(monthDir, day);
+                try {
+                  const entries = await fs.promises.readdir(dayDir);
+                  for (const entry of entries) {
+                    if (entry.endsWith(".jsonl")) {
+                      files.push(path.join(dayDir, entry));
+                    }
+                  }
+                } catch {
+                }
+              }
+            } catch {
+            }
+          }
+        } catch {
+        }
+      }
+    } catch {
+    }
+    return files;
+  }
+  async function buildIndex() {
+    if (Date.now() < indexCache.expiry) return indexCache.data;
+    const files = await findAllSessionFiles();
+    const titles = await getThreadTitles();
+    const entries = [];
+    for (const filePath of files) {
+      try {
+        const fileStat = await fs.promises.stat(filePath);
+        const sessionId = extractSessionId(path.basename(filePath));
+        const meta = await readSessionMeta(filePath);
+        const cwd = meta?.cwd || "";
+        const title = titles[sessionId] || titles[meta?.id || ""] || "";
+        entries.push({
+          filePath,
+          sessionId: meta?.id || sessionId,
+          mtime: fileStat.mtimeMs,
+          size: fileStat.size,
+          cwd,
+          title
+        });
+      } catch {
+      }
+    }
+    indexCache = { data: entries, expiry: Date.now() + CACHE_TTL };
+    return entries;
+  }
+  return {
+    async getProjects() {
+      const entries = await buildIndex();
+      const projectMap = /* @__PURE__ */ new Map();
+      for (const entry of entries) {
+        const key = entry.cwd || "unknown";
+        const existing = projectMap.get(key);
+        if (existing) {
+          existing.count++;
+          existing.lastActivity = Math.max(existing.lastActivity, entry.mtime);
+        } else {
+          projectMap.set(key, {
+            cwd: entry.cwd,
+            count: 1,
+            lastActivity: entry.mtime
+          });
+        }
+      }
+      const projects = [];
+      for (const [, value] of projectMap) {
+        const hash = encodeProjectHash(value.cwd);
+        const displayPath = value.cwd || "Unknown";
+        const parts = displayPath.split("/").filter(Boolean);
+        projects.push({
+          projectHash: hash,
+          displayPath,
+          displayName: parts[parts.length - 1] || "Unknown",
+          sessionCount: value.count,
+          lastActivity: value.lastActivity,
+          source: "codex"
+        });
+      }
+      return projects.sort((a, b) => b.lastActivity - a.lastActivity);
+    },
+    async getSessionsForProject(projectHash, limit = 50) {
+      const entries = await buildIndex();
+      const titles = await getThreadTitles();
+      const matching = entries.filter((e) => encodeProjectHash(e.cwd) === projectHash).sort((a, b) => b.mtime - a.mtime).slice(0, limit);
+      const summaries = [];
+      for (const entry of matching) {
+        let title = entry.title || titles[entry.sessionId] || "";
+        if (!title) {
+          title = await this._extractFirstUserMessage(entry.filePath);
+        }
+        summaries.push({
+          sessionId: entry.sessionId,
+          projectHash,
+          title: title || entry.sessionId,
+          startedAt: new Date(entry.mtime).toISOString(),
+          lastModified: entry.mtime,
+          fileSize: entry.size,
+          source: "codex"
+        });
+      }
+      return summaries;
+    },
+    async getAllRecentSessions(limit) {
+      const entries = await buildIndex();
+      const titles = await getThreadTitles();
+      const sorted = [...entries].sort((a, b) => b.mtime - a.mtime).slice(0, limit);
+      const summaries = [];
+      for (const entry of sorted) {
+        const projectHash = encodeProjectHash(entry.cwd);
+        const title = entry.title || titles[entry.sessionId] || entry.sessionId;
+        summaries.push({
+          sessionId: entry.sessionId,
+          projectHash,
+          title,
+          startedAt: new Date(entry.mtime).toISOString(),
+          lastModified: entry.mtime,
+          fileSize: entry.size,
+          source: "codex"
+        });
+      }
+      return summaries;
+    },
+    async readSession(_projectHash, sessionId, options) {
+      const entries = await buildIndex();
+      const entry = entries.find((e) => e.sessionId === sessionId);
+      if (!entry) return [];
+      const messages = [];
+      let lineIndex = 0;
+      const cwd = entry.cwd;
+      const rl = readline.createInterface({
+        input: fs.createReadStream(entry.filePath, { encoding: "utf-8" }),
+        crlfDelay: Infinity
+      });
+      for await (const line of rl) {
+        if (!line.trim()) continue;
+        try {
+          const parsed = JSON.parse(line);
+          const msg = parseCodexMessageLine(parsed, sessionId, cwd, lineIndex);
+          if (msg) messages.push(msg);
+        } catch {
+        }
+        lineIndex++;
+      }
+      if (options?.limit && options.limit > 0) {
+        return messages.slice(-options.limit);
+      }
+      return messages;
+    },
+    async search(query) {
+      const entries = await buildIndex();
+      const results = [];
+      const lowerQuery = query.toLowerCase();
+      for (const entry of entries) {
+        try {
+          const rl = readline.createInterface({
+            input: fs.createReadStream(entry.filePath, { encoding: "utf-8" }),
+            crlfDelay: Infinity
+          });
+          for await (const line of rl) {
+            if (!line.trim()) continue;
+            try {
+              const parsed = JSON.parse(line);
+              if (parsed.type === "event_msg" && parsed.payload?.type === "user_message") {
+                const message = parsed.payload.message || "";
+                if (message.toLowerCase().includes(lowerQuery)) {
+                  const start = message.toLowerCase().indexOf(lowerQuery);
+                  const snippet = message.slice(
+                    Math.max(0, start - 30),
+                    start + query.length + 30
+                  );
+                  results.push({
+                    projectHash: encodeProjectHash(entry.cwd),
+                    sessionId: entry.sessionId,
+                    snippet,
+                    timestamp: parsed.timestamp || ""
+                  });
+                  break;
+                }
+              }
+            } catch {
+            }
+          }
+        } catch {
+        }
+        if (results.length >= 50) break;
+      }
+      return results;
+    },
+    /** Extract first user message text from a session file (for title) */
+    async _extractFirstUserMessage(filePath) {
+      try {
+        const rl = readline.createInterface({
+          input: fs.createReadStream(filePath, { encoding: "utf-8", end: 8192 }),
+          crlfDelay: Infinity
+        });
+        for await (const line of rl) {
+          if (!line.trim()) continue;
+          try {
+            const entry = JSON.parse(line);
+            if (entry.type === "event_msg" && entry.payload?.type === "user_message") {
+              rl.close();
+              return (entry.payload.message || "").slice(0, 100);
+            }
+          } catch {
+          }
+        }
+      } catch {
+      }
+      return "";
+    },
+    clearCache() {
+      indexCache = { data: [], expiry: 0 };
+      threadTitlesCache = { data: {}, expiry: 0 };
+    }
+  };
+}
+function createChatMultiSource(opts) {
+  const { ccReader, codexReader } = opts;
+  return {
+    async getProjects() {
+      const tasks = [ccReader.getProjects()];
+      if (codexReader) tasks.push(codexReader.getProjects());
+      const results = await Promise.all(tasks);
+      const all = results.flat();
+      const map = /* @__PURE__ */ new Map();
+      for (const p of all) {
+        const existing = map.get(p.projectHash);
+        if (existing) {
+          existing.sessionCount += p.sessionCount;
+          existing.lastActivity = Math.max(existing.lastActivity, p.lastActivity);
+        } else {
+          map.set(p.projectHash, { ...p });
+        }
+      }
+      const merged = Array.from(map.values());
+      merged.sort((a, b) => b.lastActivity - a.lastActivity);
+      return merged;
+    },
+    async getSessionsForProject(projectHash, limit = 50) {
+      const tasks = [
+        ccReader.getSessionsForProject(projectHash, limit)
+      ];
+      if (codexReader) tasks.push(codexReader.getSessionsForProject(projectHash, limit));
+      const results = await Promise.all(tasks);
+      const merged = results.flat();
+      merged.sort((a, b) => b.lastModified - a.lastModified);
+      return merged.slice(0, limit);
+    },
+    async getAllRecentSessions(limit) {
+      const tasks = [
+        ccReader.getAllRecentSessions(limit)
+      ];
+      if (codexReader) tasks.push(codexReader.getAllRecentSessions(limit));
+      const results = await Promise.all(tasks);
+      const merged = results.flat();
+      merged.sort((a, b) => b.lastModified - a.lastModified);
+      return merged.slice(0, limit);
+    },
+    async readSession(projectHash, sessionId, options) {
+      const ccMessages = await ccReader.readSession(projectHash, sessionId, options);
+      if (ccMessages.length > 0) return ccMessages;
+      if (codexReader) {
+        return codexReader.readSession(projectHash, sessionId, options);
+      }
+      return [];
+    },
+    async search(query) {
+      const tasks = [ccReader.search(query)];
+      if (codexReader) tasks.push(codexReader.search(query));
+      const results = await Promise.all(tasks);
+      return results.flat().slice(0, 100);
+    }
+  };
+}
 const CC_BASE_PATH = path.join(os.homedir(), ".claude");
+const CODEX_BASE_PATH = path.join(os.homedir(), ".codex");
 function createChatHandlers() {
-  const reader = createChatProjectReader({
+  const ccReader = createChatProjectReader({
     ccBasePath: CC_BASE_PATH,
     archivePath: path.join(os.homedir(), ".muxvo", "chat-archive")
   });
+  let codexReader = null;
+  try {
+    codexReader = createCodexChatReader({ codexBasePath: CODEX_BASE_PATH });
+  } catch {
+  }
+  const reader = createChatMultiSource({ ccReader, codexReader });
   return {
     async getProjects() {
       const projects = await reader.getProjects();
