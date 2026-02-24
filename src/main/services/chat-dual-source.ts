@@ -125,6 +125,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
       startedAt,
       lastModified,
       fileSize: stat.size,
+      source: 'claude-code' as const,
     };
   }
 
@@ -244,6 +245,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
               displayName,
               sessionCount: jsonlCount,
               lastActivity: dirStat.mtimeMs,
+              source: 'claude-code',
             } as ProjectInfo;
           } catch {
             return null;
