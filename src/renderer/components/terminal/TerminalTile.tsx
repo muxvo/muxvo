@@ -148,6 +148,24 @@ export function TerminalTile({
     }
   }, [namingState, namingContext.editValue]);
 
+  // Global mousedown listener to save on clicks outside input
+  // Needed because -webkit-app-region: drag areas don't trigger blur
+  const inputRef = useRef<HTMLInputElement>(null);
+  const inputValueRef = useRef(inputValue);
+  inputValueRef.current = inputValue;
+
+  useEffect(() => {
+    if (namingState !== 'Editing') return;
+    const handleGlobalMouseDown = (e: MouseEvent) => {
+      if (inputRef.current && !inputRef.current.contains(e.target as Node)) {
+        sendNaming({ type: 'BLUR', value: inputValueRef.current });
+      }
+    };
+    // Use capture phase to catch events before drag region consumes them
+    window.addEventListener('mousedown', handleGlobalMouseDown, true);
+    return () => window.removeEventListener('mousedown', handleGlobalMouseDown, true);
+  }, [namingState]);
+
   const classNames = [
     'tile',
     !compact ? 'tile-enter' : '',
@@ -276,6 +294,7 @@ export function TerminalTile({
                 <>
                   <span className="tile-separator">·</span>
                   <input
+                    ref={inputRef}
                     type="text"
                     className="tile-custom-name-input"
                     value={inputValue}

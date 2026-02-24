@@ -6,7 +6,7 @@
  */
 
 /** 聊天数据来源 */
-export type ChatSource = 'claude-code' | 'codex';
+export type ChatSource = 'claude-code' | 'codex' | 'gemini';
 
 /** 从 ~/.claude/projects/ 或 ~/.codex/sessions/ 扫描得到的项目信息 */
 export interface ProjectInfo {
