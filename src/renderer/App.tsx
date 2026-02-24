@@ -395,7 +395,7 @@ function AppContent({
       {/* Skills panel overlay (three-column: skill list | file tree | editor) */}
       {state.skillsPanel.open && (
         <div className="skills-panel-overlay">
-          <SkillsPanel />
+          <SkillsPanel terminals={terminals} />
         </div>
       )}
 

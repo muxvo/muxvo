@@ -158,8 +158,11 @@ const api = {
 
   // --- Config domain ---
   config: {
-    getResources: (type?: string) =>
-      ipcRenderer.invoke(IPC_CHANNELS.CONFIG.GET_RESOURCES, type ? { types: [type] } : undefined),
+    getResources: (type?: string, projectPaths?: string[]) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CONFIG.GET_RESOURCES, {
+        ...(type ? { types: [type] } : {}),
+        ...(projectPaths?.length ? { projectPaths } : {}),
+      }),
     getResourceContent: (resourcePath: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.CONFIG.GET_RESOURCE_CONTENT, { path: resourcePath }),
     getSettings: () =>

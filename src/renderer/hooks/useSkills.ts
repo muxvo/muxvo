@@ -11,6 +11,7 @@ export interface SkillItem {
   desc: string;
   path: string;
   source?: string;
+  level?: 'system' | 'project';
 }
 
 interface UseSkillsResult {
@@ -48,7 +49,7 @@ function parseFrontmatterDescription(content: string): string | null {
   return raw.trim() || null;
 }
 
-export function useSkills(): UseSkillsResult {
+export function useSkills(projectPaths?: string[]): UseSkillsResult {
   const [skills, setSkills] = useState<SkillItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,11 +59,11 @@ export function useSkills(): UseSkillsResult {
     setLoading(true);
     setError(null);
     try {
-      const { resources } = await window.api.config.getResources('skills');
+      const { resources } = await window.api.config.getResources('skills', projectPaths);
 
       // Batch-read all SKILL.md files in parallel
       const settled = await Promise.allSettled(
-        resources.map(async (r: { name: string; path: string; source?: string }) => {
+        resources.map(async (r: { name: string; path: string; source?: string; level?: string }) => {
           const { content } = await window.api.config.getResourceContent(r.path + '/SKILL.md');
           return { resource: r, content };
         }),
@@ -72,11 +73,12 @@ export function useSkills(): UseSkillsResult {
 
       const items: SkillItem[] = settled.map((result, i) => {
         const resource = resources[i];
+        const level = (resource.level as 'system' | 'project') || 'system';
         if (result.status === 'fulfilled') {
           const desc = parseFrontmatterDescription(result.value.content);
-          return { name: resource.name, desc: desc || resource.name, path: resource.path, source: resource.source };
+          return { name: resource.name, desc: desc || resource.name, path: resource.path, source: resource.source, level };
         }
-        return { name: resource.name, desc: resource.name, path: resource.path, source: resource.source };
+        return { name: resource.name, desc: resource.name, path: resource.path, source: resource.source, level };
       });
 
       items.sort((a, b) => a.name.localeCompare(b.name));
@@ -88,7 +90,7 @@ export function useSkills(): UseSkillsResult {
     } finally {
       if (!abortedRef.current) setLoading(false);
     }
-  }, []);
+  }, [projectPaths]);
 
   // Initial load
   useEffect(() => {
