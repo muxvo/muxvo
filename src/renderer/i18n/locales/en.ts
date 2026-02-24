@@ -103,6 +103,7 @@ export const en = {
   'hooks.configPath': 'Config Path',
   'hooks.readOnlyHint': 'This hook is from project config and can only be modified in the corresponding config file.',
   // Tour
+  'theme.toggle': 'Toggle Theme',
   'tour.startTour': 'Feature Tour',
   'tour.next': 'Next',
   'tour.prev': 'Previous',

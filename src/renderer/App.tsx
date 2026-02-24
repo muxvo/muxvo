@@ -50,11 +50,19 @@ export function App(): JSX.Element {
     processName: '',
   });
   const [initialLocale, setInitialLocale] = useState<Locale>('zh');
+  const [uiTheme, setUiTheme] = useState<'dark' | 'light'>('dark');
 
   useEffect(() => {
     window.api.app.getPreferences().then((result: any) => {
       if (result?.success && result.data?.language) {
         setInitialLocale(result.data.language as Locale);
+      }
+    }).catch(() => {});
+    // Load theme from config
+    window.api.app.getConfig().then((result: any) => {
+      if (result?.data?.theme === 'light') {
+        setUiTheme('light');
+        document.documentElement.setAttribute('data-theme', 'light');
       }
     }).catch(() => {});
   }, []);
@@ -185,6 +193,18 @@ export function App(): JSX.Element {
     });
   }, []);
 
+  const handleToggleTheme = useCallback(() => {
+    setUiTheme((prev) => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      // Persist to config
+      window.api.app.getConfig().then((result: any) => {
+        window.api.app.saveConfig({ ...result?.data, theme: next });
+      }).catch(() => {});
+      return next;
+    });
+  }, []);
+
   // Esc key exits focused mode (only when focus is on UI, not inside terminal)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent): void {
@@ -232,6 +252,7 @@ export function App(): JSX.Element {
           selectedId={selectedId}
           maxReached={maxReached}
           closeConfirm={closeConfirm}
+          uiTheme={uiTheme}
           onDoubleClick={handleDoubleClick}
           onSidebarClick={handleSidebarClick}
           onClick={handleTileClick}
@@ -242,6 +263,7 @@ export function App(): JSX.Element {
           onCloseCancel={handleCloseCancel}
           onReorder={handleReorder}
           onRename={handleRename}
+          onToggleTheme={handleToggleTheme}
           terminalNames={terminalNames}
         />
       </PanelProvider>
@@ -257,6 +279,7 @@ function AppContent({
   selectedId,
   maxReached,
   closeConfirm,
+  uiTheme,
   onDoubleClick,
   onSidebarClick,
   onClick,
@@ -267,6 +290,7 @@ function AppContent({
   onCloseCancel,
   onReorder,
   onRename,
+  onToggleTheme,
   terminalNames,
 }: {
   terminals: (TerminalEntry & { customName?: string })[];
@@ -275,6 +299,7 @@ function AppContent({
   selectedId: string | null;
   maxReached: boolean;
   closeConfirm: CloseConfirmState;
+  uiTheme: 'dark' | 'light';
   onDoubleClick: (id: string) => void;
   onSidebarClick: (id: string) => void;
   onClick: (id: string) => void;
@@ -285,6 +310,7 @@ function AppContent({
   onCloseCancel: () => void;
   onReorder: (newOrder: string[]) => void;
   onRename: (id: string, name: string) => void;
+  onToggleTheme: () => void;
   terminalNames: Record<string, string>;
 }): JSX.Element {
   const { state, dispatch } = usePanelContext();
@@ -321,7 +347,7 @@ function AppContent({
 
   return (
     <div className="app">
-      <MenuBar viewMode={viewMode} onBackToTiling={onBackToTiling} terminalCount={terminals.length} onAddTerminal={onAddTerminal} maxReached={maxReached} />
+      <MenuBar viewMode={viewMode} onBackToTiling={onBackToTiling} terminalCount={terminals.length} onAddTerminal={onAddTerminal} maxReached={maxReached} uiTheme={uiTheme} onToggleTheme={onToggleTheme} />
       <main className="app-content">
         <TerminalGrid
           terminals={terminals}
