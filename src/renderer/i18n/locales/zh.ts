@@ -36,7 +36,7 @@ export const zh = {
   'chat.system': 'SYSTEM',
   'chat.copyToClipboard': '📋 复制会话为 Markdown',
   'chat.copied': '✅ 已复制！',
-  'chat.archiveNotice': 'Claude Code 本地聊天记录在未参与模型训练时仅保留约 30 天（参与训练时为 5 年），Muxvo 已自动归档到 ~/.muxvo/chat-archive/ 永久保留。',
+  'chat.archiveNotice': 'Claude Code 本地聊天记录在未参与模型训练时仅保留约 30 天（参与训练时为 5 年），Muxvo 已自动归档到 ~/.muxvo/chat-archive/ 永久保留。所有数据仅保存在你的本地电脑，不会上传到任何服务器。',
   'chat.archiving': '正在归档 {synced}/{total}...',
   'chat.archiveOn': '自动归档：开启',
   'chat.archiveOff': '自动归档：关闭',
