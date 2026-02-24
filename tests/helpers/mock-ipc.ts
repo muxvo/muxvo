@@ -4,15 +4,13 @@
  * 模拟 Electron 的 ipcMain / ipcRenderer 通信。
  * 当源代码就绪后，替换为真实的 IPC 测试工具。
  *
- * IPC 域（共 10 个）：
+ * IPC 域（共 8 个）：
  * - terminal:*     终端管理
  * - fs:*           文件系统
  * - chat:*         聊天历史
  * - config:*       配置管理
  * - app:*          应用生命周期
- * - marketplace:*  Skill 市场
- * - score:*        AI 评分
- * - showcase:*     展示页
+ * - discovery:*    Skill 发现
  * - auth:*         用户认证
  * - analytics:*    数据分析
  */

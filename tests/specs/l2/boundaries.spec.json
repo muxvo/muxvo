@@ -5,22 +5,17 @@
   "sources": [
     "tests/l2/cross.test.ts",
     "tests/l2/term-rules.test.ts",
-    "tests/l2/v2-content.test.ts",
-    "tests/l2/v2-install.test.ts"
+    "tests/l2/v2-content.test.ts"
   ],
   "docSources": [
     "docs/Muxvo_测试_v2/02_modules/test_CROSS.md",
     "docs/Muxvo_测试_v2/02_modules/test_TERM.md",
-    "docs/Muxvo_测试_v2/02_modules/test_V2_CONTENT.md",
-    "docs/Muxvo_测试_v2/02_modules/test_V2_INSTALL.md"
+    "docs/Muxvo_测试_v2/02_modules/test_V2_CONTENT.md"
   ],
-  "fixtureSource": "tests/helpers/test-fixtures.ts (defaultConfig, timeConstants, securityPatterns, imageFixtures)",
-  "totalCases": 16,
+  "fixtureSource": "tests/helpers/test-fixtures.ts (defaultConfig, timeConstants)",
+  "totalCases": 13,
   "removedCases": [
     { "id": "ESC_PRIORITY", "reason": "composite — individual tests TERM_L2_48~55 exist in stubs" },
-    { "id": "PUBLISH_L2_01_BOUNDARY", "reason": "duplicate of publish-rules.spec.json PUBLISH_L2_01" },
-    { "id": "PUBLISH_FILE_SIZE_SKILL", "reason": "duplicate of publish-rules.spec.json PUBLISH_L2_02" },
-    { "id": "PUBLISH_FILE_SIZE_PLUGIN", "reason": "duplicate of publish-rules.spec.json PUBLISH_L2_08" },
     { "id": "INSTALL_TYPE_ROUTING", "reason": "composite — INSTALL_L2_03 + INSTALL_L2_04 exist in stubs" },
     { "id": "BROWSER_SEARCH_DEBOUNCE", "reason": "duplicate of perf-thresholds.spec.json PERF_L2_05" }
   ],
@@ -130,31 +125,6 @@
       "priority": "P1"
     },
     {
-      "id": "SHOWCASE_L2_01",
-      "description": "展示页图片大小限制 — 单张 <= 5MB",
-      "type": "boundary",
-      "category": "file-size-limit",
-      "boundaries": [
-        { "fileSizeMB": 4, "expected": { "accepted": true } },
-        { "fileSizeMB": 5, "expected": { "accepted": true } },
-        { "fileSizeMB": 6, "expected": { "accepted": false, "reason": "单张 <= 5MB" } }
-      ],
-      "priority": "P1"
-    },
-    {
-      "id": "SHOWCASE_L2_14",
-      "description": "展示页图片格式白名单",
-      "type": "boundary",
-      "category": "file-format-whitelist",
-      "boundaries": [
-        { "format": "PNG", "expected": { "accepted": true } },
-        { "format": "JPG", "expected": { "accepted": true } },
-        { "format": "GIF", "expected": { "accepted": true } },
-        { "format": "BMP", "expected": { "accepted": false, "reason": "仅支持 PNG/JPG/GIF" } }
-      ],
-      "priority": "P1"
-    },
-    {
       "id": "APP_L2_01",
       "description": "数据保留策略边界值",
       "type": "boundary",
@@ -194,16 +164,6 @@
       "unit": "次",
       "rule": "自动重试 1 次；仍失败提示'下载失败，请稍后重试'",
       "priority": "P1"
-    },
-    {
-      "id": "PUBLISH_L2_16",
-      "description": "GitHub Pages 发布超时 30 秒",
-      "type": "threshold",
-      "parameter": "publishTimeout",
-      "expectedValue": 30000,
-      "unit": "ms",
-      "rule": "超时后保存草稿到本地 + 重试提示",
-      "priority": "P2"
     }
   ]
 }
