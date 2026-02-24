@@ -3195,11 +3195,11 @@ body::before {
   align-items: center;
   gap: 6px;
   padding: 6px 16px;
-  background: rgba(22, 27, 34, 0.75);
+  background: var(--accent);
   backdrop-filter: blur(16px);
-  border: 1px solid var(--border);
+  border: 1px solid var(--accent);
   border-radius: 8px;
-  color: var(--text-secondary);
+  color: white;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -3209,9 +3209,10 @@ body::before {
 }
 
 .grid-return-btn:hover {
-  background: var(--accent);
-  color: var(--bg-deep);
-  border-color: var(--accent);
+  background: var(--accent-hover, var(--accent));
+  color: white;
+  border-color: var(--accent-hover, var(--accent));
+  filter: brightness(1.15);
 }
 
 .grid-return-btn svg {
