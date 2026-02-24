@@ -2,7 +2,7 @@
  * Tour step definitions — maps each onboarding step to a UI element
  */
 
-export type ActionType = 'create-terminal' | 'observe' | 'focus' | 'rename' | 'open-file';
+export type ActionType = 'create-terminal' | 'observe' | 'drag-reorder' | 'drag-resize' | 'focus' | 'rename' | 'open-file';
 export type AllowedButton = 'next' | 'previous' | 'close';
 
 export interface TourStep {
@@ -33,15 +33,26 @@ export const TOUR_STEPS: TourStep[] = [
     showButtons: ['close'],
   },
   {
-    id: 'tile-view',
-    selector: '',
-    i18nTitleKey: 'tour.step2.title',
-    i18nDescKey: 'tour.step2.desc',
-    side: 'top',
+    id: 'drag-reorder',
+    selector: '.tile-header[draggable="true"]',
+    i18nTitleKey: 'tour.step2a.title',
+    i18nDescKey: 'tour.step2a.desc',
+    side: 'bottom',
     needsTerminal: true,
-    interactive: false,
-    actionType: 'observe',
-    showButtons: ['next', 'previous', 'close'],
+    interactive: true,
+    actionType: 'drag-reorder',
+    showButtons: ['next', 'close'],
+  },
+  {
+    id: 'drag-resize',
+    selector: '.resize-handle--col',
+    i18nTitleKey: 'tour.step2b.title',
+    i18nDescKey: 'tour.step2b.desc',
+    side: 'bottom',
+    needsTerminal: true,
+    interactive: true,
+    actionType: 'drag-resize',
+    showButtons: ['next', 'close'],
   },
   {
     id: 'focus-terminal',

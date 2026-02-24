@@ -13,11 +13,12 @@ import './TourOverlay.css';
 
 interface Props {
   terminalCount: number;
+  terminalOrder: string[];
   viewMode: 'Tiling' | 'Focused';
   terminalNames: Record<string, string>;
 }
 
-export function TourOverlay({ terminalCount, viewMode, terminalNames }: Props): null {
+export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNames }: Props): null {
   const { state, dispatch } = usePanelContext();
   const { t } = useI18n();
   const driverRef = useRef<Driver | null>(null);
@@ -25,6 +26,7 @@ export function TourOverlay({ terminalCount, viewMode, terminalNames }: Props): 
   const prevTerminalCountRef = useRef<number>(terminalCount);
   const prevViewModeRef = useRef<'Tiling' | 'Focused'>(viewMode);
   const prevHasNameRef = useRef<boolean>(Object.values(terminalNames).some(n => n && n.length > 0));
+  const prevTerminalOrderRef = useRef<string[]>(terminalOrder);
 
   const completeTour = useCallback(() => {
     if (driverRef.current) {
@@ -77,6 +79,19 @@ export function TourOverlay({ terminalCount, viewMode, terminalNames }: Props): 
     }
     prevTerminalCountRef.current = terminalCount;
   }, [state.tour.active, terminalCount, getCurrentActionType, moveNext]);
+
+  // Step 2a: Detect drag reorder (terminal order changed)
+  useEffect(() => {
+    if (!state.tour.active || !driverRef.current) return;
+    if (getCurrentActionType() !== 'drag-reorder') return;
+    const prev = prevTerminalOrderRef.current;
+    if (prev.length > 0 && terminalOrder.length === prev.length && terminalOrder.some((id, i) => id !== prev[i])) {
+      moveNext();
+    }
+    prevTerminalOrderRef.current = terminalOrder;
+  }, [state.tour.active, terminalOrder, getCurrentActionType, moveNext]);
+
+  // Step 2b: Detect drag resize — relies on "Next" button (no reliable prop to detect)
 
   // Step 3: Detect focus mode (wait 2s for user to see focused state)
   useEffect(() => {
@@ -173,11 +188,15 @@ export function TourOverlay({ terminalCount, viewMode, terminalNames }: Props): 
         if (idx !== undefined) {
           currentStepRef.current = idx;
         }
-        // For observe steps (no element), make overlay pass-through so user can interact
-        const overlay = document.querySelector('.driver-overlay') as HTMLElement | null;
-        if (overlay) {
-          const step = activeSteps[idx ?? 0];
-          overlay.style.pointerEvents = step?.actionType === 'observe' ? 'none' : '';
+        // For drag/observe steps, make overlay pass-through so user can interact
+        // Must target the SVG path element directly — it has inline pointer-events: auto
+        const step = activeSteps[idx ?? 0];
+        const needsPassThrough = step?.actionType === 'observe'
+          || step?.actionType === 'drag-reorder'
+          || step?.actionType === 'drag-resize';
+        const overlayPath = document.querySelector('.driver-overlay path') as SVGElement | null;
+        if (overlayPath) {
+          (overlayPath as any).style.pointerEvents = needsPassThrough ? 'none' : '';
         }
       },
       onCloseClick: () => {
