@@ -11,15 +11,28 @@ import { join } from 'path';
 import { promises as fsp } from 'fs';
 import { createChatProjectReader } from '../services/chat-dual-source';
 import { createChatArchiveManager } from '../services/chat-archive';
+import { createCodexChatReader } from '../services/codex-chat-source';
+import { createChatMultiSource } from '../services/chat-multi-source';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 
 const CC_BASE_PATH = join(homedir(), '.claude');
+const CODEX_BASE_PATH = join(homedir(), '.codex');
 
 export function createChatHandlers() {
-  const reader = createChatProjectReader({
+  const ccReader = createChatProjectReader({
     ccBasePath: CC_BASE_PATH,
     archivePath: join(homedir(), '.muxvo', 'chat-archive'),
   });
+
+  // Codex reader (gracefully null if ~/.codex doesn't exist)
+  let codexReader: ReturnType<typeof createCodexChatReader> | null = null;
+  try {
+    codexReader = createCodexChatReader({ codexBasePath: CODEX_BASE_PATH });
+  } catch {
+    // ~/.codex doesn't exist, skip
+  }
+
+  const reader = createChatMultiSource({ ccReader, codexReader });
 
   return {
     async getProjects() {

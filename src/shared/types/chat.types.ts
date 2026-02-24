@@ -5,9 +5,12 @@
  * 数据层次: Project → Session → Message
  */
 
-/** 从 ~/.claude/projects/ 扫描得到的项目信息 */
+/** 聊天数据来源 */
+export type ChatSource = 'claude-code' | 'codex';
+
+/** 从 ~/.claude/projects/ 或 ~/.codex/sessions/ 扫描得到的项目信息 */
 export interface ProjectInfo {
-  /** 目录名（projectHash），如 "-Users-rl-Nutstore-Files-my-nutstore-520-program-muxvo" */
+  /** 目录名（projectHash），如 "-Users-rl-..." 或 "codex--Users-rl-..." */
   projectHash: string;
   /** 完整项目路径，从 session 的 cwd 字段获取 */
   displayPath: string;
@@ -17,6 +20,8 @@ export interface ProjectInfo {
   sessionCount: number;
   /** 最近活跃时间（ms，取最新 session 文件的 mtime） */
   lastActivity: number;
+  /** 数据来源工具 */
+  source?: ChatSource;
 }
 
 /** 单个 session 的摘要信息（从 .jsonl 文件头部提取） */
@@ -33,6 +38,8 @@ export interface SessionSummary {
   lastModified: number;
   /** 会话文件大小（字节），用于提示对话长短 */
   fileSize: number;
+  /** 数据来源工具 */
+  source?: ChatSource;
 }
 
 /** Assistant 消息中的内容块 */
