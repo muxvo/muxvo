@@ -309,7 +309,7 @@ export function TerminalTile({
 
         {/* WaitingInput badge */}
         {state === 'WaitingInput' && (
-          <span className="tile-waiting-badge">{t('terminal.waitingInput')}</span>
+          <span className="tile-waiting-badge">1</span>
         )}
 
         {/* Header action buttons (non-compact only) */}
