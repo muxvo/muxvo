@@ -1572,23 +1572,86 @@ async function extractCwdFromProject(projectDir) {
     return null;
   }
 }
+async function extractCwdFromCodexSession(filePath) {
+  return new Promise((resolve2) => {
+    try {
+      const stream = fs.createReadStream(filePath, { encoding: "utf-8" });
+      const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
+      let lineCount = 0;
+      let resolved = false;
+      const done = (result) => {
+        if (resolved) return;
+        resolved = true;
+        rl.close();
+        stream.destroy();
+        resolve2(result);
+      };
+      rl.on("line", (line) => {
+        if (++lineCount > 10) {
+          done(null);
+          return;
+        }
+        try {
+          const obj = JSON.parse(line);
+          if (obj.type === "session_meta" && obj.payload?.cwd) {
+            done(obj.payload.cwd);
+          }
+        } catch {
+        }
+      });
+      rl.on("close", () => done(null));
+      rl.on("error", () => done(null));
+      stream.on("error", () => done(null));
+    } catch {
+      resolve2(null);
+    }
+  });
+}
+async function findJsonlFiles(dir) {
+  const results = [];
+  try {
+    const entries = await promises.readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        results.push(...await findJsonlFiles(fullPath));
+      } else if (entry.name.endsWith(".jsonl")) {
+        results.push(fullPath);
+      }
+    }
+  } catch {
+  }
+  return results;
+}
 async function discoverProjectCwds() {
   const now = Date.now();
   if (_projectCwdCache.length > 0 && now - _projectCwdCacheTime < PROJECT_CWD_CACHE_TTL) {
     return _projectCwdCache;
   }
+  const cwdSet = /* @__PURE__ */ new Set();
   const projectsDir = path.join(CLAUDE_DIR$1, "projects");
   try {
     const entries = await promises.readdir(projectsDir, { withFileTypes: true });
     const dirs = entries.filter((e) => e.isDirectory()).map((e) => path.join(projectsDir, e.name));
-    const cwds = await Promise.all(dirs.map((d) => extractCwdFromProject(d)));
-    const uniqueCwds = [...new Set(cwds.filter((c) => c !== null))];
-    _projectCwdCache = uniqueCwds;
-    _projectCwdCacheTime = now;
-    return uniqueCwds;
+    const ccCwds = await Promise.all(dirs.map((d) => extractCwdFromProject(d)));
+    for (const cwd of ccCwds) {
+      if (cwd) cwdSet.add(cwd);
+    }
   } catch {
-    return [];
   }
+  const codexSessionsDir = path.join(CODEX_DIR$1, "sessions");
+  try {
+    const jsonlFiles = await findJsonlFiles(codexSessionsDir);
+    const cxCwds = await Promise.all(jsonlFiles.map((f) => extractCwdFromCodexSession(f)));
+    for (const cwd of cxCwds) {
+      if (cwd) cwdSet.add(cwd);
+    }
+  } catch {
+  }
+  const uniqueCwds = [...cwdSet];
+  _projectCwdCache = uniqueCwds;
+  _projectCwdCacheTime = now;
+  return uniqueCwds;
 }
 function createConfigHandlers() {
   return {
@@ -1642,6 +1705,7 @@ function createConfigHandlers() {
           }
         }
         if (type === "skills") {
+          const systemDirSet = new Set(mapping.paths.map((p) => path.resolve(p)));
           const discoveredCwds = await discoverProjectCwds();
           const allProjectPaths = [.../* @__PURE__ */ new Set([...discoveredCwds, ...projectPaths])];
           for (const projectPath of allProjectPaths) {
@@ -1651,10 +1715,12 @@ function createConfigHandlers() {
               { dir: path.join(projectPath, "skills"), source: "codex" }
             ];
             for (const { dir: dirPath, source } of projectSkillDirs) {
+              if (systemDirSet.has(path.resolve(dirPath))) continue;
               try {
                 const entries = await promises.readdir(dirPath, { withFileTypes: true });
                 for (const entry of entries) {
                   if (EXCLUDED_FILES.has(entry.name)) continue;
+                  if (!entry.isDirectory()) continue;
                   const entryPath = path.join(dirPath, entry.name);
                   try {
                     const entryStat = await promises.stat(entryPath);

@@ -102,7 +102,69 @@ async function extractCwdFromProject(projectDir: string): Promise<string | null>
 }
 
 /**
- * Discover all known project cwds from ~/.claude/projects/
+ * Extract cwd from a Codex session JSONL (type: "session_meta", payload.cwd).
+ * Uses event-based approach to avoid stream cleanup issues with for-await + break.
+ */
+async function extractCwdFromCodexSession(filePath: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    try {
+      const stream = createReadStream(filePath, { encoding: 'utf-8' });
+      const rl = createInterface({ input: stream, crlfDelay: Infinity });
+      let lineCount = 0;
+      let resolved = false;
+
+      const done = (result: string | null) => {
+        if (resolved) return;
+        resolved = true;
+        rl.close();
+        stream.destroy();
+        resolve(result);
+      };
+
+      rl.on('line', (line) => {
+        if (++lineCount > 10) { done(null); return; }
+        try {
+          const obj = JSON.parse(line);
+          if (obj.type === 'session_meta' && obj.payload?.cwd) {
+            done(obj.payload.cwd);
+          }
+        } catch {
+          // Skip malformed lines
+        }
+      });
+
+      rl.on('close', () => done(null));
+      rl.on('error', () => done(null));
+      stream.on('error', () => done(null));
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+/**
+ * Recursively find all .jsonl files under a directory.
+ */
+async function findJsonlFiles(dir: string): Promise<string[]> {
+  const results: string[] = [];
+  try {
+    const entries = await readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        results.push(...(await findJsonlFiles(fullPath)));
+      } else if (entry.name.endsWith('.jsonl')) {
+        results.push(fullPath);
+      }
+    }
+  } catch {
+    // Directory doesn't exist
+  }
+  return results;
+}
+
+/**
+ * Discover all known project cwds from ~/.claude/projects/ and ~/.codex/sessions/
  */
 async function discoverProjectCwds(): Promise<string[]> {
   const now = Date.now();
@@ -110,20 +172,37 @@ async function discoverProjectCwds(): Promise<string[]> {
     return _projectCwdCache;
   }
 
+  const cwdSet = new Set<string>();
+
+  // 1. CC projects: ~/.claude/projects/<hash>/<file>.jsonl → extract cwd
   const projectsDir = join(CLAUDE_DIR, 'projects');
   try {
     const entries = await readdir(projectsDir, { withFileTypes: true });
     const dirs = entries.filter((e) => e.isDirectory()).map((e) => join(projectsDir, e.name));
-
-    const cwds = await Promise.all(dirs.map((d) => extractCwdFromProject(d)));
-    const uniqueCwds = [...new Set(cwds.filter((c): c is string => c !== null))];
-
-    _projectCwdCache = uniqueCwds;
-    _projectCwdCacheTime = now;
-    return uniqueCwds;
+    const ccCwds = await Promise.all(dirs.map((d) => extractCwdFromProject(d)));
+    for (const cwd of ccCwds) {
+      if (cwd) cwdSet.add(cwd);
+    }
   } catch {
-    return [];
+    // No CC projects
   }
+
+  // 2. Codex sessions: ~/.codex/sessions/**/*.jsonl → extract payload.cwd
+  const codexSessionsDir = join(CODEX_DIR, 'sessions');
+  try {
+    const jsonlFiles = await findJsonlFiles(codexSessionsDir);
+    const cxCwds = await Promise.all(jsonlFiles.map((f) => extractCwdFromCodexSession(f)));
+    for (const cwd of cxCwds) {
+      if (cwd) cwdSet.add(cwd);
+    }
+  } catch {
+    // No Codex sessions
+  }
+
+  const uniqueCwds = [...cwdSet];
+  _projectCwdCache = uniqueCwds;
+  _projectCwdCacheTime = now;
+  return uniqueCwds;
 }
 
 export function createConfigHandlers() {
@@ -189,7 +268,10 @@ export function createConfigHandlers() {
 
         // Project-level scanning (skills only)
         if (type === 'skills') {
-          // Auto-discover project cwds from ~/.claude/projects/ + merge explicit projectPaths
+          // System-level dirs to skip (avoid double-counting)
+          const systemDirSet = new Set(mapping.paths.map((p) => resolve(p)));
+
+          // Auto-discover project cwds from ~/.claude/projects/ + ~/.codex/sessions/ + explicit
           const discoveredCwds = await discoverProjectCwds();
           const allProjectPaths = [...new Set([...discoveredCwds, ...projectPaths])];
           for (const projectPath of allProjectPaths) {
@@ -199,10 +281,14 @@ export function createConfigHandlers() {
               { dir: join(projectPath, 'skills'), source: 'codex' },
             ];
             for (const { dir: dirPath, source } of projectSkillDirs) {
+              // Skip if overlaps with system-level path
+              if (systemDirSet.has(resolve(dirPath))) continue;
               try {
                 const entries = await readdir(dirPath, { withFileTypes: true });
                 for (const entry of entries) {
                   if (EXCLUDED_FILES.has(entry.name)) continue;
+                  // Skills must be directories (containing SKILL.md), skip loose files
+                  if (!entry.isDirectory()) continue;
                   const entryPath = join(dirPath, entry.name);
                   try {
                     const entryStat = await stat(entryPath);
