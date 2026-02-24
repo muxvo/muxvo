@@ -12,6 +12,23 @@ export interface SkillItem {
   path: string;
   source?: string;
   level?: 'system' | 'project';
+  projectName?: string;
+}
+
+/**
+ * Extract project directory name from a project-level skill path.
+ * e.g. /Users/rl/.../douban/.codex/skills/test-skill → "douban"
+ *      /Users/rl/.../douban/skills/test-skill → "douban"
+ */
+function extractProjectName(skillPath: string): string {
+  // Match: .../<projectName>/.claude/skills/ or .../<projectName>/.codex/skills/ or .../<projectName>/skills/
+  const match = skillPath.match(/\/([^/]+)\/(?:\.claude|\.codex|skills)\//);
+  if (match) {
+    // If matched "skills", we need the parent of "skills"
+    const prefix = skillPath.substring(0, skillPath.indexOf('/skills/'));
+    return prefix.split('/').pop() || match[1];
+  }
+  return '';
 }
 
 interface UseSkillsResult {
@@ -74,11 +91,12 @@ export function useSkills(): UseSkillsResult {
       const items: SkillItem[] = settled.map((result, i) => {
         const resource = resources[i];
         const level = (resource.level as 'system' | 'project') || 'system';
+        const projectName = level === 'project' ? extractProjectName(resource.path) : undefined;
         if (result.status === 'fulfilled') {
           const desc = parseFrontmatterDescription(result.value.content);
-          return { name: resource.name, desc: desc || resource.name, path: resource.path, source: resource.source, level };
+          return { name: resource.name, desc: desc || resource.name, path: resource.path, source: resource.source, level, projectName };
         }
-        return { name: resource.name, desc: resource.name, path: resource.path, source: resource.source, level };
+        return { name: resource.name, desc: resource.name, path: resource.path, source: resource.source, level, projectName };
       });
 
       items.sort((a, b) => a.name.localeCompare(b.name));
