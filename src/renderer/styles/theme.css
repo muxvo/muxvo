@@ -103,6 +103,9 @@ body,
   --border-focus: #c87d1a55;
   --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.08);
   --shadow-dialog: 0 8px 32px rgba(0, 0, 0, 0.12);
+
+  --code-bg: rgba(200, 125, 26, 0.1);
+  --code-fg: #9a5b13;
 }
 
 [data-theme="light"] ::-webkit-scrollbar-thumb {
