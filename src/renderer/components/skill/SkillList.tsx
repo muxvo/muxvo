@@ -71,6 +71,9 @@ export function SkillList({ skills, loading, selectedPath, onSelect }: SkillList
                     {skill.source === 'codex' ? 'CX' : 'CC'}
                   </span>
                 )}
+                {skill.level === 'project' && (
+                  <span className="skill-list__level-badge skill-list__level-badge--project">P</span>
+                )}
               </div>
               <span className="skill-list__item-desc">{skill.desc}</span>
             </div>

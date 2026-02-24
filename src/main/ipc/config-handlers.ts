@@ -62,15 +62,18 @@ export function createConfigHandlers() {
   return {
     /**
      * P0: Scan ~/.claude/ for resources of specified types
+     * When projectPaths provided, also scan <projectPath>/.claude/skills/ and <projectPath>/.codex/skills/
      */
-    async getResources(params?: { types?: ResourceType[] }): Promise<{ resources: Resource[] }> {
+    async getResources(params?: { types?: ResourceType[]; projectPaths?: string[] }): Promise<{ resources: Resource[] }> {
       const types = params?.types || (Object.keys(RESOURCE_TYPE_MAP) as ResourceType[]);
+      const projectPaths = params?.projectPaths || [];
       const resources: Resource[] = [];
 
       for (const type of types) {
         const mapping = RESOURCE_TYPE_MAP[type];
         if (!mapping) continue;
 
+        // System-level scanning
         for (const dirPath of mapping.paths) {
           const source = sourceFromPath(dirPath);
 
@@ -84,6 +87,7 @@ export function createConfigHandlers() {
                 path: dirPath,
                 updatedAt: fileStat.mtime.toISOString(),
                 source,
+                level: 'system',
               });
             } catch {
               // File doesn't exist, skip
@@ -103,6 +107,7 @@ export function createConfigHandlers() {
                     path: entryPath,
                     updatedAt: entryStat.mtime.toISOString(),
                     source,
+                    level: 'system',
                   });
                 } catch {
                   // Skip entries we can't stat
@@ -110,6 +115,40 @@ export function createConfigHandlers() {
               }
             } catch {
               // Directory doesn't exist, skip
+            }
+          }
+        }
+
+        // Project-level scanning (skills only)
+        if (type === 'skills' && projectPaths.length > 0) {
+          for (const projectPath of projectPaths) {
+            const projectSkillDirs = [
+              { dir: join(projectPath, '.claude', 'skills'), source: 'claude' },
+              { dir: join(projectPath, '.codex', 'skills'), source: 'codex' },
+            ];
+            for (const { dir: dirPath, source } of projectSkillDirs) {
+              try {
+                const entries = await readdir(dirPath, { withFileTypes: true });
+                for (const entry of entries) {
+                  if (EXCLUDED_FILES.has(entry.name)) continue;
+                  const entryPath = join(dirPath, entry.name);
+                  try {
+                    const entryStat = await stat(entryPath);
+                    resources.push({
+                      name: entry.name,
+                      type,
+                      path: entryPath,
+                      updatedAt: entryStat.mtime.toISOString(),
+                      source,
+                      level: 'project',
+                    });
+                  } catch {
+                    // Skip entries we can't stat
+                  }
+                }
+              } catch {
+                // Directory doesn't exist, skip
+              }
             }
           }
         }
@@ -124,8 +163,10 @@ export function createConfigHandlers() {
     async getResourceContent(params: { path: string }): Promise<{ content: string; format: string }> {
       const resolvedPath = resolve(params.path);
 
-      // Security: ensure path is within allowed config directories
-      if (!ALLOWED_CONFIG_DIRS.some(dir => resolvedPath.startsWith(dir))) {
+      // Security: ensure path is within allowed config directories or project-level skill dirs
+      const inAllowedDir = ALLOWED_CONFIG_DIRS.some(dir => resolvedPath.startsWith(dir));
+      const inProjectSkillDir = /\/\.(claude|codex)\/skills\//.test(resolvedPath);
+      if (!inAllowedDir && !inProjectSkillDir) {
         throw new Error(`Access denied: path must be within allowed directories`);
       }
 
@@ -236,7 +277,7 @@ export const configHandlers = createConfigHandlers();
 export function registerConfigHandlers(): void {
   const handlers = createConfigHandlers();
 
-  ipcMain.handle(IPC_CHANNELS.CONFIG.GET_RESOURCES, async (_event, params?: { types?: ResourceType[] }) => {
+  ipcMain.handle(IPC_CHANNELS.CONFIG.GET_RESOURCES, async (_event, params?: { types?: ResourceType[]; projectPaths?: string[] }) => {
     return handlers.getResources(params);
   });
 

@@ -24,6 +24,8 @@ export interface Resource {
   updatedAt?: string;
   /** 来源工具（'claude' | 'codex'），可选 */
   source?: string;
+  /** 级别（'system' | 'project'），可选 */
+  level?: 'system' | 'project';
 }
 
 /** config:get-settings 返回的 CC settings.json 配置 */
