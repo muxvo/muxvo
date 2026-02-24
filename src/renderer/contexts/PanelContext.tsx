@@ -15,6 +15,7 @@ export interface PanelState {
   mcpPanel: { open: boolean };
   hooksPanel: { open: boolean };
   menuDropdown: { open: boolean; type: 'mcp' | null };
+  tour: { active: boolean };
 }
 
 const initialState: PanelState = {
@@ -25,6 +26,7 @@ const initialState: PanelState = {
   mcpPanel: { open: false },
   hooksPanel: { open: false },
   menuDropdown: { open: false, type: null },
+  tour: { active: false },
 };
 
 // ── Actions ──
@@ -43,6 +45,8 @@ type PanelAction =
   | { type: 'OPEN_HOOKS_PANEL' }
   | { type: 'CLOSE_HOOKS_PANEL' }
   | { type: 'TOGGLE_MENU_DROPDOWN'; dropdownType: 'mcp' }
+  | { type: 'START_TOUR' }
+  | { type: 'COMPLETE_TOUR' }
   | { type: 'CLOSE_ALL' };
 
 // ── Reducer ──
@@ -119,6 +123,10 @@ function panelReducer(state: PanelState, action: PanelAction): PanelState {
           : { open: true, type: action.dropdownType },
       };
     }
+    case 'START_TOUR':
+      return { ...initialState, tour: { active: true } };
+    case 'COMPLETE_TOUR':
+      return { ...state, tour: { active: false } };
     case 'CLOSE_ALL':
       return { ...initialState };
     default:

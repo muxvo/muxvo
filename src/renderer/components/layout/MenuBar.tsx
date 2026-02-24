@@ -125,6 +125,14 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0
       )}
 
       <button
+        className="menu-bar__help-btn"
+        onClick={() => dispatch({ type: 'START_TOUR' })}
+        title={t('tour.startTour')}
+      >
+        ?
+      </button>
+
+      <button
         className="menu-bar__lang-btn"
         onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')}
       >
