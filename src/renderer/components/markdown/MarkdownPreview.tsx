@@ -6,8 +6,8 @@
 
 import React from 'react';
 import { getMarkdownRenderer } from '@/renderer/features/file-viewer/markdown';
-import 'highlight.js/styles/vs2015.css';
 import './MarkdownPreview.css';
+import './MarkdownPreviewHighlight.css';
 
 interface MarkdownPreviewProps {
   content: string;
