@@ -29107,9 +29107,17 @@ function LoadMoreSentinel({ onVisible }) {
   }, [cb]);
   return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { ref, style: { height: 1 } });
 }
-function SessionList({ sessions, selectedId, onSelect, sortMode = "time", onSortChange, onSessionContextMenu }) {
+function SessionList({ sessions, selectedId, onSelect, onSessionContextMenu, projects, showProjectName }) {
   const { t } = useI18n();
   const [visibleCount, setVisibleCount] = reactExports.useState(PAGE_SIZE);
+  const projectNameMap = reactExports.useMemo(() => {
+    if (!showProjectName || !projects) return null;
+    const map3 = /* @__PURE__ */ new Map();
+    for (const p of projects) {
+      map3.set(p.projectHash, p.displayName);
+    }
+    return map3;
+  }, [showProjectName, projects]);
   const sessionKey = reactExports.useMemo(() => sessions.map((s16) => s16.sessionId).join(","), [sessions]);
   reactExports.useMemo(() => {
     setVisibleCount(PAGE_SIZE);
@@ -29121,52 +29129,12 @@ function SessionList({ sessions, selectedId, onSelect, sortMode = "time", onSort
   const hasMore = sortedSessions.length > visibleCount;
   if (sortedSessions.length === 0) {
     return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "session-list", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "session-list__header", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t("chat.sessions") }),
-        onSortChange && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "session-list__sort", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "button",
-            {
-              className: `session-list__sort-btn ${sortMode === "time" ? "session-list__sort-btn--active" : ""}`,
-              onClick: () => onSortChange("time"),
-              children: t("chat.time")
-            }
-          ),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "button",
-            {
-              className: `session-list__sort-btn ${sortMode === "project" ? "session-list__sort-btn--active" : ""}`,
-              onClick: () => onSortChange("project"),
-              children: t("chat.project")
-            }
-          )
-        ] })
-      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "session-list__header", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t("chat.sessions") }) }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "session-list__empty", children: t("chat.noSessions") })
     ] });
   }
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "session-list", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "session-list__header", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t("chat.sessionsCount", { count: sortedSessions.length }) }),
-      onSortChange && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "session-list__sort", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "button",
-          {
-            className: `session-list__sort-btn ${sortMode === "time" ? "session-list__sort-btn--active" : ""}`,
-            onClick: () => onSortChange("time"),
-            children: t("chat.time")
-          }
-        ),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "button",
-          {
-            className: `session-list__sort-btn ${sortMode === "project" ? "session-list__sort-btn--active" : ""}`,
-            onClick: () => onSortChange("project"),
-            children: t("chat.project")
-          }
-        )
-      ] })
-    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "session-list__header", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t("chat.sessionsCount", { count: sortedSessions.length }) }) }),
     visibleSessions.map((session) => {
       const title = session.title.slice(0, 50);
       const preview = session.title.slice(0, 100);
@@ -29192,6 +29160,7 @@ function SessionList({ sessions, selectedId, onSelect, sortMode = "time", onSort
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "session-card__tags", children: [
                 session.source === "codex" && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "session-card__source-badge session-card__source-badge--cx", children: "CX" }),
                 session.source === "claude-code" && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "session-card__source-badge session-card__source-badge--cc", children: "CC" }),
+                projectNameMap && session.projectHash && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "session-card__project-badge", children: projectNameMap.get(session.projectHash) || "" }),
                 tags.map((tag) => /* @__PURE__ */ jsxRuntimeExports.jsx(
                   "span",
                   {
@@ -89656,10 +89625,17 @@ function ToolResultBlock({ content }) {
     }
   );
 }
+function ImageBlock({ source: source2 }) {
+  if (!source2?.data) return null;
+  const src = `data:${source2.media_type || "image/png"};base64,${source2.data}`;
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "image-block", children: /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src, alt: "", className: "image-block__img", loading: "lazy" }) });
+}
 function renderContentBlock(block2, index2) {
   switch (block2.type) {
     case "text":
       return /* @__PURE__ */ jsxRuntimeExports.jsx(MarkdownPreview, { content: block2.text || "" }, index2);
+    case "image":
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(ImageBlock, { source: block2.source }, index2);
     case "tool_use":
       return /* @__PURE__ */ jsxRuntimeExports.jsx(ToolCallBlock, { name: block2.name, input: block2.input }, index2);
     case "tool_result":
@@ -89675,7 +89651,7 @@ const MessageBubble = React4.memo(function MessageBubble2({ message }) {
   const bubbleClass = isUser ? "message-bubble--user" : isSystem ? "message-bubble--system" : "message-bubble--assistant";
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `message-bubble ${bubbleClass}`, children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "message-bubble__label", children: isUser ? t("chat.you") : isSystem ? t("chat.system") : message.uuid.startsWith("codex-") ? "CODEX" : t("chat.claude") }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "message-bubble__content", children: isUser || isSystem ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "message-bubble__text", children: message.content }) : Array.isArray(message.content) ? message.content.map((block2, i8) => renderContentBlock(block2, i8)) : /* @__PURE__ */ jsxRuntimeExports.jsx(MarkdownPreview, { content: String(message.content) }) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "message-bubble__content", children: Array.isArray(message.content) ? message.content.map((block2, i8) => renderContentBlock(block2, i8)) : isUser || isSystem ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "message-bubble__text", children: message.content }) : /* @__PURE__ */ jsxRuntimeExports.jsx(MarkdownPreview, { content: String(message.content) }) }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "message-bubble__meta", children: new Date(message.timestamp).toLocaleTimeString() })
   ] });
 });
@@ -89807,7 +89783,6 @@ function ChatHistoryPanel() {
   const [selectedSessionId, setSelectedSessionId] = reactExports.useState(null);
   const [messages, setMessages] = reactExports.useState([]);
   const [loading, setLoading] = reactExports.useState(false);
-  const [sortMode, setSortMode] = reactExports.useState("time");
   const [projectsLoading, setProjectsLoading] = reactExports.useState(true);
   const [sessionsLoading, setSessionsLoading] = reactExports.useState(true);
   const [bannerDismissed, setBannerDismissed] = reactExports.useState(
@@ -89918,9 +89893,9 @@ function ChatHistoryPanel() {
           sessions,
           selectedId: selectedSessionId,
           onSelect: setSelectedSessionId,
-          sortMode,
-          onSortChange: setSortMode,
-          onSessionContextMenu: handleSessionContextMenu
+          onSessionContextMenu: handleSessionContextMenu,
+          projects,
+          showProjectName: selectedProjectHash === null
         }
       ) }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "chat-history-panel__right", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
