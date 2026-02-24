@@ -234,6 +234,8 @@ export function ChatHistoryPanel() {
             sortMode={sortMode}
             onSortChange={setSortMode}
             onSessionContextMenu={handleSessionContextMenu}
+            projects={projects}
+            showProjectName={selectedProjectHash === null}
           />
         )}
       </div>

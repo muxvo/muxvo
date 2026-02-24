@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import type { SessionSummary } from '@/shared/types/chat.types';
+import type { SessionSummary, ProjectInfo } from '@/shared/types/chat.types';
 import type { SortMode } from './ChatHistoryPanel';
 import { useI18n } from '@/renderer/i18n';
 import './SessionList.css';
@@ -23,6 +23,8 @@ interface SessionListProps {
   sortMode?: SortMode;
   onSortChange?: (mode: SortMode) => void;
   onSessionContextMenu?: (session: SessionSummary, x: number, y: number) => void;
+  projects?: ProjectInfo[];
+  showProjectName?: boolean;
 }
 
 /**
@@ -104,9 +106,19 @@ function LoadMoreSentinel({ onVisible }: { onVisible: () => void }) {
   return <div ref={ref} style={{ height: 1 }} />;
 }
 
-export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time', onSortChange, onSessionContextMenu }: SessionListProps) {
+export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time', onSortChange, onSessionContextMenu, projects, showProjectName }: SessionListProps) {
   const { t } = useI18n();
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  // Build projectHash → displayName lookup for "all projects" view
+  const projectNameMap = useMemo(() => {
+    if (!showProjectName || !projects) return null;
+    const map = new Map<string, string>();
+    for (const p of projects) {
+      map.set(p.projectHash, p.displayName);
+    }
+    return map;
+  }, [showProjectName, projects]);
 
   // Reset visible count when sessions change (e.g. project filter)
   const sessionKey = useMemo(() => sessions.map(s => s.sessionId).join(','), [sessions]);
@@ -194,6 +206,11 @@ export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time',
                 )}
                 {session.source === 'claude-code' && (
                   <span className="session-card__source-badge session-card__source-badge--cc">CC</span>
+                )}
+                {projectNameMap && session.projectHash && (
+                  <span className="session-card__project-badge">
+                    {projectNameMap.get(session.projectHash) || ''}
+                  </span>
                 )}
                 {tags.map((tag) => (
                   <span
