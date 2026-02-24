@@ -18,16 +18,16 @@ export interface SkillItem {
 /**
  * Extract project directory name from a project-level skill path.
  * e.g. /Users/rl/.../douban/.codex/skills/test-skill → "douban"
+ *      /Users/rl/.../fufuiyouhua/.claude/skills/test-skill → "fufuiyouhua"
  *      /Users/rl/.../douban/skills/test-skill → "douban"
  */
 function extractProjectName(skillPath: string): string {
-  // Match: .../<projectName>/.claude/skills/ or .../<projectName>/.codex/skills/ or .../<projectName>/skills/
-  const match = skillPath.match(/\/([^/]+)\/(?:\.claude|\.codex|skills)\//);
-  if (match) {
-    // If matched "skills", we need the parent of "skills"
-    const prefix = skillPath.substring(0, skillPath.indexOf('/skills/'));
-    return prefix.split('/').pop() || match[1];
-  }
+  // Match: .../<projectName>/.claude/skills/ or .../<projectName>/.codex/skills/
+  const dotMatch = skillPath.match(/\/([^/]+)\/\.(?:claude|codex)\/skills\//);
+  if (dotMatch) return dotMatch[1];
+  // Match: .../<projectName>/skills/ (bare Codex layout)
+  const bareMatch = skillPath.match(/\/([^/]+)\/skills\//);
+  if (bareMatch) return bareMatch[1];
   return '';
 }
 
