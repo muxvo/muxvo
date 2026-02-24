@@ -103,6 +103,7 @@ export const zh = {
   'hooks.configPath': '配置路径',
   'hooks.readOnlyHint': '此 Hook 来自项目配置，仅可在对应配置文件中修改。',
   // Tour
+  'theme.toggle': '切换主题',
   'tour.startTour': '功能导览',
   'tour.next': '下一步',
   'tour.prev': '上一步',

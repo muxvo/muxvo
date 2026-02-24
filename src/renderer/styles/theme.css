@@ -79,3 +79,35 @@ body,
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
+
+/* === Light Theme === */
+[data-theme="light"] {
+  --bg-deep: #e8e8ec;
+  --bg-primary: #f0f0f3;
+  --bg-card: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-hover: #e5e5ea;
+  --bg-input: #ffffff;
+  --bg-grid-gap: #d1d1d6;
+
+  --text-primary: #1c1c1e;
+  --text-secondary: #636366;
+  --text-muted: #aeaeb2;
+
+  --accent: #c87d1a;
+  --accent-hover: #a56610;
+  --accent-muted: #c87d1a30;
+  --accent-glow: #c87d1a20;
+
+  --border: #d1d1d6;
+  --border-focus: #c87d1a55;
+  --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-dialog: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #c7c7cc;
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: #aeaeb2;
+}
