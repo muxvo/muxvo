@@ -1,0 +1,508 @@
+/* OnboardingModal — First-run wizard styles */
+
+/* ========== Modal Container ========== */
+
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.onboarding-modal {
+  width: 520px;
+  max-height: 80vh;
+  background: var(--bg-card, #1e2430);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  animation: onboardFadeIn 0.3s ease;
+  overflow-y: auto;
+}
+
+/* ========== Progress Indicator ========== */
+
+.onboarding-progress {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.onboarding-progress-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.onboarding-progress-dot.active {
+  background: var(--accent, #e8a748);
+  box-shadow: 0 0 8px rgba(232, 167, 72, 0.4);
+  transform: scale(1.25);
+}
+
+.onboarding-progress-dot.completed {
+  background: var(--accent, #e8a748);
+  opacity: 0.6;
+}
+
+/* ========== Content Area ========== */
+
+.onboarding-content {
+  min-height: 280px;
+  padding: 8px 0;
+}
+
+.onboarding-content-inner {
+  animation: onboardContentFade 0.3s ease;
+}
+
+/* ========== Footer / Buttons ========== */
+
+.onboarding-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+}
+
+.onboarding-footer-right {
+  display: flex;
+  gap: 8px;
+}
+
+.onboarding-btn-skip {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: color 0.2s;
+}
+
+.onboarding-btn-skip:hover {
+  color: var(--text-primary);
+}
+
+.onboarding-btn-prev {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.onboarding-btn-prev:hover {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+.onboarding-btn-next {
+  background: var(--accent, #e8a748);
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 20px;
+  border-radius: 8px;
+  transition: filter 0.2s;
+}
+
+.onboarding-btn-next:hover {
+  filter: brightness(1.05);
+}
+
+.onboarding-btn-done {
+  background: var(--accent, #e8a748);
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 16px rgba(232, 167, 72, 0.3);
+  transition: filter 0.2s;
+}
+
+.onboarding-btn-done:hover {
+  filter: brightness(1.05);
+}
+
+/* ========== Step 1: Welcome ========== */
+
+.welcome-step {
+  text-align: center;
+  padding: 16px 0;
+}
+
+.welcome-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.welcome-desc {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+.welcome-features {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+  padding: 0 20px;
+}
+
+.welcome-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.welcome-feature-icon {
+  color: var(--accent);
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+/* ========== Step 2: CLI Detection ========== */
+
+.cli-step {
+  padding: 8px 0;
+}
+
+.cli-step-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.cli-step-desc {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.cli-tool-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cli-tool-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg-elevated);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.cli-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.cli-status-dot.installed {
+  background: var(--success, #4ade80);
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.4);
+}
+
+.cli-tool-name {
+  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.cli-tool-status {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.cli-tool-path {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  margin-left: 8px;
+}
+
+.cli-detecting-spinner {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--text-secondary);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: onboardSpin 0.8s linear infinite;
+}
+
+.cli-none-hint {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-top: 16px;
+  text-align: center;
+}
+
+/* ========== Step 3: Create Terminal ========== */
+
+.terminal-step {
+  text-align: center;
+  padding: 16px 0;
+}
+
+.terminal-step-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.terminal-step-desc {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-bottom: 24px;
+}
+
+.terminal-select-btn {
+  display: inline-block;
+  padding: 12px 32px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: filter 0.2s;
+}
+
+.terminal-select-btn:hover {
+  filter: brightness(1.1);
+}
+
+.terminal-or-text {
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin: 16px 0 8px;
+}
+
+.terminal-quick-label {
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.terminal-quick-paths {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.terminal-quick-path-btn {
+  padding: 6px 16px;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--font-mono);
+  transition: border-color 0.2s;
+}
+
+.terminal-quick-path-btn:hover {
+  border-color: var(--accent);
+}
+
+.terminal-created-msg {
+  margin-top: 20px;
+  padding: 12px 16px;
+  background: rgba(74, 222, 128, 0.1);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+  border-radius: 8px;
+  color: var(--success, #4ade80);
+  font-size: 14px;
+}
+
+.terminal-created-path {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* ========== Step 4: Feature Tour ========== */
+
+.tour-step {
+  padding: 8px 0;
+}
+
+.tour-step-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.tour-step-desc {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.tour-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.tour-card {
+  padding: 16px;
+  background: var(--bg-elevated);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  transition: border-color 0.2s;
+}
+
+.tour-card:hover {
+  border-color: var(--accent);
+}
+
+/* Center the last card if odd count */
+.tour-card:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  max-width: calc(50% - 6px);
+  justify-self: center;
+}
+
+.tour-card-icon {
+  font-size: 20px;
+  margin-bottom: 8px;
+  color: var(--accent);
+}
+
+.tour-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.tour-card-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ========== Step 5: Shortcuts ========== */
+
+.shortcuts-step {
+  padding: 8px 0;
+}
+
+.shortcuts-step-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.shortcuts-step-desc {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.shortcut-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shortcut-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  background: var(--bg-elevated);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.shortcut-key {
+  background: var(--bg-deep);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  min-width: 100px;
+  text-align: center;
+  color: var(--accent);
+}
+
+.shortcut-arrow {
+  color: var(--text-secondary);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.shortcut-desc {
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+/* ========== Keyframes ========== */
+
+@keyframes onboardFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes onboardContentFade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes onboardSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

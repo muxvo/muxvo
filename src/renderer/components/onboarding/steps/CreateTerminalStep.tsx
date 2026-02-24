@@ -2,8 +2,6 @@
  * CreateTerminalStep -- Lets the user pick a working directory and create a terminal.
  */
 
-import { useState, useEffect } from 'react';
-
 interface CreateTerminalStepProps {
   t: (...args: any[]) => string;
   onSelectDirectory: () => void;
@@ -19,11 +17,7 @@ export function CreateTerminalStep({
   terminalCreated,
   selectedDir,
 }: CreateTerminalStepProps): JSX.Element {
-  const [homePath, setHomePath] = useState<string>('~');
-
-  useEffect(() => {
-    window.api.app.getHomePath().then((p: string) => setHomePath(p));
-  }, []);
+  const homePath = window.api.app.getHomePath();
 
   const quickPaths = [
     { label: 'Home (~)', path: homePath },

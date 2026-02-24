@@ -1334,13 +1334,16 @@ async function savePreferences(_prefs) {
 }
 const SCANNED_TOOLS = ["claude", "codex", "gemini"];
 async function detectCliTools() {
-  const detectedTools = [];
+  const tools = [];
   for (const tool of SCANNED_TOOLS) {
+    try {
+      const toolPath = child_process.execSync(`which ${tool}`, { encoding: "utf-8" }).trim();
+      tools.push({ name: tool, path: toolPath, installed: true });
+    } catch {
+      tools.push({ name: tool, installed: false });
+    }
   }
-  return {
-    detectedTools,
-    scannedTools: SCANNED_TOOLS
-  };
+  return { tools };
 }
 function registerAppHandlers() {
   electron.ipcMain.handle(IPC_CHANNELS.APP.GET_PREFERENCES, async () => {
@@ -1351,11 +1354,10 @@ function registerAppHandlers() {
   });
   electron.ipcMain.handle(IPC_CHANNELS.APP.DETECT_CLI_TOOLS, async () => {
     const result = await detectCliTools();
-    const detected = result.detectedTools.map((t) => t.name);
     return {
-      claude: detected.includes("claude"),
-      codex: detected.includes("codex"),
-      gemini: detected.includes("gemini")
+      claude: result.tools.some((t) => t.name === "claude" && t.installed),
+      codex: result.tools.some((t) => t.name === "codex" && t.installed),
+      gemini: result.tools.some((t) => t.name === "gemini" && t.installed)
     };
   });
 }
@@ -2301,6 +2303,7 @@ const DEFAULT_CONFIG = {
     cursorStyle: "block",
     cursorBlink: true
   },
+  onboardingCompleted: false,
   ftvLeftWidth: 250,
   ftvRightWidth: 300
 };
