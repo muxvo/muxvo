@@ -78,9 +78,16 @@ export function useSkills(): UseSkillsResult {
     try {
       const { resources } = await window.api.config.getResources('skills');
 
-      // Batch-read all SKILL.md files in parallel
+      // Batch-read skill content in parallel
+      // Supports both directory skills (path/SKILL.md) and standalone .md files (path itself)
       const settled = await Promise.allSettled(
         resources.map(async (r: { name: string; path: string; source?: string; level?: string }) => {
+          if (r.path.endsWith('.md')) {
+            // Standalone .md file skill
+            const { content } = await window.api.config.getResourceContent(r.path);
+            return { resource: r, content };
+          }
+          // Directory skill: read SKILL.md inside
           const { content } = await window.api.config.getResourceContent(r.path + '/SKILL.md');
           return { resource: r, content };
         }),
