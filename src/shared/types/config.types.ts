@@ -36,10 +36,15 @@ export interface CCSettings {
 /** config:get-claude-md 的 scope 参数 */
 export type ClaudeMdScope = 'global' | 'project';
 
+/** 上下文 MD 文件的工具来源 */
+export type ContextMdTool = 'claude' | 'gemini';
+
 /** config:get-claude-md 请求参数 */
 export interface ClaudeMdRequest {
   scope: ClaudeMdScope;
   projectPath?: string;
+  /** 工具来源，默认 'claude'（读 CLAUDE.md），'gemini' 读 GEMINI.md */
+  tool?: ContextMdTool;
 }
 
 /** config:resource-change 事件数据（M->R 推送） */

@@ -12,17 +12,18 @@ import { readdir, readFile, writeFile, rename, stat, mkdir, open } from 'fs/prom
 import { createReadStream } from 'fs';
 import { createInterface } from 'readline';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
-import type { ResourceType, Resource, ClaudeMdScope } from '@/shared/types/config.types';
+import type { ResourceType, Resource, ClaudeMdScope, ContextMdTool } from '@/shared/types/config.types';
 
 const CLAUDE_DIR = join(homedir(), '.claude');
 const CODEX_DIR = join(homedir(), '.codex');
+const GEMINI_DIR = join(homedir(), '.gemini');
 
 /** Allowed config directories for resource content access */
-const ALLOWED_CONFIG_DIRS = [CLAUDE_DIR, CODEX_DIR];
+const ALLOWED_CONFIG_DIRS = [CLAUDE_DIR, CODEX_DIR, GEMINI_DIR];
 
 /** ResourceType → directory/file mapping (supports multiple paths per type) */
 const RESOURCE_TYPE_MAP: Record<ResourceType, { paths: string[]; isFile: boolean }> = {
-  skills: { paths: [join(CLAUDE_DIR, 'skills'), join(CODEX_DIR, 'skills')], isFile: false },
+  skills: { paths: [join(CLAUDE_DIR, 'skills'), join(CODEX_DIR, 'skills'), join(GEMINI_DIR, 'skills')], isFile: false },
   hooks: { paths: [join(CLAUDE_DIR, 'hooks')], isFile: false },
   plans: { paths: [join(CLAUDE_DIR, 'plans')], isFile: false },
   tasks: { paths: [join(CLAUDE_DIR, 'tasks')], isFile: false },
@@ -33,6 +34,7 @@ const RESOURCE_TYPE_MAP: Record<ResourceType, { paths: string[]; isFile: boolean
 /** Derive source tool from directory path */
 function sourceFromPath(dirPath: string): string {
   if (dirPath.startsWith(CODEX_DIR)) return 'codex';
+  if (dirPath.startsWith(GEMINI_DIR)) return 'gemini';
   return 'claude';
 }
 
@@ -164,7 +166,35 @@ async function findJsonlFiles(dir: string): Promise<string[]> {
 }
 
 /**
- * Discover all known project cwds from ~/.claude/projects/ and ~/.codex/sessions/
+ * Extract cwd from a Gemini project temp directory.
+ * Tries logs.json and other metadata files for cwd/projectRoot fields.
+ */
+async function extractCwdFromGeminiProject(projectDir: string): Promise<string | null> {
+  // Try logs.json
+  const logsPath = join(projectDir, 'logs.json');
+  try {
+    const raw = await readFile(logsPath, 'utf-8');
+    const data = JSON.parse(raw);
+    if (typeof data === 'object' && data !== null) {
+      if (data.cwd) return data.cwd;
+      if (data.projectRoot) return data.projectRoot;
+    }
+    if (Array.isArray(data)) {
+      for (const entry of data.slice(0, 20)) {
+        if (typeof entry === 'object' && entry !== null) {
+          if (entry.cwd) return entry.cwd;
+          if (entry.projectRoot) return entry.projectRoot;
+        }
+      }
+    }
+  } catch {
+    // not found
+  }
+  return null;
+}
+
+/**
+ * Discover all known project cwds from ~/.claude/projects/, ~/.codex/sessions/, and ~/.gemini/tmp/
  */
 async function discoverProjectCwds(): Promise<string[]> {
   const now = Date.now();
@@ -197,6 +227,19 @@ async function discoverProjectCwds(): Promise<string[]> {
     }
   } catch {
     // No Codex sessions
+  }
+
+  // 3. Gemini sessions: ~/.gemini/tmp/<hash>/ → extract cwd from logs.json
+  const geminiTmpDir = join(GEMINI_DIR, 'tmp');
+  try {
+    const entries = await readdir(geminiTmpDir, { withFileTypes: true });
+    const dirs = entries.filter((e) => e.isDirectory()).map((e) => join(geminiTmpDir, e.name));
+    const gmCwds = await Promise.all(dirs.map((d) => extractCwdFromGeminiProject(d)));
+    for (const cwd of gmCwds) {
+      if (cwd) cwdSet.add(cwd);
+    }
+  } catch {
+    // No Gemini sessions
   }
 
   const uniqueCwds = [...cwdSet];
@@ -278,6 +321,7 @@ export function createConfigHandlers() {
             const projectSkillDirs = [
               { dir: join(projectPath, '.claude', 'skills'), source: 'claude' },
               { dir: join(projectPath, '.codex', 'skills'), source: 'codex' },
+              { dir: join(projectPath, '.gemini', 'skills'), source: 'gemini' },
               { dir: join(projectPath, 'skills'), source: 'codex' },
             ];
             for (const { dir: dirPath, source } of projectSkillDirs) {
@@ -323,7 +367,7 @@ export function createConfigHandlers() {
 
       // Security: ensure path is within allowed config directories or project-level skill dirs
       const inAllowedDir = ALLOWED_CONFIG_DIRS.some(dir => resolvedPath.startsWith(dir));
-      const inProjectSkillDir = /\/\.(claude|codex)\/skills\//.test(resolvedPath) || /\/skills\/[^/]+\/SKILL\.md$/.test(resolvedPath);
+      const inProjectSkillDir = /\/\.(claude|codex|gemini)\/skills\//.test(resolvedPath) || /\/skills\/[^/]+\/SKILL\.md$/.test(resolvedPath);
       if (!inAllowedDir && !inProjectSkillDir) {
         throw new Error(`Access denied: path must be within allowed directories`);
       }
@@ -347,17 +391,22 @@ export function createConfigHandlers() {
     },
 
     /**
-     * P0: Read global or project CLAUDE.md
+     * P0: Read global or project CLAUDE.md / GEMINI.md
+     * tool defaults to 'claude' (reads CLAUDE.md); 'gemini' reads GEMINI.md
      */
-    async getClaudeMd(params: { scope: ClaudeMdScope; projectPath?: string }): Promise<{ content: string }> {
+    async getClaudeMd(params: { scope: ClaudeMdScope; projectPath?: string; tool?: ContextMdTool }): Promise<{ content: string }> {
+      const tool = params.tool || 'claude';
+      const fileName = tool === 'gemini' ? 'GEMINI.md' : 'CLAUDE.md';
+      const baseDir = tool === 'gemini' ? GEMINI_DIR : CLAUDE_DIR;
+
       let filePath: string;
       if (params.scope === 'global') {
-        filePath = join(CLAUDE_DIR, 'CLAUDE.md');
+        filePath = join(baseDir, fileName);
       } else {
         if (!params.projectPath) {
           throw new Error('projectPath is required for project scope');
         }
-        filePath = join(params.projectPath, 'CLAUDE.md');
+        filePath = join(params.projectPath, fileName);
       }
 
       try {
@@ -386,17 +435,21 @@ export function createConfigHandlers() {
     },
 
     /**
-     * P1: Atomic write to CLAUDE.md (global or project)
+     * P1: Atomic write to CLAUDE.md / GEMINI.md (global or project)
      */
-    async saveClaudeMd(params: { scope: ClaudeMdScope; projectPath?: string; content: string }): Promise<{ success: boolean }> {
+    async saveClaudeMd(params: { scope: ClaudeMdScope; projectPath?: string; content: string; tool?: ContextMdTool }): Promise<{ success: boolean }> {
+      const tool = params.tool || 'claude';
+      const fileName = tool === 'gemini' ? 'GEMINI.md' : 'CLAUDE.md';
+      const baseDir = tool === 'gemini' ? GEMINI_DIR : CLAUDE_DIR;
+
       let filePath: string;
       if (params.scope === 'global') {
-        filePath = join(CLAUDE_DIR, 'CLAUDE.md');
+        filePath = join(baseDir, fileName);
       } else {
         if (!params.projectPath) {
           throw new Error('projectPath is required for project scope');
         }
-        filePath = join(params.projectPath, 'CLAUDE.md');
+        filePath = join(params.projectPath, fileName);
       }
 
       const tmpPath = filePath + '.tmp';
@@ -447,7 +500,7 @@ export function registerConfigHandlers(): void {
     return handlers.getSettings();
   });
 
-  ipcMain.handle(IPC_CHANNELS.CONFIG.GET_CLAUDE_MD, async (_event, params: { scope: ClaudeMdScope; projectPath?: string }) => {
+  ipcMain.handle(IPC_CHANNELS.CONFIG.GET_CLAUDE_MD, async (_event, params: { scope: ClaudeMdScope; projectPath?: string; tool?: ContextMdTool }) => {
     return handlers.getClaudeMd(params);
   });
 
@@ -455,7 +508,7 @@ export function registerConfigHandlers(): void {
     return handlers.saveSettings(params);
   });
 
-  ipcMain.handle(IPC_CHANNELS.CONFIG.SAVE_CLAUDE_MD, async (_event, params: { scope: ClaudeMdScope; projectPath?: string; content: string }) => {
+  ipcMain.handle(IPC_CHANNELS.CONFIG.SAVE_CLAUDE_MD, async (_event, params: { scope: ClaudeMdScope; projectPath?: string; content: string; tool?: ContextMdTool }) => {
     return handlers.saveClaudeMd(params);
   });
 

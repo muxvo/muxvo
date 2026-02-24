@@ -31,9 +31,6 @@ import { registerAppHandlers } from './ipc/app-handlers';
 import { registerFsWatcherHandlers } from './ipc/fs-watcher-handlers';
 import { registerFsImageHandlers } from './ipc/fs-image-handlers';
 import { registerAuthHandlers } from './ipc/auth-handlers';
-import { registerMarketplaceHandlers } from './ipc/marketplace-handlers';
-import { registerScoreHandlers } from './ipc/score-handlers';
-import { registerShowcaseHandlers } from './ipc/showcase-handlers';
 import { registerAnalyticsHandlers } from './ipc/analytics-handlers';
 import { createChatWatcher } from './services/chat-watcher';
 import { createChatArchiveManager } from './services/chat-archive';
@@ -185,9 +182,6 @@ app.whenReady().then(() => {
   registerFsImageHandlers();
   registerAppHandlers();
   registerAuthHandlers();
-  registerMarketplaceHandlers();
-  registerScoreHandlers();
-  registerShowcaseHandlers();
   registerAnalyticsHandlers();
 
   chatWatcher = createChatWatcher();
