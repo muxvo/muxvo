@@ -21,7 +21,7 @@ disown
 # Build for production
 npm run build
 
-# Run all tests (609 tests, runs verify-coverage as pretest)
+# Run all tests (637 tests, runs verify-coverage as pretest)
 npm test
 
 # Run tests by layer
@@ -110,7 +110,7 @@ export function registerXxxHandlers(): void {
 
 All 12 handler files in `src/main/ipc/`:
 - `terminal-handlers.ts` — accepts manager instance + persistence callback
-- `chat-handlers.ts` — dual-source reader for history/session
+- `chat-handlers.ts` — multi-source reader (CC + Codex + archive) for history/session
 - `config-handlers.ts` — resource scanning, settings/CLAUDE.md with atomic writes
 - `fs-handlers.ts`, `fs-watcher-handlers.ts`, `fs-image-handlers.ts` — file ops, watch, temp images
 - `app-handlers.ts` — preferences + CLI detection with format conversion
@@ -150,6 +150,34 @@ All `on*` event listeners return an unsubscribe cleanup function.
 - **Dependency injection**: `analytics-handlers.ts` uses DI (`createAnalyticsHandlers(tracker)`); `registerAnalyticsHandlers()` creates the tracker internally.
 - **Atomic writes**: Config/settings files use tmp + rename pattern to prevent corruption.
 - **Path security**: File access handlers validate paths against allowed directories (e.g., `~/.claude/`, `~/.muxvo/`).
+
+### Multi-Source Chat Architecture
+
+Chat history reads from both Claude Code (`~/.claude/projects/`) and Codex (`~/.codex/sessions/`):
+
+```
+chat-handlers.ts → chat-multi-source.ts (aggregator)
+                        ├── chat-dual-source.ts (CC reader + archive)
+                        └── codex-chat-source.ts (Codex reader)
+```
+
+- Same project directory merges into one project (same `projectHash`)
+- `SessionSummary.source` field (`'claude-code'` | `'codex'`) identifies origin
+- Config/skills scanning also supports both `~/.claude/` and `~/.codex/` paths
+
+### Build & Packaging
+
+```bash
+# Dev build + package (arm64 Mac)
+npx electron-vite build && npx electron-builder --mac --arm64
+
+# Apple notarization (requires keychain profile)
+ditto -c -k --keepParent dist/mac-arm64/Muxvo.app /tmp/Muxvo.zip
+xcrun notarytool submit /tmp/Muxvo.zip --keychain-profile "muxvo-notary" --wait
+xcrun stapler staple dist/mac-arm64/Muxvo.app
+```
+
+Config: `electron-builder.yml`. Signing credentials: see `1apple-developer-signing.md` (not in repo).
 
 ## Key Documents
 
