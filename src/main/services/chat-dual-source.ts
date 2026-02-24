@@ -233,8 +233,14 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
               fsp.readdir(projectPath),
               fsp.stat(projectPath),
             ]);
-            const jsonlCount = files.filter((f) => f.endsWith('.jsonl')).length;
-            if (jsonlCount === 0) return null;
+            const jsonlFiles = files.filter((f) => f.endsWith('.jsonl'));
+            if (jsonlFiles.length === 0) return null;
+
+            // Calculate total size of all .jsonl files
+            const fileStats = await Promise.all(
+              jsonlFiles.map(f => fsp.stat(join(projectPath, f)).catch(() => null))
+            );
+            const totalSize = fileStats.reduce((sum, s) => sum + (s?.size || 0), 0);
 
             const segments = projectHash.split('-').filter(s => s.length > 0);
             const displayName = segments.length > 0 ? segments[segments.length - 1] : projectHash;
@@ -243,7 +249,8 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
               projectHash,
               displayPath: '',
               displayName,
-              sessionCount: jsonlCount,
+              sessionCount: jsonlFiles.length,
+              totalSize,
               lastActivity: dirStat.mtimeMs,
               source: 'claude-code',
             } as ProjectInfo;

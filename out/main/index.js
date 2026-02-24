@@ -660,15 +660,20 @@ function createChatProjectReader(opts) {
               fs.promises.readdir(projectPath),
               fs.promises.stat(projectPath)
             ]);
-            const jsonlCount = files.filter((f) => f.endsWith(".jsonl")).length;
-            if (jsonlCount === 0) return null;
+            const jsonlFiles = files.filter((f) => f.endsWith(".jsonl"));
+            if (jsonlFiles.length === 0) return null;
+            const fileStats = await Promise.all(
+              jsonlFiles.map((f) => fs.promises.stat(path.join(projectPath, f)).catch(() => null))
+            );
+            const totalSize = fileStats.reduce((sum, s) => sum + (s?.size || 0), 0);
             const segments = projectHash.split("-").filter((s) => s.length > 0);
             const displayName = segments.length > 0 ? segments[segments.length - 1] : projectHash;
             return {
               projectHash,
               displayPath: "",
               displayName,
-              sessionCount: jsonlCount,
+              sessionCount: jsonlFiles.length,
+              totalSize,
               lastActivity: dirStat.mtimeMs,
               source: "claude-code"
             };
@@ -1166,11 +1171,13 @@ function createCodexChatReader(opts) {
         const existing = projectMap.get(key);
         if (existing) {
           existing.count++;
+          existing.totalSize += entry.size;
           existing.lastActivity = Math.max(existing.lastActivity, entry.mtime);
         } else {
           projectMap.set(key, {
             cwd: entry.cwd,
             count: 1,
+            totalSize: entry.size,
             lastActivity: entry.mtime
           });
         }
@@ -1185,6 +1192,7 @@ function createCodexChatReader(opts) {
           displayPath,
           displayName: parts[parts.length - 1] || "Unknown",
           sessionCount: value.count,
+          totalSize: value.totalSize,
           lastActivity: value.lastActivity,
           source: "codex"
         });
@@ -1340,6 +1348,7 @@ function createChatMultiSource(opts) {
         const existing = map.get(p.projectHash);
         if (existing) {
           existing.sessionCount += p.sessionCount;
+          existing.totalSize = (existing.totalSize || 0) + (p.totalSize || 0);
           existing.lastActivity = Math.max(existing.lastActivity, p.lastActivity);
         } else {
           map.set(p.projectHash, { ...p });
@@ -1405,10 +1414,10 @@ function createChatHandlers() {
     },
     async getSessions(params) {
       if (params.projectHash === "__all__") {
-        const sessions2 = await reader.getAllRecentSessions(50);
+        const sessions2 = await reader.getAllRecentSessions(200);
         return { sessions: sessions2 };
       }
-      const sessions = await reader.getSessionsForProject(params.projectHash);
+      const sessions = await reader.getSessionsForProject(params.projectHash, 500);
       return { sessions };
     },
     async getSession(params) {

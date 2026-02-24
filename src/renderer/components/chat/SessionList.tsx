@@ -8,7 +8,7 @@
  * - 按 lastModified 倒序
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import type { SessionSummary } from '@/shared/types/chat.types';
 import type { SortMode } from './ChatHistoryPanel';
 import { useI18n } from '@/renderer/i18n';
@@ -83,6 +83,25 @@ function extractTags(title: string): Array<{ label: string; color: string }> {
   }
 
   return tags;
+}
+
+/** Invisible sentinel that triggers loading more when scrolled into view */
+function LoadMoreSentinel({ onVisible }: { onVisible: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const cb = useCallback(onVisible, [onVisible]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) cb(); },
+      { rootMargin: '200px' },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [cb]);
+
+  return <div ref={ref} style={{ height: 1 }} />;
 }
 
 export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time', onSortChange, onSessionContextMenu }: SessionListProps) {
@@ -193,12 +212,7 @@ export function SessionList({ sessions, selectedId, onSelect, sortMode = 'time',
       })}
 
       {hasMore && (
-        <button
-          className="session-list__load-more"
-          onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
-        >
-          {t('chat.loadMore', { count: sortedSessions.length - visibleCount })}
-        </button>
+        <LoadMoreSentinel onVisible={() => setVisibleCount(prev => prev + PAGE_SIZE)} />
       )}
     </div>
   );

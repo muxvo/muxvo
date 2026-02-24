@@ -18,6 +18,8 @@ export interface ProjectInfo {
   displayName: string;
   /** 该项目下 .jsonl session 文件数量 */
   sessionCount: number;
+  /** 该项目下所有 session 文件的总大小（字节） */
+  totalSize?: number;
   /** 最近活跃时间（ms，取最新 session 文件的 mtime） */
   lastActivity: number;
   /** 数据来源工具 */
