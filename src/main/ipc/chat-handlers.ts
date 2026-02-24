@@ -12,6 +12,7 @@ import { promises as fsp } from 'fs';
 import { createChatProjectReader } from '../services/chat-dual-source';
 import { createChatArchiveManager } from '../services/chat-archive';
 import { createCodexChatReader } from '../services/codex-chat-source';
+import { createGeminiChatReader } from '../services/gemini-chat-source';
 import { createChatMultiSource } from '../services/chat-multi-source';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 import { createConfigManager } from '../services/app/config';
@@ -24,6 +25,7 @@ function encodeProjectHash(cwd: string): string {
 
 const CC_BASE_PATH = join(homedir(), '.claude');
 const CODEX_BASE_PATH = join(homedir(), '.codex');
+const GEMINI_BASE_PATH = join(homedir(), '.gemini');
 
 export function createChatHandlers() {
   const ccReader = createChatProjectReader({
@@ -39,7 +41,15 @@ export function createChatHandlers() {
     // ~/.codex doesn't exist, skip
   }
 
-  const reader = createChatMultiSource({ ccReader, codexReader });
+  // Gemini reader (gracefully null if ~/.gemini doesn't exist)
+  let geminiReader: ReturnType<typeof createGeminiChatReader> | null = null;
+  try {
+    geminiReader = createGeminiChatReader({ geminiBasePath: GEMINI_BASE_PATH });
+  } catch {
+    // ~/.gemini doesn't exist, skip
+  }
+
+  const reader = createChatMultiSource({ ccReader, codexReader, geminiReader });
 
   return {
     async getProjects() {

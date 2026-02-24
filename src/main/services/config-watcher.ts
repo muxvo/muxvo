@@ -13,11 +13,13 @@ import { IPC_CHANNELS } from '@/shared/constants/channels';
 
 const CLAUDE_DIR = join(homedir(), '.claude');
 const CODEX_DIR = join(homedir(), '.codex');
+const GEMINI_DIR = join(homedir(), '.gemini');
 
 /** Resource directories to watch and their type names */
 const WATCH_DIRS: Array<{ dir: string; type: string }> = [
   { dir: join(CLAUDE_DIR, 'skills'), type: 'skills' },
   { dir: join(CODEX_DIR, 'skills'), type: 'skills' },
+  { dir: join(GEMINI_DIR, 'skills'), type: 'skills' },
   { dir: join(CLAUDE_DIR, 'hooks'), type: 'hooks' },
   { dir: join(CLAUDE_DIR, 'plugins'), type: 'plugins' },
   { dir: join(CLAUDE_DIR, 'plans'), type: 'plans' },

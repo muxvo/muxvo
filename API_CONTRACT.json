@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-02-24T14:29:24.505Z",
+  "generatedAt": "2026-02-24T14:35:33.091Z",
   "projectPath": "/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo",
-  "totalApis": 15,
-  "scannedFiles": 262,
+  "totalApis": 13,
+  "scannedFiles": 212,
   "categories": {
     "main": [
       {
@@ -106,28 +106,6 @@
         "params": [],
         "responseFields": [],
         "category": "API 服务"
-      }
-    ],
-    "modules": [
-      {
-        "path": "{变量:event}",
-        "method": "GET",
-        "file": "modules/marketplace/directory-watcher.ts",
-        "line": 23,
-        "functionName": "listeners.get",
-        "params": [],
-        "responseFields": [],
-        "category": "modules"
-      },
-      {
-        "path": "change",
-        "method": "GET",
-        "file": "modules/marketplace/directory-watcher.ts",
-        "line": 28,
-        "functionName": "listeners.get",
-        "params": [],
-        "responseFields": [],
-        "category": "modules"
       }
     ],
     "组件": [
@@ -265,26 +243,6 @@
       "params": [],
       "responseFields": [],
       "category": "API 服务"
-    },
-    {
-      "path": "{变量:event}",
-      "method": "GET",
-      "file": "modules/marketplace/directory-watcher.ts",
-      "line": 23,
-      "functionName": "listeners.get",
-      "params": [],
-      "responseFields": [],
-      "category": "modules"
-    },
-    {
-      "path": "change",
-      "method": "GET",
-      "file": "modules/marketplace/directory-watcher.ts",
-      "line": 28,
-      "functionName": "listeners.get",
-      "params": [],
-      "responseFields": [],
-      "category": "modules"
     },
     {
       "path": "{变量:p}",

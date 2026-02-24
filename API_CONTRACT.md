@@ -1,10 +1,10 @@
 # API 接口契约文档
 
 > 此文档由 Claude Code Hook 自动生成（AST 解析版）
-> 生成时间: 2026-02-24T14:29:24.505Z
+> 生成时间: 2026-02-24T14:35:33.091Z
 > 项目路径: /Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo
-> 扫描文件数: 262
-> 接口总数: 15
+> 扫描文件数: 212
+> 接口总数: 13
 
 ## 基础信息
 
@@ -77,20 +77,6 @@
 - **调用函数**: `terminals.delete()`
 - **请求参数**: 无额外参数
 
-### modules
-
-#### `GET {变量:event}`
-
-- **位置**: `modules/marketplace/directory-watcher.ts:23`
-- **调用函数**: `listeners.get()`
-- **请求参数**: 无额外参数
-
-#### `GET change`
-
-- **位置**: `modules/marketplace/directory-watcher.ts:28`
-- **调用函数**: `listeners.get()`
-- **请求参数**: 无额外参数
-
 ### 组件
 
 #### `DELETE {变量:p}`
@@ -129,8 +115,6 @@
 | DELETE | `{变量:terminalId}` | API 服务 | main/services/terminal/input-detector.ts:105 |
 | GET | `{变量:id}` | API 服务 | main/services/terminal/manager.ts:96 |
 | DELETE | `{变量:id}` | API 服务 | main/services/terminal/manager.ts:142 |
-| GET | `{变量:event}` | modules | modules/marketplace/directory-watcher.ts:23 |
-| GET | `change` | modules | modules/marketplace/directory-watcher.ts:28 |
 | DELETE | `{变量:p}` | 组件 | renderer/components/file/FilePanel.tsx:137 |
 | DELETE | `{变量:folderPath}` | 组件 | renderer/components/file/FilePanel.tsx:139 |
 | DELETE | `{变量:fn}` | renderer | renderer/stores/terminal-config.ts:42 |
