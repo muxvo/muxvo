@@ -132,20 +132,24 @@ function getForegroundProcessName(pid) {
     return null;
   }
 }
+const ANSI_RE = /\x1b\[[0-9;]*[A-Za-z]|\x1b\][^\x07\x1b]*[\x07]|\x1b\].*?\x1b\\|\x1b[()][AB012]|\x1b\[[\?]?[0-9;]*[hlm]/g;
+function stripAnsi(str) {
+  return str.replace(ANSI_RE, "");
+}
 const PROMPT_PATTERNS = [
   // inquirer/prompts style: "? Select an option:"
   /^\s*\?\s+.+[:：]\s*$/m,
   // yes/no confirmation: "(y/n)", "(Y/n)", "[y/N]"
   /\([yYnN]\/[yYnN]\)/,
   /\[[yYnN]\/[yYnN]\]/,
-  // Numbered option lists: "  1) option" or "  1. option"
-  /^\s*\d+[).]\s+\S/m,
   // "Press any key", "Enter to continue"
   /press\s+(any\s+)?key/i,
   /enter\s+to\s+continue/i,
   // Claude Code / AI CLI prompts
   /Do you want to proceed/i,
-  /Would you like to/i
+  /Would you like to/i,
+  // Claude Code approval: "Esc to cancel"
+  /Esc to cancel/
 ];
 const EXCLUDE_PATTERNS = [
   /^\s*\d+[%％]/,
@@ -155,14 +159,32 @@ const EXCLUDE_PATTERNS = [
   /^(INFO|WARN|ERROR|DEBUG)/i
   // Log lines
 ];
-function detectWaitingInput(output) {
+let rollingBuffer = "";
+let rollingTerminalId = "";
+const ROLLING_MAX = 2e3;
+function detectWaitingInput(output, terminalId) {
+  if (terminalId && terminalId !== rollingTerminalId) {
+    rollingBuffer = "";
+    rollingTerminalId = terminalId;
+  }
+  rollingBuffer += output;
+  if (rollingBuffer.length > ROLLING_MAX) {
+    rollingBuffer = rollingBuffer.slice(rollingBuffer.length - ROLLING_MAX);
+  }
+  const clean = stripAnsi(rollingBuffer);
   for (const exclude of EXCLUDE_PATTERNS) {
-    if (exclude.test(output)) return false;
+    if (exclude.test(clean)) return false;
   }
   for (const pattern of PROMPT_PATTERNS) {
-    if (pattern.test(output)) return true;
+    if (pattern.test(clean)) {
+      rollingBuffer = "";
+      return true;
+    }
   }
   return false;
+}
+function resetInputDetector() {
+  rollingBuffer = "";
 }
 const transitions = {
   Created: { SPAWN: "Starting" },
@@ -256,9 +278,16 @@ function createTerminalManager(deps) {
               }
             }
           }
-          if (machine.state === "Running" && detectWaitingInput(data)) {
+          if (machine.state === "Running" && detectWaitingInput(data, id)) {
             machine.send("WAIT_INPUT");
             pushStateChange(id, machine.state);
+          }
+          if (machine.state === "WaitingInput") {
+            if (data.length <= 10 && /[\r\n]/.test(data)) {
+              resetInputDetector();
+              machine.send("USER_INPUT");
+              pushStateChange(id, machine.state);
+            }
           }
         });
         proc.onExit((code) => {

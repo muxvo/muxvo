@@ -9,7 +9,7 @@ import { BrowserWindow } from 'electron';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 import type { PtyAdapter, PtyProcess } from './pty-adapter';
 import { getForegroundProcessName } from './foreground-detector';
-import { detectWaitingInput } from './input-detector';
+import { detectWaitingInput, resetInputDetector } from './input-detector';
 import type {
   TerminalInfo,
   ForegroundProcessInfo,
@@ -118,9 +118,18 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
           }
 
           // Detect interactive prompts → transition to WaitingInput
-          if (machine.state === 'Running' && detectWaitingInput(data)) {
+          if (machine.state === 'Running' && detectWaitingInput(data, id)) {
             machine.send('WAIT_INPUT');
             pushStateChange(id, machine.state);
+          }
+          // Detect user input while waiting → transition back to Running
+          if (machine.state === 'WaitingInput') {
+            // Any keypress data that looks like user input (short chunks)
+            if (data.length <= 10 && /[\r\n]/.test(data)) {
+              resetInputDetector();
+              machine.send('USER_INPUT');
+              pushStateChange(id, machine.state);
+            }
           }
         });
 

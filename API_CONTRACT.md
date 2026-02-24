@@ -1,7 +1,7 @@
 # API 接口契约文档
 
 > 此文档由 Claude Code Hook 自动生成（AST 解析版）
-> 生成时间: 2026-02-24T06:44:31.601Z
+> 生成时间: 2026-02-24T06:54:45.491Z
 > 项目路径: /Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo
 > 扫描文件数: 259
 > 接口总数: 14
@@ -67,7 +67,7 @@
 
 #### `DELETE {变量:id}`
 
-- **位置**: `main/services/terminal/manager.ts:138`
+- **位置**: `main/services/terminal/manager.ts:147`
 - **调用函数**: `terminals.delete()`
 - **请求参数**: 无额外参数
 
@@ -121,7 +121,7 @@
 | GET | `{变量:key}` | API 服务 | main/services/chat-watcher.ts:33 |
 | GET | `{变量:path}` | API 服务 | main/services/data-sync/sync-manager.ts:99 |
 | GET | `{变量:id}` | API 服务 | main/services/terminal/manager.ts:96 |
-| DELETE | `{变量:id}` | API 服务 | main/services/terminal/manager.ts:138 |
+| DELETE | `{变量:id}` | API 服务 | main/services/terminal/manager.ts:147 |
 | GET | `{变量:event}` | modules | modules/marketplace/directory-watcher.ts:23 |
 | GET | `change` | modules | modules/marketplace/directory-watcher.ts:28 |
 | DELETE | `{变量:p}` | 组件 | renderer/components/file/FilePanel.tsx:137 |
