@@ -29009,8 +29009,15 @@ function hashColor(str) {
   const hue = Math.abs(hash) % 360;
   return `hsl(${hue}, 65%, 55%)`;
 }
-function ProjectList({ projects, selectedProjectHash, onSelectProject, totalSessionCount }) {
+function formatSize(bytes) {
+  if (bytes < 1024) return `${bytes}B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1).replace(/\.0$/, "")}KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1).replace(/\.0$/, "")}MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1).replace(/\.0$/, "")}GB`;
+}
+function ProjectList({ projects, selectedProjectHash, onSelectProject }) {
   const { t } = useI18n();
+  const totalSize = projects.reduce((sum, p) => sum + (p.totalSize || 0), 0);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "project-list", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "project-list__header", children: t("chat.projects") }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs(
@@ -29021,7 +29028,7 @@ function ProjectList({ projects, selectedProjectHash, onSelectProject, totalSess
         children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "project-list__dot", style: { background: "var(--accent)" } }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "project-list__name", children: t("chat.allProjects") }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "project-list__count", children: totalSessionCount })
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "project-list__count", children: formatSize(totalSize) })
         ]
       }
     ),
@@ -29033,7 +29040,7 @@ function ProjectList({ projects, selectedProjectHash, onSelectProject, totalSess
         children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "project-list__dot", style: { background: hashColor(project.projectHash) } }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "project-list__name", title: project.displayPath, children: project.displayName }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "project-list__count", children: project.sessionCount })
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "project-list__count", children: formatSize(project.totalSize || 0) })
         ]
       },
       project.projectHash
@@ -29082,6 +29089,23 @@ function extractTags(title) {
     tags.push({ label: "plan", color: "var(--purple)" });
   }
   return tags;
+}
+function LoadMoreSentinel({ onVisible }) {
+  const ref = reactExports.useRef(null);
+  const cb = reactExports.useCallback(onVisible, [onVisible]);
+  reactExports.useEffect(() => {
+    const el2 = ref.current;
+    if (!el2) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) cb();
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el2);
+    return () => observer.disconnect();
+  }, [cb]);
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { ref, style: { height: 1 } });
 }
 function SessionList({ sessions, selectedId, onSelect, sortMode = "time", onSortChange, onSessionContextMenu }) {
   const { t } = useI18n();
@@ -29185,14 +29209,7 @@ function SessionList({ sessions, selectedId, onSelect, sortMode = "time", onSort
         session.sessionId
       );
     }),
-    hasMore && /* @__PURE__ */ jsxRuntimeExports.jsx(
-      "button",
-      {
-        className: "session-list__load-more",
-        onClick: () => setVisibleCount((prev) => prev + PAGE_SIZE),
-        children: t("chat.loadMore", { count: sortedSessions.length - visibleCount })
-      }
-    )
+    hasMore && /* @__PURE__ */ jsxRuntimeExports.jsx(LoadMoreSentinel, { onVisible: () => setVisibleCount((prev) => prev + PAGE_SIZE) })
   ] });
 }
 const ve$2 = 0, At2 = 1, Jt = 2, zn = 4;
@@ -89657,7 +89674,7 @@ const MessageBubble = React4.memo(function MessageBubble2({ message }) {
   const isSystem = message.type === "system";
   const bubbleClass = isUser ? "message-bubble--user" : isSystem ? "message-bubble--system" : "message-bubble--assistant";
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `message-bubble ${bubbleClass}`, children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "message-bubble__label", children: isUser ? t("chat.you") : isSystem ? t("chat.system") : t("chat.claude") }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "message-bubble__label", children: isUser ? t("chat.you") : isSystem ? t("chat.system") : message.uuid.startsWith("codex-") ? "CODEX" : t("chat.claude") }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "message-bubble__content", children: isUser || isSystem ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "message-bubble__text", children: message.content }) : Array.isArray(message.content) ? message.content.map((block2, i8) => renderContentBlock(block2, i8)) : /* @__PURE__ */ jsxRuntimeExports.jsx(MarkdownPreview, { content: String(message.content) }) }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "message-bubble__meta", children: new Date(message.timestamp).toLocaleTimeString() })
   ] });
