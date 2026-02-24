@@ -117521,8 +117521,7 @@ function CreateTerminalStep({
       selectedDir && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "terminal-created-path", children: selectedDir })
     ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "terminal-select-btn", onClick: onSelectDirectory, children: t("onboard.terminal.selectDir") }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "terminal-or-text", children: t("onboard.terminal.or") }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "terminal-quick-label", children: t("onboard.terminal.quickLabel") }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "terminal-or-text", children: t("onboard.terminal.quickPaths") }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "terminal-quick-paths", children: quickPaths.map((qp) => /* @__PURE__ */ jsxRuntimeExports.jsx(
         "button",
         {
@@ -117555,10 +117554,10 @@ function FeatureTourStep({ t }) {
 }
 function ShortcutsStep({ t }) {
   const shortcuts = [
-    { key: t("onboard.shortcuts.dblClickTerminal"), desc: t("onboard.shortcuts.focusMode") },
-    { key: "Esc", desc: t("onboard.shortcuts.tileView") },
-    { key: t("onboard.shortcuts.clickPath"), desc: t("onboard.shortcuts.switchCwd") },
-    { key: t("onboard.shortcuts.plusBtn"), desc: t("onboard.shortcuts.newTerminal") }
+    { key: "Double Click", desc: "Enter focus mode" },
+    { key: "Esc", desc: "Back to tiling view" },
+    { key: "Click Path", desc: "Switch working directory" },
+    { key: "+ Button", desc: "Create new terminal" }
   ];
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "shortcuts-step", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "shortcuts-step-title", children: t("onboard.shortcuts.title") }),
@@ -117591,8 +117590,12 @@ function OnboardingModal({ onCreateTerminal }) {
   reactExports.useEffect(() => {
     if (currentStep === 2) {
       setDetecting(true);
-      window.api.app.detectCliTools().then((results) => {
-        setCliResults(results);
+      window.api.app.detectCliTools().then((result) => {
+        const tools = ["claude", "codex", "gemini"].map((name) => ({
+          name,
+          installed: !!result[name]
+        }));
+        setCliResults(tools);
         setDetecting(false);
       });
     }
@@ -117608,10 +117611,11 @@ function OnboardingModal({ onCreateTerminal }) {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   }, []);
   const handleSelectDirectory = reactExports.useCallback(async () => {
-    const path = await window.api.fs.selectDirectory();
-    if (path) {
-      onCreateTerminal(path);
-      setSelectedDir(path);
+    const result = await window.api.fs.selectDirectory();
+    if (result?.success && result.data) {
+      const dir = result.data;
+      onCreateTerminal(dir);
+      setSelectedDir(dir);
       setTerminalCreated(true);
     }
   }, [onCreateTerminal]);
@@ -117624,14 +117628,13 @@ function OnboardingModal({ onCreateTerminal }) {
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return /* @__PURE__ */ jsxRuntimeExports.jsx(WelcomeStep, { t, onNext: handleNext });
+        return /* @__PURE__ */ jsxRuntimeExports.jsx(WelcomeStep, { t });
       case 2:
         return /* @__PURE__ */ jsxRuntimeExports.jsx(
           CliDetectionStep,
           {
             t,
-            onNext: handleNext,
-            cliResults,
+            results: cliResults,
             detecting
           }
         );
@@ -117640,7 +117643,6 @@ function OnboardingModal({ onCreateTerminal }) {
           CreateTerminalStep,
           {
             t,
-            onNext: handleNext,
             onSelectDirectory: handleSelectDirectory,
             onQuickPath: handleQuickPath,
             terminalCreated,
@@ -117648,9 +117650,9 @@ function OnboardingModal({ onCreateTerminal }) {
           }
         );
       case 4:
-        return /* @__PURE__ */ jsxRuntimeExports.jsx(FeatureTourStep, { t, onNext: handleNext });
+        return /* @__PURE__ */ jsxRuntimeExports.jsx(FeatureTourStep, { t });
       case 5:
-        return /* @__PURE__ */ jsxRuntimeExports.jsx(ShortcutsStep, { t, onNext: handleComplete });
+        return /* @__PURE__ */ jsxRuntimeExports.jsx(ShortcutsStep, { t });
       default:
         return /* @__PURE__ */ jsxRuntimeExports.jsx(WelcomeStep, { t, onNext: handleNext });
     }
@@ -117665,10 +117667,10 @@ function OnboardingModal({ onCreateTerminal }) {
     }) }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "onboarding-content fade-in", children: renderStep() }, currentStep),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "onboarding-footer", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "onboarding-btn-skip", onClick: handleComplete, children: t("onboarding.skip") }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "onboarding-btn-skip", onClick: handleComplete, children: t("onboard.skip") }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-        currentStep > 1 && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "onboarding-btn-prev", onClick: handlePrev, children: t("onboarding.prev") }),
-        currentStep < TOTAL_STEPS ? /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "onboarding-btn-next", onClick: handleNext, children: t("onboarding.next") }) : /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "onboarding-btn-done", onClick: handleComplete, children: t("onboarding.done") })
+        currentStep > 1 && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "onboarding-btn-prev", onClick: handlePrev, children: t("onboard.prev") }),
+        currentStep < TOTAL_STEPS ? /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "onboarding-btn-next", onClick: handleNext, children: t("onboard.next") }) : /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "onboarding-btn-done", onClick: handleComplete, children: t("onboard.done") })
       ] })
     ] })
   ] }) });

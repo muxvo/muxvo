@@ -40,8 +40,7 @@ export function CreateTerminalStep({
           <button className="terminal-select-btn" onClick={onSelectDirectory}>
             {t('onboard.terminal.selectDir')}
           </button>
-          <div className="terminal-or-text">{t('onboard.terminal.or')}</div>
-          <div className="terminal-quick-label">{t('onboard.terminal.quickLabel')}</div>
+          <div className="terminal-or-text">{t('onboard.terminal.quickPaths')}</div>
           <div className="terminal-quick-paths">
             {quickPaths.map((qp) => (
               <button
