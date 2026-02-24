@@ -1199,47 +1199,33 @@ function createCodexChatReader(opts) {
       }
       return projects.sort((a, b) => b.lastActivity - a.lastActivity);
     },
+    /** Shared: build a SessionSummary from an index entry */
+    async _buildSummary(entry, titles) {
+      let title = entry.title || titles[entry.sessionId] || "";
+      if (!title) {
+        title = await this._extractFirstUserMessage(entry.filePath);
+      }
+      return {
+        sessionId: entry.sessionId,
+        projectHash: encodeProjectHash(entry.cwd),
+        title: title || entry.sessionId,
+        startedAt: new Date(entry.mtime).toISOString(),
+        lastModified: entry.mtime,
+        fileSize: entry.size,
+        source: "codex"
+      };
+    },
     async getSessionsForProject(projectHash, limit = 50) {
       const entries = await buildIndex();
       const titles = await getThreadTitles();
       const matching = entries.filter((e) => encodeProjectHash(e.cwd) === projectHash).sort((a, b) => b.mtime - a.mtime).slice(0, limit);
-      const summaries = [];
-      for (const entry of matching) {
-        let title = entry.title || titles[entry.sessionId] || "";
-        if (!title) {
-          title = await this._extractFirstUserMessage(entry.filePath);
-        }
-        summaries.push({
-          sessionId: entry.sessionId,
-          projectHash,
-          title: title || entry.sessionId,
-          startedAt: new Date(entry.mtime).toISOString(),
-          lastModified: entry.mtime,
-          fileSize: entry.size,
-          source: "codex"
-        });
-      }
-      return summaries;
+      return Promise.all(matching.map((e) => this._buildSummary(e, titles)));
     },
     async getAllRecentSessions(limit) {
       const entries = await buildIndex();
       const titles = await getThreadTitles();
       const sorted = [...entries].sort((a, b) => b.mtime - a.mtime).slice(0, limit);
-      const summaries = [];
-      for (const entry of sorted) {
-        const projectHash = encodeProjectHash(entry.cwd);
-        const title = entry.title || titles[entry.sessionId] || entry.sessionId;
-        summaries.push({
-          sessionId: entry.sessionId,
-          projectHash,
-          title,
-          startedAt: new Date(entry.mtime).toISOString(),
-          lastModified: entry.mtime,
-          fileSize: entry.size,
-          source: "codex"
-        });
-      }
-      return summaries;
+      return Promise.all(sorted.map((e) => this._buildSummary(e, titles)));
     },
     async readSession(_projectHash, sessionId, options) {
       const entries = await buildIndex();
