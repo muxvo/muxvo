@@ -118,12 +118,6 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0
         </button>
       </nav>
 
-      {viewMode === 'Focused' && onBackToTiling && (
-        <button className="menu-bar__back-btn" onClick={onBackToTiling}>
-          {t('menu.backToTiling')}
-        </button>
-      )}
-
       <button
         className="menu-bar__help-btn"
         onClick={() => dispatch({ type: 'START_TOUR' })}
