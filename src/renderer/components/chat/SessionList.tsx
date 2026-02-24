@@ -147,7 +147,8 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
       </div>
 
       {visibleSessions.map((session) => {
-        const title = session.title.slice(0, 50);
+        const displayTitle = session.customTitle || session.title;
+        const title = displayTitle.slice(0, 50);
         const preview = session.title.slice(0, 100);
         const time = formatTime(session.lastModified);
         const tags = extractTags(session.title);

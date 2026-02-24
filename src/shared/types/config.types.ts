@@ -96,6 +96,8 @@ export interface MuxvoConfig {
   theme: string;
   fontSize: number;
   terminal?: TerminalConfig;
+  /** Custom session names: sessionId -> displayName (from terminal rename) */
+  sessionNames?: Record<string, string>;
 }
 
 /** app:get-preferences 返回的用户偏好 */

@@ -6,7 +6,7 @@
  * DEV-PLAN B1/B2: Focus mode with Esc exit + sidebar switching
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { MenuBar } from './components/layout/MenuBar';
 import { FloatingControls } from './components/layout/FloatingControls';
 import { TerminalGrid } from './components/terminal/TerminalGrid';
@@ -185,6 +185,10 @@ export function App(): JSX.Element {
     setTerminalOrder(newOrder);
   }, []);
 
+  // Ref to access latest terminals without adding to callback deps
+  const terminalsRef = useRef(terminals);
+  terminalsRef.current = terminals;
+
   const handleRename = useCallback((id: string, name: string) => {
     setTerminalNames((prev) => {
       if (!name) {
@@ -194,6 +198,12 @@ export function App(): JSX.Element {
       }
       return { ...prev, [id]: name };
     });
+
+    // Propagate name to chat session associated with this terminal's cwd
+    const terminal = terminalsRef.current.find(t => t.id === id);
+    if (terminal?.cwd) {
+      window.api.chat.setSessionName(terminal.cwd, name || '').catch(() => {});
+    }
   }, []);
 
   const handleToggleTheme = useCallback(() => {

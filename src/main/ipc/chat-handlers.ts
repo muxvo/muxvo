@@ -14,6 +14,13 @@ import { createChatArchiveManager } from '../services/chat-archive';
 import { createCodexChatReader } from '../services/codex-chat-source';
 import { createChatMultiSource } from '../services/chat-multi-source';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
+import { createConfigManager } from '../services/app/config';
+
+/** Encode cwd to projectHash (same logic as CC/Codex path encoding) */
+function encodeProjectHash(cwd: string): string {
+  if (!cwd) return '';
+  return cwd.replace(/[^a-zA-Z0-9-]/g, '-');
+}
 
 const CC_BASE_PATH = join(homedir(), '.claude');
 const CODEX_BASE_PATH = join(homedir(), '.codex');
@@ -41,11 +48,24 @@ export function createChatHandlers() {
     },
 
     async getSessions(params: { projectHash: string }) {
+      let sessions;
       if (params.projectHash === '__all__') {
-        const sessions = await reader.getAllRecentSessions(200);
-        return { sessions };
+        sessions = await reader.getAllRecentSessions(200);
+      } else {
+        sessions = await reader.getSessionsForProject(params.projectHash, 500);
       }
-      const sessions = await reader.getSessionsForProject(params.projectHash, 500);
+
+      // Apply custom session names from config
+      const cm = createConfigManager();
+      const config = cm.loadConfig();
+      const sessionNames = config.sessionNames || {};
+      if (Object.keys(sessionNames).length > 0) {
+        sessions = sessions.map(s => {
+          const customName = sessionNames[s.sessionId];
+          return customName ? { ...s, customTitle: customName } : s;
+        });
+      }
+
       return { sessions };
     },
 
@@ -58,6 +78,32 @@ export function createChatHandlers() {
     async search(params: { query: string }) {
       const results = await reader.search(params.query);
       return { results };
+    },
+
+    async setSessionName(params: { cwd: string; customName: string }) {
+      const { cwd, customName } = params;
+      if (!cwd) return { success: false };
+
+      const projectHash = encodeProjectHash(cwd);
+      if (!projectHash) return { success: false };
+
+      // Find most recent session for this project
+      const sessions = await reader.getSessionsForProject(projectHash, 1);
+      if (sessions.length === 0) return { success: false };
+
+      const sessionId = sessions[0].sessionId;
+      const cm = createConfigManager();
+      const config = cm.loadConfig();
+      const sessionNames = { ...(config.sessionNames || {}) };
+
+      if (customName) {
+        sessionNames[sessionId] = customName;
+      } else {
+        delete sessionNames[sessionId];
+      }
+
+      cm.saveConfig({ ...config, sessionNames });
+      return { success: true, sessionId };
     },
 
     async export(params: { projectHash: string; sessionId: string; format: string; title?: string }) {
@@ -105,6 +151,7 @@ export function registerChatHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.CHAT.GET_SESSION, async (_e, p) => handlers.getSession(p));
   ipcMain.handle(IPC_CHANNELS.CHAT.SEARCH, async (_e, p) => handlers.search(p));
   ipcMain.handle(IPC_CHANNELS.CHAT.EXPORT, async (_e, p) => handlers.export(p));
+  ipcMain.handle(IPC_CHANNELS.CHAT.SET_SESSION_NAME, async (_e, p) => handlers.setSessionName(p));
 
   // Right-click context menu for session cards
   ipcMain.handle(IPC_CHANNELS.CHAT.SHOW_SESSION_MENU, async (_e, p: { x: number; y: number }) => {
