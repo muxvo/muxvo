@@ -380,9 +380,6 @@ function createRealPtyAdapter() {
     spawn(shell, cwd, cols, rows) {
       const env = { ...process.env };
       delete env.CLAUDECODE;
-      if (process.platform === "darwin" && !env.TERM_PROGRAM) {
-        env.TERM_PROGRAM = "Apple_Terminal";
-      }
       const proc = pty__namespace.spawn(shell, [], {
         cwd,
         cols,
@@ -1334,16 +1331,13 @@ async function savePreferences(_prefs) {
 }
 const SCANNED_TOOLS = ["claude", "codex", "gemini"];
 async function detectCliTools() {
-  const tools = [];
+  const detectedTools = [];
   for (const tool of SCANNED_TOOLS) {
-    try {
-      const toolPath = child_process.execSync(`which ${tool}`, { encoding: "utf-8" }).trim();
-      tools.push({ name: tool, path: toolPath, installed: true });
-    } catch {
-      tools.push({ name: tool, installed: false });
-    }
   }
-  return { tools };
+  return {
+    detectedTools,
+    scannedTools: SCANNED_TOOLS
+  };
 }
 function registerAppHandlers() {
   electron.ipcMain.handle(IPC_CHANNELS.APP.GET_PREFERENCES, async () => {
@@ -1354,10 +1348,11 @@ function registerAppHandlers() {
   });
   electron.ipcMain.handle(IPC_CHANNELS.APP.DETECT_CLI_TOOLS, async () => {
     const result = await detectCliTools();
+    const detected = result.detectedTools.map((t) => t.name);
     return {
-      claude: result.tools.some((t) => t.name === "claude" && t.installed),
-      codex: result.tools.some((t) => t.name === "codex" && t.installed),
-      gemini: result.tools.some((t) => t.name === "gemini" && t.installed)
+      claude: detected.includes("claude"),
+      codex: detected.includes("codex"),
+      gemini: detected.includes("gemini")
     };
   });
 }
@@ -2303,7 +2298,6 @@ const DEFAULT_CONFIG = {
     cursorStyle: "block",
     cursorBlink: true
   },
-  onboardingCompleted: false,
   ftvLeftWidth: 250,
   ftvRightWidth: 300
 };

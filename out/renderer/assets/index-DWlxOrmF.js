@@ -12641,42 +12641,7 @@ const zh = {
   "hooks.save": "保存",
   "hooks.cancel": "取消",
   "hooks.configPath": "配置路径",
-  "hooks.readOnlyHint": "此 Hook 来自项目配置，仅可在对应配置文件中修改。",
-  // Onboarding
-  "onboard.welcome.title": "欢迎使用 Muxvo",
-  "onboard.welcome.desc": "AI 终端工作台 — 为 Claude Code、Codex、Gemini CLI 打造的桌面环境",
-  "onboard.welcome.feature1": "多终端平铺管理",
-  "onboard.welcome.feature2": "聊天历史浏览与归档",
-  "onboard.welcome.feature3": "Skills / MCP / Hooks 可视化配置",
-  "onboard.cli.title": "CLI 工具检测",
-  "onboard.cli.desc": "检测已安装的 AI CLI 工具",
-  "onboard.cli.detecting": "正在检测...",
-  "onboard.cli.installed": "已安装",
-  "onboard.cli.notInstalled": "未安装",
-  "onboard.cli.none": "未检测到 AI CLI 工具，可作为普通终端使用",
-  "onboard.terminal.title": "创建首个终端",
-  "onboard.terminal.desc": "选择一个项目目录开始使用",
-  "onboard.terminal.selectDir": "选择目录...",
-  "onboard.terminal.quickPaths": "快捷路径",
-  "onboard.terminal.created": "终端已创建！",
-  "onboard.tour.title": "功能导览",
-  "onboard.tour.desc": "了解 Muxvo 的核心功能",
-  "onboard.tour.terminals": "终端管理",
-  "onboard.tour.terminalsDesc": "平铺/聚焦模式，拖拽排列，最多 20 个终端",
-  "onboard.tour.chat": "聊天历史",
-  "onboard.tour.chatDesc": "浏览 Claude Code 对话记录，支持搜索与归档",
-  "onboard.tour.skills": "Skills 编辑",
-  "onboard.tour.skillsDesc": "查看和编辑 Claude Code 技能文件",
-  "onboard.tour.mcp": "MCP 服务器",
-  "onboard.tour.mcpDesc": "管理 Model Context Protocol 服务器配置",
-  "onboard.tour.hooks": "Hooks 管理",
-  "onboard.tour.hooksDesc": "配置自动化钩子，触发自定义工作流",
-  "onboard.shortcuts.title": "常用操作",
-  "onboard.shortcuts.desc": "掌握这些操作，效率翻倍",
-  "onboard.skip": "跳过",
-  "onboard.next": "下一步",
-  "onboard.prev": "上一步",
-  "onboard.done": "开始使用"
+  "hooks.readOnlyHint": "此 Hook 来自项目配置，仅可在对应配置文件中修改。"
 };
 const en$2 = {
   "menu.terminal": "Terminal",
@@ -12782,42 +12747,7 @@ const en$2 = {
   "hooks.save": "Save",
   "hooks.cancel": "Cancel",
   "hooks.configPath": "Config Path",
-  "hooks.readOnlyHint": "This hook is from project config and can only be modified in the corresponding config file.",
-  // Onboarding
-  "onboard.welcome.title": "Welcome to Muxvo",
-  "onboard.welcome.desc": "AI Terminal Workbench — A desktop environment for Claude Code, Codex, and Gemini CLI",
-  "onboard.welcome.feature1": "Multi-terminal tiling management",
-  "onboard.welcome.feature2": "Chat history browsing & archiving",
-  "onboard.welcome.feature3": "Skills / MCP / Hooks visual configuration",
-  "onboard.cli.title": "CLI Tool Detection",
-  "onboard.cli.desc": "Detecting installed AI CLI tools",
-  "onboard.cli.detecting": "Detecting...",
-  "onboard.cli.installed": "Installed",
-  "onboard.cli.notInstalled": "Not Installed",
-  "onboard.cli.none": "No AI CLI tools detected. You can still use Muxvo as a regular terminal.",
-  "onboard.terminal.title": "Create Your First Terminal",
-  "onboard.terminal.desc": "Select a project directory to get started",
-  "onboard.terminal.selectDir": "Select Directory...",
-  "onboard.terminal.quickPaths": "Quick Paths",
-  "onboard.terminal.created": "Terminal created!",
-  "onboard.tour.title": "Feature Tour",
-  "onboard.tour.desc": "Discover the core features of Muxvo",
-  "onboard.tour.terminals": "Terminal Management",
-  "onboard.tour.terminalsDesc": "Tiling/focus modes, drag to arrange, up to 20 terminals",
-  "onboard.tour.chat": "Chat History",
-  "onboard.tour.chatDesc": "Browse Claude Code conversations with search & archiving",
-  "onboard.tour.skills": "Skills Editor",
-  "onboard.tour.skillsDesc": "View and edit Claude Code skill files",
-  "onboard.tour.mcp": "MCP Servers",
-  "onboard.tour.mcpDesc": "Manage Model Context Protocol server configurations",
-  "onboard.tour.hooks": "Hooks Manager",
-  "onboard.tour.hooksDesc": "Configure automation hooks to trigger custom workflows",
-  "onboard.shortcuts.title": "Quick Actions",
-  "onboard.shortcuts.desc": "Master these actions to boost your productivity",
-  "onboard.skip": "Skip",
-  "onboard.next": "Next",
-  "onboard.prev": "Previous",
-  "onboard.done": "Get Started"
+  "hooks.readOnlyHint": "This hook is from project config and can only be modified in the corresponding config file."
 };
 const locales = { zh, en: en$2 };
 const I18nContext = reactExports.createContext(null);
@@ -117458,223 +117388,6 @@ function FileTempView({
     )
   ] });
 }
-function WelcomeStep({ t }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "welcome-step", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "welcome-title", children: t("onboard.welcome.title") }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "welcome-desc", children: t("onboard.welcome.desc") }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "welcome-features", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "welcome-feature-item", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "welcome-feature-icon", children: "▶" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t("onboard.welcome.feature1") })
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "welcome-feature-item", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "welcome-feature-icon", children: "▶" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t("onboard.welcome.feature2") })
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "welcome-feature-item", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "welcome-feature-icon", children: "▶" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t("onboard.welcome.feature3") })
-      ] })
-    ] })
-  ] });
-}
-function CliDetectionStep({ t, results, detecting }) {
-  const noneInstalled = !detecting && results.length > 0 && results.every((r10) => !r10.installed);
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "cli-step", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "cli-step-title", children: t("onboard.cli.title") }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "cli-step-desc", children: t("onboard.cli.desc") }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "cli-tool-list", children: detecting ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "cli-tool-row", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "cli-detecting-spinner" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t("onboard.cli.detecting") })
-    ] }) : results.map((tool) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "cli-tool-row", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "span",
-        {
-          className: `cli-status-dot ${tool.installed ? "installed" : ""}`
-        }
-      ),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "cli-tool-name", children: tool.name }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "cli-tool-status", children: tool.installed ? t("onboard.cli.installed") : t("onboard.cli.notInstalled") }),
-      tool.installed && tool.path && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "cli-tool-path", children: tool.path })
-    ] }, tool.name)) }),
-    noneInstalled && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "cli-none-hint", children: t("onboard.cli.none") })
-  ] });
-}
-function CreateTerminalStep({
-  t,
-  onSelectDirectory,
-  onQuickPath,
-  terminalCreated,
-  selectedDir
-}) {
-  const homePath = window.api.app.getHomePath();
-  const quickPaths = [
-    { label: "Home (~)", path: homePath },
-    { label: "Desktop", path: `${homePath}/Desktop` },
-    { label: "Documents", path: `${homePath}/Documents` }
-  ];
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "terminal-step", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "terminal-step-title", children: t("onboard.terminal.title") }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "terminal-step-desc", children: t("onboard.terminal.desc") }),
-    terminalCreated ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "terminal-created-msg", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: t("onboard.terminal.created") }),
-      selectedDir && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "terminal-created-path", children: selectedDir })
-    ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "terminal-select-btn", onClick: onSelectDirectory, children: t("onboard.terminal.selectDir") }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "terminal-or-text", children: t("onboard.terminal.quickPaths") }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "terminal-quick-paths", children: quickPaths.map((qp) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "button",
-        {
-          className: "terminal-quick-path-btn",
-          onClick: () => onQuickPath(qp.path),
-          children: qp.label
-        },
-        qp.label
-      )) })
-    ] })
-  ] });
-}
-function FeatureTourStep({ t }) {
-  const features = [
-    { icon: ">_", titleKey: "onboard.tour.terminals", descKey: "onboard.tour.terminalsDesc" },
-    { icon: "☷", titleKey: "onboard.tour.chat", descKey: "onboard.tour.chatDesc" },
-    { icon: "⚡", titleKey: "onboard.tour.skills", descKey: "onboard.tour.skillsDesc" },
-    { icon: "⚙", titleKey: "onboard.tour.mcp", descKey: "onboard.tour.mcpDesc" },
-    { icon: "↻", titleKey: "onboard.tour.hooks", descKey: "onboard.tour.hooksDesc" }
-  ];
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "tour-step", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "tour-step-title", children: t("onboard.tour.title") }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "tour-step-desc", children: t("onboard.tour.desc") }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tour-grid", children: features.map((f) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "tour-card", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tour-card-icon", children: f.icon }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tour-card-title", children: t(f.titleKey) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "tour-card-desc", children: t(f.descKey) })
-    ] }, f.titleKey)) })
-  ] });
-}
-function ShortcutsStep({ t }) {
-  const shortcuts = [
-    { key: "Double Click", desc: "Enter focus mode" },
-    { key: "Esc", desc: "Back to tiling view" },
-    { key: "Click Path", desc: "Switch working directory" },
-    { key: "+ Button", desc: "Create new terminal" }
-  ];
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "shortcuts-step", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "shortcuts-step-title", children: t("onboard.shortcuts.title") }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "shortcuts-step-desc", children: t("onboard.shortcuts.desc") }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "shortcut-list", children: shortcuts.map((s15, i8) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "shortcut-card", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "shortcut-key", children: s15.key }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "shortcut-arrow", children: "→" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "shortcut-desc", children: s15.desc })
-    ] }, i8)) })
-  ] });
-}
-const TOTAL_STEPS = 5;
-function OnboardingModal({ onCreateTerminal }) {
-  const { t } = useI18n();
-  const [loading, setLoading] = reactExports.useState(true);
-  const [show, setShow] = reactExports.useState(false);
-  const [currentStep, setCurrentStep] = reactExports.useState(1);
-  const [cliResults, setCliResults] = reactExports.useState([]);
-  const [detecting, setDetecting] = reactExports.useState(false);
-  const [terminalCreated, setTerminalCreated] = reactExports.useState(false);
-  const [selectedDir, setSelectedDir] = reactExports.useState("");
-  reactExports.useEffect(() => {
-    window.api.app.getConfig().then((config2) => {
-      if (!config2.onboardingCompleted) {
-        setShow(true);
-      }
-      setLoading(false);
-    });
-  }, []);
-  reactExports.useEffect(() => {
-    if (currentStep === 2) {
-      setDetecting(true);
-      window.api.app.detectCliTools().then((result) => {
-        const tools = ["claude", "codex", "gemini"].map((name) => ({
-          name,
-          installed: !!result[name]
-        }));
-        setCliResults(tools);
-        setDetecting(false);
-      });
-    }
-  }, [currentStep]);
-  const handleComplete = reactExports.useCallback(() => {
-    window.api.app.saveConfig({ onboardingCompleted: true });
-    setShow(false);
-  }, []);
-  const handleNext = reactExports.useCallback(() => {
-    setCurrentStep((prev) => Math.min(prev + 1, TOTAL_STEPS));
-  }, []);
-  const handlePrev = reactExports.useCallback(() => {
-    setCurrentStep((prev) => Math.max(prev - 1, 1));
-  }, []);
-  const handleSelectDirectory = reactExports.useCallback(async () => {
-    const result = await window.api.fs.selectDirectory();
-    if (result?.success && result.data) {
-      const dir = result.data;
-      onCreateTerminal(dir);
-      setSelectedDir(dir);
-      setTerminalCreated(true);
-    }
-  }, [onCreateTerminal]);
-  const handleQuickPath = reactExports.useCallback((path) => {
-    onCreateTerminal(path);
-    setSelectedDir(path);
-    setTerminalCreated(true);
-  }, [onCreateTerminal]);
-  if (loading || !show) return null;
-  const renderStep = () => {
-    switch (currentStep) {
-      case 1:
-        return /* @__PURE__ */ jsxRuntimeExports.jsx(WelcomeStep, { t });
-      case 2:
-        return /* @__PURE__ */ jsxRuntimeExports.jsx(
-          CliDetectionStep,
-          {
-            t,
-            results: cliResults,
-            detecting
-          }
-        );
-      case 3:
-        return /* @__PURE__ */ jsxRuntimeExports.jsx(
-          CreateTerminalStep,
-          {
-            t,
-            onSelectDirectory: handleSelectDirectory,
-            onQuickPath: handleQuickPath,
-            terminalCreated,
-            selectedDir
-          }
-        );
-      case 4:
-        return /* @__PURE__ */ jsxRuntimeExports.jsx(FeatureTourStep, { t });
-      case 5:
-        return /* @__PURE__ */ jsxRuntimeExports.jsx(ShortcutsStep, { t });
-      default:
-        return /* @__PURE__ */ jsxRuntimeExports.jsx(WelcomeStep, { t, onNext: handleNext });
-    }
-  };
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "onboarding-overlay", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "onboarding-modal", onClick: (e) => e.stopPropagation(), children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "onboarding-progress", children: Array.from({ length: TOTAL_STEPS }, (_3, i8) => {
-      const step = i8 + 1;
-      let className = "onboarding-progress-dot";
-      if (step < currentStep) className += " completed";
-      else if (step === currentStep) className += " active";
-      return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className }, step);
-    }) }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "onboarding-content fade-in", children: renderStep() }, currentStep),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "onboarding-footer", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "onboarding-btn-skip", onClick: handleComplete, children: t("onboard.skip") }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-        currentStep > 1 && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "onboarding-btn-prev", onClick: handlePrev, children: t("onboard.prev") }),
-        currentStep < TOTAL_STEPS ? /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "onboarding-btn-next", onClick: handleNext, children: t("onboard.next") }) : /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "onboarding-btn-done", onClick: handleComplete, children: t("onboard.done") })
-      ] })
-    ] })
-  ] }) });
-}
 const MAX_TERMINALS = 20;
 function App() {
   const [terminals, setTerminals] = reactExports.useState([]);
@@ -117746,14 +117459,6 @@ function App() {
       setTerminalOrder((prev) => [...prev, result.data.id]);
     }
   }, []);
-  const handleCreateTerminalFromOnboarding = reactExports.useCallback(async (cwd) => {
-    if (terminals.length >= MAX_TERMINALS) return;
-    const result = await window.api.terminal.create(cwd);
-    if (result?.success && result.data) {
-      setTerminals((prev) => [...prev, { id: result.data.id, state: "Running", cwd }]);
-      setTerminalOrder((prev) => [...prev, result.data.id]);
-    }
-  }, [terminals.length]);
   const removeTerminal = reactExports.useCallback(async (id) => {
     const fgResult = await window.api.terminal.getForegroundProcess(id);
     if (fgResult?.success && fgResult.data && fgResult.data.name !== "shell") {
@@ -117832,8 +117537,7 @@ function App() {
       onClose: removeTerminal,
       onCloseConfirm: handleCloseConfirm,
       onCloseCancel: handleCloseCancel,
-      onReorder: handleReorder,
-      onCreateTerminalFromOnboarding: handleCreateTerminalFromOnboarding
+      onReorder: handleReorder
     }
   ) }) });
 }
@@ -117852,8 +117556,7 @@ function AppContent({
   onClose,
   onCloseConfirm,
   onCloseCancel,
-  onReorder,
-  onCreateTerminalFromOnboarding
+  onReorder
 }) {
   const { state, dispatch } = usePanelContext();
   const { t } = useI18n();
@@ -117947,8 +117650,7 @@ function AppContent({
         onConfirm: onCloseConfirm,
         onCancel: onCloseCancel
       }
-    ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(OnboardingModal, { onCreateTerminal: onCreateTerminalFromOnboarding })
+    )
   ] });
 }
 const root = document.getElementById("root");

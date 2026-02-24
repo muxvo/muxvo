@@ -92,7 +92,6 @@ export interface MuxvoConfig {
   theme: string;
   fontSize: number;
   terminal?: TerminalConfig;
-  onboardingCompleted?: boolean;
 }
 
 /** app:get-preferences 返回的用户偏好 */
