@@ -25,6 +25,14 @@ export function createRealPtyAdapter(): PtyAdapter {
       const env = { ...process.env };
       delete env.CLAUDECODE;
 
+      // macOS: ensure TERM_PROGRAM is set so zsh emits OSC 7 (cwd tracking)
+      // In packaged mode, process.env lacks TERM_PROGRAM since app launches from Finder/Dock.
+      // macOS's /etc/zshrc only sources /etc/zshrc_Apple_Terminal (which emits OSC 7)
+      // when TERM_PROGRAM == 'Apple_Terminal'.
+      if (process.platform === 'darwin' && !env.TERM_PROGRAM) {
+        env.TERM_PROGRAM = 'Apple_Terminal';
+      }
+
       const proc = pty.spawn(shell, [], {
         cwd,
         cols,
