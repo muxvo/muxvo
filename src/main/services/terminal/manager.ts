@@ -118,18 +118,13 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
           }
 
           // Detect interactive prompts → transition to WaitingInput
-          if (machine.state === 'Running' && detectWaitingInput(data, id)) {
+          const isRunning = machine.state === 'Running';
+          const detected = detectWaitingInput(data, id);
+          console.log(`[MUXVO:waitinput] state=${machine.state} detected=${detected} chunkLen=${data.length}`);
+          if (isRunning && detected) {
             machine.send('WAIT_INPUT');
+            console.log(`[MUXVO:waitinput] >>> TRANSITION to WaitingInput! id=${id}`);
             pushStateChange(id, machine.state);
-          }
-          // Detect user input while waiting → transition back to Running
-          if (machine.state === 'WaitingInput') {
-            // Any keypress data that looks like user input (short chunks)
-            if (data.length <= 10 && /[\r\n]/.test(data)) {
-              resetInputDetector();
-              machine.send('USER_INPUT');
-              pushStateChange(id, machine.state);
-            }
           }
         });
 
@@ -171,6 +166,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
     if (terminal) {
       // If waiting for user input, transition back to Running
       if (terminal.machine.state === 'WaitingInput') {
+        resetInputDetector();
         terminal.machine.send('USER_INPUT');
         pushStateChange(id, terminal.machine.state);
       }

@@ -278,16 +278,13 @@ function createTerminalManager(deps) {
               }
             }
           }
-          if (machine.state === "Running" && detectWaitingInput(data, id)) {
+          const isRunning = machine.state === "Running";
+          const detected = detectWaitingInput(data, id);
+          console.log(`[MUXVO:waitinput] state=${machine.state} detected=${detected} chunkLen=${data.length}`);
+          if (isRunning && detected) {
             machine.send("WAIT_INPUT");
+            console.log(`[MUXVO:waitinput] >>> TRANSITION to WaitingInput! id=${id}`);
             pushStateChange(id, machine.state);
-          }
-          if (machine.state === "WaitingInput") {
-            if (data.length <= 10 && /[\r\n]/.test(data)) {
-              resetInputDetector();
-              machine.send("USER_INPUT");
-              pushStateChange(id, machine.state);
-            }
           }
         });
         proc.onExit((code) => {
@@ -320,6 +317,7 @@ function createTerminalManager(deps) {
     const terminal = terminals.get(id);
     if (terminal) {
       if (terminal.machine.state === "WaitingInput") {
+        resetInputDetector();
         terminal.machine.send("USER_INPUT");
         pushStateChange(id, terminal.machine.state);
       }
@@ -1075,14 +1073,20 @@ function registerChatArchiveHandlers(archiveManager) {
   });
 }
 const CLAUDE_DIR$1 = path.join(os.homedir(), ".claude");
+const CODEX_DIR$1 = path.join(os.homedir(), ".codex");
+const ALLOWED_CONFIG_DIRS = [CLAUDE_DIR$1, CODEX_DIR$1];
 const RESOURCE_TYPE_MAP = {
-  skills: { path: path.join(CLAUDE_DIR$1, "skills"), isFile: false },
-  hooks: { path: path.join(CLAUDE_DIR$1, "hooks"), isFile: false },
-  plans: { path: path.join(CLAUDE_DIR$1, "plans"), isFile: false },
-  tasks: { path: path.join(CLAUDE_DIR$1, "tasks"), isFile: false },
-  plugins: { path: path.join(CLAUDE_DIR$1, "plugins"), isFile: false },
-  mcp: { path: path.join(CLAUDE_DIR$1, "mcp.json"), isFile: true }
+  skills: { paths: [path.join(CLAUDE_DIR$1, "skills"), path.join(CODEX_DIR$1, "skills")], isFile: false },
+  hooks: { paths: [path.join(CLAUDE_DIR$1, "hooks")], isFile: false },
+  plans: { paths: [path.join(CLAUDE_DIR$1, "plans")], isFile: false },
+  tasks: { paths: [path.join(CLAUDE_DIR$1, "tasks")], isFile: false },
+  plugins: { paths: [path.join(CLAUDE_DIR$1, "plugins")], isFile: false },
+  mcp: { paths: [path.join(CLAUDE_DIR$1, "mcp.json")], isFile: true }
 };
+function sourceFromPath(dirPath) {
+  if (dirPath.startsWith(CODEX_DIR$1)) return "codex";
+  return "claude";
+}
 const EXCLUDED_FILES = /* @__PURE__ */ new Set([
   "node_modules",
   "package.json",
@@ -1114,35 +1118,40 @@ function createConfigHandlers() {
       for (const type of types) {
         const mapping = RESOURCE_TYPE_MAP[type];
         if (!mapping) continue;
-        if (mapping.isFile) {
-          try {
-            const fileStat = await promises.stat(mapping.path);
-            resources.push({
-              name: mapping.path.split("/").pop(),
-              type,
-              path: mapping.path,
-              updatedAt: fileStat.mtime.toISOString()
-            });
-          } catch {
-          }
-        } else {
-          try {
-            const entries = await promises.readdir(mapping.path, { withFileTypes: true });
-            for (const entry of entries) {
-              if (EXCLUDED_FILES.has(entry.name)) continue;
-              const entryPath = path.join(mapping.path, entry.name);
-              try {
-                const entryStat = await promises.stat(entryPath);
-                resources.push({
-                  name: entry.name,
-                  type,
-                  path: entryPath,
-                  updatedAt: entryStat.mtime.toISOString()
-                });
-              } catch {
-              }
+        for (const dirPath of mapping.paths) {
+          const source = sourceFromPath(dirPath);
+          if (mapping.isFile) {
+            try {
+              const fileStat = await promises.stat(dirPath);
+              resources.push({
+                name: dirPath.split("/").pop(),
+                type,
+                path: dirPath,
+                updatedAt: fileStat.mtime.toISOString(),
+                source
+              });
+            } catch {
             }
-          } catch {
+          } else {
+            try {
+              const entries = await promises.readdir(dirPath, { withFileTypes: true });
+              for (const entry of entries) {
+                if (EXCLUDED_FILES.has(entry.name)) continue;
+                const entryPath = path.join(dirPath, entry.name);
+                try {
+                  const entryStat = await promises.stat(entryPath);
+                  resources.push({
+                    name: entry.name,
+                    type,
+                    path: entryPath,
+                    updatedAt: entryStat.mtime.toISOString(),
+                    source
+                  });
+                } catch {
+                }
+              }
+            } catch {
+            }
           }
         }
       }
@@ -1153,8 +1162,8 @@ function createConfigHandlers() {
      */
     async getResourceContent(params) {
       const resolvedPath = path.resolve(params.path);
-      if (!resolvedPath.startsWith(CLAUDE_DIR$1)) {
-        throw new Error(`Access denied: path must be within ${CLAUDE_DIR$1}`);
+      if (!ALLOWED_CONFIG_DIRS.some((dir) => resolvedPath.startsWith(dir))) {
+        throw new Error(`Access denied: path must be within allowed directories`);
       }
       const content = await promises.readFile(resolvedPath, "utf-8");
       const format = inferFormat(resolvedPath);
@@ -1265,6 +1274,7 @@ function registerConfigHandlers() {
 const WRITABLE_ROOTS = [
   path.join(os.homedir(), ".muxvo"),
   path.join(os.homedir(), ".claude"),
+  path.join(os.homedir(), ".codex"),
   os.tmpdir()
 ];
 function isWritablePath(targetPath) {
@@ -2235,8 +2245,10 @@ function createChatArchiveManager() {
   };
 }
 const CLAUDE_DIR = path.join(os.homedir(), ".claude");
+const CODEX_DIR = path.join(os.homedir(), ".codex");
 const WATCH_DIRS = [
   { dir: path.join(CLAUDE_DIR, "skills"), type: "skills" },
+  { dir: path.join(CODEX_DIR, "skills"), type: "skills" },
   { dir: path.join(CLAUDE_DIR, "hooks"), type: "hooks" },
   { dir: path.join(CLAUDE_DIR, "plugins"), type: "plugins" },
   { dir: path.join(CLAUDE_DIR, "plans"), type: "plans" },
