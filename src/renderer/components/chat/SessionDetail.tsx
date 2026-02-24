@@ -105,7 +105,7 @@ const MessageBubble = React.memo(function MessageBubble({ message }: MessageBubb
   return (
     <div className={`message-bubble ${bubbleClass}`}>
       <div className="message-bubble__label">
-        {isUser ? t('chat.you') : isSystem ? t('chat.system') : t('chat.claude')}
+        {isUser ? t('chat.you') : isSystem ? t('chat.system') : message.uuid.startsWith('codex-') ? 'CODEX' : t('chat.claude')}
       </div>
 
       <div className="message-bubble__content">
