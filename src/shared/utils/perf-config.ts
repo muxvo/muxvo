@@ -19,7 +19,7 @@ export interface PerformanceConfig {
   searchDebounceTime: number;
 
   // Marketplace pagination
-  marketplacePageSize: number;
+  discoveryPageSize: number;
 
   // Terminal limits
   maxTerminalCount: number;
@@ -55,7 +55,7 @@ export function getPerformanceConfig(): PerformanceConfig {
     searchDebounceTime: 300,
 
     // Marketplace pagination
-    marketplacePageSize: 20,
+    discoveryPageSize: 20,
 
     // Terminal limits
     maxTerminalCount: 20,

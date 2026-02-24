@@ -3,20 +3,16 @@
  *
  * 基于文档: docs/Muxvo_测试_v2/02_modules/test_CROSS.md
  * 测试层级: L2（规则层 -- 状态机、业务规则、边界值）
- * 用例总数: 38
+ * 用例总数: 26
  *
  * RED phase: All tests have real assertions but will FAIL because
  * source modules are not yet implemented.
  */
-import { describe, test, expect, beforeEach } from 'vitest';
-import { resetIpcMocks, handleIpc, invokeIpc, onIpcPush, emitIpcPush } from '../helpers/mock-ipc';
-import { MockApp, MockBrowserWindow } from '../helpers/mock-electron';
+import { describe, test, expect } from 'vitest';
 import {
   defaultConfig,
   timeConstants,
   terminalFixtures,
-  imageFixtures,
-  securityPatterns,
   searchFixtures,
 } from '../helpers/test-fixtures';
 import boundarySpec from '../specs/l2/boundaries.spec.json';
@@ -366,15 +362,15 @@ describe('PERF L2 -- 性能策略规则层', () => {
       expect(config.searchDebounceTime).toBe(searchFixtures.debounceMs);
     });
 
-    // PERF_L2_06: Marketplace pagination
-    test('PERF_L2_06: 市场列表分页加载 -- 每页 20 条', () => {
+    // PERF_L2_06: Discovery pagination
+    test('PERF_L2_06: 发现列表分页加载 -- 每页 20 条', () => {
       const perfCase = perfSpec.cases.find((c) => c.id === 'PERF_L2_06');
       expect(perfCase).toBeDefined();
 
       const { getPerformanceConfig } = require('@/shared/utils/perf-config');
       const config = getPerformanceConfig();
-      expect(config.marketplacePageSize).toBe(perfCase!.expectedValue);
-      expect(config.marketplacePageSize).toBe(20);
+      expect(config.discoveryPageSize).toBe(perfCase!.expectedValue);
+      expect(config.discoveryPageSize).toBe(20);
     });
 
     // PERF_L2_07: Max 20 terminals
@@ -428,7 +424,7 @@ describe('PERF L2 -- 性能策略规则层', () => {
 });
 
 // ============================================================
-// ERROR L2 -- 异常处理规则层（13 cases）
+// ERROR L2 -- 异常处理规则层（4 cases）
 // ============================================================
 describe('ERROR L2 -- 异常处理规则层', () => {
   // --- 终端与文件异常 ---
@@ -477,119 +473,6 @@ describe('ERROR L2 -- 异常处理规则层', () => {
     });
   });
 
-  // --- 网络与下载异常 ---
-  describe('网络与下载异常', () => {
-    test('ERROR_L2_03: 网络不可用 -- 离线降级模式', () => {
-      const { createMarketplaceStore } = require('@/renderer/features/marketplace/store');
-      const store = createMarketplaceStore({ networkAvailable: false });
-      store.dispatch({ type: 'OPEN' });
-
-      expect(store.getState()).toBe('Offline');
-      expect(store.getMessage()).toContain('无法连接聚合源');
-      expect(store.showsLocalData()).toBe(true);
-    });
-
-    test('ERROR_L2_04: 安装路径无权限', () => {
-      const { installSkill } = require('@/main/services/marketplace/installer');
-      const result = installSkill({
-        skillId: 'test-skill',
-        targetDir: terminalFixtures.cwdNoPermission,
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.error?.message).toContain('权限');
-    });
-
-    test('ERROR_L2_05: 下载失败自动重试 1 次', () => {
-      const downloadCase = boundarySpec.cases.find((c) => c.id === 'INSTALL_L2_15');
-      expect(downloadCase).toBeDefined();
-      expect((downloadCase as { expectedValue: number }).expectedValue).toBe(1);
-
-      const { getDownloadConfig } = require('@/main/services/marketplace/download');
-      const config = getDownloadConfig();
-      expect(config.autoRetryCount).toBe(1);
-    });
-
-    test('ERROR_L2_12: 包完整性校验失败 -- 拒绝安装', () => {
-      const { verifyPackageIntegrity } = require('@/main/services/marketplace/installer');
-      const result = verifyPackageIntegrity({
-        filePath: '/tmp/corrupted.tar.gz',
-        expectedHash: 'abc123',
-        actualHash: 'def456',
-      });
-
-      expect(result.valid).toBe(false);
-      expect(result.message).toContain('校验失败');
-    });
-  });
-
-  // --- 评分异常 ---
-  describe('评分异常', () => {
-    test('ERROR_L2_08: 评分失败最多重试 3 次', () => {
-      const { createScoreManager } = require('@/main/services/score/manager');
-      const manager = createScoreManager();
-
-      // Simulate 3 API failures
-      manager.simulateApiFailure(true);
-      const result = manager.runScoring();
-
-      expect(result.retryCount).toBe(3);
-      expect(result.success).toBe(false);
-      expect(result.error?.message).toContain('评分失败');
-    });
-
-    test('ERROR_L2_09: 评分结果 JSON 解析失败 -- 自动重试 1 次', () => {
-      const { createScoreManager } = require('@/main/services/score/manager');
-      const manager = createScoreManager();
-
-      manager.simulateInvalidJsonResponse(true);
-      const result = manager.runScoring();
-
-      expect(result.retryCount).toBeGreaterThanOrEqual(1);
-      expect(result.error?.message).toContain('格式异常');
-    });
-
-    test('ERROR_L2_10: CC 终端未运行时评分 -- 阻止', () => {
-      const { createScoreManager } = require('@/main/services/score/manager');
-      const manager = createScoreManager();
-
-      manager.setCCTerminalRunning(false);
-      const result = manager.runScoring();
-
-      expect(result.blocked).toBe(true);
-      expect(result.message).toContain('请先启动一个 Claude Code 终端');
-    });
-  });
-
-  // --- 发布与资源异常 ---
-  describe('发布与资源异常', () => {
-    test('ERROR_L2_11: 磁盘空间不足', () => {
-      const { checkDiskSpace } = require('@/main/services/system/disk');
-      const result = checkDiskSpace({ requiredMB: 500, availableMB: 50 });
-
-      expect(result.sufficient).toBe(false);
-      expect(result.message).toContain('磁盘空间不足');
-    });
-
-    test('ERROR_L2_13: GitHub Pages 发布超时 -- 30 秒', () => {
-      const publishCase = boundarySpec.cases.find((c) => c.id === 'PUBLISH_L2_16');
-      expect(publishCase).toBeDefined();
-      expect((publishCase as { expectedValue: number }).expectedValue).toBe(30000);
-
-      const { getPublishConfig } = require('@/main/services/showcase/publish');
-      const config = getPublishConfig();
-      expect(config.timeout).toBe(30000);
-      expect(config.saveDraftOnTimeout).toBe(true);
-    });
-
-    test('ERROR_L2_14: GitHub API rate limit', () => {
-      const { handleGitHubError } = require('@/main/services/showcase/publish');
-      const result = handleGitHubError({ status: 429, resetTime: '2026-02-15T12:00:00Z' });
-
-      expect(result.message).toContain('配额');
-      expect(result.resetTime).toBeDefined();
-    });
-  });
 });
 
 // ============================================================
@@ -620,15 +503,7 @@ describe('CROSS L2 -- Boundary Spec 边界值验证', () => {
     }
   });
 
-  // ---- SHOWCASE boundaries ----
-  const showcaseBoundaries = boundarySpec.cases.filter((c) => c.id.startsWith('SHOWCASE_'));
-  test.each(showcaseBoundaries)('$id: $description', ({ id, boundaries }) => {
-    for (const b of boundaries as Array<{ expected: unknown }>) {
-      expect(b.expected).toBeDefined();
-    }
-  });
-
-  // ---- INSTALL / PUBLISH thresholds ----
+  // ---- INSTALL thresholds ----
   const thresholdCases = boundarySpec.cases.filter((c) => c.type === 'threshold');
   test.each(thresholdCases)('$id: $description', ({ id, parameter, expectedValue, unit }) => {
     expect(parameter).toBeDefined();

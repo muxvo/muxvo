@@ -57,14 +57,6 @@ export const GEMINI_MD_PATH = join(GEMINI_DATA_DIR, 'GEMINI.md');
 /** Muxvo 聊天历史镜像子目录 */
 export const MUXVO_CHAT_HISTORY_SUBDIR = 'chat-history';
 
-/** Muxvo 评分缓存子目录 */
-export const MUXVO_SKILL_SCORES_SUBDIR = 'skill-scores';
-
-/** Muxvo 展示页配置子目录 */
-export const MUXVO_SHOWCASES_SUBDIR = 'showcases';
-
-/** Muxvo 发布草稿子目录 */
-export const MUXVO_PUBLISH_DRAFTS_SUBDIR = 'publish-drafts';
 
 /** Muxvo 搜索索引子目录 */
 export const MUXVO_SEARCH_INDEX_SUBDIR = 'search-index';
@@ -75,8 +67,6 @@ export const MUXVO_CONFIG_FILENAME = 'config.json';
 /** Muxvo 用户偏好文件名 */
 export const MUXVO_PREFERENCES_FILENAME = 'preferences.json';
 
-/** Muxvo 包注册表文件名 */
-export const MUXVO_MARKETPLACE_FILENAME = 'marketplace.json';
 
 /** Muxvo 埋点数据文件名 */
 export const MUXVO_ANALYTICS_FILENAME = 'analytics.json';

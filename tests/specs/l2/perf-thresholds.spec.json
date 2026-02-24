@@ -58,7 +58,7 @@
       "id": "PERF_L2_06",
       "description": "市场列表每页 20 条",
       "type": "threshold",
-      "parameter": "marketplacePageSize",
+      "parameter": "discoveryPageSize",
       "expectedValue": 20,
       "unit": "条",
       "rule": "初始 20 条，滚动底部加载下一页 20 条（无限滚动）",

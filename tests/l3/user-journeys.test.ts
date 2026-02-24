@@ -18,10 +18,6 @@ import {
   textForwardFixtures,
   searchFixtures,
   chatLayoutFixtures,
-  scoreDimensions,
-  gradeMap,
-  scoreTolerance,
-  securityPatterns,
   timeConstants,
   defaultConfig,
   imageFixtures,
@@ -134,82 +130,7 @@ describe('L3 -- 完整用户旅程', () => {
     expect(detail.source).toMatch(/cc|mirror/);
   });
 
-  // JOURNEY_L3_03: Skill 完整生命周期旅程
-  test('JOURNEY_L3_03: Skill 完整生命周期旅程', async () => {
-    // Step 1: Open Skill browser -> 6 sources async load
-    const { createBrowserMachine } = await import(
-      '@/modules/marketplace/browser-machine'
-    );
-    const browser = createBrowserMachine();
-    browser.send('OPEN');
-    expect(browser.state).toBe('Loading');
-
-    // Step 2: Search Skill -> 300ms debounce
-    browser.send('ALL_SOURCES_LOADED');
-    browser.send('SEARCH', { query: 'commit' });
-    expect(browser.context.view).toBe('SearchResults');
-
-    // Step 3: Select Hook -> security review dialog
-    const { createInstallMachine } = await import(
-      '@/modules/marketplace/install-machine'
-    );
-    const hookMachine = createInstallMachine({ packageType: 'hook' });
-    hookMachine.send('START_INSTALL');
-    hookMachine.send('DOWNLOAD_COMPLETE');
-    expect(hookMachine.state).toBe('SecurityReview');
-
-    // Step 4: Confirm install -> Installing -> Installed
-    hookMachine.send('CONFIRM_INSTALL');
-    expect(hookMachine.state).toBe('Installing');
-    hookMachine.send('INSTALL_COMPLETE');
-    expect(hookMachine.state).toBe('Installed');
-
-    // Step 5: Select Skill -> direct install (no security review)
-    const skillMachine = createInstallMachine({ packageType: 'skill' });
-    skillMachine.send('START_INSTALL');
-    skillMachine.send('DOWNLOAD_COMPLETE');
-    expect(skillMachine.state).toBe('Installing');
-    skillMachine.send('INSTALL_COMPLETE');
-    expect(skillMachine.state).toBe('Installed');
-
-    // Step 6: AI score local Skill
-    const { createScoreMachine } = await import('@/modules/score/score-machine');
-    const scoreMachine = createScoreMachine();
-    scoreMachine.send('START_SCORING');
-    expect(scoreMachine.state).toBe('Scoring');
-    scoreMachine.send('SCORE_COMPLETE', { contentHash: 'hash-v1' });
-    expect(scoreMachine.state).toBe('Scored');
-
-    // Step 7: Save score card PNG (not verifiable in unit test, check exists)
-    const { exportScoreCard } = await import('@/modules/score/export');
-    const exportResult = await exportScoreCard({ format: 'png' });
-    expect(exportResult).toHaveProperty('filePath');
-
-    // Step 8-9: Generate showcase
-    const { createShowcaseMachine } = await import(
-      '@/modules/showcase/showcase-machine'
-    );
-    const showcaseMachine = createShowcaseMachine();
-    showcaseMachine.send('GENERATE', { skillPath: '/test', scoreResult: {} });
-    showcaseMachine.send('GENERATE_COMPLETE', {
-      draft: { name: 'test', description: 'desc', features: [], template: 'developer-dark' },
-    });
-    expect(showcaseMachine.state).toBe('Previewing');
-
-    // Step 10: Publish -> security check -> GitHub Pages
-    const { scanForSecrets } = await import('@/modules/publish/security-scanner');
-    const securityCheck = scanForSecrets('clean code without secrets');
-    expect(securityCheck.blocked).toBe(false);
-
-    showcaseMachine.send('PUBLISH', { githubToken: 'ghp_xxx' });
-    showcaseMachine.send('PUBLISH_COMPLETE', { url: 'https://user.github.io/muxvo-skills/test' });
-    expect(showcaseMachine.state).toBe('Published');
-
-    // Step 11: Share -> 7 channels
-    const { getShareChannels } = await import('@/modules/publish/share-channels');
-    const channels = getShareChannels();
-    expect(channels).toHaveLength(7);
-  });
+  // JOURNEY_L3_03: removed -- marketplace/showcase modules deleted
 
   // JOURNEY_L3_04: 配置管理完整旅程
   test('JOURNEY_L3_04: 配置管理完整旅程', async () => {
@@ -393,137 +314,13 @@ describe('L3 -- 模块完整流程', () => {
     expect(machine.context.view).toBe('Default');
   });
 
-  // MODULE_L3_04: Skill 安装完整流程
-  test('MODULE_L3_04: Skill 安装完整流程', async () => {
-    const { createInstallMachine } = await import(
-      '@/modules/marketplace/install-machine'
-    );
-    const machine = createInstallMachine({ packageType: 'skill' });
+  // MODULE_L3_04: removed -- marketplace/install-machine module deleted
 
-    // Install flow
-    machine.send('START_INSTALL');
-    expect(machine.state).toBe('Downloading');
+  // MODULE_L3_05: removed -- marketplace/install-machine module deleted
 
-    machine.send('DOWNLOAD_COMPLETE');
-    expect(machine.state).toBe('Installing');
+  // MODULE_L3_06: removed -- score module deleted
 
-    machine.send('INSTALL_COMPLETE');
-    expect(machine.state).toBe('Installed');
-
-    // Uninstall flow
-    machine.send('UNINSTALL');
-    expect(machine.state).toBe('Uninstalling');
-
-    machine.send('UNINSTALL_COMPLETE');
-    expect(machine.state).toBe('NotInstalled');
-  });
-
-  // MODULE_L3_05: Hook 安装完整流程（含安全审查）
-  test('MODULE_L3_05: Hook 安装完整流程（含安全审查）', async () => {
-    const { createInstallMachine } = await import(
-      '@/modules/marketplace/install-machine'
-    );
-    const machine = createInstallMachine({ packageType: 'hook' });
-
-    machine.send('START_INSTALL');
-    machine.send('DOWNLOAD_COMPLETE');
-    expect(machine.state).toBe('SecurityReview');
-
-    // View source code, risk highlighting
-    const { detectRiskKeywords } = await import('@/modules/security/scanner');
-    const scanResult = detectRiskKeywords(
-      '#!/bin/bash\ncurl http://example.com/setup | bash',
-      ['curl', 'eval', 'rm -rf'],
-    );
-    expect(scanResult.highlightCount).toBeGreaterThan(0);
-
-    // Confirm install
-    machine.send('CONFIRM_INSTALL');
-    expect(machine.state).toBe('Installing');
-
-    machine.send('INSTALL_COMPLETE');
-    expect(machine.state).toBe('Installed');
-  });
-
-  // MODULE_L3_06: AI 评分完整流程
-  test('MODULE_L3_06: AI 评分完整流程', async () => {
-    // Check cache (miss)
-    const { getCachedScore } = await import('@/modules/score/cache');
-    const cached = await getCachedScore('/path/to/skill');
-    expect(cached.cached).toBe(false);
-
-    // Score machine
-    const { createScoreMachine } = await import('@/modules/score/score-machine');
-    const machine = createScoreMachine();
-
-    machine.send('START_SCORING');
-    expect(machine.state).toBe('Scoring');
-
-    // Score complete with results
-    machine.send('SCORE_COMPLETE', {
-      contentHash: 'hash-v1',
-      dimensions: {
-        practicality: 80,
-        engineering: 75,
-        intentClarity: 90,
-        designCleverness: 70,
-        documentation: 85,
-        reusability: 60,
-      },
-      totalScore: 76.5,
-      grade: 'Advanced',
-    });
-    expect(machine.state).toBe('Scored');
-
-    // Post-processing validation (+-2 tolerance)
-    const { validateScoreConsistency } = await import(
-      '@/modules/score/post-processor'
-    );
-    const validation = validateScoreConsistency({
-      reportedTotal: 76.5,
-      weightedAvg: 76.5,
-      tolerance: scoreTolerance,
-    });
-    expect(validation.passed).toBe(true);
-
-    // Cache hit on second attempt
-    const cached2 = await getCachedScore('/path/to/skill');
-    if (cached2.cached) {
-      expect(cached2.result).toBeDefined();
-    }
-  });
-
-  // MODULE_L3_07: 展示页发布完整流程
-  test('MODULE_L3_07: 展示页发布完整流程', async () => {
-    const { createShowcaseMachine } = await import(
-      '@/modules/showcase/showcase-machine'
-    );
-    const machine = createShowcaseMachine();
-
-    // Generate
-    machine.send('GENERATE', { skillPath: '/test', scoreResult: {} });
-    machine.send('GENERATE_COMPLETE', {
-      draft: { name: 'test', description: 'desc', features: [], template: 'developer-dark' },
-    });
-    expect(machine.state).toBe('Previewing');
-
-    // Edit
-    machine.send('EDIT');
-    expect(machine.state).toBe('Editing');
-    machine.send('SAVE');
-    expect(machine.state).toBe('Previewing');
-
-    // Publish
-    machine.send('PUBLISH', { githubToken: 'ghp_xxx' });
-    expect(machine.state).toBe('Publishing');
-    machine.send('PUBLISH_COMPLETE', { url: 'https://user.github.io/muxvo-skills/test' });
-    expect(machine.state).toBe('Published');
-
-    // Share 7 channels
-    const { getShareChannels } = await import('@/modules/publish/share-channels');
-    const channels = getShareChannels();
-    expect(channels).toHaveLength(7);
-  });
+  // MODULE_L3_07: removed -- showcase/showcase-machine module deleted
 
   // MODULE_L3_08: GitHub OAuth 登录完整流程
   test('MODULE_L3_08: GitHub OAuth 登录完整流程', async () => {
@@ -620,50 +417,9 @@ describe('L3 -- 跨模块联动', () => {
     expect(result.pushSent).toBe(true);
   });
 
-  // CROSS_L3_04: Skill 安装触发多模块联动
-  test('CROSS_L3_04: Skill 安装触发多模块联动', async () => {
-    const { createInstallOrchestrator } = await import(
-      '@/modules/marketplace/install-orchestrator'
-    );
-    const orchestrator = createInstallOrchestrator();
+  // CROSS_L3_04: removed -- marketplace/install-orchestrator module deleted
 
-    const result = await orchestrator.handleInstallComplete({
-      name: 'test-skill',
-      type: 'skill',
-      version: '1.0.0',
-      source: 'skillsmp',
-    });
-
-    expect(result.installState).toBe('Installed');
-    expect(result.registryUpdated).toBe(true);
-    expect(result.browserStatusUpdated).toBe(true);
-    expect(result.configDirectoryChanged).toBe(true);
-    expect(result.resourceChangePushed).toBe(true);
-  });
-
-  // CROSS_L3_05: 评分结果驱动展示页生成
-  test('CROSS_L3_05: 评分结果驱动展示页生成', async () => {
-    const { createScoreToShowcaseOrchestrator } = await import(
-      '@/modules/showcase/score-showcase-bridge'
-    );
-    const orchestrator = createScoreToShowcaseOrchestrator();
-
-    const result = await orchestrator.generateFromScore({
-      skillPath: '/test',
-      scoreResult: {
-        totalScore: 76.5,
-        grade: 'Advanced',
-        dimensions: scoreDimensions.map((d) => ({ name: d.name, score: 80 })),
-      },
-    });
-
-    expect(result.cachedScoreUsed).toBe(true);
-    expect(result.radarChart).toBeDefined();
-    expect(result.skillContent).toBeDefined();
-    expect(result.ogMeta).toHaveProperty('ogTitle');
-    expect(result.ogMeta).toHaveProperty('ogDescription');
-    expect(result.ogMeta).toHaveProperty('ogImage');
-  });
+  // CROSS_L3_05: removed -- showcase/score-showcase-bridge module deleted
 
   // CROSS_L3_06: Esc 键优先级链完整验证
   test('CROSS_L3_06: Esc 键优先级链完整验证', async () => {
@@ -829,70 +585,9 @@ describe('L3 -- 数据一致性', () => {
     expect(fontSize).toBe(16);
   });
 
-  // CONSIST_L3_03: 安装注册表一致性
-  test('CONSIST_L3_03: 安装注册表一致性', async () => {
-    const { createRegistry } = await import('@/modules/marketplace/registry');
-    const registry = createRegistry();
+  // CONSIST_L3_03: removed -- marketplace/registry module deleted
 
-    // Install -> registry has entry
-    await registry.add({
-      name: 'test-skill',
-      type: 'skill',
-      version: '1.0.0',
-      source: 'skillsmp',
-      installedAt: new Date().toISOString(),
-    });
-    let entries = await registry.getAll();
-    expect(entries).toHaveLength(1);
-    expect(entries[0].name).toBe('test-skill');
-
-    // Uninstall -> registry removes entry
-    await registry.remove('test-skill');
-    entries = await registry.getAll();
-    expect(entries).toHaveLength(0);
-
-    // Update -> version number changes
-    await registry.add({
-      name: 'test-skill',
-      type: 'skill',
-      version: '1.0.0',
-      source: 'skillsmp',
-      installedAt: new Date().toISOString(),
-    });
-    await registry.updateVersion('test-skill', '1.2.0');
-    entries = await registry.getAll();
-    expect(entries[0].version).toBe('1.2.0');
-  });
-
-  // CONSIST_L3_04: 评分缓存一致性
-  test('CONSIST_L3_04: 评分缓存一致性', async () => {
-    const { createScoreCache } = await import('@/modules/score/cache');
-    const cache = createScoreCache();
-
-    // First score -> cached + hash recorded
-    await cache.set('/test', {
-      contentHash: 'hash-v1',
-      promptVersion: 'v1.0',
-      result: { totalScore: 76.5, grade: 'Advanced' },
-    });
-
-    // Content unchanged -> return cache
-    const hit = await cache.get('/test', { contentHash: 'hash-v1', promptVersion: 'v1.0' });
-    expect(hit.cached).toBe(true);
-    expect(hit.result!.totalScore).toBe(76.5);
-
-    // Content changed -> cache miss
-    const miss = await cache.get('/test', { contentHash: 'hash-v2', promptVersion: 'v1.0' });
-    expect(miss.cached).toBe(false);
-
-    // Prompt version changed -> all caches invalidated
-    await cache.invalidateByPromptVersion('v2.0');
-    const invalidated = await cache.get('/test', {
-      contentHash: 'hash-v1',
-      promptVersion: 'v2.0',
-    });
-    expect(invalidated.cached).toBe(false);
-  });
+  // CONSIST_L3_04: removed -- score module deleted
 });
 
 // ============================================================
@@ -923,36 +618,7 @@ describe('L3 -- 边界时间测试', () => {
     expect(result.readTriggered).toBe(1);
   });
 
-  // TIME_L3_02: 搜索去抖边界 -- 300ms
-  test('TIME_L3_02: 搜索去抖边界 -- 300ms', async () => {
-    expect(searchFixtures.debounceMs).toBe(300);
-
-    const { createSearchDebouncer } = await import(
-      '@/modules/marketplace/search-debouncer'
-    );
-    const debouncer = createSearchDebouncer(300);
-    let searchCount = 0;
-    debouncer.onSearch(() => { searchCount++; });
-
-    // Rapid input (each < 300ms apart) -> only last triggers
-    debouncer.input('a'); // t=0
-    debouncer.input('ab'); // t=50
-    debouncer.input('abc'); // t=100
-    debouncer.input('abcd'); // t=150
-    debouncer.input('abcde'); // t=200
-    await debouncer.flush();
-    expect(searchCount).toBe(1);
-
-    // Slow input (each > 300ms apart) -> each triggers
-    searchCount = 0;
-    debouncer.inputWithDelay('x', 0);
-    await debouncer.flush();
-    debouncer.inputWithDelay('xy', 350);
-    await debouncer.flush();
-    debouncer.inputWithDelay('xyz', 700);
-    await debouncer.flush();
-    expect(searchCount).toBe(3);
-  });
+  // TIME_L3_02: removed -- marketplace/search-debouncer module deleted
 
   // TIME_L3_03: 文件面板过渡边界 -- 300ms CSS
   test('TIME_L3_03: 文件面板过渡边界 -- 300ms CSS', async () => {
@@ -972,32 +638,7 @@ describe('L3 -- 边界时间测试', () => {
     expect(clickAfter.handled).toBe(true);
   });
 
-  // TIME_L3_04: 更新检测间隔边界 -- 启动+6h
-  test('TIME_L3_04: 更新检测间隔边界 -- 启动+6h', async () => {
-    expect(timeConstants.updateCheckInterval).toBe(6 * 60 * 60 * 1000);
-
-    const { createUpdateScheduler } = await import(
-      '@/modules/marketplace/update-scheduler'
-    );
-    const scheduler = createUpdateScheduler();
-    const checks: number[] = [];
-    scheduler.onCheck((timestamp: number) => checks.push(timestamp));
-
-    // App start -> first check immediately
-    scheduler.start(0);
-    expect(checks).toHaveLength(1);
-
-    // At 6h -> second check
-    scheduler.tick(6 * 60 * 60 * 1000);
-    expect(checks).toHaveLength(2);
-
-    // Before 6h -> no additional check
-    scheduler.reset();
-    checks.length = 0;
-    scheduler.start(0);
-    scheduler.tick(5 * 60 * 60 * 1000);
-    expect(checks).toHaveLength(1); // only startup check
-  });
+  // TIME_L3_04: removed -- marketplace/update-scheduler module deleted
 
   // TIME_L3_05: 内存检查间隔边界 -- 60s
   test('TIME_L3_05: 内存检查间隔边界 -- 60s', async () => {
@@ -1135,26 +776,7 @@ describe('L3 -- 异常恢复', () => {
     expect(machine.context.isNewProcess).toBe(true);
   });
 
-  // RECOVER_L3_02: 安装失败后重试
-  test('RECOVER_L3_02: 安装失败后重试', async () => {
-    const { createInstallMachine } = await import(
-      '@/modules/marketplace/install-machine'
-    );
-    const machine = createInstallMachine({ packageType: 'skill' });
-
-    // Download -> network interrupt -> InstallFailed
-    machine.send('START_INSTALL');
-    machine.send('DOWNLOAD_FAILED', { error: 'Network interrupted' });
-    expect(machine.state).toBe('InstallFailed');
-
-    // Retry after network recovery
-    machine.send('RETRY');
-    expect(machine.state).toBe('Downloading');
-
-    machine.send('DOWNLOAD_COMPLETE');
-    machine.send('INSTALL_COMPLETE');
-    expect(machine.state).toBe('Installed');
-  });
+  // RECOVER_L3_02: removed -- marketplace/install-machine module deleted
 
   // RECOVER_L3_03: 文件监听错误恢复
   test('RECOVER_L3_03: 文件监听错误恢复', async () => {
@@ -1179,27 +801,7 @@ describe('L3 -- 异常恢复', () => {
     expect(watcher.state).toBe('Watching');
   });
 
-  // RECOVER_L3_04: 评分失败后重试
-  test('RECOVER_L3_04: 评分失败后重试', async () => {
-    const { createScoreMachine } = await import('@/modules/score/score-machine');
-    const machine = createScoreMachine();
-
-    machine.send('START_SCORING');
-
-    // 3 consecutive failures
-    for (let i = 0; i < 3; i++) {
-      machine.send('SCORE_FAILED');
-      if (i < 2) {
-        machine.send('AUTO_RETRY');
-      }
-    }
-
-    // After 3 failures -> final error, manual retry only
-    expect(machine.state).toBe('ScoreFailed');
-    expect(machine.context.retryCount).toBe(3);
-    expect(machine.context.canAutoRetry).toBe(false);
-    expect(machine.context.showManualRetryButton).toBe(true);
-  });
+  // RECOVER_L3_04: removed -- score module deleted
 
   // RECOVER_L3_05: 同步中断恢复
   test('RECOVER_L3_05: 同步中断恢复', async () => {
@@ -1225,34 +827,5 @@ describe('L3 -- 异常恢复', () => {
     expect(retryResult.synced).toHaveLength(1);
   });
 
-  // RECOVER_L3_06: 部分源加载失败降级
-  test('RECOVER_L3_06: 部分源加载失败降级', async () => {
-    const { createBrowserMachine } = await import(
-      '@/modules/marketplace/browser-machine'
-    );
-    const machine = createBrowserMachine();
-
-    machine.send('OPEN');
-    expect(machine.state).toBe('Loading');
-
-    // 4 sources succeed, 2 timeout
-    for (let i = 0; i < 4; i++) {
-      machine.send('SOURCE_LOADED', { source: `s${i}`, packages: [{ id: `pkg-${i}` }] });
-    }
-    machine.send('SOURCE_FAILED', { source: 's4', error: 'timeout' });
-    machine.send('SOURCE_FAILED', { source: 's5', error: 'timeout' });
-
-    expect(machine.state).toBe('PartialReady');
-    expect(machine.context.loadedSources).toHaveLength(4);
-    expect(machine.context.failedSources).toHaveLength(2);
-
-    // User can browse loaded data
-    expect(machine.context.displayedPackages.length).toBeGreaterThan(0);
-
-    // Failed sources auto-retry success -> Ready
-    machine.send('SOURCE_LOADED', { source: 's4', packages: [{ id: 'pkg-4' }] });
-    machine.send('SOURCE_LOADED', { source: 's5', packages: [{ id: 'pkg-5' }] });
-    expect(machine.state).toBe('Ready');
-    expect(machine.context.loadedSources).toHaveLength(6);
-  });
+  // RECOVER_L3_06: removed -- marketplace/browser-machine module deleted
 });
