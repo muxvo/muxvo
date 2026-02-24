@@ -248,7 +248,11 @@ export function TerminalTile({
       >
         {/* Status dot */}
         <span
-          className={`tile-status ${state === 'Running' ? 'tile-status--running' : 'tile-status--idle'}`}
+          className={`tile-status ${
+            state === 'WaitingInput' ? 'tile-status--waiting' :
+            state === 'Running' ? 'tile-status--running' :
+            'tile-status--idle'
+          }`}
         />
 
         {/* Tile name area */}
@@ -302,6 +306,11 @@ export function TerminalTile({
             </>
           )}
         </div>
+
+        {/* WaitingInput badge */}
+        {state === 'WaitingInput' && (
+          <span className="tile-waiting-badge">{t('terminal.waitingInput')}</span>
+        )}
 
         {/* Header action buttons (non-compact only) */}
         {!compact && (

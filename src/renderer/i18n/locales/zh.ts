@@ -9,6 +9,7 @@ export const zh = {
   'terminal.noTerminals': '暂无终端，点击 + 新建',
   'terminal.count': '{count} 个终端',
   'terminal.maxReached': '已达最大 20 个终端',
+  'terminal.waitingInput': '等待操作',
   'close.confirm': '确定关闭此终端？',
   'close.cancel': '取消',
   'close.ok': '确定',

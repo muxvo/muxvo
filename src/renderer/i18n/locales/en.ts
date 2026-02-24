@@ -9,6 +9,7 @@ export const en = {
   'terminal.noTerminals': 'No terminals. Click + to create one.',
   'terminal.count': '{count} terminals',
   'terminal.maxReached': 'Maximum 20 terminals reached',
+  'terminal.waitingInput': 'Waiting',
   'close.confirm': 'Close this terminal?',
   'close.cancel': 'Cancel',
   'close.ok': 'Confirm',
