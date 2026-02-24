@@ -242,6 +242,7 @@ export function App(): JSX.Element {
           onCloseCancel={handleCloseCancel}
           onReorder={handleReorder}
           onRename={handleRename}
+          terminalNames={terminalNames}
         />
       </PanelProvider>
     </I18nProvider>
@@ -266,6 +267,7 @@ function AppContent({
   onCloseCancel,
   onReorder,
   onRename,
+  terminalNames,
 }: {
   terminals: (TerminalEntry & { customName?: string })[];
   viewMode: 'Tiling' | 'Focused';
@@ -283,6 +285,7 @@ function AppContent({
   onCloseCancel: () => void;
   onReorder: (newOrder: string[]) => void;
   onRename: (id: string, name: string) => void;
+  terminalNames: Record<string, string>;
 }): JSX.Element {
   const { state, dispatch } = usePanelContext();
   const { t } = useI18n();
@@ -418,7 +421,11 @@ function AppContent({
         onCancel={onCloseCancel}
       />
 
-      <TourOverlay terminalCount={terminals.length} />
+      <TourOverlay
+        terminalCount={terminals.length}
+        viewMode={viewMode}
+        terminalNames={terminalNames}
+      />
     </div>
   );
 }
