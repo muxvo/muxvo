@@ -29,6 +29,7 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
   const prevTerminalOrderRef = useRef<string[]>(terminalOrder);
 
   const completeTour = useCallback(() => {
+    document.body.classList.remove('tour-drag-active');
     if (driverRef.current) {
       driverRef.current.destroy();
       driverRef.current = null;
@@ -189,16 +190,11 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
         if (idx !== undefined) {
           currentStepRef.current = idx;
         }
-        // For drag/observe steps, make overlay pass-through so user can interact
-        // Must target the SVG path element directly — it has inline pointer-events: auto
+        // For drag steps, toggle body class to override driver.js global pointer-events: none
         const step = activeSteps[idx ?? 0];
-        const needsPassThrough = step?.actionType === 'observe'
-          || step?.actionType === 'drag-reorder'
+        const needsPassThrough = step?.actionType === 'drag-reorder'
           || step?.actionType === 'drag-resize';
-        const overlayPath = document.querySelector('.driver-overlay path') as SVGElement | null;
-        if (overlayPath) {
-          (overlayPath as any).style.pointerEvents = needsPassThrough ? 'none' : '';
-        }
+        document.body.classList.toggle('tour-drag-active', needsPassThrough);
       },
       onCloseClick: () => {
         completeTour();
@@ -213,6 +209,7 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
     driverRef.current = driverInstance;
 
     return () => {
+      document.body.classList.remove('tour-drag-active');
       if (driverRef.current) {
         driverRef.current.destroy();
         driverRef.current = null;
