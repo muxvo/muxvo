@@ -143,13 +143,13 @@ const PROMPT_PATTERNS = [
   /\([yYnN]\/[yYnN]\)/,
   /\[[yYnN]\/[yYnN]\]/,
   // "Press any key", "Enter to continue"
-  /press\s+(any\s+)?key/i,
-  /enter\s+to\s+continue/i,
-  // Claude Code / AI CLI prompts
-  /Do you want to proceed/i,
-  /Would you like to/i,
+  /press\s*(any\s*)?key/i,
+  /enter\s*to\s*continue/i,
+  // Claude Code / AI CLI prompts (spaces may be lost due to cursor positioning)
+  /Do\s*you\s*want\s*to\s*proceed/i,
+  /Would\s*you\s*like\s*to/i,
   // Claude Code approval: "Esc to cancel"
-  /Esc to cancel/
+  /Esc\s*to\s*cancel/
 ];
 const EXCLUDE_PATTERNS = [
   /^\s*\d+[%％]/,
@@ -172,11 +172,19 @@ function detectWaitingInput(output, terminalId) {
     rollingBuffer = rollingBuffer.slice(rollingBuffer.length - ROLLING_MAX);
   }
   const clean = stripAnsi(rollingBuffer);
+  if (rollingBuffer.length > 500) {
+    const tail = clean.slice(-300).replace(/\n/g, "\\n").replace(/\r/g, "\\r");
+    console.log(`[MUXVO:detect] cleanTail(${clean.length}): ${tail}`);
+  }
   for (const exclude of EXCLUDE_PATTERNS) {
-    if (exclude.test(clean)) return false;
+    if (exclude.test(clean)) {
+      console.log(`[MUXVO:detect] EXCLUDED by: ${exclude}`);
+      return false;
+    }
   }
   for (const pattern of PROMPT_PATTERNS) {
     if (pattern.test(clean)) {
+      console.log(`[MUXVO:detect] MATCHED pattern: ${pattern}`);
       rollingBuffer = "";
       return true;
     }

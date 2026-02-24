@@ -21,13 +21,13 @@ const PROMPT_PATTERNS = [
   /\([yYnN]\/[yYnN]\)/,
   /\[[yYnN]\/[yYnN]\]/,
   // "Press any key", "Enter to continue"
-  /press\s+(any\s+)?key/i,
-  /enter\s+to\s+continue/i,
-  // Claude Code / AI CLI prompts
-  /Do you want to proceed/i,
-  /Would you like to/i,
+  /press\s*(any\s*)?key/i,
+  /enter\s*to\s*continue/i,
+  // Claude Code / AI CLI prompts (spaces may be lost due to cursor positioning)
+  /Do\s*you\s*want\s*to\s*proceed/i,
+  /Would\s*you\s*like\s*to/i,
   // Claude Code approval: "Esc to cancel"
-  /Esc to cancel/,
+  /Esc\s*to\s*cancel/,
 ];
 
 // Exclude patterns: avoid false positives
@@ -58,13 +58,23 @@ export function detectWaitingInput(output: string, terminalId?: string): boolean
   // Strip ANSI codes for clean matching
   const clean = stripAnsi(rollingBuffer);
 
+  // DEBUG: log the last 300 chars of clean text every 20 chunks
+  if (rollingBuffer.length > 500) {
+    const tail = clean.slice(-300).replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+    console.log(`[MUXVO:detect] cleanTail(${clean.length}): ${tail}`);
+  }
+
   // Check exclusions first
   for (const exclude of EXCLUDE_PATTERNS) {
-    if (exclude.test(clean)) return false;
+    if (exclude.test(clean)) {
+      console.log(`[MUXVO:detect] EXCLUDED by: ${exclude}`);
+      return false;
+    }
   }
   // Then check for prompt matches
   for (const pattern of PROMPT_PATTERNS) {
     if (pattern.test(clean)) {
+      console.log(`[MUXVO:detect] MATCHED pattern: ${pattern}`);
       rollingBuffer = ''; // Reset after detection
       return true;
     }
