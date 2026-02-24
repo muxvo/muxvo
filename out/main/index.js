@@ -1541,13 +1541,64 @@ function inferFormat(filePath) {
   };
   return formatMap[ext] || "text";
 }
+let _projectCwdCache = [];
+let _projectCwdCacheTime = 0;
+const PROJECT_CWD_CACHE_TTL = 6e4;
+async function extractCwdFromProject(projectDir) {
+  try {
+    const files = await promises.readdir(projectDir);
+    const jsonl = files.find((f) => f.endsWith(".jsonl"));
+    if (!jsonl) return null;
+    const filePath = path.join(projectDir, jsonl);
+    const rl = readline.createInterface({
+      input: fs.createReadStream(filePath, { encoding: "utf-8" }),
+      crlfDelay: Infinity
+    });
+    let lineCount = 0;
+    for await (const line of rl) {
+      if (++lineCount > 20) break;
+      try {
+        const obj = JSON.parse(line);
+        if (obj.cwd) {
+          rl.close();
+          return obj.cwd;
+        }
+      } catch {
+      }
+    }
+    rl.close();
+    return null;
+  } catch {
+    return null;
+  }
+}
+async function discoverProjectCwds() {
+  const now = Date.now();
+  if (_projectCwdCache.length > 0 && now - _projectCwdCacheTime < PROJECT_CWD_CACHE_TTL) {
+    return _projectCwdCache;
+  }
+  const projectsDir = path.join(CLAUDE_DIR$1, "projects");
+  try {
+    const entries = await promises.readdir(projectsDir, { withFileTypes: true });
+    const dirs = entries.filter((e) => e.isDirectory()).map((e) => path.join(projectsDir, e.name));
+    const cwds = await Promise.all(dirs.map((d) => extractCwdFromProject(d)));
+    const uniqueCwds = [...new Set(cwds.filter((c) => c !== null))];
+    _projectCwdCache = uniqueCwds;
+    _projectCwdCacheTime = now;
+    return uniqueCwds;
+  } catch {
+    return [];
+  }
+}
 function createConfigHandlers() {
   return {
     /**
      * P0: Scan ~/.claude/ for resources of specified types
+     * When projectPaths provided, also scan <projectPath>/.claude/skills/ and <projectPath>/.codex/skills/
      */
     async getResources(params) {
       const types = params?.types || Object.keys(RESOURCE_TYPE_MAP);
+      const projectPaths = params?.projectPaths || [];
       const resources = [];
       for (const type of types) {
         const mapping = RESOURCE_TYPE_MAP[type];
@@ -1562,7 +1613,8 @@ function createConfigHandlers() {
                 type,
                 path: dirPath,
                 updatedAt: fileStat.mtime.toISOString(),
-                source
+                source,
+                level: "system"
               });
             } catch {
             }
@@ -1579,12 +1631,46 @@ function createConfigHandlers() {
                     type,
                     path: entryPath,
                     updatedAt: entryStat.mtime.toISOString(),
-                    source
+                    source,
+                    level: "system"
                   });
                 } catch {
                 }
               }
             } catch {
+            }
+          }
+        }
+        if (type === "skills") {
+          const discoveredCwds = await discoverProjectCwds();
+          const allProjectPaths = [.../* @__PURE__ */ new Set([...discoveredCwds, ...projectPaths])];
+          for (const projectPath of allProjectPaths) {
+            const projectSkillDirs = [
+              { dir: path.join(projectPath, ".claude", "skills"), source: "claude" },
+              { dir: path.join(projectPath, ".codex", "skills"), source: "codex" },
+              { dir: path.join(projectPath, "skills"), source: "codex" }
+            ];
+            for (const { dir: dirPath, source } of projectSkillDirs) {
+              try {
+                const entries = await promises.readdir(dirPath, { withFileTypes: true });
+                for (const entry of entries) {
+                  if (EXCLUDED_FILES.has(entry.name)) continue;
+                  const entryPath = path.join(dirPath, entry.name);
+                  try {
+                    const entryStat = await promises.stat(entryPath);
+                    resources.push({
+                      name: entry.name,
+                      type,
+                      path: entryPath,
+                      updatedAt: entryStat.mtime.toISOString(),
+                      source,
+                      level: "project"
+                    });
+                  } catch {
+                  }
+                }
+              } catch {
+              }
             }
           }
         }
@@ -1596,7 +1682,9 @@ function createConfigHandlers() {
      */
     async getResourceContent(params) {
       const resolvedPath = path.resolve(params.path);
-      if (!ALLOWED_CONFIG_DIRS.some((dir) => resolvedPath.startsWith(dir))) {
+      const inAllowedDir = ALLOWED_CONFIG_DIRS.some((dir) => resolvedPath.startsWith(dir));
+      const inProjectSkillDir = /\/\.(claude|codex)\/skills\//.test(resolvedPath) || /\/skills\/[^/]+\/SKILL\.md$/.test(resolvedPath);
+      if (!inAllowedDir && !inProjectSkillDir) {
         throw new Error(`Access denied: path must be within allowed directories`);
       }
       const content = await promises.readFile(resolvedPath, "utf-8");

@@ -3,7 +3,7 @@
  * Full-page overlay for browsing and editing skills.
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { usePanelContext } from '@/renderer/contexts/PanelContext';
 import { useSkills } from '@/renderer/hooks/useSkills';
 import { SkillList } from './SkillList';
@@ -13,16 +13,8 @@ import { UnsavedPromptDialog } from '@/renderer/components/file/UnsavedPromptDia
 import { mapExtToFileType, toLocalFileUrl } from '@/renderer/utils/file-tree';
 import './SkillsPanel.css';
 
-interface SkillsPanelProps {
-  terminals?: Array<{ id: string; cwd: string }>;
-}
-
-export function SkillsPanel({ terminals }: SkillsPanelProps): JSX.Element {
-  const projectPaths = useMemo(() => {
-    if (!terminals?.length) return undefined;
-    return [...new Set(terminals.map((t) => t.cwd).filter(Boolean))];
-  }, [terminals]);
-  const { skills, loading } = useSkills(projectPaths);
+export function SkillsPanel(): JSX.Element {
+  const { skills, loading } = useSkills();
   const { dispatch } = usePanelContext();
 
   const [selectedSkillPath, setSelectedSkillPath] = useState<string | null>(null);
