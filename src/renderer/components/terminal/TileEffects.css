@@ -127,13 +127,28 @@
   flex-shrink: 0;
 }
 
+/* Clickable name area — enlarged hit target */
+.tile-name-clickable {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+  min-height: 24px;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.tile-name-clickable:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
 /* Custom name */
 .tile-custom-name {
   font-size: 12px;
   color: var(--text-primary);
   font-family: var(--font-mono);
   font-weight: 600;
-  cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
