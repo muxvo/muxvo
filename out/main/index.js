@@ -69,7 +69,8 @@ const IPC_CHANNELS = {
     ARCHIVE_PROGRESS: "chat:archive-progress",
     SHOW_SESSION_MENU: "chat:show-session-menu",
     DELETE_SESSION: "chat:delete-session",
-    REVEAL_FILE: "chat:reveal-file"
+    REVEAL_FILE: "chat:reveal-file",
+    SET_SESSION_NAME: "chat:set-session-name"
   },
   CONFIG: {
     GET_RESOURCES: "config:get-resources",
@@ -988,7 +989,7 @@ function createChatProjectReader(opts) {
     }
   };
 }
-function encodeProjectHash(cwd) {
+function encodeProjectHash$1(cwd) {
   if (!cwd) return "";
   return cwd.replace(/[^a-zA-Z0-9-]/g, "-");
 }
@@ -1194,7 +1195,7 @@ function createCodexChatReader(opts) {
       }
       const projects = [];
       for (const [, value] of projectMap) {
-        const hash = encodeProjectHash(value.cwd);
+        const hash = encodeProjectHash$1(value.cwd);
         const displayPath = value.cwd || "Unknown";
         const parts = displayPath.split("/").filter(Boolean);
         projects.push({
@@ -1217,7 +1218,7 @@ function createCodexChatReader(opts) {
       }
       return {
         sessionId: entry.sessionId,
-        projectHash: encodeProjectHash(entry.cwd),
+        projectHash: encodeProjectHash$1(entry.cwd),
         title: title || entry.sessionId,
         startedAt: new Date(entry.mtime).toISOString(),
         lastModified: entry.mtime,
@@ -1228,7 +1229,7 @@ function createCodexChatReader(opts) {
     async getSessionsForProject(projectHash, limit = 50) {
       const entries = await buildIndex();
       const titles = await getThreadTitles();
-      const matching = entries.filter((e) => encodeProjectHash(e.cwd) === projectHash).sort((a, b) => b.mtime - a.mtime).slice(0, limit);
+      const matching = entries.filter((e) => encodeProjectHash$1(e.cwd) === projectHash).sort((a, b) => b.mtime - a.mtime).slice(0, limit);
       return Promise.all(matching.map((e) => this._buildSummary(e, titles)));
     },
     async getAllRecentSessions(limit) {
@@ -1286,7 +1287,7 @@ function createCodexChatReader(opts) {
                     start + query.length + 30
                   );
                   results.push({
-                    projectHash: encodeProjectHash(entry.cwd),
+                    projectHash: encodeProjectHash$1(entry.cwd),
                     sessionId: entry.sessionId,
                     snippet,
                     timestamp: parsed.timestamp || ""
@@ -1390,6 +1391,88 @@ function createChatMultiSource(opts) {
     }
   };
 }
+const DEFAULT_CONFIG = {
+  window: { width: 1400, height: 900, x: 100, y: 100 },
+  openTerminals: [],
+  gridLayout: { columnRatios: [1, 1], rowRatios: [1, 1] },
+  theme: "light",
+  fontSize: 14,
+  terminal: {
+    themeName: "light",
+    fontFamily: "'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace",
+    fontSize: 13,
+    cursorStyle: "block",
+    cursorBlink: true
+  },
+  ftvLeftWidth: 250,
+  ftvRightWidth: 300
+};
+let _configDir = null;
+function initConfigDir(dir) {
+  _configDir = dir;
+}
+function getConfigPath(configDir) {
+  const dir = configDir ?? _configDir;
+  if (!dir) return null;
+  return path__namespace.join(dir, "config.json");
+}
+function getTmpPath(configDir) {
+  const dir = configDir ?? _configDir;
+  if (!dir) return null;
+  return path__namespace.join(dir, ".config.json.tmp");
+}
+function createConfigManager(deps) {
+  const fsAdapter = fs__namespace;
+  const configDir = _configDir;
+  function loadConfig() {
+    const configPath = getConfigPath(configDir);
+    if (!configPath) return { ...DEFAULT_CONFIG };
+    try {
+      if (!fsAdapter.existsSync(configPath)) {
+        return { ...DEFAULT_CONFIG };
+      }
+      const raw = fsAdapter.readFileSync(configPath, "utf-8");
+      const parsed = JSON.parse(raw);
+      const merged = { ...DEFAULT_CONFIG, ...parsed };
+      if (parsed.terminal) {
+        merged.terminal = { ...DEFAULT_CONFIG.terminal, ...parsed.terminal };
+      }
+      return merged;
+    } catch {
+      return { ...DEFAULT_CONFIG };
+    }
+  }
+  function saveConfig(config) {
+    const configPath = getConfigPath(configDir);
+    const tmpPath = getTmpPath(configDir);
+    if (!configPath || !tmpPath || !configDir) {
+      return { success: true };
+    }
+    try {
+      if (!fsAdapter.existsSync(configDir)) {
+        fsAdapter.mkdirSync(configDir, { recursive: true });
+      }
+      const fullConfig = { ...DEFAULT_CONFIG, ...config };
+      const data = JSON.stringify(fullConfig, null, 2);
+      fsAdapter.writeFileSync(tmpPath, data, "utf-8");
+      fsAdapter.renameSync(tmpPath, configPath);
+      return { success: true };
+    } catch {
+      try {
+        if (fsAdapter.existsSync(tmpPath)) {
+          fsAdapter.unlinkSync(tmpPath);
+        }
+      } catch {
+      }
+      return { success: true };
+    }
+  }
+  return { loadConfig, saveConfig };
+}
+function encodeProjectHash(cwd) {
+  if (!cwd) return "";
+  return cwd.replace(/[^a-zA-Z0-9-]/g, "-");
+}
 const CC_BASE_PATH = path.join(os.homedir(), ".claude");
 const CODEX_BASE_PATH = path.join(os.homedir(), ".codex");
 function createChatHandlers() {
@@ -1409,11 +1492,21 @@ function createChatHandlers() {
       return { projects };
     },
     async getSessions(params) {
+      let sessions;
       if (params.projectHash === "__all__") {
-        const sessions2 = await reader.getAllRecentSessions(200);
-        return { sessions: sessions2 };
+        sessions = await reader.getAllRecentSessions(200);
+      } else {
+        sessions = await reader.getSessionsForProject(params.projectHash, 500);
       }
-      const sessions = await reader.getSessionsForProject(params.projectHash, 500);
+      const cm = createConfigManager();
+      const config = cm.loadConfig();
+      const sessionNames = config.sessionNames || {};
+      if (Object.keys(sessionNames).length > 0) {
+        sessions = sessions.map((s) => {
+          const customName = sessionNames[s.sessionId];
+          return customName ? { ...s, customTitle: customName } : s;
+        });
+      }
       return { sessions };
     },
     async getSession(params) {
@@ -1424,6 +1517,25 @@ function createChatHandlers() {
     async search(params) {
       const results = await reader.search(params.query);
       return { results };
+    },
+    async setSessionName(params) {
+      const { cwd, customName } = params;
+      if (!cwd) return { success: false };
+      const projectHash = encodeProjectHash(cwd);
+      if (!projectHash) return { success: false };
+      const sessions = await reader.getSessionsForProject(projectHash, 1);
+      if (sessions.length === 0) return { success: false };
+      const sessionId = sessions[0].sessionId;
+      const cm = createConfigManager();
+      const config = cm.loadConfig();
+      const sessionNames = { ...config.sessionNames || {} };
+      if (customName) {
+        sessionNames[sessionId] = customName;
+      } else {
+        delete sessionNames[sessionId];
+      }
+      cm.saveConfig({ ...config, sessionNames });
+      return { success: true, sessionId };
     },
     async export(params) {
       const messages = await reader.readSession(params.projectHash, params.sessionId);
@@ -1460,6 +1572,7 @@ function registerChatHandlers() {
   electron.ipcMain.handle(IPC_CHANNELS.CHAT.GET_SESSION, async (_e, p) => handlers.getSession(p));
   electron.ipcMain.handle(IPC_CHANNELS.CHAT.SEARCH, async (_e, p) => handlers.search(p));
   electron.ipcMain.handle(IPC_CHANNELS.CHAT.EXPORT, async (_e, p) => handlers.export(p));
+  electron.ipcMain.handle(IPC_CHANNELS.CHAT.SET_SESSION_NAME, async (_e, p) => handlers.setSessionName(p));
   electron.ipcMain.handle(IPC_CHANNELS.CHAT.SHOW_SESSION_MENU, async (_e, p) => {
     return new Promise((resolve) => {
       const template = [
@@ -2919,84 +3032,6 @@ function createMemoryPushTimer(opts) {
       check();
     }
   };
-}
-const DEFAULT_CONFIG = {
-  window: { width: 1400, height: 900, x: 100, y: 100 },
-  openTerminals: [],
-  gridLayout: { columnRatios: [1, 1], rowRatios: [1, 1] },
-  theme: "light",
-  fontSize: 14,
-  terminal: {
-    themeName: "light",
-    fontFamily: "'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace",
-    fontSize: 13,
-    cursorStyle: "block",
-    cursorBlink: true
-  },
-  ftvLeftWidth: 250,
-  ftvRightWidth: 300
-};
-let _configDir = null;
-function initConfigDir(dir) {
-  _configDir = dir;
-}
-function getConfigPath(configDir) {
-  const dir = configDir ?? _configDir;
-  if (!dir) return null;
-  return path__namespace.join(dir, "config.json");
-}
-function getTmpPath(configDir) {
-  const dir = configDir ?? _configDir;
-  if (!dir) return null;
-  return path__namespace.join(dir, ".config.json.tmp");
-}
-function createConfigManager(deps) {
-  const fsAdapter = fs__namespace;
-  const configDir = _configDir;
-  function loadConfig() {
-    const configPath = getConfigPath(configDir);
-    if (!configPath) return { ...DEFAULT_CONFIG };
-    try {
-      if (!fsAdapter.existsSync(configPath)) {
-        return { ...DEFAULT_CONFIG };
-      }
-      const raw = fsAdapter.readFileSync(configPath, "utf-8");
-      const parsed = JSON.parse(raw);
-      const merged = { ...DEFAULT_CONFIG, ...parsed };
-      if (parsed.terminal) {
-        merged.terminal = { ...DEFAULT_CONFIG.terminal, ...parsed.terminal };
-      }
-      return merged;
-    } catch {
-      return { ...DEFAULT_CONFIG };
-    }
-  }
-  function saveConfig(config) {
-    const configPath = getConfigPath(configDir);
-    const tmpPath = getTmpPath(configDir);
-    if (!configPath || !tmpPath || !configDir) {
-      return { success: true };
-    }
-    try {
-      if (!fsAdapter.existsSync(configDir)) {
-        fsAdapter.mkdirSync(configDir, { recursive: true });
-      }
-      const fullConfig = { ...DEFAULT_CONFIG, ...config };
-      const data = JSON.stringify(fullConfig, null, 2);
-      fsAdapter.writeFileSync(tmpPath, data, "utf-8");
-      fsAdapter.renameSync(tmpPath, configPath);
-      return { success: true };
-    } catch {
-      try {
-        if (fsAdapter.existsSync(tmpPath)) {
-          fsAdapter.unlinkSync(tmpPath);
-        }
-      } catch {
-      }
-      return { success: true };
-    }
-  }
-  return { loadConfig, saveConfig };
 }
 electron.protocol.registerSchemesAsPrivileged([
   { scheme: "local-file", privileges: { bypassCSP: true, supportFetchAPI: true, stream: true } }
