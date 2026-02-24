@@ -32,10 +32,11 @@ interface SessionIndexEntry {
   title: string;
 }
 
-/** Encode cwd to CC-compatible projectHash: /Users/rl/path → -Users-rl-path */
+/** Encode cwd to CC-compatible projectHash: /Users/rl/path → -Users-rl-path
+ *  Must match CC's encoding: replace all non-alphanumeric-non-dash chars with '-' */
 function encodeProjectHash(cwd: string): string {
   if (!cwd) return '';
-  return cwd.replace(/\//g, '-');
+  return cwd.replace(/[^a-zA-Z0-9-]/g, '-');
 }
 
 /** Extract UUID from Codex session filename: rollout-YYYY-MM-DDTHH-MM-SS-{UUID}.jsonl */
@@ -56,7 +57,7 @@ async function readSessionMeta(
 ): Promise<{ id: string; cwd: string; timestamp: string } | null> {
   try {
     const rl = createInterface({
-      input: createReadStream(filePath, { encoding: 'utf-8', end: 4096 }),
+      input: createReadStream(filePath, { encoding: 'utf-8' }),
       crlfDelay: Infinity,
     });
     for await (const line of rl) {
@@ -470,7 +471,7 @@ export function createCodexChatReader(opts: CodexChatReaderOpts) {
     async _extractFirstUserMessage(filePath: string): Promise<string> {
       try {
         const rl = createInterface({
-          input: createReadStream(filePath, { encoding: 'utf-8', end: 8192 }),
+          input: createReadStream(filePath, { encoding: 'utf-8' }),
           crlfDelay: Infinity,
         });
         for await (const line of rl) {

@@ -975,7 +975,7 @@ function createChatProjectReader(opts) {
 }
 function encodeProjectHash(cwd) {
   if (!cwd) return "";
-  return cwd.replace(/\//g, "-");
+  return cwd.replace(/[^a-zA-Z0-9-]/g, "-");
 }
 function extractSessionId(filename) {
   const base = path.basename(filename, ".jsonl");
@@ -988,7 +988,7 @@ function extractSessionId(filename) {
 async function readSessionMeta(filePath) {
   try {
     const rl = readline.createInterface({
-      input: fs.createReadStream(filePath, { encoding: "utf-8", end: 4096 }),
+      input: fs.createReadStream(filePath, { encoding: "utf-8" }),
       crlfDelay: Infinity
     });
     for await (const line of rl) {
@@ -1303,7 +1303,7 @@ function createCodexChatReader(opts) {
     async _extractFirstUserMessage(filePath) {
       try {
         const rl = readline.createInterface({
-          input: fs.createReadStream(filePath, { encoding: "utf-8", end: 8192 }),
+          input: fs.createReadStream(filePath, { encoding: "utf-8" }),
           crlfDelay: Infinity
         });
         for await (const line of rl) {
