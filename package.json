@@ -17,6 +17,11 @@
     "test:l3": "vitest run tests/l3/",
     "test:coverage": "vitest run --coverage"
   },
+  "build": {
+    "mac": {
+      "icon": "icon-designs/Muxvo.icns"
+    }
+  },
   "dependencies": {
     "@electron-toolkit/utils": "^4.0.0",
     "@tiptap/markdown": "^3.20.0",
