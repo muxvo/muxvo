@@ -34,6 +34,8 @@ interface Props {
   onDrop?: (id: string) => void;
   onDragLeave?: () => void;
   dragState?: 'none' | 'dragging' | 'drag-over';
+  customName?: string;
+  onRename?: (id: string, name: string) => void;
 }
 
 /** File icon SVG (inline) */
@@ -75,7 +77,9 @@ export function TerminalTile({
   onDragOver,
   onDrop,
   onDragLeave,
-  dragState = 'none'
+  dragState = 'none',
+  customName,
+  onRename
 }: Props): JSX.Element {
   const { t } = useI18n();
   const ui = getTerminalProcessUI(state);
@@ -120,7 +124,7 @@ export function TerminalTile({
   };
 
   // Naming machine state
-  const namingRef = useRef(createNamingMachine());
+  const namingRef = useRef(createNamingMachine(customName));
   const [namingState, setNamingState] = useState(namingRef.current.state);
   const [namingContext, setNamingContext] = useState(namingRef.current.context);
   const [inputValue, setInputValue] = useState('');
@@ -129,6 +133,12 @@ export function TerminalTile({
     namingRef.current.send(event);
     setNamingState(namingRef.current.state);
     setNamingContext(namingRef.current.context);
+    // Report name changes to parent
+    if (namingRef.current.state === 'DisplayNamed') {
+      onRename?.(id, namingRef.current.context.displayText);
+    } else if (namingRef.current.state === 'DisplayEmpty') {
+      onRename?.(id, '');
+    }
   }
 
   // Initialize input value when entering Editing state
@@ -248,8 +258,15 @@ export function TerminalTile({
             {shortenPath(cwd)}
           </span>
 
-          {/* Name area (only in non-compact mode) */}
-          {!compact && (
+          {/* Name area: compact mode only shows named, full mode shows all states */}
+          {compact ? (
+            namingState === 'DisplayNamed' && (
+              <>
+                <span className="tile-separator">·</span>
+                <span className="tile-custom-name">{namingContext.displayText}</span>
+              </>
+            )
+          ) : (
             <>
               {namingState === 'Editing' ? (
                 <>

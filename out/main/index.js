@@ -380,6 +380,9 @@ function createRealPtyAdapter() {
     spawn(shell, cwd, cols, rows) {
       const env = { ...process.env };
       delete env.CLAUDECODE;
+      if (process.platform === "darwin" && !env.TERM_PROGRAM) {
+        env.TERM_PROGRAM = "Apple_Terminal";
+      }
       const proc = pty__namespace.spawn(shell, [], {
         cwd,
         cols,
