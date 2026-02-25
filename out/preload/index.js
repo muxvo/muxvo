@@ -62,30 +62,6 @@ const IPC_CHANNELS = {
     MEMORY_WARNING: "app:memory-warning",
     DETECT_CLI_TOOLS: "app:detect-cli-tools"
   },
-  MARKETPLACE: {
-    FETCH_SOURCES: "marketplace:fetch-sources",
-    SEARCH: "marketplace:search",
-    INSTALL: "marketplace:install",
-    UNINSTALL: "marketplace:uninstall",
-    GET_INSTALLED: "marketplace:get-installed",
-    INSTALL_PROGRESS: "marketplace:install-progress",
-    CHECK_UPDATES: "marketplace:check-updates",
-    PACKAGES_LOADED: "marketplace:packages-loaded",
-    UPDATE_AVAILABLE: "marketplace:update-available"
-  },
-  SCORE: {
-    RUN: "score:run",
-    CHECK_SCORER: "score:check-scorer",
-    GET_CACHED: "score:get-cached",
-    PROGRESS: "score:progress",
-    RESULT: "score:result"
-  },
-  SHOWCASE: {
-    GENERATE: "showcase:generate",
-    PUBLISH: "showcase:publish",
-    UNPUBLISH: "showcase:unpublish",
-    PUBLISH_RESULT: "showcase:publish-result"
-  },
   AUTH: {
     LOGIN_GITHUB: "auth:login-github",
     LOGOUT: "auth:logout",
@@ -216,57 +192,6 @@ const api = {
       const handler = (_event, data) => callback(data);
       electron.ipcRenderer.on(IPC_CHANNELS.CONFIG.RESOURCE_CHANGE, handler);
       return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.CONFIG.RESOURCE_CHANGE, handler);
-    }
-  },
-  // --- Marketplace domain ---
-  marketplace: {
-    fetchSources: () => electron.ipcRenderer.invoke(IPC_CHANNELS.MARKETPLACE.FETCH_SOURCES),
-    search: (query, filters) => electron.ipcRenderer.invoke(IPC_CHANNELS.MARKETPLACE.SEARCH, { query, filters }),
-    install: (params) => electron.ipcRenderer.invoke(IPC_CHANNELS.MARKETPLACE.INSTALL, params),
-    uninstall: (name, type) => electron.ipcRenderer.invoke(IPC_CHANNELS.MARKETPLACE.UNINSTALL, { name, type }),
-    getInstalled: () => electron.ipcRenderer.invoke(IPC_CHANNELS.MARKETPLACE.GET_INSTALLED),
-    checkUpdates: () => electron.ipcRenderer.invoke(IPC_CHANNELS.MARKETPLACE.CHECK_UPDATES),
-    onInstallProgress: (callback) => {
-      const handler = (_event, data) => callback(data);
-      electron.ipcRenderer.on(IPC_CHANNELS.MARKETPLACE.INSTALL_PROGRESS, handler);
-      return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.MARKETPLACE.INSTALL_PROGRESS, handler);
-    },
-    onPackagesLoaded: (callback) => {
-      const handler = (_event, data) => callback(data);
-      electron.ipcRenderer.on(IPC_CHANNELS.MARKETPLACE.PACKAGES_LOADED, handler);
-      return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.MARKETPLACE.PACKAGES_LOADED, handler);
-    },
-    onUpdateAvailable: (callback) => {
-      const handler = (_event, data) => callback(data);
-      electron.ipcRenderer.on(IPC_CHANNELS.MARKETPLACE.UPDATE_AVAILABLE, handler);
-      return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.MARKETPLACE.UPDATE_AVAILABLE, handler);
-    }
-  },
-  // --- Score domain ---
-  score: {
-    checkScorer: () => electron.ipcRenderer.invoke(IPC_CHANNELS.SCORE.CHECK_SCORER),
-    run: (skillDirName, includeAnalytics) => electron.ipcRenderer.invoke(IPC_CHANNELS.SCORE.RUN, { skillDirName, includeAnalytics }),
-    getCached: (skillDirName) => electron.ipcRenderer.invoke(IPC_CHANNELS.SCORE.GET_CACHED, { skillDirName }),
-    onProgress: (callback) => {
-      const handler = (_event, data) => callback(data);
-      electron.ipcRenderer.on(IPC_CHANNELS.SCORE.PROGRESS, handler);
-      return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.SCORE.PROGRESS, handler);
-    },
-    onResult: (callback) => {
-      const handler = (_event, data) => callback(data);
-      electron.ipcRenderer.on(IPC_CHANNELS.SCORE.RESULT, handler);
-      return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.SCORE.RESULT, handler);
-    }
-  },
-  // --- Showcase domain ---
-  showcase: {
-    generate: (skillDirName, template) => electron.ipcRenderer.invoke(IPC_CHANNELS.SHOWCASE.GENERATE, { skillDirName, template }),
-    publish: (params) => electron.ipcRenderer.invoke(IPC_CHANNELS.SHOWCASE.PUBLISH, params),
-    unpublish: (skillDirName) => electron.ipcRenderer.invoke(IPC_CHANNELS.SHOWCASE.UNPUBLISH, { skillDirName }),
-    onPublishResult: (callback) => {
-      const handler = (_event, data) => callback(data);
-      electron.ipcRenderer.on(IPC_CHANNELS.SHOWCASE.PUBLISH_RESULT, handler);
-      return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.SHOWCASE.PUBLISH_RESULT, handler);
     }
   },
   // --- Analytics domain ---

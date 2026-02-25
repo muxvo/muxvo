@@ -90,29 +90,18 @@ const IPC_CHANNELS = {
     MEMORY_WARNING: "app:memory-warning",
     DETECT_CLI_TOOLS: "app:detect-cli-tools"
   },
-  MARKETPLACE: {
-    FETCH_SOURCES: "marketplace:fetch-sources",
-    SEARCH: "marketplace:search",
-    INSTALL: "marketplace:install",
-    UNINSTALL: "marketplace:uninstall",
-    GET_INSTALLED: "marketplace:get-installed",
-    INSTALL_PROGRESS: "marketplace:install-progress",
-    CHECK_UPDATES: "marketplace:check-updates",
-    PACKAGES_LOADED: "marketplace:packages-loaded",
-    UPDATE_AVAILABLE: "marketplace:update-available"
-  },
-  SCORE: {
-    RUN: "score:run",
-    CHECK_SCORER: "score:check-scorer",
-    GET_CACHED: "score:get-cached",
-    PROGRESS: "score:progress",
-    RESULT: "score:result"
-  },
-  SHOWCASE: {
-    GENERATE: "showcase:generate",
-    PUBLISH: "showcase:publish",
-    UNPUBLISH: "showcase:unpublish",
-    PUBLISH_RESULT: "showcase:publish-result"
+  DISCOVERY: {
+    FETCH: "discovery:fetch",
+    GET_DETAIL: "discovery:get-detail",
+    SEARCH: "discovery:search",
+    INSTALL: "discovery:install",
+    UNINSTALL: "discovery:uninstall",
+    GET_INSTALLED: "discovery:get-installed",
+    PUBLISH: "discovery:publish",
+    UNPUBLISH: "discovery:unpublish",
+    INSTALL_PROGRESS: "discovery:install-progress",
+    PUBLISH_PROGRESS: "discovery:publish-progress",
+    PACKAGES_LOADED: "discovery:packages-loaded"
   },
   AUTH: {
     LOGIN_GITHUB: "auth:login-github",
@@ -1002,7 +991,7 @@ function createChatProjectReader(opts) {
     }
   };
 }
-function encodeProjectHash$1(cwd) {
+function encodeProjectHash$2(cwd) {
   if (!cwd) return "";
   return cwd.replace(/[^a-zA-Z0-9-]/g, "-");
 }
@@ -1208,7 +1197,7 @@ function createCodexChatReader(opts) {
       }
       const projects = [];
       for (const [, value] of projectMap) {
-        const hash = encodeProjectHash$1(value.cwd);
+        const hash = encodeProjectHash$2(value.cwd);
         const displayPath = value.cwd || "Unknown";
         const parts = displayPath.split("/").filter(Boolean);
         projects.push({
@@ -1231,7 +1220,7 @@ function createCodexChatReader(opts) {
       }
       return {
         sessionId: entry.sessionId,
-        projectHash: encodeProjectHash$1(entry.cwd),
+        projectHash: encodeProjectHash$2(entry.cwd),
         title: title || entry.sessionId,
         startedAt: new Date(entry.mtime).toISOString(),
         lastModified: entry.mtime,
@@ -1242,7 +1231,7 @@ function createCodexChatReader(opts) {
     async getSessionsForProject(projectHash, limit = 50) {
       const entries = await buildIndex();
       const titles = await getThreadTitles();
-      const matching = entries.filter((e) => encodeProjectHash$1(e.cwd) === projectHash).sort((a, b) => b.mtime - a.mtime).slice(0, limit);
+      const matching = entries.filter((e) => encodeProjectHash$2(e.cwd) === projectHash).sort((a, b) => b.mtime - a.mtime).slice(0, limit);
       return Promise.all(matching.map((e) => this._buildSummary(e, titles)));
     },
     async getAllRecentSessions(limit) {
@@ -1300,7 +1289,7 @@ function createCodexChatReader(opts) {
                     start + query.length + 30
                   );
                   results.push({
-                    projectHash: encodeProjectHash$1(entry.cwd),
+                    projectHash: encodeProjectHash$2(entry.cwd),
                     sessionId: entry.sessionId,
                     snippet,
                     timestamp: parsed.timestamp || ""
@@ -1342,6 +1331,329 @@ function createCodexChatReader(opts) {
     clearCache() {
       indexCache = { data: [], expiry: 0 };
       threadTitlesCache = { data: {}, expiry: 0 };
+    }
+  };
+}
+function encodeProjectHash$1(cwd) {
+  if (!cwd) return "";
+  return cwd.replace(/[^a-zA-Z0-9-]/g, "-");
+}
+function extractTextFromParts(parts) {
+  if (!Array.isArray(parts)) return "";
+  return parts.filter((p) => typeof p === "object" && p !== null && "text" in p).map((p) => p.text).join("\n");
+}
+function parseGeminiParts(parts) {
+  if (!Array.isArray(parts)) return [{ type: "text", text: "" }];
+  const blocks = [];
+  for (const part of parts) {
+    if (typeof part !== "object" || part === null) continue;
+    const p = part;
+    if ("text" in p && typeof p.text === "string") {
+      blocks.push({ type: "text", text: p.text });
+    } else if ("functionCall" in p) {
+      const fc = p.functionCall;
+      blocks.push({
+        type: "tool_use",
+        name: fc.name || "unknown",
+        input: fc.args
+      });
+    } else if ("functionResponse" in p) {
+      const fr = p.functionResponse;
+      blocks.push({
+        type: "tool_result",
+        content: fr.response,
+        tool_use_id: fr.name
+      });
+    }
+  }
+  return blocks.length > 0 ? blocks : [{ type: "text", text: "" }];
+}
+async function extractCwdFromGeminiProject$1(projectDir) {
+  const logsPath = path.join(projectDir, "logs.json");
+  try {
+    const raw = await fs.promises.readFile(logsPath, "utf-8");
+    const data = JSON.parse(raw);
+    if (typeof data === "object" && data !== null) {
+      if (data.cwd) return data.cwd;
+      if (data.projectRoot) return data.projectRoot;
+      if (data.workingDirectory) return data.workingDirectory;
+    }
+    if (Array.isArray(data)) {
+      for (const entry of data.slice(0, 20)) {
+        if (typeof entry === "object" && entry !== null) {
+          if (entry.cwd) return entry.cwd;
+          if (entry.projectRoot) return entry.projectRoot;
+        }
+      }
+    }
+  } catch {
+  }
+  const infoPath = path.join(projectDir, "project-info.json");
+  try {
+    const raw = await fs.promises.readFile(infoPath, "utf-8");
+    const info = JSON.parse(raw);
+    if (info.cwd) return info.cwd;
+    if (info.projectRoot) return info.projectRoot;
+  } catch {
+  }
+  return null;
+}
+function createGeminiChatReader(opts) {
+  const tmpDir = path.join(opts.geminiBasePath, "tmp");
+  const CACHE_TTL = 5 * 60 * 1e3;
+  let indexCache = {
+    data: [],
+    expiry: 0
+  };
+  async function findProjectDirs() {
+    const dirs = [];
+    try {
+      const entries = await fs.promises.readdir(tmpDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.isDirectory()) {
+          dirs.push({ dir: path.join(tmpDir, entry.name), hash: entry.name });
+        }
+      }
+    } catch {
+    }
+    return dirs;
+  }
+  async function findChatFiles(projectDir) {
+    const chatsDir = path.join(projectDir, "chats");
+    const files = [];
+    try {
+      const entries = await fs.promises.readdir(chatsDir);
+      for (const entry of entries) {
+        if (entry.endsWith(".json")) {
+          files.push(path.join(chatsDir, entry));
+        }
+      }
+    } catch {
+    }
+    return files;
+  }
+  async function extractFirstUserMessage(filePath) {
+    try {
+      const raw = await fs.promises.readFile(filePath, "utf-8");
+      const data = JSON.parse(raw);
+      const messages = Array.isArray(data) ? data : data?.messages || data?.history || [];
+      for (const msg of messages) {
+        if (msg?.role === "user") {
+          const text = extractTextFromParts(msg.parts || []);
+          return text.slice(0, 100);
+        }
+      }
+    } catch {
+    }
+    return "";
+  }
+  async function buildIndex() {
+    if (Date.now() < indexCache.expiry) return indexCache.data;
+    const projectDirs = await findProjectDirs();
+    const entries = [];
+    for (const { dir: projectDir, hash: geminiHash } of projectDirs) {
+      const cwd = await extractCwdFromGeminiProject$1(projectDir) || "";
+      const chatFiles = await findChatFiles(projectDir);
+      for (const filePath of chatFiles) {
+        try {
+          const fileStat = await fs.promises.stat(filePath);
+          const sessionId = path.basename(filePath, ".json");
+          entries.push({
+            filePath,
+            sessionId: `gemini-${sessionId}`,
+            mtime: fileStat.mtimeMs,
+            size: fileStat.size,
+            cwd,
+            geminiHash,
+            title: ""
+          });
+        } catch {
+        }
+      }
+    }
+    indexCache = { data: entries, expiry: Date.now() + CACHE_TTL };
+    return entries;
+  }
+  return {
+    async getProjects() {
+      const entries = await buildIndex();
+      const projectMap = /* @__PURE__ */ new Map();
+      for (const entry of entries) {
+        const key = entry.geminiHash;
+        const existing = projectMap.get(key);
+        if (existing) {
+          existing.count++;
+          existing.totalSize += entry.size;
+          existing.lastActivity = Math.max(existing.lastActivity, entry.mtime);
+        } else {
+          projectMap.set(key, {
+            cwd: entry.cwd,
+            geminiHash: entry.geminiHash,
+            count: 1,
+            totalSize: entry.size,
+            lastActivity: entry.mtime
+          });
+        }
+      }
+      const projects = [];
+      for (const [, value] of projectMap) {
+        const hash = value.cwd ? encodeProjectHash$1(value.cwd) : `gemini-${value.geminiHash.slice(0, 16)}`;
+        const displayPath = value.cwd || `Gemini (${value.geminiHash.slice(0, 8)}...)`;
+        const parts = displayPath.split("/").filter(Boolean);
+        projects.push({
+          projectHash: hash,
+          displayPath,
+          displayName: value.cwd ? parts[parts.length - 1] || "Unknown" : `Gemini ${value.geminiHash.slice(0, 8)}`,
+          sessionCount: value.count,
+          totalSize: value.totalSize,
+          lastActivity: value.lastActivity,
+          source: "gemini"
+        });
+      }
+      return projects.sort((a, b) => b.lastActivity - a.lastActivity);
+    },
+    async getSessionsForProject(projectHash, limit = 50) {
+      const entries = await buildIndex();
+      const matching = entries.filter((e) => {
+        const hash = e.cwd ? encodeProjectHash$1(e.cwd) : `gemini-${e.geminiHash.slice(0, 16)}`;
+        return hash === projectHash;
+      }).sort((a, b) => b.mtime - a.mtime).slice(0, limit);
+      const summaries = [];
+      for (const entry of matching) {
+        let title = entry.title;
+        if (!title) {
+          title = await extractFirstUserMessage(entry.filePath);
+        }
+        const hash = entry.cwd ? encodeProjectHash$1(entry.cwd) : `gemini-${entry.geminiHash.slice(0, 16)}`;
+        summaries.push({
+          sessionId: entry.sessionId,
+          projectHash: hash,
+          title: title || entry.sessionId,
+          startedAt: new Date(entry.mtime).toISOString(),
+          lastModified: entry.mtime,
+          fileSize: entry.size,
+          source: "gemini"
+        });
+      }
+      return summaries;
+    },
+    async getAllRecentSessions(limit) {
+      const entries = await buildIndex();
+      const sorted = [...entries].sort((a, b) => b.mtime - a.mtime).slice(0, limit);
+      const summaries = [];
+      for (const entry of sorted) {
+        let title = entry.title;
+        if (!title) {
+          title = await extractFirstUserMessage(entry.filePath);
+        }
+        const hash = entry.cwd ? encodeProjectHash$1(entry.cwd) : `gemini-${entry.geminiHash.slice(0, 16)}`;
+        summaries.push({
+          sessionId: entry.sessionId,
+          projectHash: hash,
+          title: title || entry.sessionId,
+          startedAt: new Date(entry.mtime).toISOString(),
+          lastModified: entry.mtime,
+          fileSize: entry.size,
+          source: "gemini"
+        });
+      }
+      return summaries;
+    },
+    async readSession(_projectHash, sessionId, options) {
+      const entries = await buildIndex();
+      const entry = entries.find((e) => e.sessionId === sessionId);
+      if (!entry) return [];
+      const messages = [];
+      try {
+        const raw = await fs.promises.readFile(entry.filePath, "utf-8");
+        const data = JSON.parse(raw);
+        const msgArray = Array.isArray(data) ? data : data?.messages || data?.history || [];
+        for (let i = 0; i < msgArray.length; i++) {
+          const msg = msgArray[i];
+          if (!msg || !msg.role) continue;
+          const parts = msg.parts || [];
+          const timestamp = msg.timestamp || msg.createTime || new Date(entry.mtime).toISOString();
+          if (msg.role === "user") {
+            const text = extractTextFromParts(parts);
+            if (!text) continue;
+            messages.push({
+              uuid: `gemini-${sessionId}-user-${i}`,
+              type: "user",
+              sessionId,
+              cwd: entry.cwd,
+              timestamp,
+              content: text
+            });
+          } else if (msg.role === "model") {
+            const blocks = parseGeminiParts(parts);
+            const hasOnlyText = blocks.every((b) => b.type === "text");
+            if (hasOnlyText) {
+              const text = blocks.map((b) => b.text || "").join("\n");
+              if (!text) continue;
+              messages.push({
+                uuid: `gemini-${sessionId}-model-${i}`,
+                type: "assistant",
+                sessionId,
+                cwd: entry.cwd,
+                timestamp,
+                content: text
+              });
+            } else {
+              messages.push({
+                uuid: `gemini-${sessionId}-model-${i}`,
+                type: "assistant",
+                sessionId,
+                cwd: entry.cwd,
+                timestamp,
+                content: blocks
+              });
+            }
+          }
+        }
+      } catch {
+      }
+      if (options?.limit && options.limit > 0) {
+        return messages.slice(-options.limit);
+      }
+      return messages;
+    },
+    async search(query) {
+      const entries = await buildIndex();
+      const results = [];
+      const lowerQuery = query.toLowerCase();
+      for (const entry of entries) {
+        try {
+          const raw = await fs.promises.readFile(entry.filePath, "utf-8");
+          const data = JSON.parse(raw);
+          const msgArray = Array.isArray(data) ? data : data?.messages || data?.history || [];
+          for (const msg of msgArray) {
+            if (msg?.role === "user") {
+              const text = extractTextFromParts(msg.parts || []);
+              if (text.toLowerCase().includes(lowerQuery)) {
+                const start = text.toLowerCase().indexOf(lowerQuery);
+                const snippet = text.slice(
+                  Math.max(0, start - 30),
+                  start + query.length + 30
+                );
+                const hash = entry.cwd ? encodeProjectHash$1(entry.cwd) : `gemini-${entry.geminiHash.slice(0, 16)}`;
+                results.push({
+                  projectHash: hash,
+                  sessionId: entry.sessionId,
+                  snippet,
+                  timestamp: msg.timestamp || ""
+                });
+                break;
+              }
+            }
+          }
+        } catch {
+        }
+        if (results.length >= 50) break;
+      }
+      return results;
+    },
+    clearCache() {
+      indexCache = { data: [], expiry: 0 };
     }
   };
 }
@@ -1496,6 +1808,7 @@ function encodeProjectHash(cwd) {
 }
 const CC_BASE_PATH = path.join(os.homedir(), ".claude");
 const CODEX_BASE_PATH = path.join(os.homedir(), ".codex");
+const GEMINI_BASE_PATH = path.join(os.homedir(), ".gemini");
 function createChatHandlers() {
   const ccReader = createChatProjectReader({
     ccBasePath: CC_BASE_PATH,
@@ -1506,7 +1819,12 @@ function createChatHandlers() {
     codexReader = createCodexChatReader({ codexBasePath: CODEX_BASE_PATH });
   } catch {
   }
-  const reader = createChatMultiSource({ ccReader, codexReader });
+  let geminiReader = null;
+  try {
+    geminiReader = createGeminiChatReader({ geminiBasePath: GEMINI_BASE_PATH });
+  } catch {
+  }
+  const reader = createChatMultiSource({ ccReader, codexReader, geminiReader });
   return {
     async getProjects() {
       const projects = await reader.getProjects();
@@ -1642,9 +1960,10 @@ function registerChatArchiveHandlers(archiveManager) {
 }
 const CLAUDE_DIR$1 = path.join(os.homedir(), ".claude");
 const CODEX_DIR$1 = path.join(os.homedir(), ".codex");
-const ALLOWED_CONFIG_DIRS = [CLAUDE_DIR$1, CODEX_DIR$1];
+const GEMINI_DIR$1 = path.join(os.homedir(), ".gemini");
+const ALLOWED_CONFIG_DIRS = [CLAUDE_DIR$1, CODEX_DIR$1, GEMINI_DIR$1];
 const RESOURCE_TYPE_MAP = {
-  skills: { paths: [path.join(CLAUDE_DIR$1, "skills"), path.join(CODEX_DIR$1, "skills")], isFile: false },
+  skills: { paths: [path.join(CLAUDE_DIR$1, "skills"), path.join(CODEX_DIR$1, "skills"), path.join(GEMINI_DIR$1, "skills")], isFile: false },
   hooks: { paths: [path.join(CLAUDE_DIR$1, "hooks")], isFile: false },
   plans: { paths: [path.join(CLAUDE_DIR$1, "plans")], isFile: false },
   tasks: { paths: [path.join(CLAUDE_DIR$1, "tasks")], isFile: false },
@@ -1653,6 +1972,7 @@ const RESOURCE_TYPE_MAP = {
 };
 function sourceFromPath(dirPath) {
   if (dirPath.startsWith(CODEX_DIR$1)) return "codex";
+  if (dirPath.startsWith(GEMINI_DIR$1)) return "gemini";
   return "claude";
 }
 const EXCLUDED_FILES = /* @__PURE__ */ new Set([
@@ -1757,6 +2077,27 @@ async function findJsonlFiles(dir) {
   }
   return results;
 }
+async function extractCwdFromGeminiProject(projectDir) {
+  const logsPath = path.join(projectDir, "logs.json");
+  try {
+    const raw = await promises.readFile(logsPath, "utf-8");
+    const data = JSON.parse(raw);
+    if (typeof data === "object" && data !== null) {
+      if (data.cwd) return data.cwd;
+      if (data.projectRoot) return data.projectRoot;
+    }
+    if (Array.isArray(data)) {
+      for (const entry of data.slice(0, 20)) {
+        if (typeof entry === "object" && entry !== null) {
+          if (entry.cwd) return entry.cwd;
+          if (entry.projectRoot) return entry.projectRoot;
+        }
+      }
+    }
+  } catch {
+  }
+  return null;
+}
 async function discoverProjectCwds() {
   const now = Date.now();
   if (_projectCwdCache.length > 0 && now - _projectCwdCacheTime < PROJECT_CWD_CACHE_TTL) {
@@ -1778,6 +2119,16 @@ async function discoverProjectCwds() {
     const jsonlFiles = await findJsonlFiles(codexSessionsDir);
     const cxCwds = await Promise.all(jsonlFiles.map((f) => extractCwdFromCodexSession(f)));
     for (const cwd of cxCwds) {
+      if (cwd) cwdSet.add(cwd);
+    }
+  } catch {
+  }
+  const geminiTmpDir = path.join(GEMINI_DIR$1, "tmp");
+  try {
+    const entries = await promises.readdir(geminiTmpDir, { withFileTypes: true });
+    const dirs = entries.filter((e) => e.isDirectory()).map((e) => path.join(geminiTmpDir, e.name));
+    const gmCwds = await Promise.all(dirs.map((d) => extractCwdFromGeminiProject(d)));
+    for (const cwd of gmCwds) {
       if (cwd) cwdSet.add(cwd);
     }
   } catch {
@@ -1846,6 +2197,7 @@ function createConfigHandlers() {
             const projectSkillDirs = [
               { dir: path.join(projectPath, ".claude", "skills"), source: "claude" },
               { dir: path.join(projectPath, ".codex", "skills"), source: "codex" },
+              { dir: path.join(projectPath, ".gemini", "skills"), source: "gemini" },
               { dir: path.join(projectPath, "skills"), source: "codex" }
             ];
             for (const { dir: dirPath, source } of projectSkillDirs) {
@@ -1883,7 +2235,7 @@ function createConfigHandlers() {
     async getResourceContent(params) {
       const resolvedPath = path.resolve(params.path);
       const inAllowedDir = ALLOWED_CONFIG_DIRS.some((dir) => resolvedPath.startsWith(dir));
-      const inProjectSkillDir = /\/\.(claude|codex)\/skills\//.test(resolvedPath) || /\/skills\/[^/]+\/SKILL\.md$/.test(resolvedPath);
+      const inProjectSkillDir = /\/\.(claude|codex|gemini)\/skills\//.test(resolvedPath) || /\/skills\/[^/]+\/SKILL\.md$/.test(resolvedPath);
       if (!inAllowedDir && !inProjectSkillDir) {
         throw new Error(`Access denied: path must be within allowed directories`);
       }
@@ -1904,17 +2256,21 @@ function createConfigHandlers() {
       }
     },
     /**
-     * P0: Read global or project CLAUDE.md
+     * P0: Read global or project CLAUDE.md / GEMINI.md
+     * tool defaults to 'claude' (reads CLAUDE.md); 'gemini' reads GEMINI.md
      */
     async getClaudeMd(params) {
+      const tool = params.tool || "claude";
+      const fileName = tool === "gemini" ? "GEMINI.md" : "CLAUDE.md";
+      const baseDir = tool === "gemini" ? GEMINI_DIR$1 : CLAUDE_DIR$1;
       let filePath;
       if (params.scope === "global") {
-        filePath = path.join(CLAUDE_DIR$1, "CLAUDE.md");
+        filePath = path.join(baseDir, fileName);
       } else {
         if (!params.projectPath) {
           throw new Error("projectPath is required for project scope");
         }
-        filePath = path.join(params.projectPath, "CLAUDE.md");
+        filePath = path.join(params.projectPath, fileName);
       }
       try {
         const content = await promises.readFile(filePath, "utf-8");
@@ -1936,17 +2292,20 @@ function createConfigHandlers() {
       return { success: true };
     },
     /**
-     * P1: Atomic write to CLAUDE.md (global or project)
+     * P1: Atomic write to CLAUDE.md / GEMINI.md (global or project)
      */
     async saveClaudeMd(params) {
+      const tool = params.tool || "claude";
+      const fileName = tool === "gemini" ? "GEMINI.md" : "CLAUDE.md";
+      const baseDir = tool === "gemini" ? GEMINI_DIR$1 : CLAUDE_DIR$1;
       let filePath;
       if (params.scope === "global") {
-        filePath = path.join(CLAUDE_DIR$1, "CLAUDE.md");
+        filePath = path.join(baseDir, fileName);
       } else {
         if (!params.projectPath) {
           throw new Error("projectPath is required for project scope");
         }
-        filePath = path.join(params.projectPath, "CLAUDE.md");
+        filePath = path.join(params.projectPath, fileName);
       }
       const tmpPath = filePath + ".tmp";
       const parentDir = filePath.substring(0, filePath.lastIndexOf("/"));
@@ -2178,7 +2537,7 @@ function createFileWatcherStore() {
     getRetryCount
   };
 }
-function pushToAllWindows$3(channel, payload) {
+function pushToAllWindows(channel, payload) {
   electron.BrowserWindow.getAllWindows().forEach((win) => {
     if (!win.isDestroyed()) {
       win.webContents.send(channel, payload);
@@ -2200,7 +2559,7 @@ function createFsWatcherHandlers() {
           const watcher = fs.watch(watchPath, { recursive: true }, (eventType, filename) => {
             if (!filename) return;
             const type = eventType === "rename" ? "add" : "change";
-            pushToAllWindows$3(IPC_CHANNELS.FS.CHANGE, {
+            pushToAllWindows(IPC_CHANNELS.FS.CHANGE, {
               watchId: params.id,
               type,
               path: filename
@@ -2354,345 +2713,6 @@ function registerAuthHandlers() {
   });
   electron.ipcMain.handle(IPC_CHANNELS.AUTH.GET_STATUS, async () => {
     return handlers.getStatus();
-  });
-}
-const DEFAULT_SOURCES = [
-  { name: "local files", url: "local://", status: "active", packages: [] },
-  { name: "CC official", url: "https://anthropic.com/skills", status: "active", packages: [] },
-  { name: "GitHub", url: "https://github.com", status: "active", packages: [] },
-  { name: "npm", url: "https://npmjs.com", status: "active", packages: [] },
-  { name: "community", url: "https://community.muxvo.com", status: "active", packages: [] },
-  { name: "custom", url: "custom://", status: "active", packages: [] }
-];
-async function fetchSources() {
-  return {
-    sources: DEFAULT_SOURCES,
-    totalCount: 0
-  };
-}
-async function getInstalledPackages() {
-  return [];
-}
-async function uninstallPackage(request) {
-  return {
-    filesDeleted: true,
-    registryRemoved: true,
-    settingsJsonCleaned: request.type === "hook"
-  };
-}
-function installSkill(options) {
-  if (options.targetDir.includes("/root/restricted") || options.targetDir.includes("restricted")) {
-    return {
-      success: false,
-      error: { message: "安装失败：权限不足，无法写入目标目录" }
-    };
-  }
-  return { success: true };
-}
-function getDefaultSortOrder() {
-  return ["anthropic", "community", "github"];
-}
-function pushToAllWindows$2(channel, payload) {
-  electron.BrowserWindow.getAllWindows().forEach((win) => {
-    if (!win.isDestroyed()) {
-      win.webContents.send(channel, payload);
-    }
-  });
-}
-function createMarketplaceHandlers() {
-  return {
-    async fetchSources() {
-      try {
-        const result = await fetchSources();
-        pushToAllWindows$2(IPC_CHANNELS.MARKETPLACE.PACKAGES_LOADED, {
-          packages: result.sources,
-          source: getDefaultSortOrder()[0]
-        });
-        return { success: true, data: result };
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { success: false, error: { code: "MARKETPLACE_FETCH_ERROR", message } };
-      }
-    },
-    async search(params) {
-      try {
-        const { sources } = await fetchSources();
-        const query = params.query.toLowerCase();
-        const filtered = sources.filter((src) => {
-          const name = String(src.name ?? "").toLowerCase();
-          const description = String(src.description ?? "").toLowerCase();
-          const tags = Array.isArray(src.tags) ? src.tags.map((t) => String(t).toLowerCase()) : [];
-          return name.includes(query) || description.includes(query) || tags.some((t) => t.includes(query));
-        });
-        return { success: true, data: { sources: filtered, totalCount: filtered.length } };
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { success: false, error: { code: "MARKETPLACE_SEARCH_ERROR", message } };
-      }
-    },
-    async install(params) {
-      try {
-        pushToAllWindows$2(IPC_CHANNELS.MARKETPLACE.INSTALL_PROGRESS, {
-          name: params.name,
-          progress: 0,
-          status: "downloading"
-        });
-        const targetDir = path.join(
-          os.homedir(),
-          ".claude",
-          params.type === "hook" ? "hooks" : "skills"
-        );
-        pushToAllWindows$2(IPC_CHANNELS.MARKETPLACE.INSTALL_PROGRESS, {
-          name: params.name,
-          progress: 50,
-          status: "installing"
-        });
-        const result = installSkill({ skillId: params.name, targetDir });
-        pushToAllWindows$2(IPC_CHANNELS.MARKETPLACE.INSTALL_PROGRESS, {
-          name: params.name,
-          progress: 100,
-          status: "complete"
-        });
-        if (!result.success) {
-          return {
-            success: false,
-            error: { code: "MARKETPLACE_INSTALL_ERROR", message: result.error?.message ?? "Install failed" }
-          };
-        }
-        return { success: true, data: result };
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { success: false, error: { code: "MARKETPLACE_INSTALL_ERROR", message } };
-      }
-    },
-    async uninstall(params) {
-      try {
-        const result = await uninstallPackage({
-          name: params.name,
-          type: params.type ?? "skill"
-        });
-        return { success: true, data: result };
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { success: false, error: { code: "MARKETPLACE_UNINSTALL_ERROR", message } };
-      }
-    },
-    async getInstalled() {
-      try {
-        const result = await getInstalledPackages();
-        return { success: true, data: result };
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { success: false, error: { code: "MARKETPLACE_GET_INSTALLED_ERROR", message } };
-      }
-    },
-    async checkUpdates() {
-      try {
-        const updates = [];
-        pushToAllWindows$2(IPC_CHANNELS.MARKETPLACE.UPDATE_AVAILABLE, { packages: updates });
-        return { success: true, data: { updates } };
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { success: false, error: { code: "MARKETPLACE_CHECK_UPDATES_ERROR", message } };
-      }
-    }
-  };
-}
-function registerMarketplaceHandlers() {
-  const handlers = createMarketplaceHandlers();
-  electron.ipcMain.handle(IPC_CHANNELS.MARKETPLACE.FETCH_SOURCES, async () => {
-    return handlers.fetchSources();
-  });
-  electron.ipcMain.handle(IPC_CHANNELS.MARKETPLACE.SEARCH, async (_event, params) => {
-    return handlers.search(params);
-  });
-  electron.ipcMain.handle(IPC_CHANNELS.MARKETPLACE.INSTALL, async (_event, params) => {
-    return handlers.install(params);
-  });
-  electron.ipcMain.handle(IPC_CHANNELS.MARKETPLACE.UNINSTALL, async (_event, params) => {
-    return handlers.uninstall(params);
-  });
-  electron.ipcMain.handle(IPC_CHANNELS.MARKETPLACE.GET_INSTALLED, async () => {
-    return handlers.getInstalled();
-  });
-  electron.ipcMain.handle(IPC_CHANNELS.MARKETPLACE.CHECK_UPDATES, async () => {
-    return handlers.checkUpdates();
-  });
-}
-async function runScore(_input) {
-  return {
-    success: false,
-    error: {
-      code: "CC_NOT_RUNNING",
-      message: "请先启动一个 Claude Code 终端"
-    }
-  };
-}
-async function getCachedScore(_skillPath) {
-  return {
-    cached: false,
-    ccInvoked: false
-  };
-}
-function pushToAllWindows$1(channel, payload) {
-  electron.BrowserWindow.getAllWindows().forEach((win) => {
-    if (!win.isDestroyed()) {
-      win.webContents.send(channel, payload);
-    }
-  });
-}
-function createScoreHandlers() {
-  return {
-    async checkScorer() {
-      try {
-        return { success: true, data: { installed: false } };
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { success: false, error: { code: "SCORE_ERROR", message } };
-      }
-    },
-    async run(params) {
-      try {
-        pushToAllWindows$1(IPC_CHANNELS.SCORE.PROGRESS, {
-          skillDirName: params.skillDirName,
-          status: "checking"
-        });
-        const result = await runScore({
-          skillPath: params.skillDirName,
-          includeUsageData: params.includeAnalytics
-        });
-        if (result.success) {
-          pushToAllWindows$1(IPC_CHANNELS.SCORE.RESULT, {
-            skillDirName: params.skillDirName,
-            score: result
-          });
-        }
-        return { success: true, data: result };
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { success: false, error: { code: "SCORE_ERROR", message } };
-      }
-    },
-    async getCached(params) {
-      try {
-        const result = await getCachedScore(params.skillDirName);
-        return { success: true, data: result };
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { success: false, error: { code: "SCORE_ERROR", message } };
-      }
-    }
-  };
-}
-function registerScoreHandlers() {
-  const handlers = createScoreHandlers();
-  electron.ipcMain.handle(IPC_CHANNELS.SCORE.CHECK_SCORER, async () => {
-    return handlers.checkScorer();
-  });
-  electron.ipcMain.handle(IPC_CHANNELS.SCORE.RUN, async (_event, params) => {
-    return handlers.run(params);
-  });
-  electron.ipcMain.handle(IPC_CHANNELS.SCORE.GET_CACHED, async (_event, params) => {
-    return handlers.getCached(params);
-  });
-}
-async function generateShowcase(input) {
-  const skillName = input.skillPath.split("/").pop() || "untitled";
-  return {
-    name: skillName,
-    description: `Showcase for ${skillName}`,
-    features: [],
-    template: "developer-dark"
-  };
-}
-function createPublishFlow(input) {
-  const steps = ["security-check"];
-  let scoringSkipped = false;
-  let scoreSource;
-  if (!input.hasScoreCache) {
-    steps.push("auto-score");
-  } else {
-    scoringSkipped = true;
-    scoreSource = "cache";
-  }
-  steps.push("publish");
-  return {
-    steps,
-    scoreRequired: false,
-    scoringSkipped,
-    scoreSource,
-    async start() {
-      if (input.simulateNetworkError) {
-        return {
-          success: false,
-          draftSaved: true,
-          draftLocation: "local"
-        };
-      }
-      return { success: true };
-    }
-  };
-}
-function pushToAllWindows(channel, payload) {
-  electron.BrowserWindow.getAllWindows().forEach((win) => {
-    if (!win.isDestroyed()) {
-      win.webContents.send(channel, payload);
-    }
-  });
-}
-function createShowcaseHandlers() {
-  return {
-    async generate(params) {
-      try {
-        const result = await generateShowcase({
-          skillPath: params.skillDirName,
-          scoreResult: null
-        });
-        return { success: true, data: result };
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { success: false, error: { code: "SHOWCASE_GENERATE_ERROR", message } };
-      }
-    },
-    async publish(params) {
-      try {
-        const flow = createPublishFlow({
-          skillPath: params.skillDirName,
-          githubLoggedIn: true
-        });
-        const result = await flow.start();
-        pushToAllWindows(IPC_CHANNELS.SHOWCASE.PUBLISH_RESULT, {
-          skillDirName: params.skillDirName,
-          success: result.success,
-          url: void 0,
-          error: result.reason
-        });
-        return { success: true, data: result };
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { success: false, error: { code: "SHOWCASE_PUBLISH_ERROR", message } };
-      }
-    },
-    async unpublish(params) {
-      try {
-        return { success: true, data: { unpublished: true } };
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { success: false, error: { code: "SHOWCASE_UNPUBLISH_ERROR", message } };
-      }
-    }
-  };
-}
-function registerShowcaseHandlers() {
-  const handlers = createShowcaseHandlers();
-  electron.ipcMain.handle(IPC_CHANNELS.SHOWCASE.GENERATE, async (_event, params) => {
-    return handlers.generate(params);
-  });
-  electron.ipcMain.handle(IPC_CHANNELS.SHOWCASE.PUBLISH, async (_event, params) => {
-    return handlers.publish(params);
-  });
-  electron.ipcMain.handle(IPC_CHANNELS.SHOWCASE.UNPUBLISH, async (_event, params) => {
-    return handlers.unpublish(params);
   });
 }
 function createAnalyticsTracker() {
@@ -2968,9 +2988,11 @@ function createChatArchiveManager() {
 }
 const CLAUDE_DIR = path.join(os.homedir(), ".claude");
 const CODEX_DIR = path.join(os.homedir(), ".codex");
+const GEMINI_DIR = path.join(os.homedir(), ".gemini");
 const WATCH_DIRS = [
   { dir: path.join(CLAUDE_DIR, "skills"), type: "skills" },
   { dir: path.join(CODEX_DIR, "skills"), type: "skills" },
+  { dir: path.join(GEMINI_DIR, "skills"), type: "skills" },
   { dir: path.join(CLAUDE_DIR, "hooks"), type: "hooks" },
   { dir: path.join(CLAUDE_DIR, "plugins"), type: "plugins" },
   { dir: path.join(CLAUDE_DIR, "plans"), type: "plans" },
@@ -3161,9 +3183,6 @@ electron.app.whenReady().then(() => {
   registerFsImageHandlers();
   registerAppHandlers();
   registerAuthHandlers();
-  registerMarketplaceHandlers();
-  registerScoreHandlers();
-  registerShowcaseHandlers();
   registerAnalyticsHandlers();
   chatWatcher = createChatWatcher();
   chatArchive = createChatArchiveManager();
