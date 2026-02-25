@@ -133,14 +133,61 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
   /**
    * Parse a single JSONL line into a SessionMessage (or null if not user/assistant).
    */
-  function parseMessageLine(line: string, sessionId: string): SessionMessage | null {
+  const PROTOCOL_TYPES = new Set(['idle_notification', 'teammate_terminated', 'shutdown_approved', 'shutdown_rejected']);
+
+  /** Check if text content is only protocol JSON (idle_notification etc.) */
+  function isProtocolJson(text: string): boolean {
+    const trimmed = text.trim();
+    if (!trimmed) return true;
+    return trimmed.split('\n').every(line => {
+      const l = line.trim();
+      if (!l) return true;
+      try { return PROTOCOL_TYPES.has(JSON.parse(l).type); }
+      catch { return false; }
+    });
+  }
+
+  /**
+   * Split concatenated <teammate-message> blocks into individual SessionMessage entries.
+   * Protocol-only blocks (idle_notification etc.) are filtered out.
+   */
+  function splitTeammateMessages(
+    content: string,
+    base: { uuid: string; sessionId: string; cwd: string; gitBranch?: string; timestamp: string },
+  ): SessionMessage[] {
+    const blockRe = /<teammate-message[^>]*>[\s\S]*?<\/teammate-message>/g;
+    const blocks = content.match(blockRe);
+    if (!blocks || blocks.length === 0) return [];
+
+    const results: SessionMessage[] = [];
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i];
+      const inner = block
+        .replace(/<teammate-message[^>]*>\n?/, '')
+        .replace(/<\/teammate-message>\s*$/, '')
+        .trim();
+      if (isProtocolJson(inner)) continue; // skip protocol noise
+      results.push({
+        uuid: `${base.uuid}-tm${i}`,
+        type: 'system',
+        sessionId: base.sessionId,
+        cwd: base.cwd,
+        gitBranch: base.gitBranch,
+        timestamp: base.timestamp,
+        content: block, // keep full <teammate-message> tag for renderer to extract name
+      });
+    }
+    return results;
+  }
+
+  function parseMessageLine(line: string, sessionId: string): SessionMessage[] {
     const trimmed = line.trim();
-    if (!trimmed) return null;
+    if (!trimmed) return [];
 
     try {
       const entry = JSON.parse(trimmed);
       const type = entry.type as string;
-      if (type !== 'user' && type !== 'assistant' && type !== 'queue-operation') return null;
+      if (type !== 'user' && type !== 'assistant' && type !== 'queue-operation') return [];
 
       let normalizedContent: string | SessionMessage['content'];
       if (type === 'queue-operation') {
@@ -153,7 +200,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
         } else if (Array.isArray(msgContent)) {
           const blocks = msgContent as Array<Record<string, unknown>>;
           const hasOnlyToolResults = blocks.length > 0 && blocks.every(b => b.type === 'tool_result');
-          if (hasOnlyToolResults) return null;
+          if (hasOnlyToolResults) return [];
           // Check if user message contains images
           const hasImages = blocks.some(b => b.type === 'image');
           if (hasImages) {
@@ -215,26 +262,20 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
           ) {
             resolvedType = 'system';
           } else if (trimmedContent.startsWith('<teammate-message')) {
-            // Strip tags and check if content is only protocol JSON noise
-            const stripped = trimmedContent
-              .replace(/<teammate-message[^>]*>\n?/g, '')
-              .replace(/<\/teammate-message>\s*/g, '')
-              .trim();
-            const isProtocolOnly = !stripped || stripped.split('\n').every(line => {
-              const l = line.trim();
-              if (!l) return true;
-              try {
-                const obj = JSON.parse(l);
-                return ['idle_notification', 'teammate_terminated', 'shutdown_approved', 'shutdown_rejected'].includes(obj.type);
-              } catch { return false; }
-            });
-            if (isProtocolOnly) return null; // hide protocol noise
-            resolvedType = 'system';
+            // Split concatenated teammate blocks into individual messages
+            const baseFields = {
+              uuid: (entry.uuid as string) || '',
+              sessionId: (entry.sessionId as string) || sessionId,
+              cwd: (entry.cwd as string) || '',
+              gitBranch: entry.gitBranch as string | undefined,
+              timestamp: (entry.timestamp as string) || '',
+            };
+            return splitTeammateMessages(trimmedContent, baseFields);
           }
         }
       }
 
-      return {
+      return [{
         uuid: (entry.uuid as string) || '',
         type: resolvedType,
         sessionId: (entry.sessionId as string) || sessionId,
@@ -242,9 +283,9 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
         gitBranch: entry.gitBranch as string | undefined,
         timestamp: (entry.timestamp as string) || '',
         content: normalizedContent,
-      };
+      }];
     } catch {
-      return null;
+      return [];
     }
   }
 
@@ -573,8 +614,8 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
               return;
             }
 
-            const msg = parseMessageLine(line, sessionId);
-            if (msg) messages.push(msg);
+            const msgs = parseMessageLine(line, sessionId);
+            if (msgs.length > 0) messages.push(...msgs);
           });
 
           rl.on('close', () => resolve());

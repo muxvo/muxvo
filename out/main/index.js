@@ -590,13 +590,49 @@ function createChatProjectReader(opts) {
       source: "claude-code"
     };
   }
+  const PROTOCOL_TYPES = /* @__PURE__ */ new Set(["idle_notification", "teammate_terminated", "shutdown_approved", "shutdown_rejected"]);
+  function isProtocolJson(text) {
+    const trimmed = text.trim();
+    if (!trimmed) return true;
+    return trimmed.split("\n").every((line) => {
+      const l = line.trim();
+      if (!l) return true;
+      try {
+        return PROTOCOL_TYPES.has(JSON.parse(l).type);
+      } catch {
+        return false;
+      }
+    });
+  }
+  function splitTeammateMessages(content, base) {
+    const blockRe = /<teammate-message[^>]*>[\s\S]*?<\/teammate-message>/g;
+    const blocks = content.match(blockRe);
+    if (!blocks || blocks.length === 0) return [];
+    const results = [];
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i];
+      const inner = block.replace(/<teammate-message[^>]*>\n?/, "").replace(/<\/teammate-message>\s*$/, "").trim();
+      if (isProtocolJson(inner)) continue;
+      results.push({
+        uuid: `${base.uuid}-tm${i}`,
+        type: "system",
+        sessionId: base.sessionId,
+        cwd: base.cwd,
+        gitBranch: base.gitBranch,
+        timestamp: base.timestamp,
+        content: block
+        // keep full <teammate-message> tag for renderer to extract name
+      });
+    }
+    return results;
+  }
   function parseMessageLine(line, sessionId) {
     const trimmed = line.trim();
-    if (!trimmed) return null;
+    if (!trimmed) return [];
     try {
       const entry = JSON.parse(trimmed);
       const type = entry.type;
-      if (type !== "user" && type !== "assistant" && type !== "queue-operation") return null;
+      if (type !== "user" && type !== "assistant" && type !== "queue-operation") return [];
       let normalizedContent;
       if (type === "queue-operation") {
         normalizedContent = typeof entry.content === "string" ? entry.content : "";
@@ -607,7 +643,7 @@ function createChatProjectReader(opts) {
         } else if (Array.isArray(msgContent)) {
           const blocks = msgContent;
           const hasOnlyToolResults = blocks.length > 0 && blocks.every((b) => b.type === "tool_result");
-          if (hasOnlyToolResults) return null;
+          if (hasOnlyToolResults) return [];
           const hasImages = blocks.some((b) => b.type === "image");
           if (hasImages) {
             normalizedContent = blocks.filter((b) => b.type === "text" || b.type === "image").map((b) => {
@@ -653,23 +689,18 @@ function createChatProjectReader(opts) {
           if (trimmedContent.startsWith("<system-reminder>") || trimmedContent.startsWith("<task-notification>") || trimmedContent.startsWith("<command-message>") || trimmedContent.startsWith("<command-name>")) {
             resolvedType = "system";
           } else if (trimmedContent.startsWith("<teammate-message")) {
-            const stripped = trimmedContent.replace(/<teammate-message[^>]*>\n?/g, "").replace(/<\/teammate-message>\s*/g, "").trim();
-            const isProtocolOnly = !stripped || stripped.split("\n").every((line2) => {
-              const l = line2.trim();
-              if (!l) return true;
-              try {
-                const obj = JSON.parse(l);
-                return ["idle_notification", "teammate_terminated", "shutdown_approved", "shutdown_rejected"].includes(obj.type);
-              } catch {
-                return false;
-              }
-            });
-            if (isProtocolOnly) return null;
-            resolvedType = "system";
+            const baseFields = {
+              uuid: entry.uuid || "",
+              sessionId: entry.sessionId || sessionId,
+              cwd: entry.cwd || "",
+              gitBranch: entry.gitBranch,
+              timestamp: entry.timestamp || ""
+            };
+            return splitTeammateMessages(trimmedContent, baseFields);
           }
         }
       }
-      return {
+      return [{
         uuid: entry.uuid || "",
         type: resolvedType,
         sessionId: entry.sessionId || sessionId,
@@ -677,9 +708,9 @@ function createChatProjectReader(opts) {
         gitBranch: entry.gitBranch,
         timestamp: entry.timestamp || "",
         content: normalizedContent
-      };
+      }];
     } catch {
-      return null;
+      return [];
     }
   }
   async function scanProjectsFromDir(baseDir) {
@@ -932,8 +963,8 @@ function createChatProjectReader(opts) {
               skipFirstLine = false;
               return;
             }
-            const msg = parseMessageLine(line, sessionId);
-            if (msg) messages.push(msg);
+            const msgs = parseMessageLine(line, sessionId);
+            if (msgs.length > 0) messages.push(...msgs);
           });
           rl.on("close", () => resolve());
         });
