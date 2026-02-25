@@ -196,6 +196,10 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
           value={searchQuery}
           onChange={onSearchChange}
           placeholder="搜索会话..."
+          matchCurrent={matchCurrent}
+          matchTotal={matchTotal}
+          onPrevMatch={onPrevMatch}
+          onNextMatch={onNextMatch}
         />
       )}
 
