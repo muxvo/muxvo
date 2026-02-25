@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 import { getPreferences, savePreferences } from '../services/app/preferences';
-import { detectCliTools } from '../services/onboard/cli-detection';
+import { detectCliTools } from '../services/app/cli-detection';
 
 export function registerAppHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.APP.GET_PREFERENCES, async () => {
