@@ -6,6 +6,26 @@
 import React from 'react';
 import './SearchInput.css';
 
+/** Escape special regex characters */
+export function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Highlight matching query text with <mark> */
+export function HighlightText({ text, query }: { text: string; query: string }) {
+  if (!query) return <>{text}</>;
+  const parts = text.split(new RegExp(`(${escapeRegex(query)})`, 'gi'));
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === query.toLowerCase()
+          ? <mark key={i} className="search-highlight">{part}</mark>
+          : part
+      )}
+    </>
+  );
+}
+
 interface SearchInputProps {
   value: string;
   onChange: (value: string) => void;
