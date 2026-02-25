@@ -77,7 +77,8 @@ const IPC_CHANNELS = {
     OAUTH_CALLBACK: "auth:oauth-callback",
     REFRESH_TOKEN: "auth:refresh-token",
     GET_PROFILE: "auth:get-profile",
-    SESSION_EXPIRED: "auth:session-expired"
+    SESSION_EXPIRED: "auth:session-expired",
+    STATUS_CHANGE: "auth:status-change"
   },
   ANALYTICS: {
     TRACK: "analytics:track",
@@ -218,6 +219,11 @@ const api = {
       const handler = () => callback();
       electron.ipcRenderer.on(IPC_CHANNELS.AUTH.SESSION_EXPIRED, handler);
       return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.AUTH.SESSION_EXPIRED, handler);
+    },
+    onStatusChange: (callback) => {
+      const handler = (_event, data) => callback(data);
+      electron.ipcRenderer.on(IPC_CHANNELS.AUTH.STATUS_CHANGE, handler);
+      return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.AUTH.STATUS_CHANGE, handler);
     }
   },
   // --- Config domain ---

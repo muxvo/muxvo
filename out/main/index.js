@@ -121,7 +121,8 @@ const IPC_CHANNELS = {
     OAUTH_CALLBACK: "auth:oauth-callback",
     REFRESH_TOKEN: "auth:refresh-token",
     GET_PROFILE: "auth:get-profile",
-    SESSION_EXPIRED: "auth:session-expired"
+    SESSION_EXPIRED: "auth:session-expired",
+    STATUS_CHANGE: "auth:status-change"
   },
   ANALYTICS: {
     TRACK: "analytics:track",
@@ -2689,6 +2690,22 @@ function createAuthMachine() {
     codeChallenge: "",
     tokenStorage: "safeStorage"
   };
+  function resetOAuthContext() {
+    context.codeVerifier = "";
+    context.codeChallenge = "";
+    context.authCode = void 0;
+  }
+  function resetAll() {
+    resetOAuthContext();
+    context.accessToken = void 0;
+    context.refreshToken = void 0;
+    context.username = void 0;
+    context.userId = void 0;
+    context.email = void 0;
+    context.authMethod = void 0;
+    context.emailCodeSentAt = void 0;
+    context.avatarUrl = void 0;
+  }
   function send(event, payload) {
     switch (state) {
       case "LoggedOut":
@@ -2701,6 +2718,14 @@ function createAuthMachine() {
           if (payload?.authMethod) {
             context.authMethod = payload.authMethod;
           }
+        } else if (event === "SEND_EMAIL_CODE") {
+          state = "CodeSent";
+          context.authMethod = "email";
+          if (payload?.email) {
+            context.email = payload.email;
+          }
+          context.emailCodeSentAt = Date.now();
+          context.error = void 0;
         }
         break;
       case "Authorizing":
@@ -2711,52 +2736,81 @@ function createAuthMachine() {
         } else if (event === "TOKEN_RECEIVED") {
           state = "LoggedIn";
           context.accessToken = payload?.accessToken;
-          context.username = payload?.username;
-          context.tokenStorage = "safeStorage";
-        } else if (event === "EXCHANGE_TOKEN") {
-          state = "ExchangingToken";
-        } else if (event === "AUTH_FAILED") {
-          state = "LoggedOut";
-          context.error = "GitHub 授权失败";
-          context.codeVerifier = "";
-          context.codeChallenge = "";
-          context.authMethod = void 0;
-        }
-        break;
-      case "ExchangingToken":
-        if (event === "BACKEND_TOKEN_RECEIVED") {
-          state = "LoggedIn";
-          context.accessToken = payload?.accessToken;
-          context.refreshToken = payload?.refreshToken;
-          context.username = payload?.username;
-          context.userId = payload?.userId;
-          context.email = payload?.email;
+          if (payload?.refreshToken) {
+            context.refreshToken = payload.refreshToken;
+          }
+          if (payload?.username) {
+            context.username = payload.username;
+          }
+          if (payload?.userId) {
+            context.userId = payload.userId;
+          }
+          if (payload?.email) {
+            context.email = payload.email;
+          }
+          if (payload?.avatarUrl) {
+            context.avatarUrl = payload.avatarUrl;
+          }
           context.tokenStorage = "safeStorage";
         } else if (event === "AUTH_FAILED") {
           state = "LoggedOut";
           context.error = payload?.error || "授权失败";
-          context.codeVerifier = "";
-          context.codeChallenge = "";
+          resetOAuthContext();
           context.authMethod = void 0;
+        }
+        break;
+      case "CodeSent":
+        if (event === "VERIFY_CODE") {
+          state = "Verifying";
+        } else if (event === "RESEND_CODE") {
+          context.emailCodeSentAt = Date.now();
+        } else if (event === "AUTH_FAILED") {
+          state = "LoggedOut";
+          context.error = payload?.error || "验证码发送失败";
+          context.authMethod = void 0;
+          context.emailCodeSentAt = void 0;
+        } else if (event === "CANCEL") {
+          state = "LoggedOut";
+          context.authMethod = void 0;
+          context.emailCodeSentAt = void 0;
+          context.error = void 0;
+        }
+        break;
+      case "Verifying":
+        if (event === "TOKEN_RECEIVED") {
+          state = "LoggedIn";
+          context.accessToken = payload?.accessToken;
+          if (payload?.refreshToken) {
+            context.refreshToken = payload.refreshToken;
+          }
+          if (payload?.username) {
+            context.username = payload.username;
+          }
+          if (payload?.userId) {
+            context.userId = payload.userId;
+          }
+          if (payload?.email) {
+            context.email = payload.email;
+          }
+          if (payload?.avatarUrl) {
+            context.avatarUrl = payload.avatarUrl;
+          }
+          context.tokenStorage = "safeStorage";
+        } else if (event === "AUTH_FAILED") {
+          state = "LoggedOut";
+          context.error = payload?.error || "验证失败";
+          resetOAuthContext();
+          context.authMethod = void 0;
+          context.emailCodeSentAt = void 0;
         }
         break;
       case "LoggedIn":
         if (event === "LOGOUT") {
           state = "LoggedOut";
-          context.accessToken = void 0;
-          context.refreshToken = void 0;
-          context.username = void 0;
-          context.userId = void 0;
-          context.email = void 0;
-          context.authMethod = void 0;
-          context.codeVerifier = "";
-          context.codeChallenge = "";
+          resetAll();
         } else if (event === "TOKEN_EXPIRED") {
           state = "LoggedOut";
-          context.accessToken = void 0;
-          context.refreshToken = void 0;
-          context.codeVerifier = "";
-          context.codeChallenge = "";
+          resetAll();
         } else if (event === "TOKEN_REFRESH") {
           context.accessToken = payload?.accessToken;
           if (payload?.refreshToken) {
@@ -2764,14 +2818,7 @@ function createAuthMachine() {
           }
         } else if (event === "REFRESH_FAILED") {
           state = "LoggedOut";
-          context.accessToken = void 0;
-          context.refreshToken = void 0;
-          context.username = void 0;
-          context.userId = void 0;
-          context.email = void 0;
-          context.authMethod = void 0;
-          context.codeVerifier = "";
-          context.codeChallenge = "";
+          resetAll();
           context.error = payload?.error || "Token 刷新失败";
         }
         break;
@@ -3020,16 +3067,16 @@ function createAuthManager(options) {
     },
     /** Send email verification code */
     async sendEmailCode(email) {
-      machine.send("LOGIN", { authMethod: "email" });
+      machine.send("SEND_EMAIL_CODE", { email });
       return client.sendEmailCode(email);
     },
     /** Verify email code and complete login */
     async verifyEmailCode(email, code) {
-      machine.send("EXCHANGE_TOKEN");
+      machine.send("VERIFY_CODE");
       try {
         const result = await client.verifyEmailCode(email, code);
         await storeTokenPair(result.accessToken, result.refreshToken);
-        machine.send("BACKEND_TOKEN_RECEIVED", {
+        machine.send("TOKEN_RECEIVED", {
           accessToken: result.accessToken,
           refreshToken: result.refreshToken,
           username: result.user.displayName || email,
@@ -3048,11 +3095,10 @@ function createAuthManager(options) {
     /** Handle OAuth callback (deep link with tokens from server redirect) */
     async handleOAuthCallback(accessToken, refreshToken) {
       machine.send("AUTH_CALLBACK", { authCode: "oauth-callback" });
-      machine.send("EXCHANGE_TOKEN");
       try {
         await storeTokenPair(accessToken, refreshToken);
         const user = await client.getUserProfile(accessToken);
-        machine.send("BACKEND_TOKEN_RECEIVED", {
+        machine.send("TOKEN_RECEIVED", {
           accessToken,
           refreshToken,
           username: user.displayName || user.email || "",
@@ -3129,8 +3175,7 @@ function createAuthManager(options) {
       try {
         const user = await client.getUserProfile(tokens.accessToken);
         machine.send("LOGIN", { authMethod: void 0 });
-        machine.send("EXCHANGE_TOKEN");
-        machine.send("BACKEND_TOKEN_RECEIVED", {
+        machine.send("TOKEN_RECEIVED", {
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
           username: user.displayName || user.email || "",
@@ -3145,8 +3190,7 @@ function createAuthManager(options) {
           await storeTokenPair(newTokens.accessToken, newTokens.refreshToken);
           const user = await client.getUserProfile(newTokens.accessToken);
           machine.send("LOGIN", { authMethod: void 0 });
-          machine.send("EXCHANGE_TOKEN");
-          machine.send("BACKEND_TOKEN_RECEIVED", {
+          machine.send("TOKEN_RECEIVED", {
             accessToken: newTokens.accessToken,
             refreshToken: newTokens.refreshToken,
             username: user.displayName || user.email || "",
@@ -3670,6 +3714,7 @@ for (const stream of [process.stdout, process.stderr]) {
 }
 let mainWindow = null;
 let lastBounds = null;
+let pendingDeepLinkUrl = null;
 function pushToAllWindows(channel, payload) {
   electron.BrowserWindow.getAllWindows().forEach((win) => {
     if (!win.isDestroyed()) {
@@ -3677,6 +3722,60 @@ function pushToAllWindows(channel, payload) {
     }
   });
 }
+function handleDeepLink(url2) {
+  console.log("[MUXVO:deeplink] Handling URL:", url2);
+  try {
+    const parsed = new URL(url2);
+    if (parsed.protocol !== "muxvo:") return;
+    if (parsed.host !== "auth" || parsed.pathname !== "/callback") {
+      console.warn("[MUXVO:deeplink] Unknown deep link path:", parsed.host, parsed.pathname);
+      return;
+    }
+    const accessToken = parsed.searchParams.get("accessToken");
+    const refreshToken = parsed.searchParams.get("refreshToken");
+    if (!accessToken || !refreshToken) {
+      console.warn("[MUXVO:deeplink] Missing tokens in callback URL");
+      return;
+    }
+    const manager = getAuthManager();
+    manager.handleOAuthCallback(accessToken, refreshToken).then((result) => {
+      console.log("[MUXVO:deeplink] OAuth callback success");
+      pushToAllWindows(IPC_CHANNELS.AUTH.STATUS_CHANGE, {
+        success: true,
+        data: {
+          loggedIn: true,
+          user: result.user
+        }
+      });
+    }).catch((err) => {
+      console.error("[MUXVO:deeplink] OAuth callback failed:", err);
+    });
+  } catch (err) {
+    console.error("[MUXVO:deeplink] Failed to parse URL:", err);
+  }
+}
+const gotTheLock = electron.app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  electron.app.quit();
+}
+electron.app.on("open-url", (event, url2) => {
+  event.preventDefault();
+  if (electron.app.isReady()) {
+    handleDeepLink(url2);
+  } else {
+    pendingDeepLinkUrl = url2;
+  }
+});
+electron.app.on("second-instance", (_event, argv) => {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  }
+  const deepLinkUrl = argv.find((arg) => arg.startsWith("muxvo://"));
+  if (deepLinkUrl) {
+    handleDeepLink(deepLinkUrl);
+  }
+});
 function createWindow(windowConfig) {
   const opts = {
     width: windowConfig?.width ?? 1280,
@@ -3738,6 +3837,13 @@ let chatArchive = null;
 let configWatcher = null;
 let memoryPush = null;
 electron.app.whenReady().then(() => {
+  if (electron.app.isPackaged) {
+    electron.app.setAsDefaultProtocolClient("muxvo");
+  }
+  if (pendingDeepLinkUrl) {
+    handleDeepLink(pendingDeepLinkUrl);
+    pendingDeepLinkUrl = null;
+  }
   const template = [
     { role: "appMenu" },
     {
@@ -3876,7 +3982,7 @@ electron.app.whenReady().then(() => {
           manager.tryRestoreSession().then((result) => {
             if (result.success && result.user) {
               console.log("[MUXVO:auth] Session restored for user:", result.user.displayName || result.user.email);
-              pushToAllWindows(IPC_CHANNELS.AUTH.GET_STATUS, {
+              pushToAllWindows(IPC_CHANNELS.AUTH.STATUS_CHANGE, {
                 success: true,
                 data: {
                   loggedIn: true,
