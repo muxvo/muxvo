@@ -18,6 +18,7 @@ import { HooksPanel } from './components/hook/HooksPanel';
 import { FilePanel } from './components/file/FilePanel';
 import { FileTempView } from './components/file/FileTempView';
 import { TourOverlay } from './components/tour/TourOverlay';
+import { UpdateNotification } from './components/app/UpdateNotification';
 import { PanelProvider, usePanelContext } from './contexts/PanelContext';
 import { I18nProvider, useI18n, type Locale } from './i18n';
 import { mapExtToFileType, toLocalFileUrl } from './utils/file-tree';
@@ -470,6 +471,8 @@ function AppContent({
         viewMode={viewMode}
         terminalNames={terminalNames}
       />
+
+      <UpdateNotification />
     </div>
   );
 }
