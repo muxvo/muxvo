@@ -74,13 +74,29 @@
 }
 
 .message-bubble--user .message-bubble__content {
-  background: var(--accent);
+  background: #3b82f6;
+  color: white;
+}
+
+[data-theme="light"] .message-bubble--user .message-bubble__content {
+  background: #2563eb;
   color: white;
 }
 
 .message-bubble--assistant .message-bubble__content {
   background: var(--bg-elevated);
   color: var(--text-primary);
+}
+
+/* Search highlight in user messages (white text on blue bg) */
+.message-bubble--user .search-highlight {
+  background: rgba(255, 255, 255, 0.3);
+  color: #fef9c3;
+}
+
+[data-theme="light"] .message-bubble--user .search-highlight {
+  background: rgba(255, 255, 255, 0.35);
+  color: #fefce8;
 }
 
 .message-bubble__text {
