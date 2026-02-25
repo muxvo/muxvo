@@ -106,7 +106,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
             if (!startedAt) startedAt = obj.timestamp || '';
             const trimmedContent = rawContent.trim();
             // Skip internal command messages (e.g. /commit skill)
-            if (trimmedContent && !trimmedContent.startsWith('<command-message>') && !trimmedContent.startsWith('<local-command-caveat>')) {
+            if (trimmedContent && !trimmedContent.startsWith('<command-message>') && !trimmedContent.startsWith('<local-command-caveat>') && !trimmedContent.startsWith('<teammate-message') && !trimmedContent.startsWith('<system-reminder>')) {
               title = trimmedContent.slice(0, 100);
               break;
             }
@@ -208,6 +208,8 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
           const contentStr = typeof normalizedContent === 'string' ? normalizedContent : '';
           const trimmedContent = contentStr.trimStart();
           if (
+            trimmedContent.startsWith('<teammate-message') ||
+            trimmedContent.startsWith('<system-reminder>') ||
             trimmedContent.startsWith('<task-notification>') ||
             trimmedContent.startsWith('<command-message>') ||
             trimmedContent.startsWith('<command-name>')
