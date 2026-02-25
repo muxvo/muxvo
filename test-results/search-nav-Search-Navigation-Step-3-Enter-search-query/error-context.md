@@ -1,0 +1,727 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic: Muxvo
+    - navigation [ref=e6]:
+      - button "终端8" [ref=e7] [cursor=pointer]
+      - button "Skills" [ref=e8] [cursor=pointer]
+      - button "MCP" [ref=e9] [cursor=pointer]
+      - button "Hooks" [ref=e10] [cursor=pointer]
+      - button "历史聊天" [active] [ref=e11] [cursor=pointer]
+    - button "切换主题" [ref=e12] [cursor=pointer]:
+      - img [ref=e13]
+    - button "?" [ref=e15] [cursor=pointer]
+    - button "EN" [ref=e16] [cursor=pointer]
+    - button "+" [ref=e17] [cursor=pointer]
+  - main [ref=e18]:
+    - generic [ref=e19]:
+      - generic [ref=e21] [cursor=pointer]:
+        - generic [ref=e22]:
+          - generic [ref=e24]:
+            - generic "~/Nutstore_Files/my_nutstore/520-program" [ref=e25]: ~/…/520-program
+            - generic [ref=e26]:
+              - generic [ref=e27]: ·
+              - generic [ref=e28]: 命名...
+          - button "文件" [ref=e29]:
+            - img [ref=e30]
+            - text: 文件
+          - button [ref=e33]:
+            - img [ref=e34]
+          - button [ref=e39]:
+            - img [ref=e40]
+        - textbox "Terminal input" [ref=e49]
+      - generic [ref=e53] [cursor=pointer]:
+        - generic [ref=e54]:
+          - generic [ref=e56]:
+            - generic "~/Nutstore_Files/my_nutstore/520-program" [ref=e57]: ~/…/520-program
+            - generic [ref=e58]:
+              - generic [ref=e59]: ·
+              - generic [ref=e60]: 命名...
+          - button "文件" [ref=e61]:
+            - img [ref=e62]
+            - text: 文件
+          - button [ref=e65]:
+            - img [ref=e66]
+          - button [ref=e71]:
+            - img [ref=e72]
+        - textbox "Terminal input" [ref=e81]
+      - generic [ref=e85] [cursor=pointer]:
+        - generic [ref=e86]:
+          - generic [ref=e88]:
+            - generic "~/Nutstore_Files/my_nutstore/520-program" [ref=e89]: ~/…/520-program
+            - generic [ref=e90]:
+              - generic [ref=e91]: ·
+              - generic [ref=e92]: 命名...
+          - button "文件" [ref=e93]:
+            - img [ref=e94]
+            - text: 文件
+          - button [ref=e97]:
+            - img [ref=e98]
+          - button [ref=e103]:
+            - img [ref=e104]
+        - textbox "Terminal input" [ref=e113]
+      - generic [ref=e117] [cursor=pointer]:
+        - generic [ref=e118]:
+          - generic [ref=e120]:
+            - generic "~/Nutstore_Files/my_nutstore/520-program" [ref=e121]: ~/…/520-program
+            - generic [ref=e122]:
+              - generic [ref=e123]: ·
+              - generic [ref=e124]: 命名...
+          - button "文件" [ref=e125]:
+            - img [ref=e126]
+            - text: 文件
+          - button [ref=e129]:
+            - img [ref=e130]
+          - button [ref=e135]:
+            - img [ref=e136]
+        - textbox "Terminal input" [ref=e145]
+      - generic [ref=e149] [cursor=pointer]:
+        - generic [ref=e150]:
+          - generic [ref=e152]:
+            - generic "~/Nutstore_Files/my_nutstore/520-program" [ref=e153]: ~/…/520-program
+            - generic [ref=e154]:
+              - generic [ref=e155]: ·
+              - generic [ref=e156]: 命名...
+          - button "文件" [ref=e157]:
+            - img [ref=e158]
+            - text: 文件
+          - button [ref=e161]:
+            - img [ref=e162]
+          - button [ref=e167]:
+            - img [ref=e168]
+        - textbox "Terminal input" [ref=e177]
+      - generic [ref=e181] [cursor=pointer]:
+        - generic [ref=e182]:
+          - generic [ref=e184]:
+            - generic "~/Nutstore_Files/my_nutstore/520-program" [ref=e185]: ~/…/520-program
+            - generic [ref=e186]:
+              - generic [ref=e187]: ·
+              - generic [ref=e188]: 命名...
+          - button "文件" [ref=e189]:
+            - img [ref=e190]
+            - text: 文件
+          - button [ref=e193]:
+            - img [ref=e194]
+          - button [ref=e199]:
+            - img [ref=e200]
+        - textbox "Terminal input" [ref=e209]
+      - generic [ref=e213] [cursor=pointer]:
+        - generic [ref=e214]:
+          - generic [ref=e216]:
+            - generic "~/Nutstore_Files/my_nutstore/520-program" [ref=e217]: ~/…/520-program
+            - generic [ref=e218]:
+              - generic [ref=e219]: ·
+              - generic [ref=e220]: 命名...
+          - button "文件" [ref=e221]:
+            - img [ref=e222]
+            - text: 文件
+          - button [ref=e225]:
+            - img [ref=e226]
+          - button [ref=e231]:
+            - img [ref=e232]
+        - textbox "Terminal input" [ref=e241]
+      - generic [ref=e245] [cursor=pointer]:
+        - generic [ref=e246]:
+          - generic [ref=e248]:
+            - generic "~/Nutstore_Files/my_nutstore/520-program" [ref=e249]: ~/…/520-program
+            - generic [ref=e250]:
+              - generic [ref=e251]: ·
+              - generic [ref=e252]: 命名...
+          - button "文件" [ref=e253]:
+            - img [ref=e254]
+            - text: 文件
+          - button [ref=e257]:
+            - img [ref=e258]
+          - button [ref=e263]:
+            - img [ref=e264]
+        - textbox "Terminal input" [ref=e273]
+  - generic [ref=e281]:
+    - generic [ref=e282]:
+      - generic [ref=e283]: Claude Code 本地聊天记录在未参与模型训练时仅保留约 30 天（参与训练时为 5 年），Muxvo 已自动归档到 ~/.muxvo/chat-archive/ 永久保留。所有数据仅保存在你的本地电脑，不会上传到任何服务器。
+      - generic [ref=e284]:
+        - generic [ref=e285] [cursor=pointer]:
+          - checkbox "自动归档：开启" [checked] [ref=e286]
+          - generic [ref=e287]: 自动归档：开启
+        - button "×" [ref=e288] [cursor=pointer]
+    - generic [ref=e289]:
+      - generic [ref=e291]:
+        - generic [ref=e292]: 项目
+        - generic [ref=e293] [cursor=pointer]:
+          - generic [ref=e295]: 全部项目
+          - generic [ref=e296]: 1.7GB
+        - generic [ref=e297] [cursor=pointer]:
+          - generic [ref=e299]: program
+          - generic [ref=e300]: 147MB
+        - generic [ref=e301] [cursor=pointer]:
+          - generic [ref=e303]: sleep
+          - generic [ref=e304]: 155.9MB
+        - generic [ref=e305] [cursor=pointer]:
+          - generic [ref=e307]: jinengrenzheng
+          - generic [ref=e308]: 6MB
+        - generic [ref=e309] [cursor=pointer]:
+          - generic [ref=e311]: ell
+          - generic [ref=e312]: 373.6KB
+        - generic [ref=e313] [cursor=pointer]:
+          - generic [ref=e315]: fufuiyouhua
+          - generic [ref=e316]: 194.7MB
+        - generic [ref=e317] [cursor=pointer]:
+          - generic [ref=e319]: vista
+          - generic [ref=e320]: 51.5MB
+        - generic [ref=e321] [cursor=pointer]:
+          - generic [ref=e323]: users
+          - generic [ref=e324]: 7.8MB
+        - generic [ref=e325] [cursor=pointer]:
+          - generic [ref=e327]: muxvo
+          - generic [ref=e328]: 261.4MB
+        - generic [ref=e329] [cursor=pointer]:
+          - generic [ref=e331]: caiexuexi
+          - generic [ref=e332]: 5.8MB
+        - generic [ref=e333] [cursor=pointer]:
+          - generic "/Users/rl/Nutstore_Files/my_nutstore/520-program/douban" [ref=e335]: douban
+          - generic [ref=e336]: 133.5KB
+        - generic [ref=e337] [cursor=pointer]:
+          - generic [ref=e339]: vowky
+          - generic [ref=e340]: 114.3MB
+        - generic [ref=e341] [cursor=pointer]:
+          - generic [ref=e343]: TL
+          - generic [ref=e344]: 50.5MB
+        - generic [ref=e345] [cursor=pointer]:
+          - generic [ref=e347]: vokey
+          - generic [ref=e348]: 256.7MB
+        - generic [ref=e349] [cursor=pointer]:
+          - generic [ref=e351]: mac
+          - generic [ref=e352]: 1.6MB
+        - generic [ref=e353] [cursor=pointer]:
+          - generic [ref=e355]: 0218search
+          - generic [ref=e356]: 6.2MB
+        - generic [ref=e357] [cursor=pointer]:
+          - generic [ref=e359]: remover
+          - generic [ref=e360]: 54.2MB
+        - generic [ref=e361] [cursor=pointer]:
+          - generic [ref=e363]: Downloads
+          - generic [ref=e364]: 107.7MB
+        - generic [ref=e365] [cursor=pointer]:
+          - generic [ref=e367]: autocode
+          - generic [ref=e368]: 19.6MB
+        - generic [ref=e369] [cursor=pointer]:
+          - generic [ref=e371]: openclaw
+          - generic [ref=e372]: 9.5MB
+        - generic [ref=e373] [cursor=pointer]:
+          - generic [ref=e375]: ccmux
+          - generic [ref=e376]: 162MB
+        - generic [ref=e377] [cursor=pointer]:
+          - generic [ref=e379]: moltbook
+          - generic [ref=e380]: 75.9MB
+        - generic [ref=e381] [cursor=pointer]:
+          - generic [ref=e383]: screenshot
+          - generic [ref=e384]: 2.4MB
+        - generic [ref=e385] [cursor=pointer]:
+          - generic [ref=e387]: Vokeys
+          - generic [ref=e388]: 1.7KB
+      - generic [ref=e390]:
+        - generic [ref=e392]: 会话 (200)
+        - textbox "搜索会话..." [ref=e394]
+        - generic [ref=e395] [cursor=pointer]:
+          - generic [ref=e396]:
+            - generic "帮我开个新的分支2" [ref=e397]
+            - generic [ref=e398]: 今天 19:22
+          - generic [ref=e399]: 帮我开个新的分支2
+          - generic [ref=e400]:
+            - generic [ref=e401]:
+              - generic [ref=e402]: CC
+              - generic [ref=e403]: muxvo
+            - generic [ref=e404]: 965.5KB
+        - generic [ref=e405] [cursor=pointer]:
+          - generic [ref=e406]:
+            - generic "现在聊天记录搜索功能有2个问题 ：搜索关键词后没有高亮搜索到的关键词；2。搜索你好却没有，实际上是有的 你用3人team来调研问题" [ref=e407]: 现在聊天记录搜索功能有2个问题 ：搜索关键词后没有高亮搜索到的关键词；2。搜索你好却没有，实际上是有
+            - generic [ref=e408]: 今天 19:22
+          - generic [ref=e409]: 现在聊天记录搜索功能有2个问题 ：搜索关键词后没有高亮搜索到的关键词；2。搜索你好却没有，实际上是有的 你用3人team来调研问题
+          - generic [ref=e410]:
+            - generic [ref=e411]:
+              - generic [ref=e412]: CC
+              - generic [ref=e413]: muxvo
+            - generic [ref=e414]: 5.6MB
+        - generic [ref=e415] [cursor=pointer]:
+          - generic [ref=e416]:
+            - generic "你仔细看下当前文件夹下的2个文档，规划一个学习agent的设计文档 用5人team来讨论规划" [ref=e417]: 你仔细看下当前文件夹下的2个文档，规划一个学习agent的设计文档
+            - generic [ref=e418]: 今天 19:21
+          - generic [ref=e419]: 你仔细看下当前文件夹下的2个文档，规划一个学习agent的设计文档 用5人team来讨论规划
+          - generic [ref=e420]:
+            - generic [ref=e421]:
+              - generic [ref=e422]: CC
+              - generic [ref=e423]: caiexuexi
+            - generic [ref=e424]: 5.8MB
+        - generic [ref=e425] [cursor=pointer]:
+          - generic [ref=e426]:
+            - generic "帮我开个新的分支 名称是branch3" [ref=e427]
+            - generic [ref=e428]: 今天 19:20
+          - generic [ref=e429]: 帮我开个新的分支 名称是branch3
+          - generic [ref=e430]:
+            - generic [ref=e431]:
+              - generic [ref=e432]: CC
+              - generic [ref=e433]: muxvo
+            - generic [ref=e434]: 16.6MB
+        - generic [ref=e435] [cursor=pointer]:
+          - generic [ref=e436]:
+            - generic "公司同事要看这个项目的代码 请用6人team检查下隐私信息，打包一份文件给他" [ref=e437]
+            - generic [ref=e438]: 今天 19:09
+          - generic [ref=e439]: 公司同事要看这个项目的代码 请用6人team检查下隐私信息，打包一份文件给他
+          - generic [ref=e440]:
+            - generic [ref=e441]:
+              - generic [ref=e442]: CC
+              - generic [ref=e443]: jinengrenzheng
+            - generic [ref=e444]: 956.5KB
+        - generic [ref=e445] [cursor=pointer]:
+          - generic [ref=e446]:
+            - generic "帮我开个新的分支 名称是branch4" [ref=e447]
+            - generic [ref=e448]: 今天 17:45
+          - generic [ref=e449]: 帮我开个新的分支 名称是branch4
+          - generic [ref=e450]:
+            - generic [ref=e451]:
+              - generic [ref=e452]: CC
+              - generic [ref=e453]: muxvo
+            - generic [ref=e454]: 4.6MB
+        - generic [ref=e455] [cursor=pointer]:
+          - generic [ref=e456]:
+            - generic "删除ell-branches/" [ref=e457]
+            - generic [ref=e458]: 今天 17:40
+          - generic [ref=e459]: 删除ell-branches/
+          - generic [ref=e460]:
+            - generic [ref=e461]:
+              - generic [ref=e462]: CC
+              - generic [ref=e463]: program
+            - generic [ref=e464]: 13.2KB
+        - generic [ref=e465] [cursor=pointer]:
+          - generic [ref=e466]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e467]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e468]: 今天 17:32
+          - generic [ref=e469]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e470]:
+            - generic [ref=e471]:
+              - generic [ref=e472]: CC
+              - generic [ref=e473]: sleep
+            - generic [ref=e474]: 8.7KB
+        - generic [ref=e475] [cursor=pointer]:
+          - generic [ref=e476]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e477]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e478]: 今天 17:32
+          - generic [ref=e479]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e480]:
+            - generic [ref=e481]:
+              - generic [ref=e482]: CC
+              - generic [ref=e483]: sleep
+            - generic [ref=e484]: 8.4KB
+        - generic [ref=e485] [cursor=pointer]:
+          - generic [ref=e486]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e487]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e488]: 今天 17:32
+          - generic [ref=e489]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e490]:
+            - generic [ref=e491]:
+              - generic [ref=e492]: CC
+              - generic [ref=e493]: sleep
+            - generic [ref=e494]: 6.3KB
+        - generic [ref=e495] [cursor=pointer]:
+          - generic [ref=e496]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e497]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e498]: 今天 17:32
+          - generic [ref=e499]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e500]:
+            - generic [ref=e501]:
+              - generic [ref=e502]: CC
+              - generic [ref=e503]: sleep
+            - generic [ref=e504]: 8.6KB
+        - generic [ref=e505] [cursor=pointer]:
+          - generic [ref=e506]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e507]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e508]: 今天 17:32
+          - generic [ref=e509]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e510]:
+            - generic [ref=e511]:
+              - generic [ref=e512]: CC
+              - generic [ref=e513]: sleep
+            - generic [ref=e514]: 6.2KB
+        - generic [ref=e515] [cursor=pointer]:
+          - generic [ref=e516]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e517]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e518]: 今天 17:32
+          - generic [ref=e519]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e520]:
+            - generic [ref=e521]:
+              - generic [ref=e522]: CC
+              - generic [ref=e523]: sleep
+            - generic [ref=e524]: 8.4KB
+        - generic [ref=e525] [cursor=pointer]:
+          - generic [ref=e526]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e527]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e528]: 今天 17:32
+          - generic [ref=e529]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e530]:
+            - generic [ref=e531]:
+              - generic [ref=e532]: CC
+              - generic [ref=e533]: sleep
+            - generic [ref=e534]: 8.3KB
+        - generic [ref=e535] [cursor=pointer]:
+          - generic [ref=e536]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e537]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e538]: 今天 17:32
+          - generic [ref=e539]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e540]:
+            - generic [ref=e541]:
+              - generic [ref=e542]: CC
+              - generic [ref=e543]: sleep
+            - generic [ref=e544]: 8.4KB
+        - generic [ref=e545] [cursor=pointer]:
+          - generic [ref=e546]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e547]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e548]: 今天 17:31
+          - generic [ref=e549]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e550]:
+            - generic [ref=e551]:
+              - generic [ref=e552]: CC
+              - generic [ref=e553]: program
+            - generic [ref=e554]: 2.2KB
+        - generic [ref=e555] [cursor=pointer]:
+          - generic [ref=e556]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e557]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e558]: 今天 17:31
+          - generic [ref=e559]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e560]:
+            - generic [ref=e561]:
+              - generic [ref=e562]: CC
+              - generic [ref=e563]: program
+            - generic [ref=e564]: 2.1KB
+        - generic [ref=e565] [cursor=pointer]:
+          - generic [ref=e566]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e567]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e568]: 今天 17:31
+          - generic [ref=e569]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e570]:
+            - generic [ref=e571]:
+              - generic [ref=e572]: CC
+              - generic [ref=e573]: program
+            - generic [ref=e574]: 2.2KB
+        - generic [ref=e575] [cursor=pointer]:
+          - generic [ref=e576]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e577]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e578]: 今天 17:31
+          - generic [ref=e579]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e580]:
+            - generic [ref=e581]:
+              - generic [ref=e582]: CC
+              - generic [ref=e583]: program
+            - generic [ref=e584]: 2.2KB
+        - generic [ref=e585] [cursor=pointer]:
+          - generic [ref=e586]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e587]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e588]: 今天 17:31
+          - generic [ref=e589]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e590]:
+            - generic [ref=e591]:
+              - generic [ref=e592]: CC
+              - generic [ref=e593]: program
+            - generic [ref=e594]: 2.7KB
+        - generic [ref=e595] [cursor=pointer]:
+          - generic [ref=e596]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e597]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e598]: 今天 17:31
+          - generic [ref=e599]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e600]:
+            - generic [ref=e601]:
+              - generic [ref=e602]: CC
+              - generic [ref=e603]: program
+            - generic [ref=e604]: 2.3KB
+        - generic [ref=e605] [cursor=pointer]:
+          - generic [ref=e606]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e607]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e608]: 今天 17:31
+          - generic [ref=e609]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e610]:
+            - generic [ref=e611]:
+              - generic [ref=e612]: CC
+              - generic [ref=e613]: program
+            - generic [ref=e614]: 2.6KB
+        - generic [ref=e615] [cursor=pointer]:
+          - generic [ref=e616]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e617]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e618]: 今天 17:31
+          - generic [ref=e619]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e620]:
+            - generic [ref=e621]:
+              - generic [ref=e622]: CC
+              - generic [ref=e623]: program
+            - generic [ref=e624]: 2.2KB
+        - generic [ref=e625] [cursor=pointer]:
+          - generic [ref=e626]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e627]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e628]: 今天 17:31
+          - generic [ref=e629]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e630]:
+            - generic [ref=e631]:
+              - generic [ref=e632]: CC
+              - generic [ref=e633]: program
+            - generic [ref=e634]: 2KB
+        - generic [ref=e635] [cursor=pointer]:
+          - generic [ref=e636]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e637]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e638]: 今天 17:31
+          - generic [ref=e639]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e640]:
+            - generic [ref=e641]:
+              - generic [ref=e642]: CC
+              - generic [ref=e643]: program
+            - generic [ref=e644]: 2.2KB
+        - generic [ref=e645] [cursor=pointer]:
+          - generic [ref=e646]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e647]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e648]: 今天 17:31
+          - generic [ref=e649]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e650]:
+            - generic [ref=e651]:
+              - generic [ref=e652]: CC
+              - generic [ref=e653]: program
+            - generic [ref=e654]: 2.8KB
+        - generic [ref=e655] [cursor=pointer]:
+          - generic [ref=e656]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e657]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e658]: 今天 17:31
+          - generic [ref=e659]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e660]:
+            - generic [ref=e661]:
+              - generic [ref=e662]: CC
+              - generic [ref=e663]: program
+            - generic [ref=e664]: 2.4KB
+        - generic [ref=e665] [cursor=pointer]:
+          - generic [ref=e666]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e667]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e668]: 今天 17:31
+          - generic [ref=e669]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e670]:
+            - generic [ref=e671]:
+              - generic [ref=e672]: CC
+              - generic [ref=e673]: program
+            - generic [ref=e674]: 2.6KB
+        - generic [ref=e675] [cursor=pointer]:
+          - generic [ref=e676]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e677]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e678]: 今天 17:31
+          - generic [ref=e679]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e680]:
+            - generic [ref=e681]:
+              - generic [ref=e682]: CC
+              - generic [ref=e683]: program
+            - generic [ref=e684]: 2.2KB
+        - generic [ref=e685] [cursor=pointer]:
+          - generic [ref=e686]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e687]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e688]: 今天 17:31
+          - generic [ref=e689]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e690]:
+            - generic [ref=e691]:
+              - generic [ref=e692]: CC
+              - generic [ref=e693]: program
+            - generic [ref=e694]: 2.2KB
+        - generic [ref=e695] [cursor=pointer]:
+          - generic [ref=e696]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e697]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e698]: 今天 17:31
+          - generic [ref=e699]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e700]:
+            - generic [ref=e701]:
+              - generic [ref=e702]: CC
+              - generic [ref=e703]: program
+            - generic [ref=e704]: 2.2KB
+        - generic [ref=e705] [cursor=pointer]:
+          - generic [ref=e706]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e707]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e708]: 今天 17:31
+          - generic [ref=e709]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e710]:
+            - generic [ref=e711]:
+              - generic [ref=e712]: CC
+              - generic [ref=e713]: program
+            - generic [ref=e714]: 2.2KB
+        - generic [ref=e715] [cursor=pointer]:
+          - generic [ref=e716]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e717]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e718]: 今天 17:31
+          - generic [ref=e719]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e720]:
+            - generic [ref=e721]:
+              - generic [ref=e722]: CC
+              - generic [ref=e723]: program
+            - generic [ref=e724]: 2.2KB
+        - generic [ref=e725] [cursor=pointer]:
+          - generic [ref=e726]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e727]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e728]: 今天 17:31
+          - generic [ref=e729]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e730]:
+            - generic [ref=e731]:
+              - generic [ref=e732]: CC
+              - generic [ref=e733]: program
+            - generic [ref=e734]: 2.2KB
+        - generic [ref=e735] [cursor=pointer]:
+          - generic [ref=e736]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e737]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e738]: 今天 17:31
+          - generic [ref=e739]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e740]:
+            - generic [ref=e741]:
+              - generic [ref=e742]: CC
+              - generic [ref=e743]: program
+            - generic [ref=e744]: 2.8KB
+        - generic [ref=e745] [cursor=pointer]:
+          - generic [ref=e746]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e747]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e748]: 今天 17:31
+          - generic [ref=e749]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e750]:
+            - generic [ref=e751]:
+              - generic [ref=e752]: CC
+              - generic [ref=e753]: program
+            - generic [ref=e754]: 2KB
+        - generic [ref=e755] [cursor=pointer]:
+          - generic [ref=e756]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e757]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e758]: 今天 17:31
+          - generic [ref=e759]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e760]:
+            - generic [ref=e761]:
+              - generic [ref=e762]: CC
+              - generic [ref=e763]: program
+            - generic [ref=e764]: 2.1KB
+        - generic [ref=e765] [cursor=pointer]:
+          - generic [ref=e766]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e767]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e768]: 今天 17:31
+          - generic [ref=e769]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e770]:
+            - generic [ref=e771]:
+              - generic [ref=e772]: CC
+              - generic [ref=e773]: program
+            - generic [ref=e774]: 2.3KB
+        - generic [ref=e775] [cursor=pointer]:
+          - generic [ref=e776]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e777]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e778]: 今天 17:31
+          - generic [ref=e779]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e780]:
+            - generic [ref=e781]:
+              - generic [ref=e782]: CC
+              - generic [ref=e783]: program
+            - generic [ref=e784]: 2.1KB
+        - generic [ref=e785] [cursor=pointer]:
+          - generic [ref=e786]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e787]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e788]: 今天 17:31
+          - generic [ref=e789]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e790]:
+            - generic [ref=e791]:
+              - generic [ref=e792]: CC
+              - generic [ref=e793]: program
+            - generic [ref=e794]: 2.2KB
+        - generic [ref=e795] [cursor=pointer]:
+          - generic [ref=e796]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e797]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e798]: 今天 17:31
+          - generic [ref=e799]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e800]:
+            - generic [ref=e801]:
+              - generic [ref=e802]: CC
+              - generic [ref=e803]: program
+            - generic [ref=e804]: 2.6KB
+        - generic [ref=e805] [cursor=pointer]:
+          - generic [ref=e806]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e807]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e808]: 今天 17:31
+          - generic [ref=e809]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e810]:
+            - generic [ref=e811]:
+              - generic [ref=e812]: CC
+              - generic [ref=e813]: program
+            - generic [ref=e814]: 2KB
+        - generic [ref=e815] [cursor=pointer]:
+          - generic [ref=e816]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e817]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e818]: 今天 17:31
+          - generic [ref=e819]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e820]:
+            - generic [ref=e821]:
+              - generic [ref=e822]: CC
+              - generic [ref=e823]: program
+            - generic [ref=e824]: 2.2KB
+        - generic [ref=e825] [cursor=pointer]:
+          - generic [ref=e826]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e827]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e828]: 今天 17:31
+          - generic [ref=e829]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e830]:
+            - generic [ref=e831]:
+              - generic [ref=e832]: CC
+              - generic [ref=e833]: program
+            - generic [ref=e834]: 2.2KB
+        - generic [ref=e835] [cursor=pointer]:
+          - generic [ref=e836]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e837]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e838]: 今天 17:31
+          - generic [ref=e839]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e840]:
+            - generic [ref=e841]:
+              - generic [ref=e842]: CC
+              - generic [ref=e843]: program
+            - generic [ref=e844]: 2.2KB
+        - generic [ref=e845] [cursor=pointer]:
+          - generic [ref=e846]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e847]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e848]: 今天 17:31
+          - generic [ref=e849]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e850]:
+            - generic [ref=e851]:
+              - generic [ref=e852]: CC
+              - generic [ref=e853]: program
+            - generic [ref=e854]: 2.1KB
+        - generic [ref=e855] [cursor=pointer]:
+          - generic [ref=e856]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e857]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e858]: 今天 17:31
+          - generic [ref=e859]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e860]:
+            - generic [ref=e861]:
+              - generic [ref=e862]: CC
+              - generic [ref=e863]: program
+            - generic [ref=e864]: 2.1KB
+        - generic [ref=e865] [cursor=pointer]:
+          - generic [ref=e866]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e867]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e868]: 今天 17:31
+          - generic [ref=e869]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e870]:
+            - generic [ref=e871]:
+              - generic [ref=e872]: CC
+              - generic [ref=e873]: program
+            - generic [ref=e874]: 2.2KB
+        - generic [ref=e875] [cursor=pointer]:
+          - generic [ref=e876]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e877]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e878]: 今天 17:31
+          - generic [ref=e879]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e880]:
+            - generic [ref=e881]:
+              - generic [ref=e882]: CC
+              - generic [ref=e883]: program
+            - generic [ref=e884]: 2.1KB
+        - generic [ref=e885] [cursor=pointer]:
+          - generic [ref=e886]:
+            - generic "根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新" [ref=e887]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求：
+            - generic [ref=e888]: 今天 17:31
+          - generic [ref=e889]: 根据以下git变更生成详细的中文commit message，只输出message本身。 要求： 1. 用自然语言清晰描述具体改了什么，不要写代码 2. 要具体，比如「新增用户登录按钮」而不是「更新
+          - generic [ref=e890]:
+            - generic [ref=e891]:
+              - generic [ref=e892]: CC
+              - generic [ref=e893]: program
+            - generic [ref=e894]: 2KB
+      - generic [ref=e898]: 选择一个会话查看详情
+```
