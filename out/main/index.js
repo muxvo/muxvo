@@ -650,7 +650,21 @@ function createChatProjectReader(opts) {
         } else {
           const contentStr = typeof normalizedContent === "string" ? normalizedContent : "";
           const trimmedContent = contentStr.trimStart();
-          if (trimmedContent.startsWith("<teammate-message") || trimmedContent.startsWith("<system-reminder>") || trimmedContent.startsWith("<task-notification>") || trimmedContent.startsWith("<command-message>") || trimmedContent.startsWith("<command-name>")) {
+          if (trimmedContent.startsWith("<system-reminder>") || trimmedContent.startsWith("<task-notification>") || trimmedContent.startsWith("<command-message>") || trimmedContent.startsWith("<command-name>")) {
+            resolvedType = "system";
+          } else if (trimmedContent.startsWith("<teammate-message")) {
+            const stripped = trimmedContent.replace(/<teammate-message[^>]*>\n?/g, "").replace(/<\/teammate-message>\s*/g, "").trim();
+            const isProtocolOnly = !stripped || stripped.split("\n").every((line2) => {
+              const l = line2.trim();
+              if (!l) return true;
+              try {
+                const obj = JSON.parse(l);
+                return ["idle_notification", "teammate_terminated", "shutdown_approved", "shutdown_rejected"].includes(obj.type);
+              } catch {
+                return false;
+              }
+            });
+            if (isProtocolOnly) return null;
             resolvedType = "system";
           }
         }
