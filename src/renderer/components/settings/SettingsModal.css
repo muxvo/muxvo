@@ -107,21 +107,25 @@
   margin-top: 2px;
 }
 
-/* Number selector (for startup terminal count) */
-.settings-modal__num-group {
+/* Stepper (for startup terminal count) */
+.settings-modal__stepper {
   display: flex;
-  gap: 4px;
+  align-items: center;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-card);
 }
 
-.settings-modal__num-btn {
+.settings-modal__stepper-btn {
   width: 32px;
-  height: 28px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg-card);
+  height: 30px;
+  border: none;
+  background: transparent;
   color: var(--text-secondary);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
   display: flex;
@@ -129,16 +133,25 @@
   justify-content: center;
 }
 
-.settings-modal__num-btn:hover {
-  border-color: var(--accent);
-  color: var(--text-primary);
+.settings-modal__stepper-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--accent);
 }
 
-.settings-modal__num-btn--active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #000;
+.settings-modal__stepper-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.settings-modal__stepper-value {
+  width: 36px;
+  text-align: center;
+  font-size: 13px;
   font-weight: 600;
+  color: var(--text-primary);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  line-height: 30px;
 }
 
 /* Radio-style toggle buttons */
@@ -190,7 +203,6 @@
 }
 
 /* Light theme adjustments */
-[data-theme="light"] .settings-modal__num-btn--active,
 [data-theme="light"] .settings-modal__toggle-btn--active {
   color: #fff;
 }

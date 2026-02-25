@@ -42,14 +42,16 @@ describe('VERIFY Settings Panel', () => {
       fs.rmSync(tmpDir, { recursive: true });
     });
 
-    test('clamping logic: values outside 1-5 are clamped at startup', () => {
+    test('clamping logic: values outside 1-20 are clamped at startup', () => {
       // This tests the clamping logic used in main/index.ts
-      const clamp = (v: number) => Math.max(1, Math.min(5, v ?? 1));
+      const clamp = (v: number) => Math.max(1, Math.min(20, v ?? 1));
       expect(clamp(0)).toBe(1);
       expect(clamp(-1)).toBe(1);
-      expect(clamp(6)).toBe(5);
-      expect(clamp(100)).toBe(5);
+      expect(clamp(21)).toBe(20);
+      expect(clamp(100)).toBe(20);
       expect(clamp(3)).toBe(3);
+      expect(clamp(10)).toBe(10);
+      expect(clamp(20)).toBe(20);
       expect(clamp(undefined as any)).toBe(1);
     });
   });

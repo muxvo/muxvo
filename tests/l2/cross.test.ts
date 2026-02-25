@@ -190,12 +190,12 @@ describe('APP L2 -- 应用生命周期规则层', () => {
 // SETTINGS L2 -- 设置面板规则层（4 cases）
 // ============================================================
 describe('SETTINGS L2 -- 设置面板规则层', () => {
-  test('SETTINGS_L2_01: startupTerminalCount 范围限制 -- 1~5', () => {
-    // Math.max(1, Math.min(5, value)) should clamp to range
-    expect(Math.max(1, Math.min(5, 0))).toBe(1);
-    expect(Math.max(1, Math.min(5, 6))).toBe(5);
-    expect(Math.max(1, Math.min(5, -1))).toBe(1);
-    expect(Math.max(1, Math.min(5, 3))).toBe(3);
+  test('SETTINGS_L2_01: startupTerminalCount 范围限制 -- 1~20', () => {
+    // Math.max(1, Math.min(20, value)) should clamp to range
+    expect(Math.max(1, Math.min(20, 0))).toBe(1);
+    expect(Math.max(1, Math.min(20, 21))).toBe(20);
+    expect(Math.max(1, Math.min(20, -1))).toBe(1);
+    expect(Math.max(1, Math.min(20, 10))).toBe(10);
   });
 
   test('SETTINGS_L2_02: 主题切换持久化', async () => {
