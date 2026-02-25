@@ -258,7 +258,7 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [currentMatchIdx, setCurrentMatchIdx] = useState(0);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
-  const initialScrollRef = useRef<number | undefined>(undefined);
+  const navScrollingRef = useRef(false);
 
   // Reset visible count when a different session is selected
   const messageKey = messages.length > 0 ? messages[0].uuid : '';
@@ -267,8 +267,7 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
     setFirstItemIndex(FIRST_ITEM_INDEX);
     setLoadingOlder(false);
     setCurrentMatchIdx(0);
-    // Mark that this is a fresh session — Virtuoso should start at the bottom
-    initialScrollRef.current = MESSAGE_PAGE_SIZE - 1;
+    navScrollingRef.current = false;
   }, [messageKey]);
 
   // When searching, expand visibleCount to load ALL messages so we can match across full history
@@ -285,12 +284,6 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
   const startIndex = Math.max(0, messages.length - visibleCount);
   const visibleMessages = messages.slice(startIndex);
   const hasEarlier = startIndex > 0;
-
-  // Consume initialScrollRef so it only applies once per session switch
-  const initialTopMost = initialScrollRef.current;
-  if (initialTopMost !== undefined) {
-    initialScrollRef.current = undefined;
-  }
 
   // Compute match indices: which visibleMessages contain the search query
   const matchIndices = useMemo(() => {
@@ -316,16 +309,18 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
 
     if (matchIndices.length > 0) {
       setCurrentMatchIdx(0);
+      navScrollingRef.current = true;
       setTimeout(() => {
         virtuosoRef.current?.scrollToIndex({ index: firstItemIndex + matchIndices[0], align: 'center', behavior: 'smooth' });
       }, 150);
+      setTimeout(() => { navScrollingRef.current = false; }, 600);
     }
   }, [matchIndices, messageKey, searchQuery, firstItemIndex]);
 
-  // Auto-scroll to bottom on real-time updates (new messages appended) — only when NOT searching
+  // Auto-scroll to bottom on real-time updates (new messages appended) — only when NOT searching and NOT navigating
   const prevMsgCount = useRef(messages.length);
   useEffect(() => {
-    if (!isSearching && messages.length > prevMsgCount.current) {
+    if (!isSearching && messages.length > prevMsgCount.current && !navScrollingRef.current) {
       virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
     }
     prevMsgCount.current = messages.length;
@@ -335,7 +330,9 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
     if (currentMatchIdx > 0) {
       const newIdx = currentMatchIdx - 1;
       setCurrentMatchIdx(newIdx);
+      navScrollingRef.current = true;
       virtuosoRef.current?.scrollToIndex({ index: firstItemIndex + matchIndices[newIdx], align: 'center', behavior: 'smooth' });
+      setTimeout(() => { navScrollingRef.current = false; }, 500);
     }
   }, [currentMatchIdx, matchIndices, firstItemIndex]);
 
@@ -343,7 +340,9 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
     if (currentMatchIdx < matchIndices.length - 1) {
       const newIdx = currentMatchIdx + 1;
       setCurrentMatchIdx(newIdx);
+      navScrollingRef.current = true;
       virtuosoRef.current?.scrollToIndex({ index: firstItemIndex + matchIndices[newIdx], align: 'center', behavior: 'smooth' });
+      setTimeout(() => { navScrollingRef.current = false; }, 500);
     }
   }, [currentMatchIdx, matchIndices, firstItemIndex]);
 
@@ -416,7 +415,7 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
         data={visibleMessages}
         firstItemIndex={firstItemIndex}
         startReached={handleStartReached}
-        initialTopMostItemIndex={initialTopMost}
+        initialTopMostItemIndex={visibleMessages.length - 1}
         components={{ Header }}
         itemContent={(index, message) => {
           const msgIdx = index - firstItemIndex;
