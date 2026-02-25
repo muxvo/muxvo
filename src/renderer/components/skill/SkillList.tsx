@@ -61,6 +61,29 @@ export function SkillList({ skills, loading, selectedPath, onSelect }: SkillList
     );
   }, [skills, searchQuery]);
 
+  // ▲▼ navigation: cycle through filtered skills
+  const matchTotal = searchQuery.trim() ? filteredSkills.length : undefined;
+
+  const matchCurrent = useMemo(() => {
+    if (!searchQuery.trim() || !selectedPath) return undefined;
+    const idx = filteredSkills.findIndex(s => s.path === selectedPath);
+    return idx >= 0 ? idx + 1 : undefined;
+  }, [searchQuery, selectedPath, filteredSkills]);
+
+  const onPrevMatch = useCallback(() => {
+    if (filteredSkills.length === 0) return;
+    const idx = filteredSkills.findIndex(s => s.path === selectedPath);
+    const prev = idx > 0 ? idx - 1 : filteredSkills.length - 1;
+    onSelect(filteredSkills[prev].path);
+  }, [filteredSkills, selectedPath, onSelect]);
+
+  const onNextMatch = useCallback(() => {
+    if (filteredSkills.length === 0) return;
+    const idx = filteredSkills.findIndex(s => s.path === selectedPath);
+    const next = idx < filteredSkills.length - 1 ? idx + 1 : 0;
+    onSelect(filteredSkills[next].path);
+  }, [filteredSkills, selectedPath, onSelect]);
+
   const groups = useMemo(() => groupSkills(filteredSkills), [filteredSkills]);
 
   const toggleGroup = useCallback((key: string) => {
@@ -120,6 +143,10 @@ export function SkillList({ skills, loading, selectedPath, onSelect }: SkillList
         value={searchQuery}
         onChange={setSearchQuery}
         placeholder="Search skills..."
+        matchCurrent={matchCurrent}
+        matchTotal={matchTotal}
+        onPrevMatch={onPrevMatch}
+        onNextMatch={onNextMatch}
       />
 
       <div className="skill-list__body">
