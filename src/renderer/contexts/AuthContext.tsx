@@ -103,8 +103,25 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
       dispatch({ type: 'LOGOUT' });
     });
 
+    // Listen for auth status change push event (Deep Link OAuth callback)
+    const unsubStatus = window.api.auth.onStatusChange?.((data: any) => {
+      if (data?.success && data.data?.loggedIn && data.data.user) {
+        const u = data.data.user;
+        dispatch({
+          type: 'LOGIN_SUCCESS',
+          user: {
+            username: u.displayName || u.username || u.email || '',
+            email: u.email,
+            avatarUrl: u.avatarUrl || '',
+            provider: u.provider || 'github',
+          },
+        });
+      }
+    });
+
     return () => {
       unsubExpired?.();
+      unsubStatus?.();
     };
   }, []);
 

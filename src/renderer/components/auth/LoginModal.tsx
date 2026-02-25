@@ -31,7 +31,7 @@ export function LoginModal(): JSX.Element | null {
   // Auto-clear error after 5s
   useEffect(() => {
     if (!state.error) return;
-    const timer = setTimeout(() => dispatch({ type: 'CLEAR_ERROR' }), 5000);
+    const timer = setTimeout(() => dispatch({ type: 'CLEAR_ERROR' }), 3000);
     return () => clearTimeout(timer);
   }, [state.error, dispatch]);
 

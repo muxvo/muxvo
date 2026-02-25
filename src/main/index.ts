@@ -68,6 +68,75 @@ function pushToAllWindows(channel: string, payload: unknown): void {
   });
 }
 
+/**
+ * Deep Link handler: parse muxvo://auth/callback?accessToken=...&refreshToken=...
+ * and complete the OAuth login flow.
+ */
+function handleDeepLink(url: string): void {
+  console.log('[MUXVO:deeplink] Handling URL:', url);
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'muxvo:') return;
+    if (parsed.host !== 'auth' || parsed.pathname !== '/callback') {
+      console.warn('[MUXVO:deeplink] Unknown deep link path:', parsed.host, parsed.pathname);
+      return;
+    }
+
+    const accessToken = parsed.searchParams.get('accessToken');
+    const refreshToken = parsed.searchParams.get('refreshToken');
+    if (!accessToken || !refreshToken) {
+      console.warn('[MUXVO:deeplink] Missing tokens in callback URL');
+      return;
+    }
+
+    const manager = getAuthManager();
+    manager.handleOAuthCallback(accessToken, refreshToken).then((result) => {
+      console.log('[MUXVO:deeplink] OAuth callback success');
+      pushToAllWindows(IPC_CHANNELS.AUTH.STATUS_CHANGE, {
+        success: true,
+        data: {
+          loggedIn: true,
+          user: result.user,
+        },
+      });
+    }).catch((err) => {
+      console.error('[MUXVO:deeplink] OAuth callback failed:', err);
+    });
+  } catch (err) {
+    console.error('[MUXVO:deeplink] Failed to parse URL:', err);
+  }
+}
+
+// ─── Single Instance Lock ───
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+}
+
+// macOS: open-url can fire before app is ready, so cache the URL
+app.on('open-url', (event, url) => {
+  event.preventDefault();
+  if (app.isReady()) {
+    handleDeepLink(url);
+  } else {
+    pendingDeepLinkUrl = url;
+  }
+});
+
+// Windows/Linux: second instance receives the deep link URL via argv
+app.on('second-instance', (_event, argv) => {
+  // Focus existing window
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  }
+  // Extract muxvo:// URL from argv
+  const deepLinkUrl = argv.find((arg) => arg.startsWith('muxvo://'));
+  if (deepLinkUrl) {
+    handleDeepLink(deepLinkUrl);
+  }
+});
+
 function createWindow(windowConfig?: WindowConfig): void {
   const opts: Electron.BrowserWindowConstructorOptions = {
     width: windowConfig?.width ?? 1280,
@@ -146,6 +215,17 @@ let configWatcher: ReturnType<typeof createConfigWatcher> | null = null;
 let memoryPush: ReturnType<typeof createMemoryPushTimer> | null = null;
 
 app.whenReady().then(() => {
+  // Register muxvo:// protocol handler (packaged app only; dev uses open-url event)
+  if (app.isPackaged) {
+    app.setAsDefaultProtocolClient('muxvo');
+  }
+
+  // Process any deep link URL that arrived before app was ready
+  if (pendingDeepLinkUrl) {
+    handleDeepLink(pendingDeepLinkUrl);
+    pendingDeepLinkUrl = null;
+  }
+
   // Set application menu with Edit menu for copy/paste/select-all shortcuts
   const template: Electron.MenuItemConstructorOptions[] = [
     { role: 'appMenu' },
