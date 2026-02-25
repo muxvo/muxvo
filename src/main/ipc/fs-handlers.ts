@@ -21,6 +21,7 @@ const WRITABLE_ROOTS = [
   join(homedir(), '.muxvo'),
   join(homedir(), '.claude'),
   join(homedir(), '.codex'),
+  join(homedir(), '.gemini'),
   tmpdir(),
 ];
 
