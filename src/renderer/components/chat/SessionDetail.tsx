@@ -26,23 +26,44 @@ interface ToolCallBlockProps {
   input?: unknown;
 }
 
+/** Render tool input: string values as Markdown, others as JSON */
+function ToolInputContent({ input }: { input: unknown }) {
+  if (typeof input === 'string') {
+    return <MarkdownPreview content={input} />;
+  }
+  if (typeof input === 'object' && input !== null && !Array.isArray(input)) {
+    const entries = Object.entries(input as Record<string, unknown>);
+    return (
+      <>
+        {entries.map(([key, val]) => (
+          <div key={key} className="tool-call-block__field">
+            <div className="tool-call-block__field-key">{key}</div>
+            {typeof val === 'string'
+              ? <MarkdownPreview content={val} />
+              : <pre className="tool-call-block__field-val">{JSON.stringify(val, null, 2)}</pre>
+            }
+          </div>
+        ))}
+      </>
+    );
+  }
+  return <pre className="tool-call-block__content">{JSON.stringify(input, null, 2)}</pre>;
+}
+
 function ToolCallBlock({ name, input }: ToolCallBlockProps) {
   const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div
-      className="tool-call-block"
-      onClick={() => setExpanded(!expanded)}
-    >
-      <div className="tool-call-block__header">
+    <div className="tool-call-block">
+      <div className="tool-call-block__header" onClick={() => setExpanded(!expanded)}>
         <span className="tool-call-block__icon">{expanded ? '▼' : '▶'}</span>
         <span className="tool-call-block__label">{t('chat.toolCall')}{name ? `: ${name}` : ''}</span>
       </div>
       {expanded && (
-        <pre className="tool-call-block__content">
-          {typeof input === 'string' ? input : JSON.stringify(input, null, 2)}
-        </pre>
+        <div className="tool-call-block__content">
+          <ToolInputContent input={input} />
+        </div>
       )}
     </div>
   );
@@ -57,18 +78,15 @@ function ToolResultBlock({ content }: ToolResultBlockProps) {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div
-      className="tool-result-block"
-      onClick={() => setExpanded(!expanded)}
-    >
-      <div className="tool-result-block__header">
+    <div className="tool-result-block">
+      <div className="tool-result-block__header" onClick={() => setExpanded(!expanded)}>
         <span className="tool-result-block__icon">{expanded ? '▼' : '▶'}</span>
         <span className="tool-result-block__label">{t('chat.toolResult')}</span>
       </div>
       {expanded && (
-        <pre className="tool-result-block__content">
-          {typeof content === 'string' ? content : JSON.stringify(content, null, 2)}
-        </pre>
+        <div className="tool-result-block__content">
+          <ToolInputContent input={content} />
+        </div>
       )}
     </div>
   );
@@ -103,6 +121,18 @@ interface MessageBubbleProps {
   message: SessionMessage;
 }
 
+/** Extract plain text from message content for clipboard copy */
+function extractMessageText(message: SessionMessage): string {
+  if (typeof message.content === 'string') return message.content;
+  if (Array.isArray(message.content)) {
+    return (message.content as AssistantContentBlock[])
+      .filter((b) => b.type === 'text')
+      .map((b) => b.text || '')
+      .join('\n\n');
+  }
+  return String(message.content);
+}
+
 const MessageBubble = React.memo(function MessageBubble({ message }: MessageBubbleProps) {
   const { t } = useI18n();
   const isUser = message.type === 'user';
@@ -114,8 +144,15 @@ const MessageBubble = React.memo(function MessageBubble({ message }: MessageBubb
       ? 'message-bubble--system'
       : 'message-bubble--assistant';
 
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const selection = window.getSelection()?.toString();
+    const textToCopy = selection || extractMessageText(message);
+    navigator.clipboard.writeText(textToCopy);
+  }, [message]);
+
   return (
-    <div className={`message-bubble ${bubbleClass}`}>
+    <div className={`message-bubble ${bubbleClass}`} onContextMenu={handleContextMenu}>
       <div className="message-bubble__label">
         {isUser ? t('chat.you') : isSystem ? t('chat.system') : message.uuid.startsWith('codex-') ? 'CODEX' : message.uuid.startsWith('gemini-') ? 'GEMINI' : t('chat.claude')}
       </div>
