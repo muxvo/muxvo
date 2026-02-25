@@ -37,8 +37,10 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Fix node-gyp distutils
-        run: pip install setuptools
+      - name: Setup Python for node-gyp
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
       - name: Install dependencies
         run: npm ci
