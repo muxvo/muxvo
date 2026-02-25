@@ -7,10 +7,9 @@
  *          auth:oauth-callback, auth:refresh-token, auth:get-profile
  */
 
-import { ipcMain, BrowserWindow } from 'electron';
+import { ipcMain, BrowserWindow, shell } from 'electron';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 import {
-  loginGithub as oauthLoginGithub,
   logout as oauthLogout,
   getAuthStatus,
 } from '@/modules/auth/github-oauth';
@@ -32,8 +31,10 @@ export function createAuthHandlers() {
     // ─── Original handlers (preserved) ───
     async loginGithub(): Promise<Record<string, unknown>> {
       try {
-        const result = await oauthLoginGithub();
-        return { success: true, data: result };
+        const manager = getAuthManager();
+        const result = await manager.loginGithub();
+        await shell.openExternal(result.authUrl);
+        return { success: true, data: { authUrl: result.authUrl } };
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         return { success: false, error: { code: 'AUTH_ERROR', message } };
@@ -66,7 +67,8 @@ export function createAuthHandlers() {
       try {
         const manager = getAuthManager();
         const result = await manager.loginGoogle();
-        return { success: true, data: result };
+        await shell.openExternal(result.authUrl);
+        return { success: true, data: { authUrl: result.authUrl } };
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         return { success: false, error: { code: 'AUTH_ERROR', message } };

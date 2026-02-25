@@ -9,7 +9,7 @@ import {
   revokeRefreshToken,
   revokeAllUserTokens,
 } from '../services/token.js';
-import { AuthError, ValidationError } from '../lib/errors.js';
+import { AppError, AuthError, ValidationError } from '../lib/errors.js';
 import { sendVerificationEmail } from '../services/email.js';
 
 // ---------------------------------------------------------------------------
@@ -17,9 +17,9 @@ import { sendVerificationEmail } from '../services/email.js';
 // ---------------------------------------------------------------------------
 
 function env(name: string, fallback?: string): string {
-  const value = process.env[name] ?? fallback;
-  if (value === undefined) {
-    throw new Error(`Missing required env var: ${name}`);
+  const value = process.env[name] || fallback;
+  if (!value) {
+    throw new AppError(`Missing required env var: ${name}`, 500, 'CONFIG_ERROR');
   }
   return value;
 }
