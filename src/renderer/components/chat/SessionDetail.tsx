@@ -258,6 +258,7 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [currentMatchIdx, setCurrentMatchIdx] = useState(0);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const initialScrollRef = useRef<number | undefined>(undefined);
 
   // Reset visible count when a different session is selected
   const messageKey = messages.length > 0 ? messages[0].uuid : '';
@@ -266,6 +267,8 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
     setFirstItemIndex(FIRST_ITEM_INDEX);
     setLoadingOlder(false);
     setCurrentMatchIdx(0);
+    // Mark that this is a fresh session — Virtuoso should start at the bottom
+    initialScrollRef.current = MESSAGE_PAGE_SIZE - 1;
   }, [messageKey]);
 
   // When searching, expand visibleCount to load ALL messages so we can match across full history
@@ -282,6 +285,12 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
   const startIndex = Math.max(0, messages.length - visibleCount);
   const visibleMessages = messages.slice(startIndex);
   const hasEarlier = startIndex > 0;
+
+  // Consume initialScrollRef so it only applies once per session switch
+  const initialTopMost = initialScrollRef.current;
+  if (initialTopMost !== undefined) {
+    initialScrollRef.current = undefined;
+  }
 
   // Compute match indices: which visibleMessages contain the search query
   const matchIndices = useMemo(() => {
@@ -309,18 +318,18 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
       setCurrentMatchIdx(0);
       setTimeout(() => {
         virtuosoRef.current?.scrollToIndex({ index: firstItemIndex + matchIndices[0], align: 'center', behavior: 'smooth' });
-      }, 100);
+      }, 150);
     }
   }, [matchIndices, messageKey, searchQuery, firstItemIndex]);
 
-  // Auto-scroll to bottom when messages change (new session or real-time update) — only when NOT searching
+  // Auto-scroll to bottom on real-time updates (new messages appended) — only when NOT searching
+  const prevMsgCount = useRef(messages.length);
   useEffect(() => {
-    if (messages.length > 0 && !isSearching) {
-      setTimeout(() => {
-        virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
-      }, 50);
+    if (!isSearching && messages.length > prevMsgCount.current) {
+      virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
     }
-  }, [messages, isSearching]);
+    prevMsgCount.current = messages.length;
+  }, [messages.length, isSearching]);
 
   const goToPrevMatch = useCallback(() => {
     if (currentMatchIdx > 0) {
@@ -407,7 +416,7 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
         data={visibleMessages}
         firstItemIndex={firstItemIndex}
         startReached={handleStartReached}
-        initialTopMostItemIndex={visibleMessages.length - 1}
+        initialTopMostItemIndex={initialTopMost}
         components={{ Header }}
         itemContent={(index, message) => {
           const msgIdx = index - firstItemIndex;
