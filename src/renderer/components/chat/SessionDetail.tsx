@@ -9,7 +9,7 @@
  * - 代码块: 复制按钮
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { MarkdownPreview } from '@/renderer/components/markdown/MarkdownPreview';
 import { useI18n } from '@/renderer/i18n';
@@ -144,6 +144,12 @@ const MessageBubble = React.memo(function MessageBubble({ message }: MessageBubb
       ? 'message-bubble--system'
       : 'message-bubble--assistant';
 
+  const teammateLabel = useMemo(() => {
+    if (!isSystem || typeof message.content !== 'string') return null;
+    const m = message.content.match(/^<teammate-message\s+teammate_id="([^"]+)"/);
+    return m ? `CLAUDE: ${m[1]}` : null;
+  }, [isSystem, message.content]);
+
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     // If no text is selected, auto-select the message content
     // so the native context menu "Copy" works on the whole message
@@ -163,7 +169,7 @@ const MessageBubble = React.memo(function MessageBubble({ message }: MessageBubb
   return (
     <div className={`message-bubble ${bubbleClass}`} onContextMenu={handleContextMenu}>
       <div className="message-bubble__label">
-        {isUser ? t('chat.you') : isSystem ? t('chat.system') : message.uuid.startsWith('codex-') ? 'CODEX' : message.uuid.startsWith('gemini-') ? 'GEMINI' : t('chat.claude')}
+        {isUser ? t('chat.you') : teammateLabel || (isSystem ? t('chat.system') : message.uuid.startsWith('codex-') ? 'CODEX' : message.uuid.startsWith('gemini-') ? 'GEMINI' : t('chat.claude'))}
       </div>
 
       <div className="message-bubble__content">

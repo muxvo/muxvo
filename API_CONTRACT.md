@@ -1,7 +1,7 @@
 # API 接口契约文档
 
 > 此文档由 Claude Code Hook 自动生成（AST 解析版）
-> 生成时间: 2026-02-25T07:13:07.504Z
+> 生成时间: 2026-02-25T07:25:24.238Z
 > 项目路径: /Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo
 > 扫描文件数: 213
 > 接口总数: 21
@@ -43,7 +43,7 @@
 
 #### `GET {变量:cacheKey}`
 
-- **位置**: `main/services/chat-dual-source.ts:380`
+- **位置**: `main/services/chat-dual-source.ts:382`
 - **调用函数**: `summaryCache.get()`
 - **请求参数**: 无额外参数
 
@@ -172,7 +172,7 @@
 | POST | `/auth/logout` | 用户认证 | main/services/auth/backend-client.ts:108 |
 | POST | `/user/me` | 用户认证 | main/services/auth/backend-client.ts:116 |
 | DELETE | `{变量:key}` | API 服务 | main/services/chat-dual-source.ts:42 |
-| GET | `{变量:cacheKey}` | API 服务 | main/services/chat-dual-source.ts:380 |
+| GET | `{变量:cacheKey}` | API 服务 | main/services/chat-dual-source.ts:382 |
 | GET | `{变量:key}` | API 服务 | main/services/chat-watcher.ts:33 |
 | GET | `{变量:path}` | API 服务 | main/services/data-sync/sync-manager.ts:99 |
 | DELETE | `{变量:terminalId}` | API 服务 | main/services/terminal/input-detector.ts:105 |
