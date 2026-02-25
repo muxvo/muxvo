@@ -19,6 +19,27 @@ import './SessionDetail.css';
 interface SessionDetailProps {
   messages: SessionMessage[];
   loading?: boolean;
+  searchQuery?: string;
+}
+
+/** Escape special regex characters */
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Highlight matching query text with <mark> */
+function HighlightText({ text, query }: { text: string; query: string }) {
+  if (!query) return <>{text}</>;
+  const parts = text.split(new RegExp(`(${escapeRegex(query)})`, 'gi'));
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === query.toLowerCase()
+          ? <mark key={i} className="search-highlight">{part}</mark>
+          : part
+      )}
+    </>
+  );
 }
 
 interface ToolCallBlockProps {
@@ -142,7 +163,7 @@ const TEAMMATE_COLORS: Record<string, string> = {
   red: '#f87171',
 };
 
-const MessageBubble = React.memo(function MessageBubble({ message }: MessageBubbleProps) {
+const MessageBubble = React.memo(function MessageBubble({ message, searchQuery }: MessageBubbleProps & { searchQuery?: string }) {
   const { t } = useI18n();
   const isUser = message.type === 'user';
   const isSystem = message.type === 'system';
@@ -195,7 +216,7 @@ const MessageBubble = React.memo(function MessageBubble({ message }: MessageBubb
                   .replace(/<\/teammate-message>\s*/g, '')
               } />
             : isUser || isSystem
-              ? <div className="message-bubble__text">{message.content as string}</div>
+              ? <div className="message-bubble__text">{searchQuery ? <HighlightText text={message.content as string} query={searchQuery} /> : message.content as string}</div>
               : <MarkdownPreview content={String(message.content)} />
         }
       </div>
@@ -229,7 +250,7 @@ export function formatMessagesAsMarkdown(messages: SessionMessage[]): string {
 const MESSAGE_PAGE_SIZE = 50;
 const FIRST_ITEM_INDEX = 100000;
 
-export function SessionDetail({ messages, loading }: SessionDetailProps) {
+export function SessionDetail({ messages, loading, searchQuery }: SessionDetailProps) {
   const { t } = useI18n();
   const [visibleCount, setVisibleCount] = useState(MESSAGE_PAGE_SIZE);
   const [firstItemIndex, setFirstItemIndex] = useState(FIRST_ITEM_INDEX);
@@ -321,7 +342,7 @@ export function SessionDetail({ messages, loading }: SessionDetailProps) {
         startReached={handleStartReached}
         initialTopMostItemIndex={visibleMessages.length - 1}
         components={{ Header }}
-        itemContent={(_index, message) => <MessageBubble key={message.uuid} message={message} />}
+        itemContent={(_index, message) => <MessageBubble key={message.uuid} message={message} searchQuery={searchQuery} />}
         followOutput="auto"
         style={{ height: '100%' }}
         overscan={200}

@@ -148,13 +148,14 @@ export function ChatHistoryPanel() {
     // 2) Full-text results NOT in loaded sessions → create placeholder summaries
     for (const r of searchResults) {
       if (seen.has(r.sessionId) || loadedIds.has(r.sessionId)) continue;
+      const cleanSnippet = r.snippet.replace(/\s+/g, ' ').trim();
       result.push({
         sessionId: r.sessionId,
         projectHash: r.projectHash,
-        title: r.snippet.slice(0, 100),
+        title: cleanSnippet.slice(0, 60) || r.sessionId.slice(0, 8),
         startedAt: r.timestamp,
         lastModified: r.timestamp ? new Date(r.timestamp).getTime() : 0,
-        fileSize: 0,
+        fileSize: -1,
         source: 'claude-code',
       });
       seen.add(r.sessionId);
@@ -324,6 +325,7 @@ export function ChatHistoryPanel() {
         <SessionDetail
           messages={messages}
           loading={loading}
+          searchQuery={searchQuery}
         />
       </div>
       </div>
