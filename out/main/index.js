@@ -3219,8 +3219,10 @@ function createAuthHandlers() {
     // ─── Original handlers (preserved) ───
     async loginGithub() {
       try {
-        const result = await oauthLoginGithub();
-        return { success: true, data: result };
+        const manager = getAuthManager();
+        const result = await manager.loginGithub();
+        await electron.shell.openExternal(result.authUrl);
+        return { success: true, data: { authUrl: result.authUrl } };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         return { success: false, error: { code: "AUTH_ERROR", message } };
@@ -3249,7 +3251,8 @@ function createAuthHandlers() {
       try {
         const manager = getAuthManager();
         const result = await manager.loginGoogle();
-        return { success: true, data: result };
+        await electron.shell.openExternal(result.authUrl);
+        return { success: true, data: { authUrl: result.authUrl } };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         return { success: false, error: { code: "AUTH_ERROR", message } };
