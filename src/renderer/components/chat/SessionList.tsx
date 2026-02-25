@@ -11,6 +11,7 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import type { SessionSummary, ProjectInfo } from '@/shared/types/chat.types';
 import { useI18n } from '@/renderer/i18n';
+import { SearchInput } from '@/renderer/components/SearchInput';
 import './SessionList.css';
 
 const PAGE_SIZE = 50;
@@ -22,6 +23,11 @@ interface SessionListProps {
   onSessionContextMenu?: (session: SessionSummary, x: number, y: number) => void;
   projects?: ProjectInfo[];
   showProjectName?: boolean;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
+  searching?: boolean;
+  /** sessionId → snippet for full-text search matches */
+  searchSnippets?: Map<string, string>;
 }
 
 /**
@@ -103,7 +109,7 @@ function LoadMoreSentinel({ onVisible }: { onVisible: () => void }) {
   return <div ref={ref} style={{ height: 1 }} />;
 }
 
-export function SessionList({ sessions, selectedId, onSelect, onSessionContextMenu, projects, showProjectName }: SessionListProps) {
+export function SessionList({ sessions, selectedId, onSelect, onSessionContextMenu, projects, showProjectName, searchQuery = '', onSearchChange, searching, searchSnippets }: SessionListProps) {
   const { t } = useI18n();
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
@@ -135,7 +141,16 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
         <div className="session-list__header">
           <span>{t('chat.sessions')}</span>
         </div>
-        <div className="session-list__empty">{t('chat.noSessions')}</div>
+        {onSearchChange && (
+          <SearchInput
+            value={searchQuery}
+            onChange={onSearchChange}
+            placeholder="搜索会话..."
+          />
+        )}
+        <div className="session-list__empty">
+          {searchQuery ? '无匹配会话' : t('chat.noSessions')}
+        </div>
       </div>
     );
   }
@@ -144,7 +159,16 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
     <div className="session-list">
       <div className="session-list__header">
         <span>{t('chat.sessionsCount', { count: sortedSessions.length })}</span>
+        {searching && <span className="session-list__searching-indicator" />}
       </div>
+
+      {onSearchChange && (
+        <SearchInput
+          value={searchQuery}
+          onChange={onSearchChange}
+          placeholder="搜索会话..."
+        />
+      )}
 
       {visibleSessions.map((session) => {
         const displayTitle = session.customTitle || session.title;
@@ -153,6 +177,7 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
         const time = formatTime(session.lastModified);
         const tags = extractTags(session.title);
         const isSelected = session.sessionId === selectedId;
+        const snippet = searchSnippets?.get(session.sessionId);
 
         return (
           <div
@@ -172,6 +197,13 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
             </div>
 
             <div className="session-card__preview">{preview}</div>
+
+            {snippet && (
+              <div className="session-card__snippet">
+                <span className="session-card__snippet-icon">🔍</span>
+                <span className="session-card__snippet-text">{snippet}</span>
+              </div>
+            )}
 
             <div className="session-card__footer">
               <div className="session-card__tags">

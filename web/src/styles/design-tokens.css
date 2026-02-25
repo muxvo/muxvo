@@ -1,0 +1,32 @@
+/* ============================================================
+   Design Tokens — extracted from landing design v2
+   ============================================================ */
+:root {
+  /* Before side (cold, lifeless) */
+  --bg-before: #14161e;
+  --bg-before-card: #1c1e28;
+  --border-before: #2a2d38;
+  --text-before: #a0a4b0;
+  --text-before-dim: #5a5e6a;
+
+  /* After side (warm, vibrant) */
+  --bg-after: #06080c;
+  --bg-after-card: #0d1117;
+  --border-after: #1e2530;
+  --border-after-active: rgba(232, 167, 72, 0.4);
+  --text-after: #f5f5f5;
+  --text-after-sec: #9ca3af;
+
+  /* Brand */
+  --amber: #e8a748;
+  --amber-light: #f5c563;
+  --amber-hover: #f0c060;
+  --amber-glow: rgba(232, 167, 72, 0.12);
+  --amber-border: rgba(232, 167, 72, 0.4);
+  --amber-muted: rgba(232, 167, 72, 0.12);
+  --success: #4ade80;
+
+  /* Fonts */
+  --font-display: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}

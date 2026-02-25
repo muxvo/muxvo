@@ -1,0 +1,7 @@
+/* Shared SearchInput styles */
+.search-input-wrap { padding: 8px 12px; border-bottom: 1px solid var(--border); position: relative; }
+.search-input-wrap__input { width: 100%; padding: 6px 28px 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-elevated); color: var(--text-primary); font-size: 12px; outline: none; transition: border-color 0.15s; }
+.search-input-wrap__input:focus { border-color: var(--accent); }
+.search-input-wrap__input::placeholder { color: var(--text-muted); }
+.search-input-wrap__clear { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; line-height: 1; padding: 0 4px; }
+.search-input-wrap__clear:hover { color: var(--text-primary); }

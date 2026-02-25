@@ -5,6 +5,7 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { useI18n } from '@/renderer/i18n';
+import { SearchInput } from '@/renderer/components/SearchInput';
 import type { SkillItem } from '@/renderer/hooks/useSkills';
 
 interface SkillListProps {
@@ -115,23 +116,11 @@ export function SkillList({ skills, loading, selectedPath, onSelect }: SkillList
       </div>
 
       {/* Search */}
-      <div className="skill-list__search">
-        <input
-          type="text"
-          className="skill-list__search-input"
-          placeholder="Search skills..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        {searchQuery && (
-          <button
-            className="skill-list__search-clear"
-            onClick={() => setSearchQuery('')}
-          >
-            &times;
-          </button>
-        )}
-      </div>
+      <SearchInput
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder="Search skills..."
+      />
 
       <div className="skill-list__body">
         {groups.length === 0 && searchQuery && (
