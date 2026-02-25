@@ -145,11 +145,20 @@ const MessageBubble = React.memo(function MessageBubble({ message }: MessageBubb
       : 'message-bubble--assistant';
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    const selection = window.getSelection()?.toString();
-    const textToCopy = selection || extractMessageText(message);
-    navigator.clipboard.writeText(textToCopy);
-  }, [message]);
+    // If no text is selected, auto-select the message content
+    // so the native context menu "Copy" works on the whole message
+    const selection = window.getSelection();
+    if (!selection || selection.toString().trim() === '') {
+      const contentEl = (e.currentTarget as HTMLElement).querySelector('.message-bubble__content');
+      if (contentEl) {
+        const range = document.createRange();
+        range.selectNodeContents(contentEl);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }
+    // Don't prevent default — let the native Electron context menu handle copy
+  }, []);
 
   return (
     <div className={`message-bubble ${bubbleClass}`} onContextMenu={handleContextMenu}>
