@@ -133,18 +133,27 @@ function extractMessageText(message: SessionMessage): string {
   return String(message.content);
 }
 
+const TEAMMATE_COLORS: Record<string, string> = {
+  blue: '#60a5fa',
+  yellow: '#facc15',
+  orange: '#fb923c',
+  green: '#34d399',
+  purple: '#a855f7',
+  red: '#f87171',
+};
+
 const MessageBubble = React.memo(function MessageBubble({ message }: MessageBubbleProps) {
   const { t } = useI18n();
   const isUser = message.type === 'user';
   const isSystem = message.type === 'system';
 
-  const teammateLabel = useMemo(() => {
+  const teammateInfo = useMemo(() => {
     if (!isSystem || typeof message.content !== 'string') return null;
-    const m = message.content.match(/^<teammate-message\s+teammate_id="([^"]+)"/);
-    return m ? `CLAUDE: ${m[1]}` : null;
+    const m = message.content.match(/<teammate-message\s+teammate_id="([^"]+)"(?:\s+color="([^"]+)")?/);
+    return m ? { label: `CLAUDE: ${m[1]}`, color: m[2] || null } : null;
   }, [isSystem, message.content]);
 
-  const isTeammate = teammateLabel !== null;
+  const isTeammate = teammateInfo !== null;
 
   const bubbleClass = isUser
     ? 'message-bubble--user'
@@ -172,8 +181,8 @@ const MessageBubble = React.memo(function MessageBubble({ message }: MessageBubb
 
   return (
     <div className={`message-bubble ${bubbleClass}`} onContextMenu={handleContextMenu}>
-      <div className="message-bubble__label">
-        {isUser ? t('chat.you') : teammateLabel || (isSystem ? t('chat.system') : message.uuid.startsWith('codex-') ? 'CODEX' : message.uuid.startsWith('gemini-') ? 'GEMINI' : t('chat.claude'))}
+      <div className="message-bubble__label" style={teammateInfo?.color ? { color: TEAMMATE_COLORS[teammateInfo.color] || undefined } : undefined}>
+        {isUser ? t('chat.you') : teammateInfo?.label || (isSystem ? t('chat.system') : message.uuid.startsWith('codex-') ? 'CODEX' : message.uuid.startsWith('gemini-') ? 'GEMINI' : t('chat.claude'))}
       </div>
 
       <div className="message-bubble__content">
