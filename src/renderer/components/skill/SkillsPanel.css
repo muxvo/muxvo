@@ -53,6 +53,7 @@
 .skills-panel__editor-body { flex: 1; overflow: auto; }
 .skills-panel__editor-body textarea { width: 100%; height: 100%; border: none; background: transparent; color: var(--text-primary); font-family: var(--font-mono); font-size: 13px; line-height: 1.6; padding: 16px; resize: none; outline: none; }
 .skills-panel__editor-body .tiptap-editor { height: 100%; }
+.skills-panel__preview-wrap { height: 100%; overflow-y: auto; padding: 16px; }
 
 /* Empty/status states */
 .skills-panel__placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 8px; color: var(--text-muted); font-size: 13px; }
