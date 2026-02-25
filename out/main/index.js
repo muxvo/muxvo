@@ -4024,7 +4024,7 @@ electron.app.whenReady().then(() => {
             }
           } else {
             const homePath = require("os").homedir();
-            const count = Math.max(1, Math.min(5, config.startupTerminalCount ?? 1));
+            const count = Math.max(1, Math.min(20, config.startupTerminalCount ?? 1));
             for (let i = 0; i < count; i++) {
               terminalManager.spawn({ cwd: homePath });
             }
