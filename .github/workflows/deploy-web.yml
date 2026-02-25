@@ -1,0 +1,54 @@
+name: Deploy Web
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'web/**'
+      - 'admin/**'
+      - 'docker/nginx/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Build web
+        run: cd web && npm ci && npm run build
+
+      - name: Build admin
+        run: cd admin && npm ci && npm run build
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy web assets
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            web/dist/ root@${{ secrets.SERVER_HOST }}:/var/www/muxvo-web/
+
+      - name: Deploy admin assets
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            admin/dist/ root@${{ secrets.SERVER_HOST }}:/var/www/muxvo-admin/
+
+      - name: Reload Nginx
+        run: |
+          ssh -i ~/.ssh/deploy_key root@${{ secrets.SERVER_HOST }} \
+            "nginx -t && systemctl reload nginx"
