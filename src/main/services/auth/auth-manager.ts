@@ -79,17 +79,17 @@ export function createAuthManager(options: AuthManagerOptions) {
 
     /** Send email verification code */
     async sendEmailCode(email: string): Promise<{ success: boolean; expiresIn: number }> {
-      machine.send('LOGIN', { authMethod: 'email' as AuthMethod });
+      machine.send('SEND_EMAIL_CODE', { email });
       return client.sendEmailCode(email);
     },
 
     /** Verify email code and complete login */
     async verifyEmailCode(email: string, code: string) {
-      machine.send('EXCHANGE_TOKEN');
+      machine.send('VERIFY_CODE');
       try {
         const result = await client.verifyEmailCode(email, code);
         await storeTokenPair(result.accessToken, result.refreshToken);
-        machine.send('BACKEND_TOKEN_RECEIVED', {
+        machine.send('TOKEN_RECEIVED', {
           accessToken: result.accessToken,
           refreshToken: result.refreshToken,
           username: result.user.displayName || email,
@@ -109,12 +109,11 @@ export function createAuthManager(options: AuthManagerOptions) {
     /** Handle OAuth callback (deep link with tokens from server redirect) */
     async handleOAuthCallback(accessToken: string, refreshToken: string) {
       machine.send('AUTH_CALLBACK', { authCode: 'oauth-callback' });
-      machine.send('EXCHANGE_TOKEN');
       try {
         await storeTokenPair(accessToken, refreshToken);
         // Fetch user profile with the access token
         const user = await client.getUserProfile(accessToken);
-        machine.send('BACKEND_TOKEN_RECEIVED', {
+        machine.send('TOKEN_RECEIVED', {
           accessToken,
           refreshToken,
           username: user.displayName || user.email || '',
@@ -196,8 +195,7 @@ export function createAuthManager(options: AuthManagerOptions) {
       try {
         const user = await client.getUserProfile(tokens.accessToken);
         machine.send('LOGIN', { authMethod: undefined });
-        machine.send('EXCHANGE_TOKEN');
-        machine.send('BACKEND_TOKEN_RECEIVED', {
+        machine.send('TOKEN_RECEIVED', {
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
           username: user.displayName || user.email || '',
@@ -213,8 +211,7 @@ export function createAuthManager(options: AuthManagerOptions) {
           await storeTokenPair(newTokens.accessToken, newTokens.refreshToken);
           const user = await client.getUserProfile(newTokens.accessToken);
           machine.send('LOGIN', { authMethod: undefined });
-          machine.send('EXCHANGE_TOKEN');
-          machine.send('BACKEND_TOKEN_RECEIVED', {
+          machine.send('TOKEN_RECEIVED', {
             accessToken: newTokens.accessToken,
             refreshToken: newTokens.refreshToken,
             username: user.displayName || user.email || '',

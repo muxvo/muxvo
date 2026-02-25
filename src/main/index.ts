@@ -406,7 +406,7 @@ app.whenReady().then(() => {
           manager.tryRestoreSession().then((result) => {
             if (result.success && result.user) {
               console.log('[MUXVO:auth] Session restored for user:', result.user.displayName || result.user.email);
-              pushToAllWindows(IPC_CHANNELS.AUTH.GET_STATUS, {
+              pushToAllWindows(IPC_CHANNELS.AUTH.STATUS_CHANGE, {
                 success: true,
                 data: {
                   loggedIn: true,
