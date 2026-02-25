@@ -378,7 +378,7 @@ function AppContent({
 
   return (
     <div className="app">
-      <MenuBar viewMode={viewMode} onBackToTiling={onBackToTiling} terminalCount={terminals.length} onAddTerminal={onAddTerminal} maxReached={maxReached} />
+      <MenuBar viewMode={viewMode} onBackToTiling={onBackToTiling} terminalCount={terminals.length} onAddTerminal={handleAddTerminal} maxReached={maxReached} />
       <main className="app-content">
         <TerminalGrid
           terminals={terminals}
