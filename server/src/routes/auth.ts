@@ -10,6 +10,7 @@ import {
   revokeAllUserTokens,
 } from '../services/token.js';
 import { AuthError, ValidationError } from '../lib/errors.js';
+import { sendVerificationEmail } from '../services/email.js';
 
 // ---------------------------------------------------------------------------
 // Env helpers
@@ -432,8 +433,9 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       [email, code],
     );
 
-    // TODO: Send email - placeholder for now
-    request.log.info({ email, code }, '[auth] Email verification code generated');
+    // Send verification email (falls back to console.log if RESEND_API_KEY not set)
+    await sendVerificationEmail(email, code);
+    request.log.info({ email }, '[auth] Email verification code sent');
 
     return { success: true, expiresIn: 300 };
   });
