@@ -14,6 +14,7 @@ import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { MarkdownPreview } from '@/renderer/components/markdown/MarkdownPreview';
 import { useI18n } from '@/renderer/i18n';
 import type { SessionMessage, AssistantContentBlock } from '@/shared/types/chat.types';
+import { getScrollTarget } from '@/shared/utils/search-navigation';
 import './SessionDetail.css';
 
 interface SessionDetailProps {
@@ -306,20 +307,25 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
     return indices;
   }, [visibleMessages, searchQuery]);
 
-  // Auto-scroll to first match when search query or session changes
+  // Reset currentMatchIdx when search query or session changes
   const prevMatchKey = useRef('');
   useEffect(() => {
     const matchKey = `${messageKey}:${searchQuery}`;
     if (matchKey === prevMatchKey.current) return;
     prevMatchKey.current = matchKey;
-
     if (matchIndices.length > 0) {
       setCurrentMatchIdx(0);
-      setTimeout(() => {
-        virtuosoRef.current?.scrollToIndex({ index: firstItemIndex + matchIndices[0], align: 'center', behavior: 'auto' });
-      }, 150);
     }
-  }, [matchIndices, messageKey, searchQuery, firstItemIndex]);
+  }, [matchIndices, messageKey, searchQuery]);
+
+  // Unified scroll effect: fires AFTER React commit so Virtuoso is ready
+  useEffect(() => {
+    if (!searchQuery?.trim() || matchIndices.length === 0) return;
+    const target = getScrollTarget(matchIndices, currentMatchIdx, firstItemIndex);
+    if (target !== null) {
+      virtuosoRef.current?.scrollToIndex({ index: target, align: 'center', behavior: 'auto' });
+    }
+  }, [currentMatchIdx, matchIndices, firstItemIndex, searchQuery]);
 
   // Auto-scroll to bottom on real-time updates (new messages appended) — only when NOT searching
   const prevMsgCount = useRef(messages.length);
@@ -330,21 +336,16 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
     prevMsgCount.current = messages.length;
   }, [messages.length, isSearching]);
 
+  // Click handlers only update state — scroll is handled by the effect above
   const goToPrevMatch = useCallback(() => {
-    if (currentMatchIdx > 0) {
-      const newIdx = currentMatchIdx - 1;
-      setCurrentMatchIdx(newIdx);
-      virtuosoRef.current?.scrollToIndex({ index: firstItemIndex + matchIndices[newIdx], align: 'center', behavior: 'auto' });
-    }
-  }, [currentMatchIdx, matchIndices, firstItemIndex]);
+    setCurrentMatchIdx(prev => prev > 0 ? prev - 1 : prev);
+  }, []);
 
   const goToNextMatch = useCallback(() => {
-    if (currentMatchIdx < matchIndices.length - 1) {
-      const newIdx = currentMatchIdx + 1;
-      setCurrentMatchIdx(newIdx);
-      virtuosoRef.current?.scrollToIndex({ index: firstItemIndex + matchIndices[newIdx], align: 'center', behavior: 'auto' });
-    }
-  }, [currentMatchIdx, matchIndices, firstItemIndex]);
+    setCurrentMatchIdx(prev =>
+      prev < matchIndices.length - 1 ? prev + 1 : prev
+    );
+  }, [matchIndices.length]);
 
   const handleStartReached = useCallback(() => {
     if (!hasEarlier || loadingOlder) return;
