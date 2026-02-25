@@ -137,6 +137,7 @@ export function App(): JSX.Element {
     if (result?.success && result.data) {
       setTerminals((prev) => [...prev, { id: result.data.id, state: 'Running', cwd: home }]);
       setTerminalOrder((prev) => [...prev, result.data.id]);
+      setSelectedId(result.data.id);
     }
   }, []);
 
@@ -339,6 +340,12 @@ function AppContent({
 }): JSX.Element {
   const { state, dispatch } = usePanelContext();
   const { t } = useI18n();
+
+  // Wrap onAddTerminal to close all panels first (switch back to terminal tab)
+  const handleAddTerminal = useCallback(async () => {
+    dispatch({ type: 'CLOSE_ALL' });
+    await onAddTerminal();
+  }, [dispatch, onAddTerminal]);
 
   // File content loading for FileTempView
   const [fileContent, setFileContent] = useState('');
