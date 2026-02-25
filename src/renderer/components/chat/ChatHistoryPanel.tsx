@@ -12,6 +12,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { ProjectList } from './ProjectList';
 import { SessionList } from './SessionList';
 import { SessionDetail } from './SessionDetail';
+import type { SessionDetailHandle } from './SessionDetail';
 import { useI18n } from '@/renderer/i18n';
 import type { ProjectInfo, SessionSummary, SessionMessage, SearchResult } from '@/shared/types/chat.types';
 import './ChatHistoryPanel.css';
@@ -94,6 +95,13 @@ export function ChatHistoryPanel() {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Match navigation (bridged from SessionDetail to SearchInput)
+  const detailRef = useRef<SessionDetailHandle>(null);
+  const [matchInfo, setMatchInfo] = useState({ current: 0, total: 0 });
+  const handleMatchInfoChange = useCallback((current: number, total: number) => {
+    setMatchInfo({ current, total });
+  }, []);
 
   // Debounced full-text search via backend
   useEffect(() => {
@@ -317,15 +325,21 @@ export function ChatHistoryPanel() {
             onSearchChange={setSearchQuery}
             searching={searching}
             searchSnippets={searchSnippets}
+            matchCurrent={matchInfo.current}
+            matchTotal={matchInfo.total}
+            onPrevMatch={() => detailRef.current?.goToPrevMatch()}
+            onNextMatch={() => detailRef.current?.goToNextMatch()}
           />
         )}
       </div>
 
       <div className="chat-history-panel__right">
         <SessionDetail
+          ref={detailRef}
           messages={messages}
           loading={loading}
           searchQuery={searchQuery}
+          onMatchInfoChange={handleMatchInfoChange}
         />
       </div>
       </div>

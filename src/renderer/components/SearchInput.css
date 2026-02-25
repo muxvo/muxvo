@@ -5,3 +5,11 @@
 .search-input-wrap__input::placeholder { color: var(--text-muted); }
 .search-input-wrap__clear { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; line-height: 1; padding: 0 4px; }
 .search-input-wrap__clear:hover { color: var(--text-primary); }
+.search-input-wrap__clear--with-nav { right: 14px; }
+
+/* Match navigation inside search input */
+.search-input-wrap__nav { position: absolute; right: 32px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 2px; }
+.search-input-wrap__nav-count { font-size: 11px; color: var(--text-muted); margin-right: 4px; white-space: nowrap; }
+.search-input-wrap__nav-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 9px; padding: 1px 3px; line-height: 1; border-radius: 3px; }
+.search-input-wrap__nav-btn:hover:not(:disabled) { background: var(--bg-hover); color: var(--text-primary); }
+.search-input-wrap__nav-btn:disabled { opacity: 0.3; cursor: default; }

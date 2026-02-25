@@ -9,17 +9,23 @@
  * - 代码块: 复制按钮
  */
 
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo, useImperativeHandle, forwardRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { MarkdownPreview } from '@/renderer/components/markdown/MarkdownPreview';
 import { useI18n } from '@/renderer/i18n';
 import type { SessionMessage, AssistantContentBlock } from '@/shared/types/chat.types';
 import './SessionDetail.css';
 
+export interface SessionDetailHandle {
+  goToPrevMatch: () => void;
+  goToNextMatch: () => void;
+}
+
 interface SessionDetailProps {
   messages: SessionMessage[];
   loading?: boolean;
   searchQuery?: string;
+  onMatchInfoChange?: (current: number, total: number) => void;
 }
 
 /** Escape special regex characters */
@@ -251,7 +257,7 @@ export function formatMessagesAsMarkdown(messages: SessionMessage[]): string {
 const MESSAGE_PAGE_SIZE = 50;
 const FIRST_ITEM_INDEX = 100000;
 
-export function SessionDetail({ messages, loading, searchQuery }: SessionDetailProps) {
+export const SessionDetail = forwardRef<SessionDetailHandle, SessionDetailProps>(function SessionDetail({ messages, loading, searchQuery, onMatchInfoChange }, ref) {
   const { t } = useI18n();
   const [visibleCount, setVisibleCount] = useState(MESSAGE_PAGE_SIZE);
   const [firstItemIndex, setFirstItemIndex] = useState(FIRST_ITEM_INDEX);
@@ -348,6 +354,17 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
     );
   }, [matchIndices.length]);
 
+  // Expose nav actions to parent via ref
+  useImperativeHandle(ref, () => ({
+    goToPrevMatch,
+    goToNextMatch,
+  }), [goToPrevMatch, goToNextMatch]);
+
+  // Report match info to parent
+  useEffect(() => {
+    onMatchInfoChange?.(currentMatchIdx + 1, matchIndices.length);
+  }, [currentMatchIdx, matchIndices.length, onMatchInfoChange]);
+
   const handleStartReached = useCallback(() => {
     if (!hasEarlier || loadingOlder) return;
     setLoadingOlder(true);
@@ -403,15 +420,6 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
 
   return (
     <div className="session-detail">
-      {searchQuery && matchIndices.length > 0 && (
-        <div className="session-detail__search-nav">
-          <span className="session-detail__search-nav-count">
-            {currentMatchIdx + 1} / {matchIndices.length}
-          </span>
-          <button onClick={goToPrevMatch} disabled={currentMatchIdx <= 0}>▲</button>
-          <button onClick={goToNextMatch} disabled={currentMatchIdx >= matchIndices.length - 1}>▼</button>
-        </div>
-      )}
       <Virtuoso
         key={messageKey}
         ref={virtuosoRef}
@@ -431,4 +439,4 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
       />
     </div>
   );
-}
+});
