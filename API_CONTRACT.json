@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-02-25T14:22:26.508Z",
+  "generatedAt": "2026-02-25T14:30:10.983Z",
   "projectPath": "/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo",
-  "totalApis": 23,
-  "scannedFiles": 222,
+  "totalApis": 110,
+  "scannedFiles": 225,
   "categories": {
     "main": [
       {
@@ -41,7 +41,13 @@
         "file": "main/ipc/fs-watcher-handlers.ts",
         "line": 76,
         "functionName": "watchers.delete",
-        "params": [],
+        "params": [
+          {
+            "name": "{表达式: $to.pos}",
+            "type": "object",
+            "required": true
+          }
+        ],
         "responseFields": [],
         "category": "main"
       }
@@ -239,6 +245,984 @@
     ],
     "renderer": [
       {
+        "path": "{变量:t}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+        "line": 357,
+        "functionName": "xr.get",
+        "params": [
+          {
+            "name": "{变量: e}",
+            "type": "object",
+            "required": true
+          }
+        ],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:e}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+        "line": 453,
+        "functionName": "Sr.get",
+        "params": [
+          {
+            "name": "{变量: t}",
+            "type": "object",
+            "required": true
+          }
+        ],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:n}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+        "line": 843,
+        "functionName": "t.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:u}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+        "line": 890,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:f}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+        "line": 892,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:l}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+        "line": 1470,
+        "functionName": "e.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:a}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+        "line": 1793,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:T}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+        "line": 1805,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:r}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+        "line": 2867,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{动态路径}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+        "line": 2868,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:o}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+        "line": 3513,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:value}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 2788,
+        "functionName": "CapturedStacks.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:newIdx}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 3471,
+        "functionName": "existingChildren.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{动态路径}",
+        "method": "DELETE",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 3551,
+        "functionName": "oldFiber.delete",
+        "params": [
+          {
+            "name": "{变量: to2}",
+            "type": "object",
+            "required": true
+          }
+        ],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:flags}{动态}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 7665,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:resourceType}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 8498,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:wakeable}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 9405,
+        "functionName": "pingCache.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:wakeable}",
+        "method": "DELETE",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 9410,
+        "functionName": "pingCache.delete",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:domEventName}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 9836,
+        "functionName": "topLevelEventsToReactNames.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:currentProps}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 11418,
+        "functionName": "pendingProps.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:type}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 11429,
+        "functionName": "styles$243.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:styleProps}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 11528,
+        "functionName": "preloadPropsMap.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:instance$249}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 11547,
+        "functionName": "preloadPropsMap.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:ownerDocument}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 11591,
+        "functionName": "caches.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:nodeKey}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 11600,
+        "functionName": "cache.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:root2}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 11723,
+        "functionName": "precedencesByRoot.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:node}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 11739,
+        "functionName": "precedences.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:pointerId}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 12135,
+        "functionName": "queuedPointers.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:s16}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 13794,
+        "functionName": "Fn$2.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{动态表达式}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 13813,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:t}",
+        "method": "DELETE",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 14111,
+        "functionName": "http.delete",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:o2}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 15186,
+        "functionName": "s16.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:e}",
+        "method": "DELETE",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 16304,
+        "functionName": "http.delete",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:ze2}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 16810,
+        "functionName": "u3.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "W",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 17020,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:c}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 17077,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:f2}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 17097,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:r10}{动态表达式}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 17513,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{成员访问}{动态}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 17843,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:e}{变量:o2}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 18126,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:e}{变量:n}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 18129,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:l2}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 18313,
+        "functionName": "s16.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:i9}{动态}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 18556,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{成员访问}{成员访问}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 18978,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:t}",
+        "method": "PUT",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 19092,
+        "functionName": "http.put",
+        "params": [
+          {
+            "name": "{变量: e}",
+            "type": "object",
+            "required": true
+          }
+        ],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:e}",
+        "method": "PUT",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 19448,
+        "functionName": "http.put",
+        "params": [
+          {
+            "name": "{变量: u3}",
+            "type": "object",
+            "required": true
+          }
+        ],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{成员访问}{变量:e}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 19799,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:r10}{动态}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 19815,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{成员访问}{变量:r10}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 19820,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:r10}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 20347,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:i9}",
+        "method": "DELETE",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 20778,
+        "functionName": "http.delete",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{成员访问}{变量:o2}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 20885,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:i9}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 24708,
+        "functionName": "zi.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:A2}{成员访问}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 26430,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:h2}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 26435,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:A2}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 26531,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:codePoint}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 33238,
+        "functionName": "decodeMap.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:doc2}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 92047,
+        "functionName": "resolveCache.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:attrs}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 94196,
+        "functionName": "suspiciousAttributeCache.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:from2}",
+        "method": "DELETE",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 95735,
+        "functionName": "tr3.delete",
+        "params": [
+          {
+            "name": "{变量: to2}",
+            "type": "object",
+            "required": true
+          }
+        ],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{动态表达式}",
+        "method": "DELETE",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 97077,
+        "functionName": "http.delete",
+        "params": [
+          {
+            "name": "{表达式: $cut.pos}",
+            "type": "object",
+            "required": true
+          }
+        ],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:next}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 99361,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:chFrom}",
+        "method": "DELETE",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 102233,
+        "functionName": "http.delete",
+        "params": [
+          {
+            "name": "{变量: chTo}",
+            "type": "object",
+            "required": true
+          }
+        ],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:obj}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 107263,
+        "functionName": "Reflect.get",
+        "params": [
+          {
+            "name": "{变量: key}",
+            "type": "object",
+            "required": true
+          }
+        ],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:textEnd}",
+        "method": "DELETE",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 107619,
+        "functionName": "tr3.delete",
+        "params": [
+          {
+            "name": "{表达式: range.to}",
+            "type": "object",
+            "required": true
+          }
+        ],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{成员访问}{变量:startSpaces}",
+        "method": "DELETE",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 107622,
+        "functionName": "tr3.delete",
+        "params": [
+          {
+            "name": "{变量: textStart}",
+            "type": "object",
+            "required": true
+          }
+        ],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:b2}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 108311,
+        "functionName": "cache.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:a}",
+        "method": "DELETE",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 108318,
+        "functionName": "cache.delete",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:b2}",
+        "method": "DELETE",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 108319,
+        "functionName": "cache.delete",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:callback}",
+        "method": "DELETE",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 108833,
+        "functionName": "subscribers.delete",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:onStoreChange}",
+        "method": "DELETE",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 109151,
+        "functionName": "http.delete",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:lineStartPos}",
+        "method": "DELETE",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 109758,
+        "functionName": "tr3.delete",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "validate",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 110850,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "render",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 110903,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "truncate",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 110939,
+        "functionName": "options2.get",
+        "params": [
+          {
+            "name": "{变量: val}",
+            "type": "object",
+            "required": true
+          }
+        ],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "format",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 110940,
+        "functionName": "options2.get",
+        "params": [
+          {
+            "name": "{变量: val}",
+            "type": "object",
+            "required": true
+          }
+        ],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "formatHref",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 110949,
+        "functionName": "options2.get",
+        "params": [
+          {
+            "name": "{变量: href}",
+            "type": "object",
+            "required": true
+          }
+        ],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "defaultProtocol",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 110949,
+        "functionName": "options2.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "tagName",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 111015,
+        "functionName": "options2.get",
+        "params": [
+          {
+            "name": "{变量: href}",
+            "type": "object",
+            "required": true
+          }
+        ],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "className",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 111018,
+        "functionName": "options2.get",
+        "params": [
+          {
+            "name": "{变量: href}",
+            "type": "object",
+            "required": true
+          }
+        ],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "target",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 111019,
+        "functionName": "options2.get",
+        "params": [
+          {
+            "name": "{变量: href}",
+            "type": "object",
+            "required": true
+          }
+        ],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "rel",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 111020,
+        "functionName": "options2.get",
+        "params": [
+          {
+            "name": "{变量: href}",
+            "type": "object",
+            "required": true
+          }
+        ],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:state}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 113782,
+        "functionName": "historyKey.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:markType}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 115461,
+        "functionName": "activeMarks.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:tokenName}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 115565,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:name}",
+        "method": "GET",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 115570,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
+        "path": "{变量:markType}",
+        "method": "DELETE",
+        "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+        "line": 116169,
+        "functionName": "activeMarks.delete",
+        "params": [],
+        "responseFields": [],
+        "category": "renderer"
+      },
+      {
         "path": "{变量:fn}",
         "method": "DELETE",
         "file": "renderer/stores/terminal-config.ts",
@@ -287,7 +1271,13 @@
       "file": "main/ipc/fs-watcher-handlers.ts",
       "line": 76,
       "functionName": "watchers.delete",
-      "params": [],
+      "params": [
+        {
+          "name": "{表达式: $to.pos}",
+          "type": "object",
+          "required": true
+        }
+      ],
       "responseFields": [],
       "category": "main"
     },
@@ -475,6 +1465,984 @@
       "params": [],
       "responseFields": [],
       "category": "组件"
+    },
+    {
+      "path": "{变量:t}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+      "line": 357,
+      "functionName": "xr.get",
+      "params": [
+        {
+          "name": "{变量: e}",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:e}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+      "line": 453,
+      "functionName": "Sr.get",
+      "params": [
+        {
+          "name": "{变量: t}",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:n}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+      "line": 843,
+      "functionName": "t.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:u}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+      "line": 890,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:f}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+      "line": 892,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:l}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+      "line": 1470,
+      "functionName": "e.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:a}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+      "line": 1793,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:T}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+      "line": 1805,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:r}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+      "line": 2867,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{动态路径}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+      "line": 2868,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:o}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/addon-ligatures-De7GL7Qy.js",
+      "line": 3513,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:value}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 2788,
+      "functionName": "CapturedStacks.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:newIdx}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 3471,
+      "functionName": "existingChildren.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{动态路径}",
+      "method": "DELETE",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 3551,
+      "functionName": "oldFiber.delete",
+      "params": [
+        {
+          "name": "{变量: to2}",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:flags}{动态}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 7665,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:resourceType}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 8498,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:wakeable}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 9405,
+      "functionName": "pingCache.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:wakeable}",
+      "method": "DELETE",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 9410,
+      "functionName": "pingCache.delete",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:domEventName}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 9836,
+      "functionName": "topLevelEventsToReactNames.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:currentProps}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 11418,
+      "functionName": "pendingProps.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:type}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 11429,
+      "functionName": "styles$243.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:styleProps}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 11528,
+      "functionName": "preloadPropsMap.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:instance$249}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 11547,
+      "functionName": "preloadPropsMap.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:ownerDocument}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 11591,
+      "functionName": "caches.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:nodeKey}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 11600,
+      "functionName": "cache.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:root2}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 11723,
+      "functionName": "precedencesByRoot.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:node}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 11739,
+      "functionName": "precedences.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:pointerId}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 12135,
+      "functionName": "queuedPointers.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:s16}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 13794,
+      "functionName": "Fn$2.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{动态表达式}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 13813,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:t}",
+      "method": "DELETE",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 14111,
+      "functionName": "http.delete",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:o2}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 15186,
+      "functionName": "s16.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:e}",
+      "method": "DELETE",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 16304,
+      "functionName": "http.delete",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:ze2}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 16810,
+      "functionName": "u3.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "W",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 17020,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:c}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 17077,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:f2}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 17097,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:r10}{动态表达式}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 17513,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{成员访问}{动态}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 17843,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:e}{变量:o2}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 18126,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:e}{变量:n}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 18129,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:l2}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 18313,
+      "functionName": "s16.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:i9}{动态}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 18556,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{成员访问}{成员访问}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 18978,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:t}",
+      "method": "PUT",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 19092,
+      "functionName": "http.put",
+      "params": [
+        {
+          "name": "{变量: e}",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:e}",
+      "method": "PUT",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 19448,
+      "functionName": "http.put",
+      "params": [
+        {
+          "name": "{变量: u3}",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{成员访问}{变量:e}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 19799,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:r10}{动态}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 19815,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{成员访问}{变量:r10}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 19820,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:r10}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 20347,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:i9}",
+      "method": "DELETE",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 20778,
+      "functionName": "http.delete",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{成员访问}{变量:o2}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 20885,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:i9}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 24708,
+      "functionName": "zi.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:A2}{成员访问}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 26430,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:h2}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 26435,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:A2}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 26531,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:codePoint}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 33238,
+      "functionName": "decodeMap.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:doc2}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 92047,
+      "functionName": "resolveCache.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:attrs}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 94196,
+      "functionName": "suspiciousAttributeCache.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:from2}",
+      "method": "DELETE",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 95735,
+      "functionName": "tr3.delete",
+      "params": [
+        {
+          "name": "{变量: to2}",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{动态表达式}",
+      "method": "DELETE",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 97077,
+      "functionName": "http.delete",
+      "params": [
+        {
+          "name": "{表达式: $cut.pos}",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:next}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 99361,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:chFrom}",
+      "method": "DELETE",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 102233,
+      "functionName": "http.delete",
+      "params": [
+        {
+          "name": "{变量: chTo}",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:obj}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 107263,
+      "functionName": "Reflect.get",
+      "params": [
+        {
+          "name": "{变量: key}",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:textEnd}",
+      "method": "DELETE",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 107619,
+      "functionName": "tr3.delete",
+      "params": [
+        {
+          "name": "{表达式: range.to}",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{成员访问}{变量:startSpaces}",
+      "method": "DELETE",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 107622,
+      "functionName": "tr3.delete",
+      "params": [
+        {
+          "name": "{变量: textStart}",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:b2}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 108311,
+      "functionName": "cache.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:a}",
+      "method": "DELETE",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 108318,
+      "functionName": "cache.delete",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:b2}",
+      "method": "DELETE",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 108319,
+      "functionName": "cache.delete",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:callback}",
+      "method": "DELETE",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 108833,
+      "functionName": "subscribers.delete",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:onStoreChange}",
+      "method": "DELETE",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 109151,
+      "functionName": "http.delete",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:lineStartPos}",
+      "method": "DELETE",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 109758,
+      "functionName": "tr3.delete",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "validate",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 110850,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "render",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 110903,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "truncate",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 110939,
+      "functionName": "options2.get",
+      "params": [
+        {
+          "name": "{变量: val}",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "format",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 110940,
+      "functionName": "options2.get",
+      "params": [
+        {
+          "name": "{变量: val}",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "formatHref",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 110949,
+      "functionName": "options2.get",
+      "params": [
+        {
+          "name": "{变量: href}",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "defaultProtocol",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 110949,
+      "functionName": "options2.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "tagName",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 111015,
+      "functionName": "options2.get",
+      "params": [
+        {
+          "name": "{变量: href}",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "className",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 111018,
+      "functionName": "options2.get",
+      "params": [
+        {
+          "name": "{变量: href}",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "target",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 111019,
+      "functionName": "options2.get",
+      "params": [
+        {
+          "name": "{变量: href}",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "rel",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 111020,
+      "functionName": "options2.get",
+      "params": [
+        {
+          "name": "{变量: href}",
+          "type": "object",
+          "required": true
+        }
+      ],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:state}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 113782,
+      "functionName": "historyKey.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:markType}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 115461,
+      "functionName": "activeMarks.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:tokenName}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 115565,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:name}",
+      "method": "GET",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 115570,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
+    },
+    {
+      "path": "{变量:markType}",
+      "method": "DELETE",
+      "file": "renderer/out/renderer/assets/index-Br2Wxst6.js",
+      "line": 116169,
+      "functionName": "activeMarks.delete",
+      "params": [],
+      "responseFields": [],
+      "category": "renderer"
     },
     {
       "path": "{变量:fn}",

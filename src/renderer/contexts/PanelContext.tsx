@@ -14,6 +14,7 @@ export interface PanelState {
   skillsPanel: { open: boolean };
   mcpPanel: { open: boolean };
   hooksPanel: { open: boolean };
+  pluginsPanel: { open: boolean };
   menuDropdown: { open: boolean; type: 'mcp' | null };
   tour: { active: boolean };
 }
@@ -25,6 +26,7 @@ const initialState: PanelState = {
   skillsPanel: { open: false },
   mcpPanel: { open: false },
   hooksPanel: { open: false },
+  pluginsPanel: { open: false },
   menuDropdown: { open: false, type: null },
   tour: { active: false },
 };
