@@ -16,7 +16,7 @@ interface MarkdownPreviewProps {
 }
 
 /** Highlight matching text in HTML string, only modifying text nodes (not tag attributes) */
-function highlightHtml(html: string, query: string, active?: boolean): string {
+export function highlightHtml(html: string, query: string, active?: boolean): string {
   if (!query) return html;
   const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const cls = `search-highlight${active ? ' search-highlight--active' : ''}`;
