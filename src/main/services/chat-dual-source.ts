@@ -208,12 +208,27 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
           const contentStr = typeof normalizedContent === 'string' ? normalizedContent : '';
           const trimmedContent = contentStr.trimStart();
           if (
-            trimmedContent.startsWith('<teammate-message') ||
             trimmedContent.startsWith('<system-reminder>') ||
             trimmedContent.startsWith('<task-notification>') ||
             trimmedContent.startsWith('<command-message>') ||
             trimmedContent.startsWith('<command-name>')
           ) {
+            resolvedType = 'system';
+          } else if (trimmedContent.startsWith('<teammate-message')) {
+            // Strip tags and check if content is only protocol JSON noise
+            const stripped = trimmedContent
+              .replace(/<teammate-message[^>]*>\n?/g, '')
+              .replace(/<\/teammate-message>\s*/g, '')
+              .trim();
+            const isProtocolOnly = !stripped || stripped.split('\n').every(line => {
+              const l = line.trim();
+              if (!l) return true;
+              try {
+                const obj = JSON.parse(l);
+                return ['idle_notification', 'teammate_terminated', 'shutdown_approved', 'shutdown_rejected'].includes(obj.type);
+              } catch { return false; }
+            });
+            if (isProtocolOnly) return null; // hide protocol noise
             resolvedType = 'system';
           }
         }

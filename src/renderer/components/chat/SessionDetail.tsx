@@ -182,8 +182,8 @@ const MessageBubble = React.memo(function MessageBubble({ message }: MessageBubb
           : isTeammate
             ? <MarkdownPreview content={
                 (message.content as string)
-                  .replace(/^<teammate-message[^>]*>\n?/, '')
-                  .replace(/<\/teammate-message>\s*$/, '')
+                  .replace(/<teammate-message[^>]*>\n?/g, '')
+                  .replace(/<\/teammate-message>\s*/g, '')
               } />
             : isUser || isSystem
               ? <div className="message-bubble__text">{message.content as string}</div>
