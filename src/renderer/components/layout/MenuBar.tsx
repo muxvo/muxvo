@@ -13,7 +13,7 @@ import { useI18n } from '@/renderer/i18n';
 import { AuthButton } from '@/renderer/components/auth/AuthButton';
 import './MenuBar.css';
 
-type TabId = 'terminals' | 'skills' | 'mcp' | 'hooks' | 'chat';
+type TabId = 'terminals' | 'skills' | 'mcp' | 'hooks' | 'plugins' | 'chat';
 
 interface Props {
   viewMode?: 'Tiling' | 'Focused';
@@ -33,11 +33,13 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0
   const skillsOpen = state.skillsPanel.open;
   const mcpOpen = state.mcpPanel.open;
   const hooksOpen = state.hooksPanel.open;
+  const pluginsOpen = state.pluginsPanel.open;
 
   function getActiveTab(): TabId {
     if (skillsOpen) return 'skills';
     if (mcpOpen) return 'mcp';
     if (hooksOpen) return 'hooks';
+    if (pluginsOpen) return 'plugins';
     if (chatOpen) return 'chat';
     return 'terminals';
   }
@@ -50,6 +52,7 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0
     if (skillsOpen) dispatch({ type: 'CLOSE_SKILLS_PANEL' });
     if (mcpOpen) dispatch({ type: 'CLOSE_MCP_PANEL' });
     if (hooksOpen) dispatch({ type: 'CLOSE_HOOKS_PANEL' });
+    if (pluginsOpen) dispatch({ type: 'CLOSE_PLUGINS_PANEL' });
   }
 
   function handleTabClick(tab: TabId) {
@@ -73,6 +76,12 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0
     if (tab === 'hooks') {
       closeAllPanels();
       if (!hooksOpen) dispatch({ type: 'OPEN_HOOKS_PANEL' });
+      return;
+    }
+
+    if (tab === 'plugins') {
+      closeAllPanels();
+      if (!pluginsOpen) dispatch({ type: 'OPEN_PLUGINS_PANEL' });
       return;
     }
 
@@ -112,6 +121,12 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0
           onClick={() => handleTabClick('hooks')}
         >
           Hooks
+        </button>
+        <button
+          className={`menu-bar__tab${activeTab === 'plugins' ? ' menu-bar__tab--active' : ''}`}
+          onClick={() => handleTabClick('plugins')}
+        >
+          Plugins
         </button>
         <button
           className={`menu-bar__tab${activeTab === 'chat' ? ' menu-bar__tab--active' : ''}`}

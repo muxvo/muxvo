@@ -111,3 +111,14 @@ body::before {
   width: 14px;
   height: 14px;
 }
+
+/* Plugins panel overlay (full-screen below menu bar) */
+.plugins-panel-overlay {
+  position: fixed;
+  top: var(--menu-bar-height);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: var(--bg-deep);
+}

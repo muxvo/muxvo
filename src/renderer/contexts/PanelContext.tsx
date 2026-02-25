@@ -46,6 +46,8 @@ type PanelAction =
   | { type: 'CLOSE_MCP_PANEL' }
   | { type: 'OPEN_HOOKS_PANEL' }
   | { type: 'CLOSE_HOOKS_PANEL' }
+  | { type: 'OPEN_PLUGINS_PANEL' }
+  | { type: 'CLOSE_PLUGINS_PANEL' }
   | { type: 'TOGGLE_MENU_DROPDOWN'; dropdownType: 'mcp' }
   | { type: 'START_TOUR' }
   | { type: 'COMPLETE_TOUR' }
@@ -114,6 +116,16 @@ function panelReducer(state: PanelState, action: PanelAction): PanelState {
       return {
         ...state,
         hooksPanel: { open: false },
+      };
+    case 'OPEN_PLUGINS_PANEL':
+      return {
+        ...state,
+        pluginsPanel: { open: true },
+      };
+    case 'CLOSE_PLUGINS_PANEL':
+      return {
+        ...state,
+        pluginsPanel: { open: false },
       };
     case 'TOGGLE_MENU_DROPDOWN': {
       const isOpen =
