@@ -181,6 +181,9 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
                 {session.source === 'claude-code' && (
                   <span className="session-card__source-badge session-card__source-badge--cc">CC</span>
                 )}
+                {session.source === 'gemini' && (
+                  <span className="session-card__source-badge session-card__source-badge--gm">GM</span>
+                )}
                 {projectNameMap && session.projectHash && (
                   <span className="session-card__project-badge">
                     {projectNameMap.get(session.projectHash) || ''}
