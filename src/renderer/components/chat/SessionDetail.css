@@ -26,6 +26,42 @@
   user-select: text;
 }
 
+/* Search match navigation bar */
+.session-detail__search-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.session-detail__search-nav-count {
+  min-width: 50px;
+}
+
+.session-detail__search-nav button {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+.session-detail__search-nav button:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.session-detail__search-nav button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
 /* Message Bubble */
 .message-bubble {
   margin-bottom: 16px;
@@ -88,15 +124,39 @@
   color: var(--text-primary);
 }
 
-/* Search highlight in user messages (white text on blue bg) */
+/* Search highlight — user messages (blue bg) */
 .message-bubble--user .search-highlight {
-  background: rgba(255, 255, 255, 0.3);
-  color: #fef9c3;
+  background: #fde047;
+  color: #1e3a5f;
+  border-radius: 2px;
+  padding: 0 2px;
 }
 
 [data-theme="light"] .message-bubble--user .search-highlight {
-  background: rgba(255, 255, 255, 0.35);
-  color: #fefce8;
+  background: #fde047;
+  color: #1e3a5f;
+}
+
+/* Search highlight — assistant/system messages */
+.message-bubble--assistant .search-highlight,
+.message-bubble--system .search-highlight {
+  background: rgba(250, 204, 21, 0.35);
+  color: #fef08a;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+[data-theme="light"] .message-bubble--assistant .search-highlight,
+[data-theme="light"] .message-bubble--system .search-highlight {
+  background: rgba(250, 204, 21, 0.45);
+  color: #92400e;
+}
+
+/* Active match highlight (navigation focus) */
+.search-highlight--active {
+  background: #f97316 !important;
+  color: white !important;
+  box-shadow: 0 0 0 2px #f97316;
 }
 
 .message-bubble__text {
