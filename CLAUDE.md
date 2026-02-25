@@ -21,7 +21,7 @@ disown
 # Build for production
 npm run build
 
-# Run all tests (637 tests, runs verify-coverage as pretest)
+# Run all tests (534 tests, runs verify-coverage as pretest)
 npm test
 
 # Run tests by layer
@@ -114,7 +114,7 @@ All 12 handler files in `src/main/ipc/`:
 - `config-handlers.ts` — resource scanning, settings/CLAUDE.md with atomic writes
 - `fs-handlers.ts`, `fs-watcher-handlers.ts`, `fs-image-handlers.ts` — file ops, watch, temp images
 - `app-handlers.ts` — preferences + CLI detection with format conversion
-- `auth-handlers.ts` — GitHub OAuth (login/logout/status)
+- `auth-handlers.ts` — Multi-method auth: GitHub OAuth + Google OAuth + Email verification
 - `marketplace-handlers.ts` — fetch sources, search, install/uninstall, updates + 3 push events
 - `score-handlers.ts` — run scorer, check/get-cached + 2 push events
 - `showcase-handlers.ts` — generate/publish/unpublish + publish-result push
@@ -133,7 +133,7 @@ All registered in `src/main/index.ts` at app startup. Legacy stub exports (e.g.,
 | fs | selectDirectory, readDir, readFile, writeFile, watchStart, watchStop, writeTempImage, writeClipboardImage | onFileChange |
 | chat | getHistory, getSession, search, export | onSessionUpdate, onSyncStatus |
 | config | getResources, getResourceContent, getSettings, saveSettings, getClaudeMd, saveClaudeMd, getMemory | onResourceChange |
-| auth | loginGithub, logout, getStatus | — |
+| auth | loginGithub, loginGoogle, loginEmail, verifyEmail, logout, getStatus | — |
 | marketplace | fetchSources, search, install, uninstall, getInstalled, checkUpdates | onInstallProgress, onPackagesLoaded, onUpdateAvailable |
 | score | checkScorer, run, getCached | onProgress, onResult |
 | showcase | generate, publish, unpublish | onPublishResult |
@@ -184,3 +184,32 @@ Config: `electron-builder.yml`. Signing credentials: see `1apple-developer-signi
 - `PRD.md` — Full product requirements (3000+ lines)
 - `DEV-PLAN.md` — Technical architecture and IPC protocol spec (1300+ lines)
 - `docs/Muxvo_测试_v2/` — Test documentation with 539 test cases across 8 modules
+- `docs/deployment-plan.md` — Cloud deployment plan (Phase 0-5)
+
+## Cloud Infrastructure
+
+- **GitHub**: `muxvo` org — `muxvo/muxvo` (Public) + `muxvo/server` (Private)
+- **Server**: 47.86.240.83 (Aliyun Hong Kong ECS, Ubuntu 24.04)
+- **Domains**: `muxvo.com` (web), `api.muxvo.com` (Fastify API), `admin.muxvo.com` (admin panel)
+- **CI/CD**: `.github/workflows/` — `ci.yml`, `deploy-server.yml`, `deploy-web.yml`, `release.yml`
+
+### Subproject Layout
+
+| Directory | Stack | Purpose |
+|-----------|-------|---------|
+| `server/` | Fastify 5 + PostgreSQL 16 + Redis 7 | Backend API (auth, user, showcase, analytics) |
+| `web/` | React 19 + Vite + Tailwind CSS v4 | Public website at muxvo.com |
+| `admin/` | React 19 + Vite + Tailwind CSS | Admin panel (stub) |
+
+### Auth Architecture
+
+Three login methods (`AuthMethod = 'github' | 'google' | 'email'`):
+
+```
+src/modules/auth/auth-machine.ts   — State machine: LoggedOut → Authorizing → ExchangingToken → LoggedIn
+src/main/services/auth/
+  ├── auth-manager.ts              — Orchestrator (login flow, token refresh)
+  └── backend-client.ts            — HTTP client for api.muxvo.com/auth/*
+server/src/routes/auth.ts          — Backend: OAuth callbacks, JWT RS256, email verification
+server/src/services/email.ts       — Email sending via Resend API
+```

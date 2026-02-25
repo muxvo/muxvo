@@ -80,6 +80,27 @@ const api = {
       ipcRenderer.on(IPC_CHANNELS.APP.MEMORY_WARNING, handler);
       return () => ipcRenderer.removeListener(IPC_CHANNELS.APP.MEMORY_WARNING, handler);
     },
+    onUpdateAvailable: (callback: (data: { version: string; releaseDate: string }) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data as { version: string; releaseDate: string });
+      ipcRenderer.on(IPC_CHANNELS.APP.UPDATE_AVAILABLE, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.APP.UPDATE_AVAILABLE, handler);
+    },
+    onUpdateDownloading: (callback: (data: { percent: number; bytesPerSecond: number; transferred: number; total: number }) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data as { percent: number; bytesPerSecond: number; transferred: number; total: number });
+      ipcRenderer.on(IPC_CHANNELS.APP.UPDATE_DOWNLOADING, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.APP.UPDATE_DOWNLOADING, handler);
+    },
+    onUpdateDownloaded: (callback: (data: { version: string }) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data as { version: string });
+      ipcRenderer.on(IPC_CHANNELS.APP.UPDATE_DOWNLOADED, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.APP.UPDATE_DOWNLOADED, handler);
+    },
+    onUpdateError: (callback: (data: { message: string }) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: unknown) => callback(data as { message: string });
+      ipcRenderer.on(IPC_CHANNELS.APP.UPDATE_ERROR, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.APP.UPDATE_ERROR, handler);
+    },
+    installUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.APP.INSTALL_UPDATE),
   },
 
   // --- FS domain ---

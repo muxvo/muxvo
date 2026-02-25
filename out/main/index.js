@@ -981,6 +981,18 @@ function createChatProjectReader(opts) {
      * Searches both CC and archive sources.
      */
     async search(query) {
+      function extractSearchableText(obj) {
+        const mc = obj.message?.content ?? obj.content;
+        if (typeof mc === "string") return mc;
+        if (Array.isArray(mc)) {
+          return mc.map((block) => {
+            if (block.type === "text" && typeof block.text === "string") return block.text;
+            if (block.type === "tool_result" && typeof block.content === "string") return block.content;
+            return "";
+          }).filter(Boolean).join("\n");
+        }
+        return "";
+      }
       const results = [];
       const q = query.toLowerCase();
       const seenSessions = /* @__PURE__ */ new Set();
@@ -1007,13 +1019,16 @@ function createChatProjectReader(opts) {
                     if (!trimmed) continue;
                     try {
                       const obj = JSON.parse(trimmed);
-                      if (obj.type !== "user") continue;
-                      const text = typeof obj.message?.content === "string" ? obj.message.content : typeof obj.content === "string" ? obj.content : "";
+                      if (obj.type !== "user" && obj.type !== "assistant") continue;
+                      const text = extractSearchableText(obj);
                       if (text.toLowerCase().includes(q)) {
+                        const idx = text.toLowerCase().indexOf(q);
+                        const snippetStart = Math.max(0, idx - 30);
+                        const snippetEnd = Math.min(text.length, idx + query.length + 170);
                         results.push({
                           projectHash,
                           sessionId,
-                          snippet: text.slice(0, 200),
+                          snippet: text.slice(snippetStart, snippetEnd),
                           timestamp: obj.timestamp || ""
                         });
                       }

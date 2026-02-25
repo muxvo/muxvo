@@ -15,12 +15,13 @@ mac:
     - target: dmg
       arch:
         - arm64
+        # - x64  # Intel Mac support: adds ~10min build time, enable when needed
   hardenedRuntime: true
   gatekeeperAssess: false
   identity: "li rao (M7T6PJ8YJZ)"
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
-  notarize: false
+  notarize: true
 
 dmg:
   sign: false
