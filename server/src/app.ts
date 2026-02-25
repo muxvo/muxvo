@@ -4,6 +4,8 @@ import dbPlugin from './plugins/db.js';
 import { healthRoutes } from './routes/health.js';
 import { authRoutes } from './routes/auth.js';
 import { userRoutes } from './routes/user.js';
+import { showcaseRoutes } from './routes/showcase.js';
+import { analyticsRoutes } from './routes/analytics.js';
 import { loadKeys } from './lib/jwt.js';
 import { AppError } from './lib/errors.js';
 
@@ -53,9 +55,11 @@ export async function buildApp() {
   await app.register(authRoutes, { prefix: '/auth' });
   await app.register(userRoutes, { prefix: '/user' });
 
+  await app.register(showcaseRoutes, { prefix: '/showcase' });
+  await app.register(analyticsRoutes, { prefix: '/analytics' });
+
   // Future plugins:
   // await app.register(marketplaceRoutes, { prefix: '/marketplace' });
-  // await app.register(showcaseRoutes, { prefix: '/showcase' });
   // await app.register(adminRoutes, { prefix: '/admin' });
 
   return app;
