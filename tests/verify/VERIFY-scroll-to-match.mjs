@@ -13,7 +13,7 @@ const PROJECT = resolve(__dirname, '../..');
 
 async function main() {
   const app = await _electron.launch({
-    args: [resolve(PROJECT, 'out/main/index.js')],
+    args: ['--user-data-dir=/tmp/muxvo-test-data', resolve(PROJECT, 'out/main/index.js')],
     cwd: PROJECT,
     env: { ...process.env, ELECTRON_RENDERER_URL: 'http://localhost:5173' },
   });
@@ -34,12 +34,34 @@ async function main() {
   await win.waitForTimeout(2000);
   console.log('History panel opened');
 
+  await win.screenshot({ path: '/tmp/verify-scroll-01-history.png' });
+
   // 2. Type a search query that should match in sessions
-  const searchInput = win.locator('.search-input-wrap__input');
-  if (!(await searchInput.isVisible())) {
-    console.log('GREEN FAIL: Search input not found in history panel');
-    await app.close();
-    process.exit(1);
+  // Try multiple possible selectors for the search input
+  let searchInput = win.locator('.search-input-wrap__input');
+  if (!(await searchInput.isVisible().catch(() => false))) {
+    // Try alternative selectors
+    searchInput = win.locator('input[placeholder*="搜索"]');
+    if (!(await searchInput.isVisible().catch(() => false))) {
+      searchInput = win.locator('input[placeholder*="search" i]');
+      if (!(await searchInput.isVisible().catch(() => false))) {
+        searchInput = win.locator('.session-list input');
+        if (!(await searchInput.isVisible().catch(() => false))) {
+          // Log all input elements for debugging
+          const allInputs = await win.locator('input').all();
+          console.log(`Found ${allInputs.length} input elements`);
+          for (const inp of allInputs) {
+            const ph = await inp.getAttribute('placeholder').catch(() => '');
+            const cls = await inp.getAttribute('class').catch(() => '');
+            console.log(`  Input: class="${cls}" placeholder="${ph}"`);
+          }
+          console.log('GREEN FAIL: Search input not found in history panel');
+          await win.screenshot({ path: '/tmp/verify-scroll-fail.png' });
+          await app.close();
+          process.exit(1);
+        }
+      }
+    }
   }
 
   // Use a common keyword that likely appears in chat history
