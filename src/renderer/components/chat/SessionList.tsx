@@ -216,9 +216,11 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
               <span className="session-card__time">{time}</span>
             </div>
 
-            <div className="session-card__preview">
-              {searchQuery ? <HighlightText text={preview} query={searchQuery} /> : preview}
-            </div>
+            {session.fileSize !== -1 && (
+              <div className="session-card__preview">
+                {searchQuery ? <HighlightText text={preview} query={searchQuery} /> : preview}
+              </div>
+            )}
 
             {snippet && (
               <div className="session-card__snippet">
