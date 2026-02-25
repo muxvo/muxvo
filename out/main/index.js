@@ -44,7 +44,8 @@ const IPC_CHANNELS = {
     GET_BUFFER: "terminal:get-buffer",
     UPDATE_CWD: "terminal:update-cwd",
     CWD_CHANGED: "terminal:cwd-changed",
-    LIST_UPDATED: "terminal:list-updated"
+    LIST_UPDATED: "terminal:list-updated",
+    ZOOM: "terminal:zoom"
   },
   FS: {
     READ_DIR: "fs:read-dir",
