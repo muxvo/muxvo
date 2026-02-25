@@ -138,17 +138,21 @@ const MessageBubble = React.memo(function MessageBubble({ message }: MessageBubb
   const isUser = message.type === 'user';
   const isSystem = message.type === 'system';
 
-  const bubbleClass = isUser
-    ? 'message-bubble--user'
-    : isSystem
-      ? 'message-bubble--system'
-      : 'message-bubble--assistant';
-
   const teammateLabel = useMemo(() => {
     if (!isSystem || typeof message.content !== 'string') return null;
     const m = message.content.match(/^<teammate-message\s+teammate_id="([^"]+)"/);
     return m ? `CLAUDE: ${m[1]}` : null;
   }, [isSystem, message.content]);
+
+  const isTeammate = teammateLabel !== null;
+
+  const bubbleClass = isUser
+    ? 'message-bubble--user'
+    : isTeammate
+      ? 'message-bubble--assistant'
+      : isSystem
+        ? 'message-bubble--system'
+        : 'message-bubble--assistant';
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     // If no text is selected, auto-select the message content
@@ -175,9 +179,15 @@ const MessageBubble = React.memo(function MessageBubble({ message }: MessageBubb
       <div className="message-bubble__content">
         {Array.isArray(message.content)
           ? (message.content as AssistantContentBlock[]).map((block, i) => renderContentBlock(block, i))
-          : isUser || isSystem
-            ? <div className="message-bubble__text">{message.content as string}</div>
-            : <MarkdownPreview content={String(message.content)} />
+          : isTeammate
+            ? <MarkdownPreview content={
+                (message.content as string)
+                  .replace(/^<teammate-message[^>]*>\n?/, '')
+                  .replace(/<\/teammate-message>\s*$/, '')
+              } />
+            : isUser || isSystem
+              ? <div className="message-bubble__text">{message.content as string}</div>
+              : <MarkdownPreview content={String(message.content)} />
         }
       </div>
 
