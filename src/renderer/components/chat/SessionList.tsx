@@ -16,6 +16,26 @@ import './SessionList.css';
 
 const PAGE_SIZE = 50;
 
+/** Escape special regex characters */
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Highlight matching query text with <mark> */
+function HighlightText({ text, query }: { text: string; query: string }) {
+  if (!query) return <>{text}</>;
+  const parts = text.split(new RegExp(`(${escapeRegex(query)})`, 'gi'));
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === query.toLowerCase()
+          ? <mark key={i} className="search-highlight">{part}</mark>
+          : part
+      )}
+    </>
+  );
+}
+
 interface SessionListProps {
   sessions: SessionSummary[];
   selectedId: string | null;
@@ -191,7 +211,7 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
           >
             <div className="session-card__header">
               <span className="session-card__title" title={session.title}>
-                {title}
+                {searchQuery ? <HighlightText text={title} query={searchQuery} /> : title}
               </span>
               <span className="session-card__time">{time}</span>
             </div>
@@ -201,7 +221,9 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
             {snippet && (
               <div className="session-card__snippet">
                 <span className="session-card__snippet-icon">🔍</span>
-                <span className="session-card__snippet-text">{snippet}</span>
+                <span className="session-card__snippet-text">
+                  <HighlightText text={snippet} query={searchQuery} />
+                </span>
               </div>
             )}
 

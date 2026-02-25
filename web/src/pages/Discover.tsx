@@ -1,22 +1,4 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-
-/* ------------------------------------------------------------------ */
-/*  Design tokens (from landing page CSS variables)                   */
-/* ------------------------------------------------------------------ */
-const T = {
-  bgAfter: '#06080c',
-  bgAfterCard: '#0d1117',
-  borderAfter: '#1e2530',
-  borderAfterActive: 'rgba(232,167,72,0.4)',
-  textAfter: '#f5f5f5',
-  textAfterSec: '#9ca3af',
-  amber: '#e8a748',
-  amberLight: '#f5c563',
-  amberGlow: 'rgba(232,167,72,0.12)',
-  fontDisplay: "'DM Sans', system-ui, sans-serif",
-  fontMono: "'JetBrains Mono', monospace",
-} as const;
 
 /* ------------------------------------------------------------------ */
 /*  Static skill data                                                 */
@@ -83,137 +65,60 @@ export function Discover() {
   }, [search, activeCategory]);
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: T.bgAfter,
-      color: T.textAfter,
-      fontFamily: T.fontDisplay,
-      WebkitFontSmoothing: 'antialiased',
-    }}>
-      {/* --- Google Fonts link (injected once) --- */}
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
-
-      {/* ============ NAV ============ */}
-      <nav style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        height: 64,
-        display: 'flex',
-        alignItems: 'center',
-        background: 'rgba(6,8,12,0.92)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        borderBottom: `1px solid ${T.borderAfter}`,
-      }}>
-        <div style={{
-          maxWidth: 1200,
-          margin: '0 auto',
-          padding: '0 24px',
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}>
-          <Link to="/" style={{ display: 'flex', alignItems: 'baseline', gap: 8, textDecoration: 'none' }}>
-            <span style={{ fontWeight: 700, fontSize: 18, color: T.amber }}>Muxvo</span>
-          </Link>
-          <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
-            <Link to="/" style={{ fontSize: 14, color: T.textAfterSec, textDecoration: 'none' }}>Home</Link>
-            <Link to="/discover" style={{ fontSize: 14, color: T.amber, textDecoration: 'none' }}>Discover</Link>
-          </div>
-        </div>
-      </nav>
-
+    <div className="min-h-screen" style={{ background: 'var(--bg-after)' }}>
       {/* ============ HEADER ============ */}
-      <header style={{
-        maxWidth: 1200,
-        margin: '0 auto',
-        padding: '64px 24px 0',
-        textAlign: 'center',
-      }}>
-        <p style={{
-          fontFamily: T.fontMono,
-          fontSize: 13,
-          fontWeight: 600,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase' as const,
-          color: T.amber,
-          marginBottom: 12,
-        }}>
+      <header className="max-w-[1200px] mx-auto px-6 pt-16 text-center">
+        <p
+          className="text-[13px] font-semibold tracking-widest uppercase mb-3"
+          style={{ fontFamily: 'var(--font-mono)', color: 'var(--amber)' }}
+        >
           SKILL MARKETPLACE
         </p>
-        <h1 style={{
-          fontSize: 48,
-          fontWeight: 700,
-          letterSpacing: '-0.02em',
-          lineHeight: 1.15,
-          margin: 0,
-        }}>
-          Discover <span style={{ color: T.amber }}>Skills</span>
+        <h1
+          className="text-5xl max-sm:text-4xl font-bold m-0"
+          style={{ letterSpacing: '-0.02em', lineHeight: 1.15 }}
+        >
+          Discover <span style={{ color: 'var(--amber)' }}>Skills</span>
         </h1>
-        <p style={{
-          fontSize: 18,
-          color: T.textAfterSec,
-          marginTop: 12,
-          maxWidth: 600,
-          marginLeft: 'auto',
-          marginRight: 'auto',
-          lineHeight: 1.6,
-        }}>
-          Browse community-built skills for Claude Code, Codex, and Gemini CLI. Each skill is AI-scored for quality.
+        <p
+          className="text-lg mt-3 max-w-[600px] mx-auto"
+          style={{ color: 'var(--text-after-sec)', lineHeight: 1.6 }}
+        >
+          Browse community-built skills for Claude Code, Codex, and Gemini CLI.
+          Each skill is AI-scored for quality.
         </p>
       </header>
 
       {/* ============ SEARCH + FILTERS ============ */}
-      <div style={{
-        maxWidth: 1200,
-        margin: '0 auto',
-        padding: '40px 24px 0',
-      }}>
+      <div className="max-w-[1200px] mx-auto px-6 pt-10">
         {/* Search bar */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          background: T.bgAfterCard,
-          border: `1px solid ${T.borderAfterActive}`,
-          borderRadius: 10,
-          padding: '14px 20px',
-          maxWidth: 560,
-          margin: '0 auto',
-        }}>
-          <span style={{ color: T.amber, marginRight: 12, fontSize: 16, flexShrink: 0 }}>&#128269;</span>
+        <div
+          className="flex items-center rounded-[10px] px-5 py-3.5 max-w-[560px] mx-auto"
+          style={{
+            background: 'var(--bg-after-card)',
+            border: '1px solid var(--border-after-active)',
+          }}
+        >
+          <span className="mr-3 text-base shrink-0" style={{ color: 'var(--amber)' }}>
+            &#128269;
+          </span>
           <input
             type="text"
-            className="discover-search"
+            className="discover-search flex-1 bg-transparent border-none outline-none text-sm"
             placeholder="Search skills by name, description, or author..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{
-              flex: 1,
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              fontFamily: T.fontMono,
-              fontSize: 14,
-              color: T.textAfter,
-              caretColor: T.amber,
+              fontFamily: 'var(--font-mono)',
+              color: 'var(--text-after)',
+              caretColor: 'var(--amber)',
             }}
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: T.textAfterSec,
-                cursor: 'pointer',
-                fontSize: 16,
-                padding: '0 4px',
-                lineHeight: 1,
-              }}
+              className="bg-transparent border-none cursor-pointer text-base px-1 leading-none"
+              style={{ color: 'var(--text-after-sec)' }}
             >
               &#x2715;
             </button>
@@ -221,45 +126,33 @@ export function Discover() {
         </div>
 
         {/* Category pills */}
-        <div style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 10,
-          justifyContent: 'center',
-          marginTop: 24,
-        }}>
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              style={{
-                padding: '7px 18px',
-                borderRadius: 20,
-                border: `1px solid ${activeCategory === cat ? T.amber : T.borderAfter}`,
-                background: activeCategory === cat ? T.amberGlow : 'transparent',
-                color: activeCategory === cat ? T.amber : T.textAfterSec,
-                fontFamily: T.fontDisplay,
-                fontWeight: 600,
-                fontSize: 13,
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-              }}
-            >
-              {cat}
-            </button>
-          ))}
+        <div className="flex flex-wrap gap-2.5 justify-center mt-6">
+          {CATEGORIES.map((cat) => {
+            const active = activeCategory === cat;
+            return (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className="py-1.5 px-4.5 rounded-full font-semibold text-[13px] cursor-pointer transition-all duration-150"
+                style={{
+                  border: `1px solid ${active ? 'var(--amber)' : 'var(--border-after)'}`,
+                  background: active ? 'var(--amber-glow)' : 'transparent',
+                  color: active ? 'var(--amber)' : 'var(--text-after-sec)',
+                  fontFamily: 'var(--font-display)',
+                }}
+              >
+                {cat}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* ============ SKILL GRID ============ */}
-      <div style={{
-        maxWidth: 1200,
-        margin: '0 auto',
-        padding: '40px 24px 80px',
-      }}>
+      <div className="max-w-[1200px] mx-auto px-6 pt-10 pb-20">
         <style>{`
           .discover-search::placeholder {
-            color: #5a5e6a;
+            color: var(--text-before-dim);
           }
           .discover-grid {
             display: grid;
@@ -274,9 +167,9 @@ export function Discover() {
           }
         `}</style>
         {filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '80px 0', color: T.textAfterSec }}>
-            <p style={{ fontSize: 18, marginBottom: 8 }}>No skills found</p>
-            <p style={{ fontSize: 14 }}>Try a different search term or category.</p>
+          <div className="text-center py-20" style={{ color: 'var(--text-after-sec)' }}>
+            <p className="text-lg mb-2">No skills found</p>
+            <p className="text-sm">Try a different search term or category.</p>
           </div>
         ) : (
           <div className="discover-grid">
@@ -286,33 +179,6 @@ export function Discover() {
           </div>
         )}
       </div>
-
-      {/* ============ FOOTER ============ */}
-      <footer style={{
-        background: T.bgAfter,
-        padding: '0 24px 48px',
-      }}>
-        <div style={{
-          height: 1,
-          background: `linear-gradient(to right, transparent, ${T.amber}, transparent)`,
-          marginBottom: 48,
-        }} />
-        <div style={{
-          maxWidth: 1200,
-          margin: '0 auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 12,
-        }}>
-          <span style={{ fontWeight: 700, fontSize: 16, color: T.amber }}>Muxvo</span>
-          <span style={{ fontFamily: T.fontMono, fontSize: 13, color: T.textAfterSec }}>
-            The desktop workbench for AI CLI tools.
-          </span>
-          <span style={{ fontSize: 13, color: T.textAfterSec }}>&copy; 2026 Muxvo. MIT License.</span>
-        </div>
-      </footer>
     </div>
   );
 }
@@ -322,92 +188,62 @@ export function Discover() {
 /* ------------------------------------------------------------------ */
 function SkillCard({ skill }: { skill: Skill }) {
   const [hovered, setHovered] = useState(false);
-
   const catColor = CATEGORY_COLORS[skill.category];
 
   return (
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      className="flex flex-col rounded-[10px] p-6 transition-all duration-200"
       style={{
-        background: T.bgAfterCard,
-        border: `1px solid ${hovered ? T.borderAfterActive : T.borderAfter}`,
-        borderRadius: 10,
-        padding: 24,
-        display: 'flex',
-        flexDirection: 'column',
-        transition: 'border-color 0.2s, box-shadow 0.2s',
-        boxShadow: hovered ? `0 0 24px ${T.amberGlow}` : 'none',
+        background: 'var(--bg-after-card)',
+        border: `1px solid ${hovered ? 'var(--border-after-active)' : 'var(--border-after)'}`,
+        boxShadow: hovered ? '0 0 24px var(--amber-glow)' : 'none',
       }}
     >
       {/* Top row: category tag + score */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <span style={{
-          fontSize: 11,
-          fontWeight: 600,
-          fontFamily: T.fontMono,
-          padding: '3px 10px',
-          borderRadius: 12,
-          background: `${catColor}18`,
-          color: catColor,
-          letterSpacing: '0.03em',
-        }}>
+      <div className="flex justify-between items-center mb-3">
+        <span
+          className="text-[11px] font-semibold py-0.5 px-2.5 rounded-xl"
+          style={{
+            fontFamily: 'var(--font-mono)',
+            background: `${catColor}18`,
+            color: catColor,
+            letterSpacing: '0.03em',
+          }}
+        >
           {skill.category}
         </span>
-        <span style={{
-          fontSize: 13,
-          fontWeight: 700,
-          color: T.amber,
-          fontFamily: T.fontMono,
-        }}>
+        <span
+          className="text-[13px] font-bold"
+          style={{ color: 'var(--amber)', fontFamily: 'var(--font-mono)' }}
+        >
           {skill.score.toFixed(1)}
         </span>
       </div>
 
       {/* Name */}
-      <h3 style={{
-        fontSize: 17,
-        fontWeight: 700,
-        color: T.textAfter,
-        margin: 0,
-        marginBottom: 8,
-        lineHeight: 1.3,
-      }}>
+      <h3 className="text-[17px] font-bold m-0 mb-2 leading-snug" style={{ color: 'var(--text-after)' }}>
         {skill.name}
       </h3>
 
       {/* Description */}
-      <p style={{
-        fontSize: 13,
-        color: T.textAfterSec,
-        lineHeight: 1.6,
-        margin: 0,
-        flex: 1,
-        marginBottom: 16,
-      }}>
+      <p
+        className="text-[13px] m-0 flex-1 mb-4"
+        style={{ color: 'var(--text-after-sec)', lineHeight: 1.6 }}
+      >
         {skill.description}
       </p>
 
       {/* Bottom row: author + installs */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingTop: 12,
-        borderTop: `1px solid ${T.borderAfter}`,
-      }}>
-        <span style={{
-          fontSize: 12,
-          color: T.textAfterSec,
-          fontFamily: T.fontMono,
-        }}>
+      <div
+        className="flex justify-between items-center pt-3"
+        style={{ borderTop: '1px solid var(--border-after)' }}
+      >
+        <span className="text-xs" style={{ color: 'var(--text-after-sec)', fontFamily: 'var(--font-mono)' }}>
           @{skill.author}
         </span>
-        <span style={{
-          fontSize: 12,
-          color: T.textAfterSec,
-          fontFamily: T.fontMono,
-        }}>
+        <span className="text-xs" style={{ color: 'var(--text-after-sec)', fontFamily: 'var(--font-mono)' }}>
           {formatInstalls(skill.installs)} installs
         </span>
       </div>
