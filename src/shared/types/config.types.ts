@@ -101,6 +101,8 @@ export interface MuxvoConfig {
   theme: string;
   fontSize: number;
   terminal?: TerminalConfig;
+  /** 启动时自动创建的终端数量 (1-5) */
+  startupTerminalCount?: number;
   /** Custom session names: sessionId -> displayName (from terminal rename) */
   sessionNames?: Record<string, string>;
 }

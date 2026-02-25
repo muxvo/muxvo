@@ -39,6 +39,7 @@ import { createConfigWatcher } from './services/config-watcher';
 import { createMemoryPushTimer } from './services/perf/memory-push';
 import { createSyncStatusPusher } from './services/chat-sync-push';
 import { initConfigDir, createConfigManager } from './services/app/config';
+import { initPrefsDir } from './services/app/preferences';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 
 // Prevent EPIPE crash when stdout/stderr pipe is broken (e.g. launched via .app double-click)
@@ -278,6 +279,7 @@ app.whenReady().then(() => {
 
   // Initialize config persistence
   initConfigDir(app.getPath('userData'));
+  initPrefsDir(app.getPath('userData'));
   const configManager = createConfigManager();
   const savedConfig = configManager.loadConfig();
 
@@ -410,10 +412,13 @@ app.whenReady().then(() => {
               }
             }
           } else {
-            // Normal start: create one fresh terminal at home directory
+            // Normal start: create terminals based on config
             const homePath = require('os').homedir();
-            terminalManager.spawn({ cwd: homePath });
-            console.log('[MUXVO] fresh start, created terminal at ' + homePath);
+            const count = Math.max(1, Math.min(5, config.startupTerminalCount ?? 1));
+            for (let i = 0; i < count; i++) {
+              terminalManager.spawn({ cwd: homePath });
+            }
+            console.log('[MUXVO] fresh start, created ' + count + ' terminal(s) at ' + homePath);
           }
 
           // Notify renderer to refresh terminal list
