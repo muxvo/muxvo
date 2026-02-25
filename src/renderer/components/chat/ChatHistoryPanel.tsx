@@ -8,12 +8,12 @@
  * - 右栏 (flex, min 400px): SessionDetail
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { ProjectList } from './ProjectList';
 import { SessionList } from './SessionList';
 import { SessionDetail } from './SessionDetail';
 import { useI18n } from '@/renderer/i18n';
-import type { ProjectInfo, SessionSummary, SessionMessage } from '@/shared/types/chat.types';
+import type { ProjectInfo, SessionSummary, SessionMessage, SearchResult } from '@/shared/types/chat.types';
 import './ChatHistoryPanel.css';
 
 
@@ -88,6 +88,55 @@ export function ChatHistoryPanel() {
   const [bannerDismissed, setBannerDismissed] = useState(
     () => localStorage.getItem('muxvo-archive-notice-dismissed') === 'true'
   );
+
+  // Search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Debounced full-text search via backend
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+
+    setSearching(true);
+    searchTimerRef.current = setTimeout(() => {
+      window.api.chat.search(searchQuery.trim())
+        .then((result: { results?: SearchResult[] }) => {
+          setSearchResults(result?.results || []);
+        })
+        .catch(() => setSearchResults([]))
+        .finally(() => setSearching(false));
+    }, 300);
+
+    return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
+  }, [searchQuery]);
+
+  // Filter sessions: title match (client) + full-text match (backend results)
+  const searchSnippets = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const r of searchResults) {
+      map.set(r.sessionId, r.snippet);
+    }
+    return map;
+  }, [searchResults]);
+
+  const filteredSessions = useMemo(() => {
+    if (!searchQuery.trim()) return sessions;
+    const q = searchQuery.toLowerCase();
+    const fullTextIds = new Set(searchResults.map(r => r.sessionId));
+    return sessions.filter(s => {
+      const titleMatch = s.title.toLowerCase().includes(q)
+        || (s.customTitle && s.customTitle.toLowerCase().includes(q));
+      return titleMatch || fullTextIds.has(s.sessionId);
+    });
+  }, [sessions, searchQuery, searchResults]);
 
   const handleDismissBanner = useCallback(() => {
     localStorage.setItem('muxvo-archive-notice-dismissed', 'true');
@@ -226,12 +275,16 @@ export function ChatHistoryPanel() {
           </div>
         ) : (
           <SessionList
-            sessions={sessions}
+            sessions={filteredSessions}
             selectedId={selectedSessionId}
             onSelect={setSelectedSessionId}
             onSessionContextMenu={handleSessionContextMenu}
             projects={projects}
             showProjectName={selectedProjectHash === null}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            searching={searching}
+            searchSnippets={searchSnippets}
           />
         )}
       </div>
