@@ -48,6 +48,32 @@ npm run verify:coverage
 npx tsc --noEmit
 ```
 
+## Playwright E2E Testing (Electron)
+
+Muxvo 是 Electron 应用，E2E 测试需要特殊的启动方式：
+
+**前提条件**: `npx electron-vite dev` 必须正在运行（vite renderer server 在 5173 端口）。
+
+**在测试脚本中启动 Electron**:
+
+```js
+import { _electron } from '@playwright/test';
+
+const app = await _electron.launch({
+  args: [resolve(PROJECT, 'out/main/index.js')],
+  cwd: PROJECT,
+  env: { ...process.env, ELECTRON_RENDERER_URL: 'http://localhost:5173' },
+});
+const window = await app.firstWindow();
+await window.waitForTimeout(6000); // 等待 React 挂载
+await window.waitForLoadState('networkidle');
+```
+
+**常见错误**:
+- 白屏 (body 84 chars) → vite server 没在跑，或没设 `ELECTRON_RENDERER_URL`
+- `is.dev` 始终为 true → 来自 `@electron-toolkit/utils`，检查 `app.isPackaged`（未打包=true），设 `NODE_ENV` 无效
+- `window.api` undefined → 不能用 `chromium.launch()` + `page.goto()`，必须用 `_electron.launch()` 才有 preload
+
 ## Architecture
 
 ### Process Model (Electron)
