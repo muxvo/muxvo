@@ -1,138 +1,198 @@
 /**
  * E2E verification: Skill search keyword highlighting
- * Uses Playwright Electron to launch Muxvo and test the SkillList search.
+ *
+ * Strategy:
+ * 1. Start vite renderer dev server on port 5173
+ * 2. Launch Electron via _electron.launch() with ELECTRON_RENDERER_URL
+ * 3. Navigate to Skills panel and test keyword highlighting
  */
 import { _electron } from '@playwright/test';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { spawn } from 'child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROJECT = resolve(__dirname, '../..');
 
+// Start vite dev server for renderer only
+function startViteRenderer() {
+  return new Promise((resolveP, reject) => {
+    const proc = spawn('npx', ['electron-vite', 'dev', '--no-sandbox'], {
+      cwd: PROJECT,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env },
+      shell: true,
+    });
+
+    let resolved = false;
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        // Even if we don't see the ready message, try after timeout
+        resolveP(proc);
+      }
+    }, 15000);
+
+    proc.stdout.on('data', (data) => {
+      const line = data.toString();
+      process.stdout.write(`[vite] ${line}`);
+      // electron-vite dev prints the URL when ready
+      if ((line.includes('localhost') || line.includes('ready') || line.includes('5173')) && !resolved) {
+        resolved = true;
+        clearTimeout(timeout);
+        // Wait a bit for electron to fully start
+        setTimeout(() => resolveP(proc), 3000);
+      }
+    });
+
+    proc.stderr.on('data', (data) => {
+      process.stderr.write(`[vite:err] ${data.toString()}`);
+    });
+
+    proc.on('error', (err) => {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timeout);
+        reject(err);
+      }
+    });
+  });
+}
+
 async function main() {
-  console.log('Launching Electron app...');
-  const app = await _electron.launch({
-    args: [resolve(PROJECT, 'out/main/index.js')],
-    cwd: PROJECT,
-    env: { ...process.env, NODE_ENV: 'production' },
-  });
+  console.log('Starting electron-vite dev...');
+  const viteProc = await startViteRenderer();
+  console.log('electron-vite dev started, connecting via CDP...');
 
-  const window = await app.firstWindow();
-
-  // Wait for app to fully render (Electron + React mount takes time)
-  await window.waitForTimeout(5000);
-  await window.waitForLoadState('domcontentloaded');
-
-  // Wait for any React element to appear
   try {
-    await window.waitForSelector('[class*="sidebar"], [class*="panel"], [class*="app"]', { timeout: 10000 });
-  } catch {
-    console.log('WARN: Could not find app container element');
-  }
+    // electron-vite dev starts Electron with --remote-debugging-port
+    // Try connecting via CDP to the Electron renderer
+    const { chromium } = await import('@playwright/test');
 
-  await window.screenshot({ path: '/tmp/verify-01-initial.png' });
-  console.log('Screenshot 1: Initial state');
+    // Wait a moment for Electron window to load
+    await new Promise(r => setTimeout(r, 5000));
 
-  // Dump page structure for debugging
-  const bodyHtml = await window.locator('body').innerHTML();
-  console.log(`Body length: ${bodyHtml.length} chars`);
-  console.log(`Body preview: ${bodyHtml.slice(0, 500)}`);
+    // electron-vite dev typically enables remote debugging on port 9222
+    // But we should look for the actual Electron window
+    // Let's try connecting directly to the dev server as a web page first
+    const browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage();
 
-  // Find all clickable elements on page
-  const allElements = await window.locator('*').all();
-  console.log(`Total elements: ${allElements.length}`);
+    // Connect to the vite dev server renderer
+    await page.goto('http://localhost:5173', { waitUntil: 'networkidle', timeout: 15000 });
+    await page.waitForTimeout(3000);
 
-  // Look for anything skill-related
-  const skillElements = await window.locator('[class*="skill" i]').all();
-  console.log(`Skill-related elements: ${skillElements.length}`);
+    await page.screenshot({ path: '/tmp/verify-01-initial.png' });
+    console.log('Screenshot 1: Initial state');
 
-  // Look for the skill panel opener - check sidebar/navigation
-  const sidebarItems = await window.locator('.sidebar-content a, .sidebar-content button, .sidebar-content div[class*="item"]').all();
-  console.log(`Sidebar items: ${sidebarItems.length}`);
-  for (const item of sidebarItems.slice(0, 10)) {
-    const text = (await item.textContent().catch(() => ''))?.trim();
-    const cls = await item.getAttribute('class').catch(() => '');
-    console.log(`  Sidebar: text="${text}" class="${cls}"`);
-  }
+    const bodyLen = (await page.locator('body').innerHTML()).length;
+    console.log(`Body length: ${bodyLen}`);
 
-  // Try to open skills panel via keyboard shortcut or click
-  // Check what panels exist
-  const panels = await window.locator('[class*="panel"]').all();
-  console.log(`Panel elements: ${panels.length}`);
-  for (const p of panels.slice(0, 5)) {
-    const cls = await p.getAttribute('class').catch(() => '');
-    console.log(`  Panel class: "${cls}"`);
-  }
-
-  // Check if SkillsPanel might already be a full overlay that needs to be opened
-  // Look for the Skills tab/button in the main layout
-  const allBtns = await window.locator('button, a, [role="button"], [class*="tab"]').all();
-  console.log(`Buttons/tabs found: ${allBtns.length}`);
-  for (const btn of allBtns.slice(0, 20)) {
-    const text = (await btn.textContent().catch(() => ''))?.trim();
-    if (text) console.log(`  Btn: "${text.slice(0, 50)}"`);
-  }
-
-  // Try to dispatch the OPEN_SKILLS_PANEL action via the app
-  // This is a React SPA so we may need to trigger navigation
-  await window.evaluate(() => {
-    // Try dispatching keyboard shortcut or clicking skills icon
-    const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true });
-    window.dispatchEvent(event);
-  });
-  await window.waitForTimeout(1000);
-
-  await window.screenshot({ path: '/tmp/verify-02-after-key.png' });
-  console.log('Screenshot 2: After keyboard attempt');
-
-  // Check for skill list now
-  const skillList = window.locator('.skill-list');
-  const isVisible = await skillList.isVisible().catch(() => false);
-  console.log(`Skill list visible after keyboard: ${isVisible}`);
-
-  if (isVisible) {
-    await runHighlightTest(window, skillList);
-  } else {
-    console.log('Skills panel not open. Trying to find open method...');
-    // Last resort: look for any element with "skill" text
-    const skillText = await window.locator('text=/skill/i').all();
-    console.log(`Elements with "skill" text: ${skillText.length}`);
-    for (const el of skillText.slice(0, 5)) {
-      const tag = await el.evaluate(e => e.tagName).catch(() => '');
-      const text = (await el.textContent().catch(() => ''))?.trim();
-      console.log(`  ${tag}: "${text?.slice(0, 50)}"`);
+    if (bodyLen < 10) {
+      console.log('Page is empty, waiting more...');
+      await page.waitForTimeout(5000);
+      await page.screenshot({ path: '/tmp/verify-01b-retry.png' });
     }
-    process.exitCode = 1;
-  }
 
-  await window.screenshot({ path: '/tmp/verify-04-final.png' });
-  await app.close();
+    // Check for skill list - it's an overlay panel opened from sidebar
+    // First let's see what's rendered
+    const skillListVisible = await page.locator('.skill-list').isVisible().catch(() => false);
+    console.log(`Skill list initially visible: ${skillListVisible}`);
+
+    // Skills panel is an overlay - need to find and click the trigger
+    // Look for sidebar icons/buttons
+    const allClickable = await page.locator('button, a, [role="button"], [class*="icon"], [class*="btn"]').all();
+    console.log(`Clickable elements: ${allClickable.length}`);
+    for (const el of allClickable.slice(0, 20)) {
+      const text = (await el.textContent().catch(() => ''))?.trim();
+      const cls = await el.getAttribute('class').catch(() => '');
+      const title = await el.getAttribute('title').catch(() => '');
+      if (text || title) console.log(`  "${text?.slice(0,30)}" class="${cls}" title="${title}"`);
+    }
+
+    // Try to find and click skills button/icon
+    let skillsOpened = false;
+
+    // Try title attribute
+    const skillBtn = page.locator('[title*="skill" i], [title*="Skill"]');
+    if (await skillBtn.count() > 0) {
+      await skillBtn.first().click();
+      await page.waitForTimeout(1000);
+      skillsOpened = true;
+      console.log('Clicked skill button via title');
+    }
+
+    // Try aria-label
+    if (!skillsOpened) {
+      const ariaBtn = page.locator('[aria-label*="skill" i]');
+      if (await ariaBtn.count() > 0) {
+        await ariaBtn.first().click();
+        await page.waitForTimeout(1000);
+        skillsOpened = true;
+        console.log('Clicked skill button via aria-label');
+      }
+    }
+
+    // Try SVG icon buttons in sidebar
+    if (!skillsOpened) {
+      const svgBtns = await page.locator('.sidebar button, .sidebar [class*="icon"]').all();
+      console.log(`Sidebar SVG buttons: ${svgBtns.length}`);
+    }
+
+    await page.screenshot({ path: '/tmp/verify-02-nav.png' });
+    console.log('Screenshot 2: After navigation attempt');
+
+    // Check skill list again
+    const skillList = page.locator('.skill-list');
+    if (await skillList.isVisible().catch(() => false)) {
+      await runHighlightTest(page, skillList);
+    } else {
+      // Dump full page classes for debugging
+      const html = await page.content();
+      const classes = [...new Set((html.match(/class="([^"]+)"/g) || []).map(c => c.slice(7, -1)))];
+      console.log('Unique classes (first 30):');
+      classes.slice(0, 30).forEach(c => console.log(`  ${c}`));
+      console.log('GREEN FAIL: Could not open skills panel');
+      process.exitCode = 1;
+    }
+
+    await page.screenshot({ path: '/tmp/verify-04-final.png' });
+    await browser.close();
+  } finally {
+    // Kill the vite process
+    viteProc.kill('SIGTERM');
+    // Also kill any electron processes it spawned
+    try {
+      const { execSync } = await import('child_process');
+      execSync('pkill -f "electron-vite" 2>/dev/null; pkill -f "electron ." 2>/dev/null', { stdio: 'ignore' });
+    } catch {}
+  }
   console.log('Done');
 }
 
-async function runHighlightTest(window, skillList) {
+async function runHighlightTest(page, skillList) {
   const searchInput = skillList.locator('.search-input-wrap__input');
   if (!(await searchInput.isVisible().catch(() => false))) {
-    console.log('GREEN FAIL: Search input not found in skill list');
+    console.log('GREEN FAIL: Search input not found');
     process.exitCode = 1;
     return;
   }
 
   await searchInput.fill('auto');
-  await window.waitForTimeout(500);
-  await window.screenshot({ path: '/tmp/verify-03-search.png' });
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: '/tmp/verify-03-search.png' });
   console.log('Screenshot 3: After search "auto"');
 
   const marks = skillList.locator('mark.search-highlight');
   const markCount = await marks.count();
-  console.log(`Found ${markCount} highlighted <mark> elements`);
+  console.log(`Found ${markCount} <mark class="search-highlight"> elements`);
 
   if (markCount > 0) {
-    const firstMarkText = await marks.first().textContent();
-    console.log(`First mark text: "${firstMarkText}"`);
+    const firstText = await marks.first().textContent();
+    console.log(`First mark text: "${firstText}"`);
     console.log('GREEN PASS: Keyword highlighting works in SkillList');
   } else {
-    console.log('GREEN FAIL: No search-highlight marks found');
+    console.log('GREEN FAIL: No highlighted marks found');
     process.exitCode = 1;
   }
 }
