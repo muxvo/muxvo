@@ -173,8 +173,8 @@ export function McpPanel(): JSX.Element {
               return (
                 <div key={scope} className="mcp-panel__scope-group">
                   <div className="mcp-panel__scope-label">
-                    <span className={`mcp-panel__scope-badge ${SCOPE_LABELS[scope].cls}`}>
-                      {SCOPE_LABELS[scope].label}
+                    <span className={`mcp-panel__scope-badge ${(SCOPE_LABELS[scope] || { cls: '' }).cls}`}>
+                      {(SCOPE_LABELS[scope] || { label: scope }).label}
                     </span>
                   </div>
                   {items.map((s) => (
@@ -257,8 +257,8 @@ function ServerDetail({
     <div className="mcp-panel__detail">
       <div className="mcp-panel__detail-header">
         <h3 className="mcp-panel__detail-name">{server.name}</h3>
-        <span className={`mcp-panel__scope-badge ${SCOPE_LABELS[server.scope].cls}`}>
-          {SCOPE_LABELS[server.scope].label}
+        <span className={`mcp-panel__scope-badge ${(SCOPE_LABELS[server.scope] || { cls: '' }).cls}`}>
+          {(SCOPE_LABELS[server.scope] || { label: server.scope }).label}
         </span>
         <span className={`mcp-panel__type-badge mcp-panel__type-badge--${server.type}`}>
           {server.type.toUpperCase()}

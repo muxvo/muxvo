@@ -58,7 +58,7 @@ function parseMcpServers(
     });
 }
 
-/** Read and parse a JSON config file, return empty array on failure */
+/** Read and parse a config file (JSON or TOML), return empty array on failure */
 async function readConfigFile(
   filePath: string,
   scope: McpConfigScope,
@@ -66,8 +66,16 @@ async function readConfigFile(
   try {
     const result = await window.api.fs.readFile(filePath);
     if (!result?.success || !result.data?.content) return [];
-    const json = JSON.parse(result.data.content);
-    return parseMcpServers(json, scope, filePath);
+
+    let raw: Record<string, unknown>;
+    if (filePath.endsWith('.toml')) {
+      const parsed = parseToml(result.data.content) as Record<string, unknown>;
+      // Codex TOML uses mcp_servers (underscore) as key
+      raw = { mcpServers: parsed.mcp_servers ?? {} };
+    } else {
+      raw = JSON.parse(result.data.content);
+    }
+    return parseMcpServers(raw, scope, filePath);
   } catch {
     return [];
   }
@@ -80,8 +88,10 @@ export function useMcpConfig(projectCwd?: string): UseMcpConfigReturn {
   const [reloadKey, setReloadKey] = useState(0);
 
   const homePath = window.api.app.getHomePath();
-  const globalPath = `${homePath}/.claude/mcp.json`;
+  const globalPath = `${homePath}/.claude.json`;
   const desktopPath = `${homePath}/Library/Application Support/Claude/claude_desktop_config.json`;
+  const codexGlobalPath = `${homePath}/.codex/config.toml`;
+  const geminiGlobalPath = `${homePath}/.gemini/settings.json`;
 
   const reload = useCallback(() => setReloadKey((k) => k + 1), []);
 
@@ -93,10 +103,14 @@ export function useMcpConfig(projectCwd?: string): UseMcpConfigReturn {
     const promises: Promise<McpServerConfig[]>[] = [
       readConfigFile(globalPath, 'global'),
       readConfigFile(desktopPath, 'desktop'),
+      readConfigFile(codexGlobalPath, 'codex'),
+      readConfigFile(geminiGlobalPath, 'gemini'),
     ];
 
     if (projectCwd) {
       promises.push(readConfigFile(`${projectCwd}/.mcp.json`, 'project'));
+      promises.push(readConfigFile(`${projectCwd}/.codex/config.toml`, 'codex-project'));
+      promises.push(readConfigFile(`${projectCwd}/.gemini/settings.json`, 'gemini-project'));
     }
 
     Promise.all(promises)
@@ -113,7 +127,7 @@ export function useMcpConfig(projectCwd?: string): UseMcpConfigReturn {
       });
 
     return () => { cancelled = true; };
-  }, [globalPath, desktopPath, projectCwd, reloadKey]);
+  }, [globalPath, desktopPath, codexGlobalPath, geminiGlobalPath, projectCwd, reloadKey]);
 
   /** Read global config, apply mutation, write back */
   const mutateGlobal = useCallback(
