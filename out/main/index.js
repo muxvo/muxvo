@@ -2125,7 +2125,7 @@ function createConfigHandlers() {
               { dir: path.join(projectPath, ".claude", "skills"), source: "claude" },
               { dir: path.join(projectPath, ".codex", "skills"), source: "codex" },
               { dir: path.join(projectPath, ".gemini", "skills"), source: "gemini" },
-              { dir: path.join(projectPath, "skills"), source: "codex" }
+              { dir: path.join(projectPath, "skills"), source: "shared" }
             ];
             for (const { dir: dirPath, source } of projectSkillDirs) {
               if (systemDirSet.has(path.resolve(dirPath))) continue;
