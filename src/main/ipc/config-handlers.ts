@@ -167,28 +167,15 @@ async function findJsonlFiles(dir: string): Promise<string[]> {
 
 /**
  * Extract cwd from a Gemini project temp directory.
- * Tries logs.json and other metadata files for cwd/projectRoot fields.
+ * Reads .project_root file which contains the full absolute path.
  */
 async function extractCwdFromGeminiProject(projectDir: string): Promise<string | null> {
-  // Try logs.json
-  const logsPath = join(projectDir, 'logs.json');
+  const projectRootPath = join(projectDir, '.project_root');
   try {
-    const raw = await readFile(logsPath, 'utf-8');
-    const data = JSON.parse(raw);
-    if (typeof data === 'object' && data !== null) {
-      if (data.cwd) return data.cwd;
-      if (data.projectRoot) return data.projectRoot;
-    }
-    if (Array.isArray(data)) {
-      for (const entry of data.slice(0, 20)) {
-        if (typeof entry === 'object' && entry !== null) {
-          if (entry.cwd) return entry.cwd;
-          if (entry.projectRoot) return entry.projectRoot;
-        }
-      }
-    }
+    const cwd = (await readFile(projectRootPath, 'utf-8')).trim();
+    if (cwd) return cwd;
   } catch {
-    // not found
+    // .project_root doesn't exist
   }
   return null;
 }
