@@ -123,10 +123,10 @@ function ImageBlock({ source }: { source: AssistantContentBlock['source'] }) {
   );
 }
 
-function renderContentBlock(block: AssistantContentBlock, index: number) {
+function renderContentBlock(block: AssistantContentBlock, index: number, searchQuery?: string, isActiveMatch?: boolean) {
   switch (block.type) {
     case 'text':
-      return <MarkdownPreview key={index} content={block.text || ''} />;
+      return <MarkdownPreview key={index} content={block.text || ''} searchQuery={searchQuery} isActiveMatch={isActiveMatch} />;
     case 'image':
       return <ImageBlock key={index} source={block.source} />;
     case 'tool_use':
@@ -209,16 +209,16 @@ const MessageBubble = React.memo(function MessageBubble({ message, searchQuery, 
 
       <div className="message-bubble__content">
         {Array.isArray(message.content)
-          ? (message.content as AssistantContentBlock[]).map((block, i) => renderContentBlock(block, i))
+          ? (message.content as AssistantContentBlock[]).map((block, i) => renderContentBlock(block, i, searchQuery, isActiveMatch))
           : isTeammate
             ? <MarkdownPreview content={
                 (message.content as string)
                   .replace(/<teammate-message[^>]*>\n?/g, '')
                   .replace(/<\/teammate-message>\s*/g, '')
-              } />
+              } searchQuery={searchQuery} isActiveMatch={isActiveMatch} />
             : isUser || isSystem
               ? <div className="message-bubble__text">{searchQuery ? <HighlightText text={message.content as string} query={searchQuery} active={isActiveMatch} /> : message.content as string}</div>
-              : <MarkdownPreview content={String(message.content)} />
+              : <MarkdownPreview content={String(message.content)} searchQuery={searchQuery} isActiveMatch={isActiveMatch} />
         }
       </div>
 

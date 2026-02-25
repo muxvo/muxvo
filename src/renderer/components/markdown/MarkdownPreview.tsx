@@ -11,11 +11,27 @@ import './MarkdownPreviewHighlight.css';
 
 interface MarkdownPreviewProps {
   content: string;
+  searchQuery?: string;
+  isActiveMatch?: boolean;
 }
 
-export const MarkdownPreview = React.memo(function MarkdownPreview({ content }: MarkdownPreviewProps) {
+/** Highlight matching text in HTML string, only modifying text nodes (not tag attributes) */
+function highlightHtml(html: string, query: string, active?: boolean): string {
+  if (!query) return html;
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const cls = `search-highlight${active ? ' search-highlight--active' : ''}`;
+  return html.replace(/(<[^>]*>)|([^<]+)/g, (match, tag, text) => {
+    if (tag) return tag;
+    return text.replace(new RegExp(`(${escaped})`, 'gi'), `<mark class="${cls}">$1</mark>`);
+  });
+}
+
+export const MarkdownPreview = React.memo(function MarkdownPreview({ content, searchQuery, isActiveMatch }: MarkdownPreviewProps) {
   const renderer = getMarkdownRenderer();
-  const html = renderer.render(content);
+  let html = renderer.render(content);
+  if (searchQuery) {
+    html = highlightHtml(html, searchQuery, isActiveMatch);
+  }
 
   return (
     <div
