@@ -9,6 +9,7 @@ const os = require("os");
 const fs = require("fs");
 const readline = require("readline");
 const promises = require("fs/promises");
+const electronUpdater = require("electron-updater");
 function _interopNamespaceDefault(e) {
   const n = Object.create(null, { [Symbol.toStringTag]: { value: "Module" } });
   if (e) {
@@ -1411,16 +1412,11 @@ function createGeminiChatReader(opts) {
       for (const filePath of chatFiles) {
         try {
           const fileStat = await fs.promises.stat(filePath);
-          const raw = await fs.promises.readFile(filePath, "utf-8");
-          const data = JSON.parse(raw);
-          const sessionId = data.sessionId || path.basename(filePath, ".json");
-          const startTime = data.startTime ? new Date(data.startTime).getTime() : fileStat.mtimeMs;
-          const lastUpdated = data.lastUpdated ? new Date(data.lastUpdated).getTime() : fileStat.mtimeMs;
+          const sessionId = path.basename(filePath, ".json");
           entries.push({
             filePath,
             sessionId: `gemini-${sessionId}`,
-            startTime,
-            lastUpdated,
+            mtime: fileStat.mtimeMs,
             size: fileStat.size,
             cwd,
             folderName,
@@ -1443,14 +1439,14 @@ function createGeminiChatReader(opts) {
         if (existing) {
           existing.count++;
           existing.totalSize += entry.size;
-          existing.lastActivity = Math.max(existing.lastActivity, entry.lastUpdated);
+          existing.lastActivity = Math.max(existing.lastActivity, entry.mtime);
         } else {
           projectMap.set(key, {
             cwd: entry.cwd,
             folderName: entry.folderName,
             count: 1,
             totalSize: entry.size,
-            lastActivity: entry.lastUpdated
+            lastActivity: entry.mtime
           });
         }
       }
@@ -1488,8 +1484,8 @@ function createGeminiChatReader(opts) {
           sessionId: entry.sessionId,
           projectHash: hash,
           title: title || entry.sessionId,
-          startedAt: new Date(entry.startTime).toISOString(),
-          lastModified: entry.lastUpdated,
+          startedAt: new Date(entry.mtime).toISOString(),
+          lastModified: entry.mtime,
           fileSize: entry.size,
           source: "gemini"
         });
@@ -1510,8 +1506,8 @@ function createGeminiChatReader(opts) {
           sessionId: entry.sessionId,
           projectHash: hash,
           title: title || entry.sessionId,
-          startedAt: new Date(entry.startTime).toISOString(),
-          lastModified: entry.lastUpdated,
+          startedAt: new Date(entry.mtime).toISOString(),
+          lastModified: entry.mtime,
           fileSize: entry.size,
           source: "gemini"
         });
@@ -1530,7 +1526,7 @@ function createGeminiChatReader(opts) {
         for (let i = 0; i < msgArray.length; i++) {
           const msg = msgArray[i];
           if (!msg || !msg.type) continue;
-          const timestamp = msg.timestamp || new Date(entry.startTime).toISOString();
+          const timestamp = msg.timestamp || new Date(entry.mtime).toISOString();
           const uuid = msg.id ? `gemini-${msg.id}` : `gemini-${sessionId}-${i}`;
           if (msg.type === "user") {
             const text = extractTextFromUserContent(msg.content);
@@ -3150,6 +3146,12 @@ electron.app.whenReady().then(() => {
   function launchWindowWithTerminals() {
     const config = configManager.loadConfig();
     createWindow(config.window);
+    if (!utils.is.dev) {
+      electronUpdater.autoUpdater.logger = null;
+      electronUpdater.autoUpdater.autoDownload = true;
+      electronUpdater.autoUpdater.autoInstallOnAppQuit = true;
+      electronUpdater.autoUpdater.checkForUpdatesAndNotify();
+    }
     if (mainWindow) {
       const terminalsToRestore = config.openTerminals && config.openTerminals.length > 0 ? config.openTerminals : null;
       mainWindow.webContents.once("did-finish-load", () => {

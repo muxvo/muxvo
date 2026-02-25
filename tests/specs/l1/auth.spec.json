@@ -1,0 +1,54 @@
+{
+  "module": "AUTH",
+  "layer": "L1",
+  "source": "tests/l1/auth.test.ts",
+  "docSource": "docs/Muxvo_测试_v2/02_modules/test_AUTH.md",
+  "totalCases": 3,
+  "cases": [
+    {
+      "id": "AUTH_L1_01",
+      "description": "auth:login-github IPC 格式 -- 返回 { success, data?: { user } }",
+      "type": "ipc",
+      "channel": "auth:login-github",
+      "direction": "invoke",
+      "input": {},
+      "expectedResponse": {
+        "success": "boolean",
+        "user": {
+          "username": "string",
+          "avatarUrl": "string"
+        }
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "AUTH_L1_02",
+      "description": "auth:logout IPC 格式 -- 返回 { success }",
+      "type": "ipc",
+      "channel": "auth:logout",
+      "direction": "invoke",
+      "input": {},
+      "expectedResponse": {
+        "success": "boolean"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "AUTH_L1_03",
+      "description": "auth:get-status IPC 格式 -- 返回 { success, data: { loggedIn, user?, tokenExpiry? } }",
+      "type": "ipc",
+      "channel": "auth:get-status",
+      "direction": "invoke",
+      "input": {},
+      "expectedResponse": {
+        "loggedIn": "boolean",
+        "user": {
+          "username": "string",
+          "avatarUrl": "string"
+        },
+        "tokenExpiry": "string"
+      },
+      "priority": "P0"
+    }
+  ]
+}
