@@ -1,0 +1,320 @@
+/* LoginModal — Centered modal with three login methods */
+
+.login-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.login-modal {
+  position: relative;
+  width: 380px;
+  max-width: 90vw;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-dialog);
+  overflow: hidden;
+  animation: loginModalIn 0.2s ease-out;
+}
+
+@keyframes loginModalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Header */
+.login-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 0;
+}
+
+.login-modal__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+.login-modal__close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.login-modal__close-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* Error bar */
+.login-modal__error-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 12px 20px 0;
+  padding: 8px 12px;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  border-radius: 6px;
+  color: var(--error);
+  font-size: 12px;
+}
+
+.login-modal__error-dismiss {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: var(--error);
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+/* Body */
+.login-modal__body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* OAuth buttons */
+.login-modal__oauth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.login-modal__oauth-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--text-muted);
+}
+
+.login-modal__oauth-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.login-modal__oauth-btn--github:hover:not(:disabled) {
+  border-color: var(--text-secondary);
+}
+
+.login-modal__oauth-btn--google:hover:not(:disabled) {
+  border-color: #4285f4;
+}
+
+.login-modal__oauth-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Divider */
+.login-modal__divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 6px 0;
+}
+
+.login-modal__divider::before,
+.login-modal__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.login-modal__divider span {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Email form */
+.login-modal__email-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.login-modal__field {
+  display: flex;
+  gap: 8px;
+}
+
+.login-modal__input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.login-modal__input:focus {
+  border-color: var(--accent);
+}
+
+.login-modal__input::placeholder {
+  color: var(--text-muted);
+}
+
+.login-modal__input:disabled {
+  opacity: 0.5;
+}
+
+.login-modal__send-code-btn,
+.login-modal__login-btn {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.login-modal__send-code-btn {
+  background: var(--accent-muted);
+  color: var(--accent);
+}
+
+.login-modal__send-code-btn:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--bg-deep);
+}
+
+.login-modal__send-code-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.login-modal__login-btn {
+  background: var(--accent);
+  color: var(--bg-deep);
+}
+
+.login-modal__login-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.login-modal__login-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Error text in email form */
+.login-modal__error {
+  font-size: 12px;
+  color: var(--error);
+}
+
+/* Footer */
+.login-modal__footer {
+  padding: 0 20px 16px;
+}
+
+.login-modal__terms {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Loading overlay */
+.login-modal__loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+}
+
+.login-modal__spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: loginSpinner 0.6s linear infinite;
+}
+
+@keyframes loginSpinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* MenuBar auth button */
+.menu-bar__auth-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  z-index: 2;
+  -webkit-app-region: no-drag;
+  transition: all 0.15s;
+  font-family: var(--font-sans);
+}
+
+.menu-bar__auth-btn:hover {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border-color: rgba(232, 167, 72, 0.3);
+}
+
+.menu-bar__auth-btn svg {
+  flex-shrink: 0;
+}

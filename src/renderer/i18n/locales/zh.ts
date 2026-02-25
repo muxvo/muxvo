@@ -126,4 +126,18 @@ export const zh = {
   'tour.step5.desc': '点击"文件"按钮，打开当前目录的文件浏览器！',
   'tour.noTerminal.title': '请先创建终端',
   'tour.noTerminal.desc': '点击 + 按钮创建一个终端后，再次点击 ? 按钮即可查看完整的功能导览。',
+  // Auth
+  'auth.loginButton': '登录',
+  'auth.modalTitle': 'Muxvo 登录',
+  'auth.loginGithub': '使用 GitHub 登录',
+  'auth.loginGoogle': '使用 Google 登录',
+  'auth.orEmail': '或使用邮箱',
+  'auth.emailPlaceholder': '邮箱地址',
+  'auth.codePlaceholder': '验证码',
+  'auth.sendCode': '发送验证码',
+  'auth.resendCode': '重新发送',
+  'auth.sending': '发送中...',
+  'auth.login': '登录',
+  'auth.logout': '登出',
+  'auth.termsNotice': '登录即表示同意服务条款和隐私政策',
 } as const;

@@ -1,0 +1,106 @@
+/**
+ * LoginModal — Modal dialog with three login methods (GitHub, Google, Email)
+ */
+
+import { useEffect, useCallback } from 'react';
+import { useAuth } from '@/renderer/contexts/AuthContext';
+import { useI18n } from '@/renderer/i18n';
+import { OAuthButton } from './OAuthButton';
+import { EmailLoginForm } from './EmailLoginForm';
+import './LoginModal.css';
+
+export function LoginModal(): JSX.Element | null {
+  const { state, dispatch, loginGithub, loginGoogle, sendEmailCode, loginEmail } = useAuth();
+  const { t } = useI18n();
+
+  const isLoading = state.status === 'loading';
+
+  // Close on Escape key
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      dispatch({ type: 'CLOSE_LOGIN_MODAL' });
+    }
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (!state.loginModalOpen) return;
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [state.loginModalOpen, handleKeyDown]);
+
+  // Auto-clear error after 5s
+  useEffect(() => {
+    if (!state.error) return;
+    const timer = setTimeout(() => dispatch({ type: 'CLEAR_ERROR' }), 5000);
+    return () => clearTimeout(timer);
+  }, [state.error, dispatch]);
+
+  if (!state.loginModalOpen) return null;
+
+  return (
+    <div className="login-modal__backdrop" onClick={() => dispatch({ type: 'CLOSE_LOGIN_MODAL' })}>
+      <div className="login-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="login-modal__header">
+          <span className="login-modal__title">{t('auth.modalTitle')}</span>
+          <button
+            className="login-modal__close-btn"
+            onClick={() => dispatch({ type: 'CLOSE_LOGIN_MODAL' })}
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        {state.error && (
+          <div className="login-modal__error-bar">
+            <span>{state.error}</span>
+            <button className="login-modal__error-dismiss" onClick={() => dispatch({ type: 'CLEAR_ERROR' })}>
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        <div className="login-modal__body">
+          <OAuthButton
+            provider="github"
+            label={t('auth.loginGithub')}
+            onClick={loginGithub}
+            disabled={isLoading}
+          />
+          <OAuthButton
+            provider="google"
+            label={t('auth.loginGoogle')}
+            onClick={loginGoogle}
+            disabled={isLoading}
+          />
+
+          <div className="login-modal__divider">
+            <span>{t('auth.orEmail')}</span>
+          </div>
+
+          <EmailLoginForm
+            onSendCode={sendEmailCode}
+            onLogin={loginEmail}
+            disabled={isLoading}
+            error={null}
+          />
+        </div>
+
+        <div className="login-modal__footer">
+          <span className="login-modal__terms">{t('auth.termsNotice')}</span>
+        </div>
+
+        {isLoading && (
+          <div className="login-modal__loading">
+            <div className="login-modal__spinner" />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
