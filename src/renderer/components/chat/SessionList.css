@@ -224,10 +224,16 @@
   to { transform: rotate(360deg); }
 }
 
-/* Search keyword highlight */
+/* Search keyword highlight — dark theme */
 .search-highlight {
-  background: rgba(250, 204, 21, 0.5);
-  color: var(--text-primary);
+  background: rgba(250, 204, 21, 0.35);
+  color: #fef08a;
   border-radius: 2px;
   padding: 0 2px;
+}
+
+/* Search keyword highlight — light theme */
+[data-theme="light"] .search-highlight {
+  background: rgba(250, 204, 21, 0.45);
+  color: #92400e;
 }

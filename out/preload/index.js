@@ -60,7 +60,12 @@ const IPC_CHANNELS = {
     GET_PREFERENCES: "app:get-preferences",
     SAVE_PREFERENCES: "app:save-preferences",
     MEMORY_WARNING: "app:memory-warning",
-    DETECT_CLI_TOOLS: "app:detect-cli-tools"
+    DETECT_CLI_TOOLS: "app:detect-cli-tools",
+    UPDATE_AVAILABLE: "app:update-available",
+    UPDATE_DOWNLOADING: "app:update-downloading",
+    UPDATE_DOWNLOADED: "app:update-downloaded",
+    UPDATE_ERROR: "app:update-error",
+    INSTALL_UPDATE: "app:install-update"
   },
   AUTH: {
     LOGIN_GITHUB: "auth:login-github",
@@ -130,7 +135,28 @@ const api = {
       const handler = (_event, data) => callback(data);
       electron.ipcRenderer.on(IPC_CHANNELS.APP.MEMORY_WARNING, handler);
       return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.APP.MEMORY_WARNING, handler);
-    }
+    },
+    onUpdateAvailable: (callback) => {
+      const handler = (_event, data) => callback(data);
+      electron.ipcRenderer.on(IPC_CHANNELS.APP.UPDATE_AVAILABLE, handler);
+      return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.APP.UPDATE_AVAILABLE, handler);
+    },
+    onUpdateDownloading: (callback) => {
+      const handler = (_event, data) => callback(data);
+      electron.ipcRenderer.on(IPC_CHANNELS.APP.UPDATE_DOWNLOADING, handler);
+      return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.APP.UPDATE_DOWNLOADING, handler);
+    },
+    onUpdateDownloaded: (callback) => {
+      const handler = (_event, data) => callback(data);
+      electron.ipcRenderer.on(IPC_CHANNELS.APP.UPDATE_DOWNLOADED, handler);
+      return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.APP.UPDATE_DOWNLOADED, handler);
+    },
+    onUpdateError: (callback) => {
+      const handler = (_event, data) => callback(data);
+      electron.ipcRenderer.on(IPC_CHANNELS.APP.UPDATE_ERROR, handler);
+      return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.APP.UPDATE_ERROR, handler);
+    },
+    installUpdate: () => electron.ipcRenderer.invoke(IPC_CHANNELS.APP.INSTALL_UPDATE)
   },
   // --- FS domain ---
   fs: {

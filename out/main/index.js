@@ -89,7 +89,14 @@ const IPC_CHANNELS = {
     GET_PREFERENCES: "app:get-preferences",
     SAVE_PREFERENCES: "app:save-preferences",
     MEMORY_WARNING: "app:memory-warning",
-    DETECT_CLI_TOOLS: "app:detect-cli-tools"
+    DETECT_CLI_TOOLS: "app:detect-cli-tools",
+    UPDATE_CHECKING: "app:update-checking",
+    UPDATE_AVAILABLE: "app:update-available",
+    UPDATE_NOT_AVAILABLE: "app:update-not-available",
+    UPDATE_DOWNLOADING: "app:update-downloading",
+    UPDATE_DOWNLOADED: "app:update-downloaded",
+    UPDATE_ERROR: "app:update-error",
+    INSTALL_UPDATE: "app:install-update"
   },
   DISCOVERY: {
     FETCH: "discovery:fetch",
@@ -1031,11 +1038,13 @@ function createChatProjectReader(opts) {
                           snippet: text.slice(snippetStart, snippetEnd),
                           timestamp: obj.timestamp || ""
                         });
+                        break;
                       }
                     } catch {
                     }
                   }
-                } catch {
+                } catch (err) {
+                  console.warn("[chat:search] skip file:", f, err);
                 }
               }
             } catch {
@@ -1719,7 +1728,7 @@ function createChatMultiSource(opts) {
       if (codexReader) tasks.push(codexReader.search(query));
       if (geminiReader) tasks.push(geminiReader.search(query));
       const results = await Promise.all(tasks);
-      return results.flat().slice(0, 100);
+      return results.flat().slice(0, 500);
     }
   };
 }
@@ -2524,7 +2533,7 @@ function createFileWatcherStore() {
     getRetryCount
   };
 }
-function pushToAllWindows(channel, payload) {
+function pushToAllWindows$1(channel, payload) {
   electron.BrowserWindow.getAllWindows().forEach((win) => {
     if (!win.isDestroyed()) {
       win.webContents.send(channel, payload);
@@ -2546,7 +2555,7 @@ function createFsWatcherHandlers() {
           const watcher = fs.watch(watchPath, { recursive: true }, (eventType, filename) => {
             if (!filename) return;
             const type = eventType === "rename" ? "add" : "change";
-            pushToAllWindows(IPC_CHANNELS.FS.CHANGE, {
+            pushToAllWindows$1(IPC_CHANNELS.FS.CHANGE, {
               watchId: params.id,
               type,
               path: filename
@@ -3563,6 +3572,13 @@ for (const stream of [process.stdout, process.stderr]) {
 }
 let mainWindow = null;
 let lastBounds = null;
+function pushToAllWindows(channel, payload) {
+  electron.BrowserWindow.getAllWindows().forEach((win) => {
+    if (!win.isDestroyed()) {
+      win.webContents.send(channel, payload);
+    }
+  });
+}
 function createWindow(windowConfig) {
   const opts = {
     width: windowConfig?.width ?? 1280,
@@ -3689,6 +3705,9 @@ electron.app.whenReady().then(() => {
     const result = configManager.saveConfig(config);
     return { success: true, data: result };
   });
+  electron.ipcMain.handle(IPC_CHANNELS.APP.INSTALL_UPDATE, () => {
+    electronUpdater.autoUpdater.quitAndInstall();
+  });
   function launchWindowWithTerminals() {
     const config = configManager.loadConfig();
     createWindow(config.window);
@@ -3696,7 +3715,37 @@ electron.app.whenReady().then(() => {
       electronUpdater.autoUpdater.logger = null;
       electronUpdater.autoUpdater.autoDownload = true;
       electronUpdater.autoUpdater.autoInstallOnAppQuit = true;
-      electronUpdater.autoUpdater.checkForUpdatesAndNotify();
+      electronUpdater.autoUpdater.on("checking-for-update", () => {
+        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_CHECKING, {});
+      });
+      electronUpdater.autoUpdater.on("update-available", (info) => {
+        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_AVAILABLE, {
+          version: info.version,
+          releaseDate: info.releaseDate
+        });
+      });
+      electronUpdater.autoUpdater.on("update-not-available", () => {
+        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_NOT_AVAILABLE, {});
+      });
+      electronUpdater.autoUpdater.on("download-progress", (progress) => {
+        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_DOWNLOADING, {
+          percent: progress.percent,
+          bytesPerSecond: progress.bytesPerSecond,
+          transferred: progress.transferred,
+          total: progress.total
+        });
+      });
+      electronUpdater.autoUpdater.on("update-downloaded", (info) => {
+        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_DOWNLOADED, {
+          version: info.version
+        });
+      });
+      electronUpdater.autoUpdater.on("error", (err) => {
+        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_ERROR, {
+          message: err.message
+        });
+      });
+      electronUpdater.autoUpdater.checkForUpdates();
     }
     if (mainWindow) {
       const terminalsToRestore = config.openTerminals && config.openTerminals.length > 0 ? config.openTerminals : null;
