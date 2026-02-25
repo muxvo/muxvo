@@ -22,6 +22,10 @@ const SCOPE_LABELS: Record<string, { label: string; cls: string }> = {
   global: { label: 'Global', cls: 'mcp-panel__scope--global' },
   project: { label: 'Project', cls: 'mcp-panel__scope--project' },
   desktop: { label: 'Desktop', cls: 'mcp-panel__scope--desktop' },
+  codex: { label: 'Codex', cls: 'mcp-panel__scope--codex' },
+  gemini: { label: 'Gemini', cls: 'mcp-panel__scope--gemini' },
+  'codex-project': { label: 'Codex Project', cls: 'mcp-panel__scope--codex' },
+  'gemini-project': { label: 'Gemini Project', cls: 'mcp-panel__scope--gemini' },
 };
 
 const TYPE_OPTIONS: McpServerType[] = ['stdio', 'http', 'sse'];
@@ -163,7 +167,7 @@ export function McpPanel(): JSX.Element {
           ) : servers.length === 0 ? (
             <div className="mcp-panel__empty">{t('mcp.noServers')}</div>
           ) : (
-            (['global', 'project', 'desktop'] as const).map((scope) => {
+            Object.keys(grouped).map((scope) => {
               const items = grouped[scope];
               if (!items?.length) return null;
               return (

@@ -2,12 +2,17 @@
  * useMcpConfig — Read/write MCP server configurations from multiple sources
  *
  * Sources:
- *   Global (writable):  ~/.claude/mcp.json
+ *   Global (writable):   ~/.claude.json
  *   Project (read-only): {cwd}/.mcp.json
  *   Desktop (read-only): ~/Library/Application Support/Claude/claude_desktop_config.json
+ *   Codex (read-only):   ~/.codex/config.toml
+ *   Gemini (read-only):  ~/.gemini/settings.json
+ *   Codex project (read-only): {cwd}/.codex/config.toml
+ *   Gemini project (read-only): {cwd}/.gemini/settings.json
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { parse as parseToml } from '@iarna/toml';
 import type { McpServerConfig, McpServerType, McpConfigScope } from '@/shared/types/mcp.types';
 
 interface UseMcpConfigReturn {
