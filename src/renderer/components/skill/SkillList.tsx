@@ -5,7 +5,7 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { useI18n } from '@/renderer/i18n';
-import { SearchInput } from '@/renderer/components/SearchInput';
+import { SearchInput, HighlightText } from '@/renderer/components/SearchInput';
 import type { SkillItem } from '@/renderer/hooks/useSkills';
 
 interface SkillListProps {
@@ -155,7 +155,9 @@ export function SkillList({ skills, loading, selectedPath, onSelect }: SkillList
                         onClick={() => onSelect(skill.path)}
                       >
                         <div className="skill-list__item-header">
-                          <span className="skill-list__item-name">{skill.name}</span>
+                          <span className="skill-list__item-name">
+                            {searchQuery ? <HighlightText text={skill.name} query={searchQuery} /> : skill.name}
+                          </span>
                           {skill.source && skill.source !== 'shared' && (
                             <span className={`skill-list__source-badge skill-list__source-badge--${skill.source === 'codex' ? 'cx' : skill.source === 'gemini' ? 'gm' : 'cc'}`}>
                               {skill.source === 'codex' ? 'CX' : skill.source === 'gemini' ? 'GM' : 'CC'}
@@ -166,7 +168,9 @@ export function SkillList({ skills, loading, selectedPath, onSelect }: SkillList
                             <span className="skill-list__source-badge skill-list__source-badge--gm">GM</span>
                           </>)}
                         </div>
-                        <span className="skill-list__item-desc">{skill.desc}</span>
+                        <span className="skill-list__item-desc">
+                          {searchQuery ? <HighlightText text={skill.desc} query={searchQuery} /> : skill.desc}
+                        </span>
                       </div>
                     );
                   })}
