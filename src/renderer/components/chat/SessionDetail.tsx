@@ -14,7 +14,6 @@ import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { MarkdownPreview } from '@/renderer/components/markdown/MarkdownPreview';
 import { useI18n } from '@/renderer/i18n';
 import type { SessionMessage, AssistantContentBlock } from '@/shared/types/chat.types';
-import { getScrollTarget } from '@/shared/utils/search-navigation';
 import './SessionDetail.css';
 
 interface SessionDetailProps {
@@ -319,27 +318,15 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
   }, [matchIndices, messageKey, searchQuery]);
 
   // Unified scroll effect: fires AFTER React commit so Virtuoso is ready
+  // Note: Virtuoso's scrollToIndex uses DATA index (0-based), not absolute index
   useEffect(() => {
     if (!searchQuery?.trim() || matchIndices.length === 0) return;
     if (currentMatchIdx < 0 || currentMatchIdx >= matchIndices.length) return;
     const dataIndex = matchIndices[currentMatchIdx];
-    // Try both absolute index and data index to determine which one Virtuoso expects
-    const absoluteTarget = firstItemIndex + dataIndex;
-    console.log('[MUXVO:scroll-effect]', { currentMatchIdx, dataIndex, absoluteTarget, firstItemIndex, refExists: !!virtuosoRef.current });
     requestAnimationFrame(() => {
-      const ref = virtuosoRef.current;
-      if (!ref) return;
-      // Try scrollIntoView which is more reliable than scrollToIndex
-      try {
-        (ref as any).scrollIntoView?.({ index: absoluteTarget, align: 'center', behavior: 'auto' });
-        console.log('[MUXVO:scrollIntoView] called with absoluteTarget', absoluteTarget);
-      } catch {
-        // Fallback to scrollToIndex
-        ref.scrollToIndex({ index: absoluteTarget, align: 'center', behavior: 'auto' });
-        console.log('[MUXVO:scrollToIndex] fallback called with absoluteTarget', absoluteTarget);
-      }
+      virtuosoRef.current?.scrollToIndex({ index: dataIndex, align: 'center', behavior: 'auto' });
     });
-  }, [currentMatchIdx, matchIndices, firstItemIndex, searchQuery]);
+  }, [currentMatchIdx, matchIndices, searchQuery]);
 
   // Auto-scroll to bottom on real-time updates (new messages appended) — only when NOT searching
   const prevMsgCount = useRef(messages.length);
@@ -352,21 +339,13 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
 
   // Click handlers only update state — scroll is handled by the effect above
   const goToPrevMatch = useCallback(() => {
-    console.log('[MUXVO:goToPrev] before setState');
-    setCurrentMatchIdx(prev => {
-      const next = prev > 0 ? prev - 1 : prev;
-      console.log('[MUXVO:goToPrev] setState', prev, '→', next);
-      return next;
-    });
+    setCurrentMatchIdx(prev => prev > 0 ? prev - 1 : prev);
   }, []);
 
   const goToNextMatch = useCallback(() => {
-    console.log('[MUXVO:goToNext] before setState, matchIndices.length=', matchIndices.length);
-    setCurrentMatchIdx(prev => {
-      const next = prev < matchIndices.length - 1 ? prev + 1 : prev;
-      console.log('[MUXVO:goToNext] setState', prev, '→', next);
-      return next;
-    });
+    setCurrentMatchIdx(prev =>
+      prev < matchIndices.length - 1 ? prev + 1 : prev
+    );
   }, [matchIndices.length]);
 
   const handleStartReached = useCallback(() => {
