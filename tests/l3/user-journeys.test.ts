@@ -347,8 +347,8 @@ describe('L3 -- 模块完整流程', () => {
     expect(machine.context.username).toBe('testuser');
   });
 
-  // MODULE_L3_09: Backend OAuth 完整流程（含 token exchange）
-  test('MODULE_L3_09: Backend OAuth 完整流程（含 ExchangingToken）', async () => {
+  // MODULE_L3_09: Backend OAuth 完整流程（Authorizing -> TOKEN_RECEIVED -> LoggedIn）
+  test('MODULE_L3_09: Backend OAuth 完整流程（Authorizing -> TOKEN_RECEIVED -> LoggedIn）', async () => {
     const { createAuthMachine } = await import('@/modules/auth/auth-machine');
     const machine = createAuthMachine();
 
@@ -358,13 +358,11 @@ describe('L3 -- 模块完整流程', () => {
     expect(machine.state).toBe('Authorizing');
     expect(machine.context.authMethod).toBe('github');
 
-    // Authorizing -> ExchangingToken
+    // Authorizing: AUTH_CALLBACK stores authCode
     machine.send('AUTH_CALLBACK', { authCode: 'oauth-code' });
-    machine.send('EXCHANGE_TOKEN');
-    expect(machine.state).toBe('ExchangingToken');
 
-    // ExchangingToken -> LoggedIn (with backend tokens)
-    machine.send('BACKEND_TOKEN_RECEIVED', {
+    // Authorizing -> LoggedIn via TOKEN_RECEIVED
+    machine.send('TOKEN_RECEIVED', {
       accessToken: 'jwt_access_token',
       refreshToken: 'jwt_refresh_token',
       username: 'backenduser',
@@ -395,8 +393,7 @@ describe('L3 -- 模块完整流程', () => {
     const { createAuthMachine } = await import('@/modules/auth/auth-machine');
     const machine = createAuthMachine();
     machine.send('LOGIN');
-    machine.send('EXCHANGE_TOKEN');
-    machine.send('BACKEND_TOKEN_RECEIVED', {
+    machine.send('TOKEN_RECEIVED', {
       accessToken: pair.accessToken,
       refreshToken: pair.refreshToken,
       username: 'restored_user',
@@ -416,8 +413,7 @@ describe('L3 -- 模块完整流程', () => {
 
     // Bring to LoggedIn
     machine.send('LOGIN');
-    machine.send('EXCHANGE_TOKEN');
-    machine.send('BACKEND_TOKEN_RECEIVED', {
+    machine.send('TOKEN_RECEIVED', {
       accessToken: 'old_access',
       refreshToken: 'old_refresh',
       username: 'user',
@@ -442,8 +438,7 @@ describe('L3 -- 模块完整流程', () => {
 
     // Bring to LoggedIn
     machine.send('LOGIN');
-    machine.send('EXCHANGE_TOKEN');
-    machine.send('BACKEND_TOKEN_RECEIVED', {
+    machine.send('TOKEN_RECEIVED', {
       accessToken: 'access',
       refreshToken: 'refresh',
       username: 'user',

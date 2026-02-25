@@ -49,7 +49,6 @@ export function createAuthMachine() {
     context.codeVerifier = '';
     context.codeChallenge = '';
     context.authCode = undefined;
-    context.error = undefined;
   }
 
   function resetAll() {
