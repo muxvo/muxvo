@@ -193,11 +193,15 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
       {visibleSessions.map((session) => {
         const displayTitle = session.customTitle || session.title;
         const title = displayTitle.slice(0, 50);
-        const preview = session.title.slice(0, 100);
+        const snippet = searchSnippets?.get(session.sessionId);
+        // Use snippet as preview when title/preview don't contain the keyword (full-text match only)
+        const rawPreview = session.title.slice(0, 100);
+        const preview = searchQuery && snippet && !rawPreview.toLowerCase().includes(searchQuery.toLowerCase())
+          ? snippet.slice(0, 100)
+          : rawPreview;
         const time = formatTime(session.lastModified);
         const tags = extractTags(session.title);
         const isSelected = session.sessionId === selectedId;
-        const snippet = searchSnippets?.get(session.sessionId);
 
         return (
           <div
@@ -216,20 +220,9 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
               <span className="session-card__time">{time}</span>
             </div>
 
-            {session.fileSize !== -1 && (
-              <div className="session-card__preview">
-                {searchQuery ? <HighlightText text={preview} query={searchQuery} /> : preview}
-              </div>
-            )}
-
-            {snippet && (
-              <div className="session-card__snippet">
-                <span className="session-card__snippet-icon">🔍</span>
-                <span className="session-card__snippet-text">
-                  <HighlightText text={snippet} query={searchQuery} />
-                </span>
-              </div>
-            )}
+            <div className="session-card__preview">
+              {searchQuery ? <HighlightText text={preview} query={searchQuery} /> : preview}
+            </div>
 
             <div className="session-card__footer">
               <div className="session-card__tags">
