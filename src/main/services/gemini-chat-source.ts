@@ -231,59 +231,45 @@ export function createGeminiChatReader(opts: GeminiChatReaderOpts) {
             : `gemini-${e.folderName}`;
           return hash === projectHash;
         })
-        .sort((a, b) => b.lastUpdated - a.lastUpdated)
+        .sort((a, b) => b.mtime - a.mtime)
         .slice(0, limit);
 
-      const summaries: SessionSummary[] = [];
-      for (const entry of matching) {
-        let title = entry.title;
-        if (!title) {
-          title = await extractFirstUserMessage(entry.filePath);
-        }
+      return Promise.all(matching.map(async (entry) => {
+        const title = entry.title || await extractFirstUserMessage(entry.filePath);
         const hash = entry.cwd
           ? encodeProjectHash(entry.cwd)
           : `gemini-${entry.folderName}`;
-
-        summaries.push({
+        return {
           sessionId: entry.sessionId,
           projectHash: hash,
           title: title || entry.sessionId,
           startedAt: new Date(entry.mtime).toISOString(),
           lastModified: entry.mtime,
           fileSize: entry.size,
-          source: 'gemini',
-        });
-      }
-
-      return summaries;
+          source: 'gemini' as const,
+        };
+      }));
     },
 
     async getAllRecentSessions(limit: number): Promise<SessionSummary[]> {
       const entries = await buildIndex();
-      const sorted = [...entries].sort((a, b) => b.lastUpdated - a.lastUpdated).slice(0, limit);
+      const sorted = [...entries].sort((a, b) => b.mtime - a.mtime).slice(0, limit);
 
-      const summaries: SessionSummary[] = [];
-      for (const entry of sorted) {
-        let title = entry.title;
-        if (!title) {
-          title = await extractFirstUserMessage(entry.filePath);
-        }
+      return Promise.all(sorted.map(async (entry) => {
+        const title = entry.title || await extractFirstUserMessage(entry.filePath);
         const hash = entry.cwd
           ? encodeProjectHash(entry.cwd)
           : `gemini-${entry.folderName}`;
-
-        summaries.push({
+        return {
           sessionId: entry.sessionId,
           projectHash: hash,
           title: title || entry.sessionId,
           startedAt: new Date(entry.mtime).toISOString(),
           lastModified: entry.mtime,
           fileSize: entry.size,
-          source: 'gemini',
-        });
-      }
-
-      return summaries;
+          source: 'gemini' as const,
+        };
+      }));
     },
 
     async readSession(
