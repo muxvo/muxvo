@@ -15,6 +15,7 @@ import { ChatHistoryPanel } from './components/chat/ChatHistoryPanel';
 import { SkillsPanel } from './components/skill/SkillsPanel';
 import { McpPanel } from './components/mcp/McpPanel';
 import { HooksPanel } from './components/hook/HooksPanel';
+import { PluginPanel } from './components/plugin/PluginPanel';
 import { FilePanel } from './components/file/FilePanel';
 import { FileTempView } from './components/file/FileTempView';
 import { TourOverlay } from './components/tour/TourOverlay';
@@ -425,6 +426,13 @@ function AppContent({
       {state.hooksPanel.open && (
         <div className="hooks-panel-overlay">
           <HooksPanel />
+        </div>
+      )}
+
+      {/* Plugins panel overlay (two-column: plugin list | detail) */}
+      {state.pluginsPanel.open && (
+        <div className="plugins-panel-overlay">
+          <PluginPanel />
         </div>
       )}
 
