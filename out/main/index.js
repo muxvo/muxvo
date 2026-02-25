@@ -1987,7 +1987,7 @@ const RESOURCE_TYPE_MAP = {
   plans: { paths: [path.join(CLAUDE_DIR$1, "plans")], isFile: false },
   tasks: { paths: [path.join(CLAUDE_DIR$1, "tasks")], isFile: false },
   plugins: { paths: [path.join(CLAUDE_DIR$1, "plugins")], isFile: false },
-  mcp: { paths: [path.join(CLAUDE_DIR$1, "mcp.json")], isFile: true }
+  mcp: { paths: [path.join(CLAUDE_DIR$1, "mcp.json"), path.join(CODEX_DIR$1, "config.toml"), path.join(GEMINI_DIR$1, "settings.json")], isFile: true }
 };
 function sourceFromPath(dirPath) {
   if (dirPath.startsWith(CODEX_DIR$1)) return "codex";
@@ -2363,6 +2363,7 @@ const WRITABLE_ROOTS = [
   path.join(os.homedir(), ".muxvo"),
   path.join(os.homedir(), ".claude"),
   path.join(os.homedir(), ".codex"),
+  path.join(os.homedir(), ".gemini"),
   os.tmpdir()
 ];
 function isWritablePath(targetPath) {
