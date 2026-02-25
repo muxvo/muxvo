@@ -426,7 +426,7 @@ export const SessionDetail = forwardRef<SessionDetailHandle, SessionDetailProps>
         data={visibleMessages}
         firstItemIndex={firstItemIndex}
         startReached={handleStartReached}
-        initialTopMostItemIndex={visibleMessages.length - 1}
+        initialTopMostItemIndex={isSearching && matchIndices.length > 0 ? matchIndices[0] : visibleMessages.length - 1}
         components={{ Header }}
         itemContent={(index, message) => {
           const msgIdx = index - firstItemIndex;
