@@ -322,8 +322,13 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
   useEffect(() => {
     if (!searchQuery?.trim() || matchIndices.length === 0) return;
     const target = getScrollTarget(matchIndices, currentMatchIdx, firstItemIndex);
+    console.log('[MUXVO:scroll-effect]', { currentMatchIdx, target, refExists: !!virtuosoRef.current, matchCount: matchIndices.length });
     if (target !== null) {
-      virtuosoRef.current?.scrollToIndex({ index: target, align: 'center', behavior: 'auto' });
+      // Use requestAnimationFrame to ensure Virtuoso has processed layout
+      requestAnimationFrame(() => {
+        console.log('[MUXVO:scroll-raf]', { target, refExists: !!virtuosoRef.current });
+        virtuosoRef.current?.scrollToIndex({ index: target, align: 'center', behavior: 'auto' });
+      });
     }
   }, [currentMatchIdx, matchIndices, firstItemIndex, searchQuery]);
 
