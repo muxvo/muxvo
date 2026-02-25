@@ -156,6 +156,23 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.AUTH.LOGOUT),
     getStatus: () =>
       ipcRenderer.invoke(IPC_CHANNELS.AUTH.GET_STATUS),
+    loginGoogle: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH.LOGIN_GOOGLE),
+    sendEmailCode: (email: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH.SEND_EMAIL_CODE, { email }),
+    verifyEmailCode: (email: string, code: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH.VERIFY_EMAIL_CODE, { email, code }),
+    oauthCallback: (accessToken: string, refreshToken: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH.OAUTH_CALLBACK, { accessToken, refreshToken }),
+    refreshToken: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH.REFRESH_TOKEN),
+    getProfile: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH.GET_PROFILE),
+    onSessionExpired: (callback: () => void) => {
+      const handler = () => callback();
+      ipcRenderer.on(IPC_CHANNELS.AUTH.SESSION_EXPIRED, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.AUTH.SESSION_EXPIRED, handler);
+    },
   },
 
   // --- Config domain ---

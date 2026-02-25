@@ -21,3 +21,52 @@ export interface AuthStatus {
   };
   tokenExpiry?: string;
 }
+
+// ─── Phase 5 新增类型（仅追加，不修改上方接口） ───
+
+/** 认证方式 */
+export type AuthMethod = 'github' | 'google' | 'email';
+
+/** 用户资料（来自后端） */
+export interface UserProfile {
+  id: string;
+  displayName: string | null;
+  email: string | null;
+  avatarUrl: string | null;
+  role: string;
+}
+
+/** Token 对 */
+export interface TokenPair {
+  accessToken: string;
+  refreshToken: string;
+}
+
+/** auth:send-email-code 请求 */
+export interface EmailCodeRequest {
+  email: string;
+}
+
+/** auth:send-email-code 返回值 */
+export interface EmailCodeResponse {
+  success: boolean;
+  expiresIn: number;
+}
+
+/** auth:verify-email-code 请求 */
+export interface EmailVerifyRequest {
+  email: string;
+  code: string;
+}
+
+/** auth:oauth-callback 请求（从 deep link 接收） */
+export interface OAuthCallbackRequest {
+  accessToken: string;
+  refreshToken: string;
+}
+
+/** OAuth init 返回值 */
+export interface OAuthInitResponse {
+  authUrl: string;
+  state: string;
+}

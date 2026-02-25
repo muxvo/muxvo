@@ -233,4 +233,125 @@ describe('AUTH L2 -- 规则层测试', () => {
       expect(storageType).toBe('safeStorage');
     });
   });
+
+  // ─── Phase 5 新增 AUTH L2 测试 ───
+  describe('状态机: ExchangingToken 新路径 (Phase 5)', () => {
+    // AUTH_L2_06: ExchangingToken 状态转换
+    test('AUTH_L2_06: ExchangingToken 新路径 (Authorizing -> ExchangingToken -> LoggedIn)', async () => {
+      const { createAuthMachine } = await import('@/modules/auth/auth-machine');
+      const machine = createAuthMachine();
+
+      machine.send('LOGIN', { authMethod: 'github' });
+      expect(machine.state).toBe('Authorizing');
+
+      machine.send('EXCHANGE_TOKEN');
+      expect(machine.state).toBe('ExchangingToken');
+
+      machine.send('BACKEND_TOKEN_RECEIVED', {
+        accessToken: 'jwt_access',
+        refreshToken: 'jwt_refresh',
+        username: 'testuser',
+        userId: 'usr_123',
+        email: 'test@example.com',
+      });
+      expect(machine.state).toBe('LoggedIn');
+      expect(machine.context.accessToken).toBe('jwt_access');
+      expect(machine.context.refreshToken).toBe('jwt_refresh');
+      expect(machine.context.userId).toBe('usr_123');
+    });
+
+    // AUTH_L2_07: ExchangingToken 失败回退
+    test('AUTH_L2_07: ExchangingToken 失败回退 (ExchangingToken -> LoggedOut)', async () => {
+      const { createAuthMachine } = await import('@/modules/auth/auth-machine');
+      const machine = createAuthMachine();
+
+      machine.send('LOGIN');
+      machine.send('EXCHANGE_TOKEN');
+      expect(machine.state).toBe('ExchangingToken');
+
+      machine.send('AUTH_FAILED', { error: 'Token exchange failed' });
+      expect(machine.state).toBe('LoggedOut');
+      expect(machine.context.error).toContain('Token exchange failed');
+    });
+
+    // AUTH_L2_08: TOKEN_REFRESH 保持 LoggedIn
+    test('AUTH_L2_08: TOKEN_REFRESH 保持 LoggedIn 并更新 token', async () => {
+      const { createAuthMachine } = await import('@/modules/auth/auth-machine');
+      const machine = createAuthMachine();
+
+      // Bring to LoggedIn via original path
+      machine.send('LOGIN');
+      machine.send('TOKEN_RECEIVED', { accessToken: 'old_token', username: 'user' });
+      expect(machine.state).toBe('LoggedIn');
+
+      machine.send('TOKEN_REFRESH', {
+        accessToken: 'new_token',
+        refreshToken: 'new_refresh',
+      });
+      expect(machine.state).toBe('LoggedIn');
+      expect(machine.context.accessToken).toBe('new_token');
+      expect(machine.context.refreshToken).toBe('new_refresh');
+    });
+
+    // AUTH_L2_09: REFRESH_FAILED 回退到 LoggedOut
+    test('AUTH_L2_09: REFRESH_FAILED 回退到 LoggedOut', async () => {
+      const { createAuthMachine } = await import('@/modules/auth/auth-machine');
+      const machine = createAuthMachine();
+
+      machine.send('LOGIN');
+      machine.send('TOKEN_RECEIVED', { accessToken: 'token', username: 'user' });
+      expect(machine.state).toBe('LoggedIn');
+
+      machine.send('REFRESH_FAILED', { error: 'Refresh 过期' });
+      expect(machine.state).toBe('LoggedOut');
+      expect(machine.context.error).toContain('Refresh 过期');
+      expect(machine.context.accessToken).toBeUndefined();
+    });
+
+    // AUTH_L2_10: authMethod 上下文保留
+    test('AUTH_L2_10: authMethod 上下文在 LOGIN 时设置', async () => {
+      const { createAuthMachine } = await import('@/modules/auth/auth-machine');
+      const machine = createAuthMachine();
+
+      machine.send('LOGIN', { authMethod: 'google' });
+      expect(machine.context.authMethod).toBe('google');
+
+      machine.send('AUTH_FAILED');
+      expect(machine.state).toBe('LoggedOut');
+      expect(machine.context.authMethod).toBeUndefined();
+    });
+  });
+
+  describe('Token 存储扩展 (Phase 5)', () => {
+    // AUTH_L2_11: Token 对存储和读取
+    test('AUTH_L2_11: storeTokenPair/getTokenPair 存储和读取 token 对', async () => {
+      const { storeTokenPair, getTokenPair, clearToken } = await import(
+        '@/modules/auth/token-storage'
+      );
+
+      await storeTokenPair('access_abc', 'refresh_xyz');
+      const pair = await getTokenPair();
+      expect(pair.accessToken).toBe('access_abc');
+      expect(pair.refreshToken).toBe('refresh_xyz');
+
+      await clearToken();
+      const cleared = await getTokenPair();
+      expect(cleared.accessToken).toBeUndefined();
+      expect(cleared.refreshToken).toBeUndefined();
+    });
+
+    // AUTH_L2_12: storeToken 兼容性
+    test('AUTH_L2_12: storeToken 原有接口兼容性保持', async () => {
+      const { storeToken, getToken, getTokenStorageType, clearToken } = await import(
+        '@/modules/auth/token-storage'
+      );
+
+      await storeToken('single_token');
+      expect(await getToken()).toBe('single_token');
+      expect(getTokenStorageType()).toBe('safeStorage');
+
+      await clearToken();
+      expect(await getToken()).toBeUndefined();
+    });
+  });
 });
