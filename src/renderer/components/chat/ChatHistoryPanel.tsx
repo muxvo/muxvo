@@ -111,7 +111,7 @@ export function ChatHistoryPanel() {
         .then((result: { results?: SearchResult[] }) => {
           setSearchResults(result?.results || []);
         })
-        .catch(() => setSearchResults([]))
+        .catch((err) => { console.error('[chat:search]', err); setSearchResults([]); })
         .finally(() => setSearching(false));
     }, 300);
 

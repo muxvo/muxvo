@@ -226,8 +226,8 @@
 
 /* Search keyword highlight */
 .search-highlight {
-  background: rgba(250, 204, 21, 0.3);
-  color: inherit;
+  background: rgba(250, 204, 21, 0.5);
+  color: var(--text-primary);
   border-radius: 2px;
-  padding: 0 1px;
+  padding: 0 2px;
 }
