@@ -570,7 +570,7 @@ function createChatProjectReader(opts) {
             }
             if (!startedAt) startedAt = obj.timestamp || "";
             const trimmedContent = rawContent.trim();
-            if (trimmedContent && !trimmedContent.startsWith("<command-message>") && !trimmedContent.startsWith("<local-command-caveat>")) {
+            if (trimmedContent && !trimmedContent.startsWith("<command-message>") && !trimmedContent.startsWith("<local-command-caveat>") && !trimmedContent.startsWith("<teammate-message") && !trimmedContent.startsWith("<system-reminder>")) {
               title = trimmedContent.slice(0, 100);
               break;
             }
@@ -650,7 +650,7 @@ function createChatProjectReader(opts) {
         } else {
           const contentStr = typeof normalizedContent === "string" ? normalizedContent : "";
           const trimmedContent = contentStr.trimStart();
-          if (trimmedContent.startsWith("<task-notification>") || trimmedContent.startsWith("<command-message>") || trimmedContent.startsWith("<command-name>")) {
+          if (trimmedContent.startsWith("<teammate-message") || trimmedContent.startsWith("<system-reminder>") || trimmedContent.startsWith("<task-notification>") || trimmedContent.startsWith("<command-message>") || trimmedContent.startsWith("<command-name>")) {
             resolvedType = "system";
           }
         }
