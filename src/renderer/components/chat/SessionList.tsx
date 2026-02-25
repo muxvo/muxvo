@@ -11,30 +11,10 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import type { SessionSummary, ProjectInfo } from '@/shared/types/chat.types';
 import { useI18n } from '@/renderer/i18n';
-import { SearchInput } from '@/renderer/components/SearchInput';
+import { SearchInput, HighlightText } from '@/renderer/components/SearchInput';
 import './SessionList.css';
 
 const PAGE_SIZE = 50;
-
-/** Escape special regex characters */
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-/** Highlight matching query text with <mark> */
-function HighlightText({ text, query }: { text: string; query: string }) {
-  if (!query) return <>{text}</>;
-  const parts = text.split(new RegExp(`(${escapeRegex(query)})`, 'gi'));
-  return (
-    <>
-      {parts.map((part, i) =>
-        part.toLowerCase() === query.toLowerCase()
-          ? <mark key={i} className="search-highlight">{part}</mark>
-          : part
-      )}
-    </>
-  );
-}
 
 interface SessionListProps {
   sessions: SessionSummary[];
