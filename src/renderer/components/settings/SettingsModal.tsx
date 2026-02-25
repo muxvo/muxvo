@@ -18,7 +18,7 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
     if (!state.settingsModal.open) return;
     window.api.app.getConfig().then((result: any) => {
       if (result?.data?.startupTerminalCount) {
-        setStartupCount(Math.max(1, Math.min(5, result.data.startupTerminalCount)));
+        setStartupCount(Math.max(1, Math.min(20, result.data.startupTerminalCount)));
       }
     }).catch(() => {});
   }, [state.settingsModal.open]);
@@ -74,16 +74,18 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
                 <div className="settings-modal__label">{t('settings.startupTerminals')}</div>
                 <div className="settings-modal__desc">{t('settings.startupTerminalsDesc')}</div>
               </div>
-              <div className="settings-modal__num-group">
-                {[1, 2, 3, 4, 5].map(n => (
-                  <button
-                    key={n}
-                    className={`settings-modal__num-btn${n === startupCount ? ' settings-modal__num-btn--active' : ''}`}
-                    onClick={() => handleStartupCountChange(n)}
-                  >
-                    {n}
-                  </button>
-                ))}
+              <div className="settings-modal__stepper">
+                <button
+                  className="settings-modal__stepper-btn"
+                  onClick={() => handleStartupCountChange(Math.max(1, startupCount - 1))}
+                  disabled={startupCount <= 1}
+                >&#x2212;</button>
+                <span className="settings-modal__stepper-value">{startupCount}</span>
+                <button
+                  className="settings-modal__stepper-btn"
+                  onClick={() => handleStartupCountChange(Math.min(20, startupCount + 1))}
+                  disabled={startupCount >= 20}
+                >&#x2b;</button>
               </div>
             </div>
           </div>
