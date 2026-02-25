@@ -30,7 +30,7 @@ import { registerFsHandlers } from './ipc/fs-handlers';
 import { registerAppHandlers } from './ipc/app-handlers';
 import { registerFsWatcherHandlers } from './ipc/fs-watcher-handlers';
 import { registerFsImageHandlers } from './ipc/fs-image-handlers';
-import { registerAuthHandlers } from './ipc/auth-handlers';
+import { registerAuthHandlers, getAuthManager } from './ipc/auth-handlers';
 import { registerAnalyticsHandlers } from './ipc/analytics-handlers';
 import { autoUpdater } from 'electron-updater';
 import { createChatWatcher } from './services/chat-watcher';
@@ -317,6 +317,27 @@ app.whenReady().then(() => {
               id: t.id, state: t.state, cwd: t.cwd,
             })));
           }
+
+          // Restore auth session from stored tokens (§6.3 / §7.4)
+          // Runs after renderer is ready so push events can be received.
+          // On failure (expired token + refresh failure), silently stays logged out.
+          const manager = getAuthManager();
+          manager.tryRestoreSession().then((result) => {
+            if (result.success && result.user) {
+              console.log('[MUXVO:auth] Session restored for user:', result.user.displayName || result.user.email);
+              pushToAllWindows(IPC_CHANNELS.AUTH.GET_STATUS, {
+                success: true,
+                data: {
+                  loggedIn: true,
+                  user: result.user,
+                },
+              });
+            } else {
+              console.log('[MUXVO:auth] No session to restore');
+            }
+          }).catch((err) => {
+            console.warn('[MUXVO:auth] Session restore failed:', err);
+          });
         }, 500);
       });
     }
