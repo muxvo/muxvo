@@ -32,6 +32,7 @@ import { registerFsWatcherHandlers } from './ipc/fs-watcher-handlers';
 import { registerFsImageHandlers } from './ipc/fs-image-handlers';
 import { registerAuthHandlers } from './ipc/auth-handlers';
 import { registerAnalyticsHandlers } from './ipc/analytics-handlers';
+import { autoUpdater } from 'electron-updater';
 import { createChatWatcher } from './services/chat-watcher';
 import { createChatArchiveManager } from './services/chat-archive';
 import { createConfigWatcher } from './services/config-watcher';
@@ -228,6 +229,14 @@ app.whenReady().then(() => {
   function launchWindowWithTerminals(): void {
     const config = configManager.loadConfig();
     createWindow(config.window);
+
+    // Auto-update check (production only)
+    if (!is.dev) {
+      autoUpdater.logger = null;
+      autoUpdater.autoDownload = true;
+      autoUpdater.autoInstallOnAppQuit = true;
+      autoUpdater.checkForUpdatesAndNotify();
+    }
 
     // Restore terminals or create a fresh one after renderer is ready
     if (mainWindow) {

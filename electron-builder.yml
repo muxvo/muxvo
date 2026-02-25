@@ -4,6 +4,11 @@ directories:
   buildResources: build
   output: dist
 
+publish:
+  provider: github
+  owner: muxvo
+  repo: muxvo
+
 mac:
   category: public.app-category.developer-tools
   target:

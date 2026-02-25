@@ -32,8 +32,7 @@ interface GeminiChatReaderOpts {
 interface SessionIndexEntry {
   filePath: string;
   sessionId: string;
-  startTime: number; // ms timestamp from session JSON
-  lastUpdated: number; // ms timestamp from session JSON
+  mtime: number; // file mtime (lightweight, no JSON read needed)
   size: number;
   cwd: string;
   folderName: string; // Project folder name under tmp/
@@ -147,19 +146,13 @@ export function createGeminiChatReader(opts: GeminiChatReaderOpts) {
       for (const filePath of chatFiles) {
         try {
           const fileStat = await fsp.stat(filePath);
-          // Read session JSON to get sessionId and timestamps
-          const raw = await fsp.readFile(filePath, 'utf-8');
-          const data = JSON.parse(raw);
-
-          const sessionId = data.sessionId || basename(filePath, '.json');
-          const startTime = data.startTime ? new Date(data.startTime).getTime() : fileStat.mtimeMs;
-          const lastUpdated = data.lastUpdated ? new Date(data.lastUpdated).getTime() : fileStat.mtimeMs;
+          // Use filename as sessionId (lightweight, no JSON read)
+          const sessionId = basename(filePath, '.json');
 
           entries.push({
             filePath,
             sessionId: `gemini-${sessionId}`,
-            startTime,
-            lastUpdated,
+            mtime: fileStat.mtimeMs,
             size: fileStat.size,
             cwd,
             folderName,
@@ -191,14 +184,14 @@ export function createGeminiChatReader(opts: GeminiChatReaderOpts) {
         if (existing) {
           existing.count++;
           existing.totalSize += entry.size;
-          existing.lastActivity = Math.max(existing.lastActivity, entry.lastUpdated);
+          existing.lastActivity = Math.max(existing.lastActivity, entry.mtime);
         } else {
           projectMap.set(key, {
             cwd: entry.cwd,
             folderName: entry.folderName,
             count: 1,
             totalSize: entry.size,
-            lastActivity: entry.lastUpdated,
+            lastActivity: entry.mtime,
           });
         }
       }
@@ -255,8 +248,8 @@ export function createGeminiChatReader(opts: GeminiChatReaderOpts) {
           sessionId: entry.sessionId,
           projectHash: hash,
           title: title || entry.sessionId,
-          startedAt: new Date(entry.startTime).toISOString(),
-          lastModified: entry.lastUpdated,
+          startedAt: new Date(entry.mtime).toISOString(),
+          lastModified: entry.mtime,
           fileSize: entry.size,
           source: 'gemini',
         });
@@ -283,8 +276,8 @@ export function createGeminiChatReader(opts: GeminiChatReaderOpts) {
           sessionId: entry.sessionId,
           projectHash: hash,
           title: title || entry.sessionId,
-          startedAt: new Date(entry.startTime).toISOString(),
-          lastModified: entry.lastUpdated,
+          startedAt: new Date(entry.mtime).toISOString(),
+          lastModified: entry.mtime,
           fileSize: entry.size,
           source: 'gemini',
         });
@@ -312,7 +305,7 @@ export function createGeminiChatReader(opts: GeminiChatReaderOpts) {
           const msg = msgArray[i];
           if (!msg || !msg.type) continue;
 
-          const timestamp = msg.timestamp || new Date(entry.startTime).toISOString();
+          const timestamp = msg.timestamp || new Date(entry.mtime).toISOString();
           const uuid = msg.id ? `gemini-${msg.id}` : `gemini-${sessionId}-${i}`;
 
           if (msg.type === 'user') {
