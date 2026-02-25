@@ -10,6 +10,7 @@
 
 import { usePanelContext } from '@/renderer/contexts/PanelContext';
 import { useI18n } from '@/renderer/i18n';
+import { AuthButton } from '@/renderer/components/auth/AuthButton';
 import './MenuBar.css';
 
 type TabId = 'terminals' | 'skills' | 'mcp' | 'hooks' | 'chat';
@@ -143,6 +144,8 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0
           </svg>
         )}
       </button>
+
+      <AuthButton />
 
       <button
         className="menu-bar__help-btn"
