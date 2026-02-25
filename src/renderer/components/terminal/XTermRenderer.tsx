@@ -12,6 +12,19 @@ import { DEFAULT_TERMINAL_CONFIG } from '@/renderer/stores/terminal-config';
 import { TerminalSearchBar } from './TerminalSearchBar';
 import '@xterm/xterm/css/xterm.css';
 
+// Debounced font size persistence to avoid rapid disk writes during zoom
+let zoomSaveTimer: ReturnType<typeof setTimeout> | null = null;
+function saveTerminalFontSize(size: number): void {
+  if (zoomSaveTimer) clearTimeout(zoomSaveTimer);
+  zoomSaveTimer = setTimeout(() => {
+    window.api.app.getConfig().then((result) => {
+      const config = result?.data ?? {};
+      const terminal = { ...config.terminal, fontSize: size };
+      window.api.app.saveConfig({ ...config, terminal });
+    });
+  }, 500);
+}
+
 interface Props {
   terminalId: string;
 }
@@ -46,6 +59,19 @@ export function XTermRenderer({ terminalId }: Props): JSX.Element {
       const isMod = navigator.platform.includes('Mac') ? e.metaKey : e.ctrlKey;
       if (isMod && e.key === 'f' && e.type === 'keydown') {
         setSearchVisible((prev) => !prev);
+        return false;
+      }
+      // Cmd/Ctrl +/- zoom terminal font size
+      if (isMod && (e.key === '=' || e.key === '+') && e.type === 'keydown') {
+        window.dispatchEvent(new CustomEvent('muxvo:terminal-zoom', { detail: 'in' }));
+        return false;
+      }
+      if (isMod && e.key === '-' && e.type === 'keydown') {
+        window.dispatchEvent(new CustomEvent('muxvo:terminal-zoom', { detail: 'out' }));
+        return false;
+      }
+      if (isMod && e.key === '0' && e.type === 'keydown') {
+        window.dispatchEvent(new CustomEvent('muxvo:terminal-zoom', { detail: 'reset' }));
         return false;
       }
       return true;
@@ -134,10 +160,27 @@ export function XTermRenderer({ terminalId }: Props): JSX.Element {
     };
     window.addEventListener('muxvo:theme-change', onThemeChange);
 
+    // Terminal font zoom handler (from xterm key interception or Electron Menu IPC)
+    const handleZoom = (direction: string) => {
+      const current = term.options.fontSize ?? DEFAULT_TERMINAL_CONFIG.fontSize;
+      let next: number;
+      if (direction === 'in') next = Math.min(current + 1, 32);
+      else if (direction === 'out') next = Math.max(current - 1, 8);
+      else next = DEFAULT_TERMINAL_CONFIG.fontSize;
+      term.options.fontSize = next;
+      requestAnimationFrame(() => fitAddon.fit());
+      saveTerminalFontSize(next);
+    };
+    const onZoomEvent = (e: Event) => handleZoom((e as CustomEvent).detail);
+    window.addEventListener('muxvo:terminal-zoom', onZoomEvent);
+    const unsubZoom = window.api.terminal.onZoom((direction: string) => handleZoom(direction));
+
     return () => {
       unsubOutput();
       observer.disconnect();
       window.removeEventListener('muxvo:theme-change', onThemeChange);
+      window.removeEventListener('muxvo:terminal-zoom', onZoomEvent);
+      unsubZoom();
       addonManager.disposeAll();
       term.dispose();
     };
