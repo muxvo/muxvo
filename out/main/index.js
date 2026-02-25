@@ -2787,21 +2787,110 @@ function createAuthMachine() {
     send
   };
 }
-let storedToken;
-let storedRefreshToken;
+let safeStorage = null;
+let appGetPath = null;
+try {
+  const electron2 = require("electron");
+  if (electron2.safeStorage) {
+    safeStorage = electron2.safeStorage;
+  }
+  if (electron2.app?.getPath) {
+    appGetPath = (name) => electron2.app.getPath(name);
+  }
+} catch {
+}
+function getTokenFilePath() {
+  if (!appGetPath) return null;
+  try {
+    return path.join(appGetPath("userData"), ".auth-token");
+  } catch {
+    return null;
+  }
+}
+let cachedAccessToken;
+let cachedRefreshToken;
+function resolveStorageType() {
+  if (safeStorage && safeStorage.isEncryptionAvailable() && getTokenFilePath()) {
+    return "safeStorage";
+  }
+  if (getTokenFilePath()) {
+    return "plaintext";
+  }
+  return "memory";
+}
+async function writeTokenFile(data) {
+  const filePath = getTokenFilePath();
+  if (!filePath) return;
+  const json = JSON.stringify(data);
+  const storageType = resolveStorageType();
+  if (storageType === "safeStorage" && safeStorage) {
+    const encrypted = safeStorage.encryptString(json);
+    const tmpPath = filePath + ".tmp";
+    await fs.promises.writeFile(tmpPath, encrypted);
+    await fs.promises.rename(tmpPath, filePath);
+  } else if (storageType === "plaintext") {
+    const tmpPath = filePath + ".tmp";
+    await fs.promises.writeFile(tmpPath, json, "utf-8");
+    await fs.promises.rename(tmpPath, filePath);
+  }
+}
+async function readTokenFile() {
+  const filePath = getTokenFilePath();
+  if (!filePath || !fs.existsSync(filePath)) return null;
+  const storageType = resolveStorageType();
+  try {
+    if (storageType === "safeStorage" && safeStorage) {
+      const encrypted = await fs.promises.readFile(filePath);
+      const json = safeStorage.decryptString(encrypted);
+      return JSON.parse(json);
+    } else {
+      const json = await fs.promises.readFile(filePath, "utf-8");
+      return JSON.parse(json);
+    }
+  } catch {
+    await deleteTokenFile();
+    return null;
+  }
+}
+async function deleteTokenFile() {
+  const filePath = getTokenFilePath();
+  if (!filePath) return;
+  try {
+    await fs.promises.unlink(filePath);
+  } catch {
+  }
+  try {
+    await fs.promises.unlink(filePath + ".tmp");
+  } catch {
+  }
+}
 async function clearToken() {
-  storedToken = void 0;
-  storedRefreshToken = void 0;
+  cachedAccessToken = void 0;
+  cachedRefreshToken = void 0;
+  await deleteTokenFile();
 }
 async function storeTokenPair(accessToken, refreshToken) {
-  storedToken = accessToken;
-  storedRefreshToken = refreshToken;
+  cachedAccessToken = accessToken;
+  cachedRefreshToken = refreshToken;
+  await writeTokenFile({ accessToken, refreshToken });
 }
 async function getTokenPair() {
-  return {
-    accessToken: storedToken,
-    refreshToken: storedRefreshToken
-  };
+  if (cachedAccessToken || cachedRefreshToken) {
+    return {
+      accessToken: cachedAccessToken,
+      refreshToken: cachedRefreshToken
+    };
+  }
+  const data = await readTokenFile();
+  if (data) {
+    cachedAccessToken = data.accessToken;
+    cachedRefreshToken = data.refreshToken || void 0;
+    return {
+      accessToken: cachedAccessToken,
+      refreshToken: cachedRefreshToken
+    };
+  }
+  return {};
 }
 function createBackendClient(options) {
   const { baseUrl, timeout = 15e3 } = options;
@@ -3783,6 +3872,23 @@ electron.app.whenReady().then(() => {
               cwd: t.cwd
             })));
           }
+          const manager = getAuthManager();
+          manager.tryRestoreSession().then((result) => {
+            if (result.success && result.user) {
+              console.log("[MUXVO:auth] Session restored for user:", result.user.displayName || result.user.email);
+              pushToAllWindows(IPC_CHANNELS.AUTH.GET_STATUS, {
+                success: true,
+                data: {
+                  loggedIn: true,
+                  user: result.user
+                }
+              });
+            } else {
+              console.log("[MUXVO:auth] No session to restore");
+            }
+          }).catch((err) => {
+            console.warn("[MUXVO:auth] Session restore failed:", err);
+          });
         }, 500);
       });
     }
