@@ -19,7 +19,7 @@ import { createAuthManager } from '@/main/services/auth/auth-manager';
 // Lazy singleton auth manager (created on first use)
 let authManager: ReturnType<typeof createAuthManager> | null = null;
 
-function getAuthManager() {
+export function getAuthManager() {
   if (!authManager) {
     const backendUrl = process.env.MUXVO_API_URL || 'https://api.muxvo.com';
     authManager = createAuthManager({ backendUrl });
