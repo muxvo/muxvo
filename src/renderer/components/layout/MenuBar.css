@@ -24,6 +24,10 @@
   -webkit-app-region: drag;
 }
 
+body.name-editing .menu-bar__drag-region {
+  -webkit-app-region: no-drag;
+}
+
 .menu-bar__title {
   font-size: 12px;
   font-weight: 500;

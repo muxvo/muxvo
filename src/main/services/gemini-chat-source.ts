@@ -1,16 +1,18 @@
 /**
  * Gemini CLI Chat Source Reader
  *
- * Reads Gemini CLI chat sessions from ~/.gemini/tmp/<project_hash>/chats/*.json
+ * Reads Gemini CLI chat sessions from ~/.gemini/tmp/<project_folder_name>/chats/*.json
  * and converts them to Muxvo's unified SessionMessage format.
  *
  * API mirrors codex-chat-source.ts for use with chat-multi-source aggregator.
  *
- * Key differences from CC/Codex:
- * - Session files are JSON (not JSONL)
- * - Messages use { role: "user"|"model", parts: [...] }
- * - project_hash is SHA-256 of project root (not cwd encoding)
- * - cwd must be discovered from logs.json or inferred
+ * Actual Gemini CLI data format (verified):
+ * - Project dirs: ~/.gemini/tmp/<project_folder_name>/ (not SHA-256 hash)
+ * - cwd: read from .project_root file in project dir
+ * - Session JSON: { sessionId, projectHash, startTime, lastUpdated, messages: [...] }
+ * - Messages use { type: "user"|"gemini", content: ... }
+ * - User content: [{ text: "..." }] (array of objects)
+ * - Gemini content: "plain string"
  */
 
 import { promises as fsp } from 'fs';
@@ -20,7 +22,6 @@ import type {
   SessionSummary,
   SessionMessage,
   SearchResult,
-  AssistantContentBlock,
 } from '@/shared/types/chat.types';
 
 interface GeminiChatReaderOpts {
@@ -31,10 +32,11 @@ interface GeminiChatReaderOpts {
 interface SessionIndexEntry {
   filePath: string;
   sessionId: string;
-  mtime: number;
+  startTime: number; // ms timestamp from session JSON
+  lastUpdated: number; // ms timestamp from session JSON
   size: number;
   cwd: string;
-  geminiHash: string; // Original SHA-256 project hash directory name
+  folderName: string; // Project folder name under tmp/
   title: string;
 }
 
@@ -44,88 +46,28 @@ function encodeProjectHash(cwd: string): string {
   return cwd.replace(/[^a-zA-Z0-9-]/g, '-');
 }
 
-/** Extract text content from Gemini message parts */
-function extractTextFromParts(parts: unknown[]): string {
-  if (!Array.isArray(parts)) return '';
-  return parts
+/** Extract text from user content (array of {text} objects) */
+function extractTextFromUserContent(content: unknown): string {
+  if (typeof content === 'string') return content;
+  if (!Array.isArray(content)) return '';
+  return content
     .filter((p): p is { text: string } => typeof p === 'object' && p !== null && 'text' in p)
     .map((p) => p.text)
     .join('\n');
 }
 
-/** Parse Gemini parts into AssistantContentBlock[] for tool calls */
-function parseGeminiParts(parts: unknown[]): AssistantContentBlock[] {
-  if (!Array.isArray(parts)) return [{ type: 'text', text: '' }];
-
-  const blocks: AssistantContentBlock[] = [];
-  for (const part of parts) {
-    if (typeof part !== 'object' || part === null) continue;
-    const p = part as Record<string, unknown>;
-
-    if ('text' in p && typeof p.text === 'string') {
-      blocks.push({ type: 'text', text: p.text });
-    } else if ('functionCall' in p) {
-      const fc = p.functionCall as Record<string, unknown>;
-      blocks.push({
-        type: 'tool_use',
-        name: (fc.name as string) || 'unknown',
-        input: fc.args,
-      });
-    } else if ('functionResponse' in p) {
-      const fr = p.functionResponse as Record<string, unknown>;
-      blocks.push({
-        type: 'tool_result',
-        content: fr.response,
-        tool_use_id: fr.name as string,
-      });
-    }
-  }
-
-  return blocks.length > 0 ? blocks : [{ type: 'text', text: '' }];
-}
-
 /**
- * Try to read cwd from logs.json in a Gemini project temp directory.
- * Gemini stores logs.json alongside chats/ in the project hash dir.
- * We look for cwd-like paths in the data.
+ * Read cwd from .project_root file in a Gemini project temp directory.
+ * .project_root contains the full absolute path to the project root.
  */
 async function extractCwdFromGeminiProject(projectDir: string): Promise<string | null> {
-  const logsPath = join(projectDir, 'logs.json');
+  const projectRootPath = join(projectDir, '.project_root');
   try {
-    const raw = await fsp.readFile(logsPath, 'utf-8');
-    const data = JSON.parse(raw);
-
-    // logs.json may contain a cwd or projectRoot field
-    if (typeof data === 'object' && data !== null) {
-      if (data.cwd) return data.cwd;
-      if (data.projectRoot) return data.projectRoot;
-      if (data.workingDirectory) return data.workingDirectory;
-    }
-
-    // If it's an array (log entries), look for cwd in entries
-    if (Array.isArray(data)) {
-      for (const entry of data.slice(0, 20)) {
-        if (typeof entry === 'object' && entry !== null) {
-          if (entry.cwd) return entry.cwd;
-          if (entry.projectRoot) return entry.projectRoot;
-        }
-      }
-    }
+    const cwd = (await fsp.readFile(projectRootPath, 'utf-8')).trim();
+    if (cwd) return cwd;
   } catch {
-    // logs.json doesn't exist or is not parseable
+    // .project_root doesn't exist
   }
-
-  // Try reading .gemini-project-info or similar metadata
-  const infoPath = join(projectDir, 'project-info.json');
-  try {
-    const raw = await fsp.readFile(infoPath, 'utf-8');
-    const info = JSON.parse(raw);
-    if (info.cwd) return info.cwd;
-    if (info.projectRoot) return info.projectRoot;
-  } catch {
-    // not found
-  }
-
   return null;
 }
 
@@ -139,14 +81,14 @@ export function createGeminiChatReader(opts: GeminiChatReaderOpts) {
     expiry: 0,
   };
 
-  /** Find all project hash directories under tmp/ */
-  async function findProjectDirs(): Promise<Array<{ dir: string; hash: string }>> {
-    const dirs: Array<{ dir: string; hash: string }> = [];
+  /** Find all project directories under tmp/ */
+  async function findProjectDirs(): Promise<Array<{ dir: string; folderName: string }>> {
+    const dirs: Array<{ dir: string; folderName: string }> = [];
     try {
       const entries = await fsp.readdir(tmpDir, { withFileTypes: true });
       for (const entry of entries) {
         if (entry.isDirectory()) {
-          dirs.push({ dir: join(tmpDir, entry.name), hash: entry.name });
+          dirs.push({ dir: join(tmpDir, entry.name), folderName: entry.name });
         }
       }
     } catch {
@@ -177,11 +119,11 @@ export function createGeminiChatReader(opts: GeminiChatReaderOpts) {
     try {
       const raw = await fsp.readFile(filePath, 'utf-8');
       const data = JSON.parse(raw);
-      const messages = Array.isArray(data) ? data : data?.messages || data?.history || [];
+      const messages = data?.messages || [];
 
       for (const msg of messages) {
-        if (msg?.role === 'user') {
-          const text = extractTextFromParts(msg.parts || []);
+        if (msg?.type === 'user') {
+          const text = extractTextFromUserContent(msg.content);
           return text.slice(0, 100);
         }
       }
@@ -198,22 +140,29 @@ export function createGeminiChatReader(opts: GeminiChatReaderOpts) {
     const projectDirs = await findProjectDirs();
     const entries: SessionIndexEntry[] = [];
 
-    for (const { dir: projectDir, hash: geminiHash } of projectDirs) {
+    for (const { dir: projectDir, folderName } of projectDirs) {
       const cwd = (await extractCwdFromGeminiProject(projectDir)) || '';
       const chatFiles = await findChatFiles(projectDir);
 
       for (const filePath of chatFiles) {
         try {
           const fileStat = await fsp.stat(filePath);
-          const sessionId = basename(filePath, '.json');
+          // Read session JSON to get sessionId and timestamps
+          const raw = await fsp.readFile(filePath, 'utf-8');
+          const data = JSON.parse(raw);
+
+          const sessionId = data.sessionId || basename(filePath, '.json');
+          const startTime = data.startTime ? new Date(data.startTime).getTime() : fileStat.mtimeMs;
+          const lastUpdated = data.lastUpdated ? new Date(data.lastUpdated).getTime() : fileStat.mtimeMs;
 
           entries.push({
             filePath,
             sessionId: `gemini-${sessionId}`,
-            mtime: fileStat.mtimeMs,
+            startTime,
+            lastUpdated,
             size: fileStat.size,
             cwd,
-            geminiHash,
+            folderName,
             title: '',
           });
         } catch {
@@ -230,42 +179,42 @@ export function createGeminiChatReader(opts: GeminiChatReaderOpts) {
     async getProjects(): Promise<ProjectInfo[]> {
       const entries = await buildIndex();
 
-      // Group by geminiHash (since cwd might not be available for all)
+      // Group by cwd (or folderName if cwd unknown)
       const projectMap = new Map<
         string,
-        { cwd: string; geminiHash: string; count: number; totalSize: number; lastActivity: number }
+        { cwd: string; folderName: string; count: number; totalSize: number; lastActivity: number }
       >();
 
       for (const entry of entries) {
-        const key = entry.geminiHash;
+        const key = entry.cwd || entry.folderName;
         const existing = projectMap.get(key);
         if (existing) {
           existing.count++;
           existing.totalSize += entry.size;
-          existing.lastActivity = Math.max(existing.lastActivity, entry.mtime);
+          existing.lastActivity = Math.max(existing.lastActivity, entry.lastUpdated);
         } else {
           projectMap.set(key, {
             cwd: entry.cwd,
-            geminiHash: entry.geminiHash,
+            folderName: entry.folderName,
             count: 1,
             totalSize: entry.size,
-            lastActivity: entry.mtime,
+            lastActivity: entry.lastUpdated,
           });
         }
       }
 
       const projects: ProjectInfo[] = [];
       for (const [, value] of projectMap) {
-        // Use CC-compatible projectHash if cwd is known, otherwise use gemini hash prefix
+        // Use CC-compatible projectHash if cwd is known, otherwise use folder name prefix
         const hash = value.cwd
           ? encodeProjectHash(value.cwd)
-          : `gemini-${value.geminiHash.slice(0, 16)}`;
-        const displayPath = value.cwd || `Gemini (${value.geminiHash.slice(0, 8)}...)`;
+          : `gemini-${value.folderName}`;
+        const displayPath = value.cwd || `Gemini (${value.folderName})`;
         const parts = displayPath.split('/').filter(Boolean);
         projects.push({
           projectHash: hash,
           displayPath,
-          displayName: value.cwd ? parts[parts.length - 1] || 'Unknown' : `Gemini ${value.geminiHash.slice(0, 8)}`,
+          displayName: value.cwd ? parts[parts.length - 1] || 'Unknown' : `Gemini ${value.folderName}`,
           sessionCount: value.count,
           totalSize: value.totalSize,
           lastActivity: value.lastActivity,
@@ -286,10 +235,10 @@ export function createGeminiChatReader(opts: GeminiChatReaderOpts) {
         .filter((e) => {
           const hash = e.cwd
             ? encodeProjectHash(e.cwd)
-            : `gemini-${e.geminiHash.slice(0, 16)}`;
+            : `gemini-${e.folderName}`;
           return hash === projectHash;
         })
-        .sort((a, b) => b.mtime - a.mtime)
+        .sort((a, b) => b.lastUpdated - a.lastUpdated)
         .slice(0, limit);
 
       const summaries: SessionSummary[] = [];
@@ -300,14 +249,14 @@ export function createGeminiChatReader(opts: GeminiChatReaderOpts) {
         }
         const hash = entry.cwd
           ? encodeProjectHash(entry.cwd)
-          : `gemini-${entry.geminiHash.slice(0, 16)}`;
+          : `gemini-${entry.folderName}`;
 
         summaries.push({
           sessionId: entry.sessionId,
           projectHash: hash,
           title: title || entry.sessionId,
-          startedAt: new Date(entry.mtime).toISOString(),
-          lastModified: entry.mtime,
+          startedAt: new Date(entry.startTime).toISOString(),
+          lastModified: entry.lastUpdated,
           fileSize: entry.size,
           source: 'gemini',
         });
@@ -318,7 +267,7 @@ export function createGeminiChatReader(opts: GeminiChatReaderOpts) {
 
     async getAllRecentSessions(limit: number): Promise<SessionSummary[]> {
       const entries = await buildIndex();
-      const sorted = [...entries].sort((a, b) => b.mtime - a.mtime).slice(0, limit);
+      const sorted = [...entries].sort((a, b) => b.lastUpdated - a.lastUpdated).slice(0, limit);
 
       const summaries: SessionSummary[] = [];
       for (const entry of sorted) {
@@ -328,14 +277,14 @@ export function createGeminiChatReader(opts: GeminiChatReaderOpts) {
         }
         const hash = entry.cwd
           ? encodeProjectHash(entry.cwd)
-          : `gemini-${entry.geminiHash.slice(0, 16)}`;
+          : `gemini-${entry.folderName}`;
 
         summaries.push({
           sessionId: entry.sessionId,
           projectHash: hash,
           title: title || entry.sessionId,
-          startedAt: new Date(entry.mtime).toISOString(),
-          lastModified: entry.mtime,
+          startedAt: new Date(entry.startTime).toISOString(),
+          lastModified: entry.lastUpdated,
           fileSize: entry.size,
           source: 'gemini',
         });
@@ -357,52 +306,40 @@ export function createGeminiChatReader(opts: GeminiChatReaderOpts) {
       try {
         const raw = await fsp.readFile(entry.filePath, 'utf-8');
         const data = JSON.parse(raw);
-        const msgArray = Array.isArray(data) ? data : data?.messages || data?.history || [];
+        const msgArray = data?.messages || [];
 
         for (let i = 0; i < msgArray.length; i++) {
           const msg = msgArray[i];
-          if (!msg || !msg.role) continue;
+          if (!msg || !msg.type) continue;
 
-          const parts = msg.parts || [];
-          const timestamp = msg.timestamp || msg.createTime || new Date(entry.mtime).toISOString();
+          const timestamp = msg.timestamp || new Date(entry.startTime).toISOString();
+          const uuid = msg.id || `gemini-${sessionId}-${i}`;
 
-          if (msg.role === 'user') {
-            const text = extractTextFromParts(parts);
+          if (msg.type === 'user') {
+            const text = extractTextFromUserContent(msg.content);
             if (!text) continue;
             messages.push({
-              uuid: `gemini-${sessionId}-user-${i}`,
+              uuid,
               type: 'user',
               sessionId,
               cwd: entry.cwd,
               timestamp,
               content: text,
             });
-          } else if (msg.role === 'model') {
-            // Model messages may contain text, tool calls, or both
-            const blocks = parseGeminiParts(parts);
-            const hasOnlyText = blocks.every((b) => b.type === 'text');
-
-            if (hasOnlyText) {
-              const text = blocks.map((b) => b.text || '').join('\n');
-              if (!text) continue;
-              messages.push({
-                uuid: `gemini-${sessionId}-model-${i}`,
-                type: 'assistant',
-                sessionId,
-                cwd: entry.cwd,
-                timestamp,
-                content: text,
-              });
-            } else {
-              messages.push({
-                uuid: `gemini-${sessionId}-model-${i}`,
-                type: 'assistant',
-                sessionId,
-                cwd: entry.cwd,
-                timestamp,
-                content: blocks,
-              });
-            }
+          } else if (msg.type === 'gemini') {
+            // Gemini model replies: content is a plain string
+            const text = typeof msg.content === 'string'
+              ? msg.content
+              : extractTextFromUserContent(msg.content);
+            if (!text) continue;
+            messages.push({
+              uuid,
+              type: 'assistant',
+              sessionId,
+              cwd: entry.cwd,
+              timestamp,
+              content: text,
+            });
           }
         }
       } catch {
@@ -424,11 +361,11 @@ export function createGeminiChatReader(opts: GeminiChatReaderOpts) {
         try {
           const raw = await fsp.readFile(entry.filePath, 'utf-8');
           const data = JSON.parse(raw);
-          const msgArray = Array.isArray(data) ? data : data?.messages || data?.history || [];
+          const msgArray = data?.messages || [];
 
           for (const msg of msgArray) {
-            if (msg?.role === 'user') {
-              const text = extractTextFromParts(msg.parts || []);
+            if (msg?.type === 'user') {
+              const text = extractTextFromUserContent(msg.content);
               if (text.toLowerCase().includes(lowerQuery)) {
                 const start = text.toLowerCase().indexOf(lowerQuery);
                 const snippet = text.slice(
@@ -437,7 +374,7 @@ export function createGeminiChatReader(opts: GeminiChatReaderOpts) {
                 );
                 const hash = entry.cwd
                   ? encodeProjectHash(entry.cwd)
-                  : `gemini-${entry.geminiHash.slice(0, 16)}`;
+                  : `gemini-${entry.folderName}`;
                 results.push({
                   projectHash: hash,
                   sessionId: entry.sessionId,
