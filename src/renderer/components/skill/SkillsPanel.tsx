@@ -9,6 +9,7 @@ import { useSkills } from '@/renderer/hooks/useSkills';
 import { SkillList } from './SkillList';
 import { SkillFileTree } from './SkillFileTree';
 import { MarkdownWysiwyg } from '@/renderer/components/markdown/MarkdownWysiwyg';
+import { MarkdownPreview } from '@/renderer/components/markdown/MarkdownPreview';
 import { UnsavedPromptDialog } from '@/renderer/components/file/UnsavedPromptDialog';
 import { mapExtToFileType, toLocalFileUrl } from '@/renderer/utils/file-tree';
 import './SkillsPanel.css';
@@ -29,6 +30,74 @@ export function SkillsPanel(): JSX.Element {
   const [middleWidth, setMiddleWidth] = useState(280);
   const pendingAction = useRef<(() => void) | null>(null);
   const prevSkillPathRef = useRef<string | null>(null);
+
+  // ── Search state (lifted from SkillList) ──
+
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // ── Document match navigation ──
+
+  const [docMatchIdx, setDocMatchIdx] = useState(0);
+  const [docMatchTotal, setDocMatchTotal] = useState(0);
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  // Count marks after MarkdownPreview renders
+  useEffect(() => {
+    if (!searchQuery.trim() || !previewRef.current) {
+      setDocMatchTotal(0);
+      setDocMatchIdx(0);
+      return;
+    }
+    // Small delay to ensure MarkdownPreview has rendered
+    const timer = setTimeout(() => {
+      const marks = previewRef.current?.querySelectorAll('mark.search-highlight');
+      if (!marks) return;
+      setDocMatchTotal(marks.length);
+      setDocMatchIdx((prev) => {
+        const idx = marks.length > 0 ? Math.min(prev || 1, marks.length) : 0;
+        // Apply active class
+        marks.forEach((m) => m.classList.remove('search-highlight--active'));
+        if (idx > 0 && marks[idx - 1]) {
+          marks[idx - 1].classList.add('search-highlight--active');
+          (marks[idx - 1] as HTMLElement).scrollIntoView({ block: 'center', behavior: 'auto' });
+        }
+        return idx;
+      });
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [searchQuery, editContent, selectedFilePath]);
+
+  const goToPrevMatch = useCallback(() => {
+    setDocMatchIdx((prev) => {
+      if (prev <= 1) return prev;
+      const next = prev - 1;
+      const marks = previewRef.current?.querySelectorAll('mark.search-highlight');
+      if (marks) {
+        marks.forEach((m) => m.classList.remove('search-highlight--active'));
+        if (marks[next - 1]) {
+          marks[next - 1].classList.add('search-highlight--active');
+          (marks[next - 1] as HTMLElement).scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+      }
+      return next;
+    });
+  }, []);
+
+  const goToNextMatch = useCallback(() => {
+    setDocMatchIdx((prev) => {
+      if (prev >= docMatchTotal) return prev;
+      const next = prev + 1;
+      const marks = previewRef.current?.querySelectorAll('mark.search-highlight');
+      if (marks) {
+        marks.forEach((m) => m.classList.remove('search-highlight--active'));
+        if (marks[next - 1]) {
+          marks[next - 1].classList.add('search-highlight--active');
+          (marks[next - 1] as HTMLElement).scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+      }
+      return next;
+    });
+  }, [docMatchTotal]);
 
   // ── File loading ──
 
@@ -172,6 +241,10 @@ export function SkillsPanel(): JSX.Element {
     document.addEventListener('mouseup', onUp);
   };
 
+  // ── Determine if right panel should show read-only preview (when searching markdown) ──
+  const isSearching = Boolean(searchQuery.trim());
+  const showPreview = isSearching && fileType === 'markdown' && !sourceMode;
+
   // ── Render ──
 
   return (
@@ -183,6 +256,12 @@ export function SkillsPanel(): JSX.Element {
           loading={loading}
           selectedPath={selectedSkillPath}
           onSelect={handleSelectSkill}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          matchCurrent={docMatchIdx}
+          matchTotal={docMatchTotal}
+          onPrevMatch={goToPrevMatch}
+          onNextMatch={goToNextMatch}
         />
       </div>
 
@@ -205,7 +284,7 @@ export function SkillsPanel(): JSX.Element {
         onMouseDown={handleResizeStart(setMiddleWidth)}
       />
 
-      {/* Right: editor */}
+      {/* Right: editor / preview */}
       <div className="skills-panel__right">
         {selectedFilePath ? (
           <>
@@ -240,6 +319,10 @@ export function SkillsPanel(): JSX.Element {
                     alt={selectedFilePath.split('/').pop()}
                     style={{ maxWidth: '100%', maxHeight: '100%' }}
                   />
+                </div>
+              ) : showPreview ? (
+                <div ref={previewRef} className="skills-panel__preview-wrap">
+                  <MarkdownPreview content={editContent} searchQuery={searchQuery} />
                 </div>
               ) : fileType === 'markdown' && !sourceMode ? (
                 <MarkdownWysiwyg

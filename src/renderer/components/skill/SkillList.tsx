@@ -5,7 +5,7 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { useI18n } from '@/renderer/i18n';
-import { SearchInput, HighlightText } from '@/renderer/components/SearchInput';
+import { SearchInput } from '@/renderer/components/SearchInput';
 import type { SkillItem } from '@/renderer/hooks/useSkills';
 
 interface SkillListProps {
@@ -13,6 +13,14 @@ interface SkillListProps {
   loading: boolean;
   selectedPath: string | null;
   onSelect: (skillPath: string) => void;
+  // Controlled search — state lives in parent (SkillsPanel)
+  searchQuery: string;
+  onSearchChange: (q: string) => void;
+  // Document-level match navigation — passed through to SearchInput
+  matchCurrent?: number;
+  matchTotal?: number;
+  onPrevMatch?: () => void;
+  onNextMatch?: () => void;
 }
 
 interface SkillGroup {
@@ -48,10 +56,9 @@ function groupSkills(skills: SkillItem[]): SkillGroup[] {
   return groups;
 }
 
-export function SkillList({ skills, loading, selectedPath, onSelect }: SkillListProps) {
+export function SkillList({ skills, loading, selectedPath, onSelect, searchQuery, onSearchChange, matchCurrent, matchTotal, onPrevMatch, onNextMatch }: SkillListProps) {
   const { t } = useI18n();
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
-  const [searchQuery, setSearchQuery] = useState('');
 
   const filteredSkills = useMemo(() => {
     if (!searchQuery.trim()) return skills;
@@ -60,30 +67,6 @@ export function SkillList({ skills, loading, selectedPath, onSelect }: SkillList
       (s) => s.name.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q),
     );
   }, [skills, searchQuery]);
-
-  // ▲▼ navigation: cycle through filtered skills
-  const matchTotal = searchQuery.trim() ? filteredSkills.length : undefined;
-
-  const matchCurrent = useMemo(() => {
-    if (!searchQuery.trim()) return undefined;
-    if (!selectedPath) return filteredSkills.length > 0 ? 0 : undefined;
-    const idx = filteredSkills.findIndex(s => s.path === selectedPath);
-    return idx >= 0 ? idx + 1 : 0;
-  }, [searchQuery, selectedPath, filteredSkills]);
-
-  const onPrevMatch = useCallback(() => {
-    if (filteredSkills.length === 0) return;
-    const idx = filteredSkills.findIndex(s => s.path === selectedPath);
-    const prev = idx > 0 ? idx - 1 : filteredSkills.length - 1;
-    onSelect(filteredSkills[prev].path);
-  }, [filteredSkills, selectedPath, onSelect]);
-
-  const onNextMatch = useCallback(() => {
-    if (filteredSkills.length === 0) return;
-    const idx = filteredSkills.findIndex(s => s.path === selectedPath);
-    const next = idx < filteredSkills.length - 1 ? idx + 1 : 0;
-    onSelect(filteredSkills[next].path);
-  }, [filteredSkills, selectedPath, onSelect]);
 
   const groups = useMemo(() => groupSkills(filteredSkills), [filteredSkills]);
 
@@ -142,7 +125,7 @@ export function SkillList({ skills, loading, selectedPath, onSelect }: SkillList
       {/* Search */}
       <SearchInput
         value={searchQuery}
-        onChange={setSearchQuery}
+        onChange={onSearchChange}
         placeholder="Search skills..."
         matchCurrent={matchCurrent}
         matchTotal={matchTotal}
@@ -183,9 +166,7 @@ export function SkillList({ skills, loading, selectedPath, onSelect }: SkillList
                         onClick={() => onSelect(skill.path)}
                       >
                         <div className="skill-list__item-header">
-                          <span className="skill-list__item-name">
-                            {searchQuery ? <HighlightText text={skill.name} query={searchQuery} /> : skill.name}
-                          </span>
+                          <span className="skill-list__item-name">{skill.name}</span>
                           {skill.source && skill.source !== 'shared' && (
                             <span className={`skill-list__source-badge skill-list__source-badge--${skill.source === 'codex' ? 'cx' : skill.source === 'gemini' ? 'gm' : 'cc'}`}>
                               {skill.source === 'codex' ? 'CX' : skill.source === 'gemini' ? 'GM' : 'CC'}
@@ -196,9 +177,7 @@ export function SkillList({ skills, loading, selectedPath, onSelect }: SkillList
                             <span className="skill-list__source-badge skill-list__source-badge--gm">GM</span>
                           </>)}
                         </div>
-                        <span className="skill-list__item-desc">
-                          {searchQuery ? <HighlightText text={skill.desc} query={searchQuery} /> : skill.desc}
-                        </span>
+                        <span className="skill-list__item-desc">{skill.desc}</span>
                       </div>
                     );
                   })}
