@@ -1,5 +1,11 @@
 import Fastify from 'fastify';
+import type { FastifyError } from 'fastify';
+import dbPlugin from './plugins/db.js';
 import { healthRoutes } from './routes/health.js';
+import { authRoutes } from './routes/auth.js';
+import { userRoutes } from './routes/user.js';
+import { loadKeys } from './lib/jwt.js';
+import { AppError } from './lib/errors.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -8,12 +14,46 @@ export async function buildApp() {
     },
   });
 
+  // Global error handler for AppError instances
+  app.setErrorHandler<FastifyError>((error, request, reply) => {
+    if (error instanceof AppError) {
+      return reply.status(error.statusCode).send({
+        error: error.code,
+        message: error.message,
+      });
+    }
+
+    // Fastify validation errors (schema validation)
+    if (error.validation) {
+      return reply.status(400).send({
+        error: 'VALIDATION_ERROR',
+        message: error.message,
+      });
+    }
+
+    // Unexpected errors
+    request.log.error(error, 'Unhandled error');
+    return reply.status(500).send({
+      error: 'INTERNAL_ERROR',
+      message:
+        process.env.NODE_ENV === 'production'
+          ? 'Internal server error'
+          : error.message,
+    });
+  });
+
+  // Load JWT keys before registering routes that need them
+  await loadKeys();
+
+  // Infrastructure plugins
+  await app.register(dbPlugin);
+
   // Register route plugins
   await app.register(healthRoutes);
+  await app.register(authRoutes, { prefix: '/auth' });
+  await app.register(userRoutes, { prefix: '/user' });
 
   // Future plugins:
-  // await app.register(authRoutes, { prefix: '/auth' });
-  // await app.register(userRoutes, { prefix: '/user' });
   // await app.register(marketplaceRoutes, { prefix: '/marketplace' });
   // await app.register(showcaseRoutes, { prefix: '/showcase' });
   // await app.register(adminRoutes, { prefix: '/admin' });
