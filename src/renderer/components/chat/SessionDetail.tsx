@@ -321,15 +321,24 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
   // Unified scroll effect: fires AFTER React commit so Virtuoso is ready
   useEffect(() => {
     if (!searchQuery?.trim() || matchIndices.length === 0) return;
-    const target = getScrollTarget(matchIndices, currentMatchIdx, firstItemIndex);
-    console.log('[MUXVO:scroll-effect]', { currentMatchIdx, target, refExists: !!virtuosoRef.current, matchCount: matchIndices.length });
-    if (target !== null) {
-      // Use requestAnimationFrame to ensure Virtuoso has processed layout
-      requestAnimationFrame(() => {
-        console.log('[MUXVO:scroll-raf]', { target, refExists: !!virtuosoRef.current });
-        virtuosoRef.current?.scrollToIndex({ index: target, align: 'center', behavior: 'auto' });
-      });
-    }
+    if (currentMatchIdx < 0 || currentMatchIdx >= matchIndices.length) return;
+    const dataIndex = matchIndices[currentMatchIdx];
+    // Try both absolute index and data index to determine which one Virtuoso expects
+    const absoluteTarget = firstItemIndex + dataIndex;
+    console.log('[MUXVO:scroll-effect]', { currentMatchIdx, dataIndex, absoluteTarget, firstItemIndex, refExists: !!virtuosoRef.current });
+    requestAnimationFrame(() => {
+      const ref = virtuosoRef.current;
+      if (!ref) return;
+      // Try scrollIntoView which is more reliable than scrollToIndex
+      try {
+        (ref as any).scrollIntoView?.({ index: absoluteTarget, align: 'center', behavior: 'auto' });
+        console.log('[MUXVO:scrollIntoView] called with absoluteTarget', absoluteTarget);
+      } catch {
+        // Fallback to scrollToIndex
+        ref.scrollToIndex({ index: absoluteTarget, align: 'center', behavior: 'auto' });
+        console.log('[MUXVO:scrollToIndex] fallback called with absoluteTarget', absoluteTarget);
+      }
+    });
   }, [currentMatchIdx, matchIndices, firstItemIndex, searchQuery]);
 
   // Auto-scroll to bottom on real-time updates (new messages appended) — only when NOT searching
@@ -343,13 +352,21 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
 
   // Click handlers only update state — scroll is handled by the effect above
   const goToPrevMatch = useCallback(() => {
-    setCurrentMatchIdx(prev => prev > 0 ? prev - 1 : prev);
+    console.log('[MUXVO:goToPrev] before setState');
+    setCurrentMatchIdx(prev => {
+      const next = prev > 0 ? prev - 1 : prev;
+      console.log('[MUXVO:goToPrev] setState', prev, '→', next);
+      return next;
+    });
   }, []);
 
   const goToNextMatch = useCallback(() => {
-    setCurrentMatchIdx(prev =>
-      prev < matchIndices.length - 1 ? prev + 1 : prev
-    );
+    console.log('[MUXVO:goToNext] before setState, matchIndices.length=', matchIndices.length);
+    setCurrentMatchIdx(prev => {
+      const next = prev < matchIndices.length - 1 ? prev + 1 : prev;
+      console.log('[MUXVO:goToNext] setState', prev, '→', next);
+      return next;
+    });
   }, [matchIndices.length]);
 
   const handleStartReached = useCallback(() => {
