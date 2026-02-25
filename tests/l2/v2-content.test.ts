@@ -184,7 +184,7 @@ describe('AUTH L2 -- 规则层测试', () => {
 
       machine.send('AUTH_FAILED', { error: 'user_cancelled' });
       expect(machine.state).toBe('LoggedOut');
-      expect(machine.context.error).toContain('GitHub 授权失败');
+      expect(machine.context.error).toBe('user_cancelled');
     });
 
     // AUTH_L2_03: Token 过期处理 (LoggedIn -> LoggedOut)
@@ -235,19 +235,18 @@ describe('AUTH L2 -- 规则层测试', () => {
   });
 
   // ─── Phase 5 新增 AUTH L2 测试 ───
-  describe('状态机: ExchangingToken 新路径 (Phase 5)', () => {
-    // AUTH_L2_06: ExchangingToken 状态转换
-    test('AUTH_L2_06: ExchangingToken 新路径 (Authorizing -> ExchangingToken -> LoggedIn)', async () => {
+  describe('状态机: 5 状态路径 (Phase 5)', () => {
+    // AUTH_L2_06: OAuth 路径 (Authorizing -> TOKEN_RECEIVED -> LoggedIn)
+    test('AUTH_L2_06: OAuth 路径 (Authorizing -> TOKEN_RECEIVED -> LoggedIn)', async () => {
       const { createAuthMachine } = await import('@/modules/auth/auth-machine');
       const machine = createAuthMachine();
 
       machine.send('LOGIN', { authMethod: 'github' });
       expect(machine.state).toBe('Authorizing');
 
-      machine.send('EXCHANGE_TOKEN');
-      expect(machine.state).toBe('ExchangingToken');
+      machine.send('AUTH_CALLBACK', { authCode: 'oauth-code' });
 
-      machine.send('BACKEND_TOKEN_RECEIVED', {
+      machine.send('TOKEN_RECEIVED', {
         accessToken: 'jwt_access',
         refreshToken: 'jwt_refresh',
         username: 'testuser',
@@ -260,14 +259,16 @@ describe('AUTH L2 -- 规则层测试', () => {
       expect(machine.context.userId).toBe('usr_123');
     });
 
-    // AUTH_L2_07: ExchangingToken 失败回退
-    test('AUTH_L2_07: ExchangingToken 失败回退 (ExchangingToken -> LoggedOut)', async () => {
+    // AUTH_L2_07: Email 路径 (CodeSent -> Verifying -> LoggedIn) 及失败回退
+    test('AUTH_L2_07: Email 路径验证失败回退 (Verifying -> LoggedOut)', async () => {
       const { createAuthMachine } = await import('@/modules/auth/auth-machine');
       const machine = createAuthMachine();
 
-      machine.send('LOGIN');
-      machine.send('EXCHANGE_TOKEN');
-      expect(machine.state).toBe('ExchangingToken');
+      machine.send('SEND_EMAIL_CODE', { email: 'test@example.com' });
+      expect(machine.state).toBe('CodeSent');
+
+      machine.send('VERIFY_CODE');
+      expect(machine.state).toBe('Verifying');
 
       machine.send('AUTH_FAILED', { error: 'Token exchange failed' });
       expect(machine.state).toBe('LoggedOut');
