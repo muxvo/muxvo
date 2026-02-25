@@ -13,6 +13,7 @@ import { TerminalTile } from '@/renderer/components/terminal/TerminalTile';
 import { UnsavedPromptDialog } from './UnsavedPromptDialog';
 import { FileItem } from './FileItem';
 import { type TreeEntry, mapIpcToTree, insertAfter, removeChildren } from '@/renderer/utils/file-tree';
+import type { FileEntry as IpcFileEntry } from '@/shared/types/fs.types';
 import './FileTempView.css';
 
 interface FileTempViewProps {

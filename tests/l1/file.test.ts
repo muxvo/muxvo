@@ -26,7 +26,7 @@ describe('FILE L1 -- 契约层测试', () => {
     // ---- IPC invoke cases (FILE_L1_01 ~ FILE_L1_05, FILE_L1_07) ----
     test.each(ipcCases)('$id: $description', async ({ id, channel, input, expectedResponse }) => {
       // Register a mock handler that returns data shaped like expectedResponse
-      handleIpc(channel, async (_event, ...args) => {
+      handleIpc(channel!, async (_event, ...args) => {
         // In RED phase the real handler doesn't exist yet.
         // We simulate a conforming response so we can assert the contract shape.
         const data: Record<string, unknown> = {};
@@ -38,7 +38,7 @@ describe('FILE L1 -- 契约层测试', () => {
         return { success: true, data };
       });
 
-      const result = await invokeIpc(channel, input);
+      const result = await invokeIpc(channel!, input);
       expect(result).toBeDefined();
       expect(result.success).toBe(true);
       if (expectedResponse) {
@@ -51,7 +51,7 @@ describe('FILE L1 -- 契约层测试', () => {
     // ---- IPC push case (FILE_L1_06) ----
     test.each(ipcPushCases)('$id: $description', ({ id, channel, expectedPayload }) => {
       const received: unknown[] = [];
-      onIpcPush(channel, (...args) => {
+      onIpcPush(channel!, (...args) => {
         received.push(args);
       });
 
@@ -62,7 +62,7 @@ describe('FILE L1 -- 契约层测试', () => {
           mockPayload[key] = `mock_${key}`;
         }
       }
-      emitIpcPush(channel, mockPayload);
+      emitIpcPush(channel!, mockPayload);
 
       expect(received.length).toBe(1);
       const payload = (received[0] as unknown[])[0] as Record<string, unknown>;

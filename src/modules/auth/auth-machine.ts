@@ -16,7 +16,7 @@ export type AuthMethod = 'github' | 'google' | 'email';
 
 type AuthState = 'LoggedOut' | 'Authorizing' | 'ExchangingToken' | 'LoggedIn';
 
-interface AuthContext {
+export interface AuthContext {
   codeVerifier: string;
   codeChallenge: string;
   authCode?: string;
