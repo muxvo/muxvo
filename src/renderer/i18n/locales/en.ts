@@ -126,4 +126,18 @@ export const en = {
   'tour.step5.desc': 'Click the "File" button to open the file browser for this directory!',
   'tour.noTerminal.title': 'Create a Terminal First',
   'tour.noTerminal.desc': 'Click the + button to create a terminal, then click ? again to see the full feature tour.',
+  // Auth
+  'auth.loginButton': 'Login',
+  'auth.modalTitle': 'Login to Muxvo',
+  'auth.loginGithub': 'Continue with GitHub',
+  'auth.loginGoogle': 'Continue with Google',
+  'auth.orEmail': 'or use email',
+  'auth.emailPlaceholder': 'Email address',
+  'auth.codePlaceholder': 'Verification code',
+  'auth.sendCode': 'Send Code',
+  'auth.resendCode': 'Resend',
+  'auth.sending': 'Sending...',
+  'auth.login': 'Login',
+  'auth.logout': 'Logout',
+  'auth.termsNotice': 'By logging in you agree to the Terms of Service and Privacy Policy',
 } as const;
