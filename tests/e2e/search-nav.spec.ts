@@ -20,6 +20,16 @@ test('Search navigation: ▼▲ buttons scroll to matched messages', async () =>
   await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(2000);
 
+  // Capture console output for debugging
+  const consoleLogs: string[] = [];
+  page.on('console', (msg) => {
+    const text = msg.text();
+    if (text.includes('[MUXVO:')) {
+      consoleLogs.push(text);
+      console.log(`  [console] ${text}`);
+    }
+  });
+
   try {
     // ── Step 1: Navigate to Chat History tab ───────────────────
     console.log('Step 1: Navigate to Chat History tab');
@@ -148,6 +158,13 @@ test('Search navigation: ▼▲ buttons scroll to matched messages', async () =>
 
     const scrollAfter = await scroller.evaluate((el) => el.scrollTop);
     console.log(`  Scroll after ▼: ${scrollAfter}`);
+
+    // Print all captured MUXVO logs for debugging
+    console.log(`  --- Console logs (${consoleLogs.length}) ---`);
+    for (const log of consoleLogs) {
+      console.log(`  ${log}`);
+    }
+    console.log(`  --- End console logs ---`);
 
     // CORE ASSERTION
     if (scrollAfter !== scrollBefore) {
