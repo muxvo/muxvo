@@ -223,3 +223,11 @@
 @keyframes session-search-spin {
   to { transform: rotate(360deg); }
 }
+
+/* Search keyword highlight */
+.search-highlight {
+  background: rgba(250, 204, 21, 0.3);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}

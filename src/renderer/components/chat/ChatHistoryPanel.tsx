@@ -130,12 +130,37 @@ export function ChatHistoryPanel() {
   const filteredSessions = useMemo(() => {
     if (!searchQuery.trim()) return sessions;
     const q = searchQuery.toLowerCase();
-    const fullTextIds = new Set(searchResults.map(r => r.sessionId));
-    return sessions.filter(s => {
+    const loadedIds = new Set(sessions.map(s => s.sessionId));
+    const seen = new Set<string>();
+    const result: SessionSummary[] = [];
+
+    // 1) Title-matched sessions from loaded list
+    for (const s of sessions) {
       const titleMatch = s.title.toLowerCase().includes(q)
         || (s.customTitle && s.customTitle.toLowerCase().includes(q));
-      return titleMatch || fullTextIds.has(s.sessionId);
-    });
+      const fullTextMatch = searchResults.some(r => r.sessionId === s.sessionId);
+      if (titleMatch || fullTextMatch) {
+        result.push(s);
+        seen.add(s.sessionId);
+      }
+    }
+
+    // 2) Full-text results NOT in loaded sessions → create placeholder summaries
+    for (const r of searchResults) {
+      if (seen.has(r.sessionId) || loadedIds.has(r.sessionId)) continue;
+      result.push({
+        sessionId: r.sessionId,
+        projectHash: r.projectHash,
+        title: r.snippet.slice(0, 100),
+        startedAt: r.timestamp,
+        lastModified: r.timestamp ? new Date(r.timestamp).getTime() : 0,
+        fileSize: 0,
+        source: 'claude-code',
+      });
+      seen.add(r.sessionId);
+    }
+
+    return result;
   }, [sessions, searchQuery, searchResults]);
 
   const handleDismissBanner = useCallback(() => {
@@ -169,9 +194,11 @@ export function ChatHistoryPanel() {
     setMessages([]);
   }, []);
 
-  // Use ref to access sessions without adding it as useEffect dependency
+  // Use refs to access sessions/searchResults without adding as useEffect dependency
   const sessionsRef = useRef(sessions);
   sessionsRef.current = sessions;
+  const searchResultsRef = useRef(searchResults);
+  searchResultsRef.current = searchResults;
 
   // Fetch session detail — only re-run when selectedSessionId changes
   useEffect(() => {
@@ -179,11 +206,15 @@ export function ChatHistoryPanel() {
       setMessages([]);
       return;
     }
-    const session = sessionsRef.current.find(s => s.sessionId === selectedSessionId);
-    if (!session) return;
+    // Look up projectHash from loaded sessions first, then search results
+    let projectHash = sessionsRef.current.find(s => s.sessionId === selectedSessionId)?.projectHash;
+    if (!projectHash) {
+      projectHash = searchResultsRef.current.find(r => r.sessionId === selectedSessionId)?.projectHash;
+    }
+    if (!projectHash) return;
 
     setLoading(true);
-    window.api.chat.getSession(session.projectHash, selectedSessionId)
+    window.api.chat.getSession(projectHash, selectedSessionId)
       .then((result: { messages?: SessionMessage[] }) => setMessages(result?.messages || []))
       .catch(() => setMessages([]))
       .finally(() => setLoading(false));
