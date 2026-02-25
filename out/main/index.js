@@ -2599,8 +2599,418 @@ async function getAuthStatus() {
   }
   return { loggedIn: false };
 }
+function generatePKCE() {
+  const verifier = "pkce-verifier-" + Math.random().toString(36).slice(2);
+  const challenge = "pkce-challenge-" + Math.random().toString(36).slice(2);
+  return { verifier, challenge };
+}
+function createAuthMachine() {
+  let state = "LoggedOut";
+  const context = {
+    codeVerifier: "",
+    codeChallenge: "",
+    tokenStorage: "safeStorage"
+  };
+  function send(event, payload) {
+    switch (state) {
+      case "LoggedOut":
+        if (event === "LOGIN") {
+          state = "Authorizing";
+          const pkce = generatePKCE();
+          context.codeVerifier = pkce.verifier;
+          context.codeChallenge = pkce.challenge;
+          context.error = void 0;
+          if (payload?.authMethod) {
+            context.authMethod = payload.authMethod;
+          }
+        }
+        break;
+      case "Authorizing":
+        if (event === "AUTH_CALLBACK") {
+          if (payload?.authCode) {
+            context.authCode = payload.authCode;
+          }
+        } else if (event === "TOKEN_RECEIVED") {
+          state = "LoggedIn";
+          context.accessToken = payload?.accessToken;
+          context.username = payload?.username;
+          context.tokenStorage = "safeStorage";
+        } else if (event === "EXCHANGE_TOKEN") {
+          state = "ExchangingToken";
+        } else if (event === "AUTH_FAILED") {
+          state = "LoggedOut";
+          context.error = "GitHub 授权失败";
+          context.codeVerifier = "";
+          context.codeChallenge = "";
+          context.authMethod = void 0;
+        }
+        break;
+      case "ExchangingToken":
+        if (event === "BACKEND_TOKEN_RECEIVED") {
+          state = "LoggedIn";
+          context.accessToken = payload?.accessToken;
+          context.refreshToken = payload?.refreshToken;
+          context.username = payload?.username;
+          context.userId = payload?.userId;
+          context.email = payload?.email;
+          context.tokenStorage = "safeStorage";
+        } else if (event === "AUTH_FAILED") {
+          state = "LoggedOut";
+          context.error = payload?.error || "授权失败";
+          context.codeVerifier = "";
+          context.codeChallenge = "";
+          context.authMethod = void 0;
+        }
+        break;
+      case "LoggedIn":
+        if (event === "LOGOUT") {
+          state = "LoggedOut";
+          context.accessToken = void 0;
+          context.refreshToken = void 0;
+          context.username = void 0;
+          context.userId = void 0;
+          context.email = void 0;
+          context.authMethod = void 0;
+          context.codeVerifier = "";
+          context.codeChallenge = "";
+        } else if (event === "TOKEN_EXPIRED") {
+          state = "LoggedOut";
+          context.accessToken = void 0;
+          context.refreshToken = void 0;
+          context.codeVerifier = "";
+          context.codeChallenge = "";
+        } else if (event === "TOKEN_REFRESH") {
+          context.accessToken = payload?.accessToken;
+          if (payload?.refreshToken) {
+            context.refreshToken = payload.refreshToken;
+          }
+        } else if (event === "REFRESH_FAILED") {
+          state = "LoggedOut";
+          context.accessToken = void 0;
+          context.refreshToken = void 0;
+          context.username = void 0;
+          context.userId = void 0;
+          context.email = void 0;
+          context.authMethod = void 0;
+          context.codeVerifier = "";
+          context.codeChallenge = "";
+          context.error = payload?.error || "Token 刷新失败";
+        }
+        break;
+    }
+  }
+  return {
+    get state() {
+      return state;
+    },
+    get context() {
+      return context;
+    },
+    send
+  };
+}
+let storedToken;
+let storedRefreshToken;
+async function clearToken() {
+  storedToken = void 0;
+  storedRefreshToken = void 0;
+}
+async function storeTokenPair(accessToken, refreshToken) {
+  storedToken = accessToken;
+  storedRefreshToken = refreshToken;
+}
+async function getTokenPair() {
+  return {
+    accessToken: storedToken,
+    refreshToken: storedRefreshToken
+  };
+}
+function createBackendClient(options) {
+  const { baseUrl, timeout = 15e3 } = options;
+  async function request(path2, init) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeout);
+    try {
+      const response = await fetch(`${baseUrl}${path2}`, {
+        ...init,
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+          ...init?.headers
+        }
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        const msg = body.message || response.statusText;
+        throw new Error(`API error ${response.status}: ${msg}`);
+      }
+      return await response.json();
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  return {
+    /** Initialize GitHub OAuth flow — returns authUrl for browser open */
+    async initGithubAuth() {
+      return request("/auth/github/init", { method: "POST" });
+    },
+    /** Initialize Google OAuth flow — returns authUrl for browser open */
+    async initGoogleAuth() {
+      return request("/auth/google/init", { method: "POST" });
+    },
+    /** Send email verification code */
+    async sendEmailCode(email) {
+      return request("/auth/email/send", {
+        method: "POST",
+        body: JSON.stringify({ email })
+      });
+    },
+    /** Verify email code and get tokens */
+    async verifyEmailCode(email, code) {
+      return request("/auth/email/verify", {
+        method: "POST",
+        body: JSON.stringify({ email, code })
+      });
+    },
+    /** Refresh access token using refresh token (rotation) */
+    async refreshToken(refreshToken) {
+      return request("/auth/refresh", {
+        method: "POST",
+        body: JSON.stringify({ refreshToken })
+      });
+    },
+    /** Logout — revoke refresh token on server */
+    async logout(refreshToken) {
+      return request("/auth/logout", {
+        method: "POST",
+        body: JSON.stringify({ refreshToken })
+      });
+    },
+    /** Get user profile (requires access token) */
+    async getUserProfile(accessToken) {
+      return request("/user/me", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+    }
+  };
+}
+const TOKEN_REFRESH_INTERVAL_MS = 12 * 60 * 1e3;
+function createAuthManager(options) {
+  const machine = createAuthMachine();
+  const client = createBackendClient({
+    baseUrl: options.backendUrl,
+    timeout: options.backendTimeout
+  });
+  let refreshTimer = null;
+  function startRefreshTimer() {
+    stopRefreshTimer();
+    refreshTimer = setInterval(async () => {
+      try {
+        const tokens = await getTokenPair();
+        if (!tokens.refreshToken) {
+          stopRefreshTimer();
+          return;
+        }
+        const newTokens = await client.refreshToken(tokens.refreshToken);
+        await storeTokenPair(newTokens.accessToken, newTokens.refreshToken);
+        machine.send("TOKEN_REFRESH", {
+          accessToken: newTokens.accessToken,
+          refreshToken: newTokens.refreshToken
+        });
+      } catch {
+        machine.send("REFRESH_FAILED", { error: "Token 自动刷新失败" });
+        stopRefreshTimer();
+        await clearToken();
+      }
+    }, TOKEN_REFRESH_INTERVAL_MS);
+  }
+  function stopRefreshTimer() {
+    if (refreshTimer) {
+      clearInterval(refreshTimer);
+      refreshTimer = null;
+    }
+  }
+  return {
+    get state() {
+      return machine.state;
+    },
+    get context() {
+      return machine.context;
+    },
+    /** Start GitHub OAuth flow — opens browser */
+    async loginGithub() {
+      machine.send("LOGIN", { authMethod: "github" });
+      const result = await client.initGithubAuth();
+      return result;
+    },
+    /** Start Google OAuth flow — opens browser */
+    async loginGoogle() {
+      machine.send("LOGIN", { authMethod: "google" });
+      const result = await client.initGoogleAuth();
+      return result;
+    },
+    /** Send email verification code */
+    async sendEmailCode(email) {
+      machine.send("LOGIN", { authMethod: "email" });
+      return client.sendEmailCode(email);
+    },
+    /** Verify email code and complete login */
+    async verifyEmailCode(email, code) {
+      machine.send("EXCHANGE_TOKEN");
+      try {
+        const result = await client.verifyEmailCode(email, code);
+        await storeTokenPair(result.accessToken, result.refreshToken);
+        machine.send("BACKEND_TOKEN_RECEIVED", {
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+          username: result.user.displayName || email,
+          userId: result.user.id,
+          email: result.user.email || email
+        });
+        startRefreshTimer();
+        return { success: true, user: result.user };
+      } catch (err) {
+        machine.send("AUTH_FAILED", {
+          error: err instanceof Error ? err.message : "验证码验证失败"
+        });
+        return { success: false, error: err instanceof Error ? err.message : "验证码验证失败" };
+      }
+    },
+    /** Handle OAuth callback (deep link with tokens from server redirect) */
+    async handleOAuthCallback(accessToken, refreshToken) {
+      machine.send("AUTH_CALLBACK", { authCode: "oauth-callback" });
+      machine.send("EXCHANGE_TOKEN");
+      try {
+        await storeTokenPair(accessToken, refreshToken);
+        const user = await client.getUserProfile(accessToken);
+        machine.send("BACKEND_TOKEN_RECEIVED", {
+          accessToken,
+          refreshToken,
+          username: user.displayName || user.email || "",
+          userId: user.id,
+          email: user.email || ""
+        });
+        startRefreshTimer();
+        return { success: true, user };
+      } catch (err) {
+        machine.send("AUTH_FAILED", {
+          error: err instanceof Error ? err.message : "OAuth 回调处理失败"
+        });
+        await clearToken();
+        return { success: false, error: err instanceof Error ? err.message : "OAuth 回调处理失败" };
+      }
+    },
+    /** Manual token refresh */
+    async refreshToken() {
+      const tokens = await getTokenPair();
+      if (!tokens.refreshToken) {
+        return { success: false, error: "No refresh token available" };
+      }
+      try {
+        const newTokens = await client.refreshToken(tokens.refreshToken);
+        await storeTokenPair(newTokens.accessToken, newTokens.refreshToken);
+        machine.send("TOKEN_REFRESH", {
+          accessToken: newTokens.accessToken,
+          refreshToken: newTokens.refreshToken
+        });
+        return { success: true };
+      } catch (err) {
+        machine.send("REFRESH_FAILED", { error: "Token 刷新失败" });
+        await clearToken();
+        stopRefreshTimer();
+        return { success: false, error: err instanceof Error ? err.message : "Token 刷新失败" };
+      }
+    },
+    /** Logout — revoke server token + clear local */
+    async logout() {
+      const tokens = await getTokenPair();
+      stopRefreshTimer();
+      if (tokens.refreshToken) {
+        try {
+          await client.logout(tokens.refreshToken);
+        } catch {
+        }
+      }
+      await clearToken();
+      machine.send("LOGOUT");
+      return { success: true };
+    },
+    /** Get current auth status */
+    async getStatus() {
+      const isLoggedIn = machine.state === "LoggedIn";
+      if (isLoggedIn) {
+        return {
+          loggedIn: true,
+          user: {
+            username: machine.context.username || "",
+            avatarUrl: "",
+            userId: machine.context.userId,
+            email: machine.context.email
+          }
+        };
+      }
+      return { loggedIn: false };
+    },
+    /** Try to restore session from stored tokens on startup */
+    async tryRestoreSession() {
+      const tokens = await getTokenPair();
+      if (!tokens.accessToken || !tokens.refreshToken) {
+        return { success: false };
+      }
+      try {
+        const user = await client.getUserProfile(tokens.accessToken);
+        machine.send("LOGIN", { authMethod: void 0 });
+        machine.send("EXCHANGE_TOKEN");
+        machine.send("BACKEND_TOKEN_RECEIVED", {
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          username: user.displayName || user.email || "",
+          userId: user.id,
+          email: user.email || ""
+        });
+        startRefreshTimer();
+        return { success: true, user };
+      } catch {
+        try {
+          const newTokens = await client.refreshToken(tokens.refreshToken);
+          await storeTokenPair(newTokens.accessToken, newTokens.refreshToken);
+          const user = await client.getUserProfile(newTokens.accessToken);
+          machine.send("LOGIN", { authMethod: void 0 });
+          machine.send("EXCHANGE_TOKEN");
+          machine.send("BACKEND_TOKEN_RECEIVED", {
+            accessToken: newTokens.accessToken,
+            refreshToken: newTokens.refreshToken,
+            username: user.displayName || user.email || "",
+            userId: user.id,
+            email: user.email || ""
+          });
+          startRefreshTimer();
+          return { success: true, user };
+        } catch {
+          await clearToken();
+          return { success: false };
+        }
+      }
+    },
+    /** Stop refresh timer (for cleanup) */
+    destroy() {
+      stopRefreshTimer();
+    }
+  };
+}
+let authManager = null;
+function getAuthManager() {
+  if (!authManager) {
+    const backendUrl = process.env.MUXVO_API_URL || "https://api.muxvo.com";
+    authManager = createAuthManager({ backendUrl });
+  }
+  return authManager;
+}
 function createAuthHandlers() {
   return {
+    // ─── Original handlers (preserved) ───
     async loginGithub() {
       try {
         const result = await loginGithub();
@@ -2627,6 +3037,67 @@ function createAuthHandlers() {
         const message = err instanceof Error ? err.message : String(err);
         return { success: false, error: { code: "AUTH_ERROR", message } };
       }
+    },
+    // ─── Phase 5 新增 handlers ───
+    async loginGoogle() {
+      try {
+        const manager = getAuthManager();
+        const result = await manager.loginGoogle();
+        return { success: true, data: result };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "AUTH_ERROR", message } };
+      }
+    },
+    async sendEmailCode(params) {
+      try {
+        const manager = getAuthManager();
+        const result = await manager.sendEmailCode(params.email);
+        return { success: true, data: result };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "AUTH_ERROR", message } };
+      }
+    },
+    async verifyEmailCode(params) {
+      try {
+        const manager = getAuthManager();
+        const result = await manager.verifyEmailCode(params.email, params.code);
+        return { success: true, data: result };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "AUTH_ERROR", message } };
+      }
+    },
+    async oauthCallback(params) {
+      try {
+        const manager = getAuthManager();
+        const result = await manager.handleOAuthCallback(params.accessToken, params.refreshToken);
+        return { success: true, data: result };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "AUTH_ERROR", message } };
+      }
+    },
+    async refreshToken() {
+      try {
+        const manager = getAuthManager();
+        const result = await manager.refreshToken();
+        return { success: true, data: result };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "AUTH_ERROR", message } };
+      }
+    },
+    async getProfile() {
+      try {
+        const manager = getAuthManager();
+        const status = await manager.getStatus();
+        return { success: true, data: status };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: "AUTH_ERROR", message } };
+      }
     }
   };
 }
@@ -2640,6 +3111,24 @@ function registerAuthHandlers() {
   });
   electron.ipcMain.handle(IPC_CHANNELS.AUTH.GET_STATUS, async () => {
     return handlers.getStatus();
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.AUTH.LOGIN_GOOGLE, async () => {
+    return handlers.loginGoogle();
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.AUTH.SEND_EMAIL_CODE, async (_e, params) => {
+    return handlers.sendEmailCode(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.AUTH.VERIFY_EMAIL_CODE, async (_e, params) => {
+    return handlers.verifyEmailCode(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.AUTH.OAUTH_CALLBACK, async (_e, params) => {
+    return handlers.oauthCallback(params);
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.AUTH.REFRESH_TOKEN, async () => {
+    return handlers.refreshToken();
+  });
+  electron.ipcMain.handle(IPC_CHANNELS.AUTH.GET_PROFILE, async () => {
+    return handlers.getProfile();
   });
 }
 function createAnalyticsTracker() {

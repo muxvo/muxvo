@@ -65,7 +65,14 @@ const IPC_CHANNELS = {
   AUTH: {
     LOGIN_GITHUB: "auth:login-github",
     LOGOUT: "auth:logout",
-    GET_STATUS: "auth:get-status"
+    GET_STATUS: "auth:get-status",
+    LOGIN_GOOGLE: "auth:login-google",
+    SEND_EMAIL_CODE: "auth:send-email-code",
+    VERIFY_EMAIL_CODE: "auth:verify-email-code",
+    OAUTH_CALLBACK: "auth:oauth-callback",
+    REFRESH_TOKEN: "auth:refresh-token",
+    GET_PROFILE: "auth:get-profile",
+    SESSION_EXPIRED: "auth:session-expired"
   },
   ANALYTICS: {
     TRACK: "analytics:track",
@@ -174,7 +181,18 @@ const api = {
   auth: {
     loginGithub: () => electron.ipcRenderer.invoke(IPC_CHANNELS.AUTH.LOGIN_GITHUB),
     logout: () => electron.ipcRenderer.invoke(IPC_CHANNELS.AUTH.LOGOUT),
-    getStatus: () => electron.ipcRenderer.invoke(IPC_CHANNELS.AUTH.GET_STATUS)
+    getStatus: () => electron.ipcRenderer.invoke(IPC_CHANNELS.AUTH.GET_STATUS),
+    loginGoogle: () => electron.ipcRenderer.invoke(IPC_CHANNELS.AUTH.LOGIN_GOOGLE),
+    sendEmailCode: (email) => electron.ipcRenderer.invoke(IPC_CHANNELS.AUTH.SEND_EMAIL_CODE, { email }),
+    verifyEmailCode: (email, code) => electron.ipcRenderer.invoke(IPC_CHANNELS.AUTH.VERIFY_EMAIL_CODE, { email, code }),
+    oauthCallback: (accessToken, refreshToken) => electron.ipcRenderer.invoke(IPC_CHANNELS.AUTH.OAUTH_CALLBACK, { accessToken, refreshToken }),
+    refreshToken: () => electron.ipcRenderer.invoke(IPC_CHANNELS.AUTH.REFRESH_TOKEN),
+    getProfile: () => electron.ipcRenderer.invoke(IPC_CHANNELS.AUTH.GET_PROFILE),
+    onSessionExpired: (callback) => {
+      const handler = () => callback();
+      electron.ipcRenderer.on(IPC_CHANNELS.AUTH.SESSION_EXPIRED, handler);
+      return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.AUTH.SESSION_EXPIRED, handler);
+    }
   },
   // --- Config domain ---
   config: {
