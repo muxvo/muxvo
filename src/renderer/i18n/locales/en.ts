@@ -37,7 +37,7 @@ export const en = {
   'chat.system': 'SYSTEM',
   'chat.copyToClipboard': '📋 Copy Session as Markdown',
   'chat.copied': '✅ Copied!',
-  'chat.archiveNotice': 'Claude Code retains local chat history for ~30 days when not used for training (5 years if opted in). Muxvo auto-archives to ~/.muxvo/chat-archive/ for permanent retention. All data is stored locally on your computer and never uploaded to any server.',
+  'chat.archiveNotice': 'Claude Code retains local history for ~30 days (5 years if opted into training); Codex and Gemini CLI retain history indefinitely by default (Codex supports size-based limits, Gemini supports configurable retention period). Muxvo auto-archives Claude Code history to ~/.muxvo/chat-archive/. All data is stored locally on your computer.',
   'chat.archiving': 'Archiving {synced}/{total}...',
   'chat.archiveOn': 'Auto-archive: On',
   'chat.archiveOff': 'Auto-archive: Off',
