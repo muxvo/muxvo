@@ -3856,6 +3856,32 @@ electron.app.whenReady().then(() => {
         { role: "paste" },
         { role: "selectAll" }
       ]
+    },
+    {
+      label: "View",
+      submenu: [
+        {
+          label: "Zoom In",
+          accelerator: "CommandOrControl+=",
+          click: () => {
+            electron.BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.TERMINAL.ZOOM, "in");
+          }
+        },
+        {
+          label: "Zoom Out",
+          accelerator: "CommandOrControl+-",
+          click: () => {
+            electron.BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.TERMINAL.ZOOM, "out");
+          }
+        },
+        {
+          label: "Reset Zoom",
+          accelerator: "CommandOrControl+0",
+          click: () => {
+            electron.BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.TERMINAL.ZOOM, "reset");
+          }
+        }
+      ]
     }
   ];
   electron.Menu.setApplicationMenu(electron.Menu.buildFromTemplate(template));

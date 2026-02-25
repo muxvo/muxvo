@@ -15,7 +15,8 @@ const IPC_CHANNELS = {
     GET_BUFFER: "terminal:get-buffer",
     UPDATE_CWD: "terminal:update-cwd",
     CWD_CHANGED: "terminal:cwd-changed",
-    LIST_UPDATED: "terminal:list-updated"
+    LIST_UPDATED: "terminal:list-updated",
+    ZOOM: "terminal:zoom"
   },
   FS: {
     READ_DIR: "fs:read-dir",
@@ -122,6 +123,11 @@ const api = {
       const handler = (_event, data) => callback(data);
       electron.ipcRenderer.on(IPC_CHANNELS.TERMINAL.CWD_CHANGED, handler);
       return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.TERMINAL.CWD_CHANGED, handler);
+    },
+    onZoom: (callback) => {
+      const handler = (_event, direction) => callback(direction);
+      electron.ipcRenderer.on(IPC_CHANNELS.TERMINAL.ZOOM, handler);
+      return () => electron.ipcRenderer.removeListener(IPC_CHANNELS.TERMINAL.ZOOM, handler);
     }
   },
   // --- App domain ---
