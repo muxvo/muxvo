@@ -21,6 +21,7 @@ import { FileTempView } from './components/file/FileTempView';
 import { TourOverlay } from './components/tour/TourOverlay';
 import { UpdateNotification } from './components/app/UpdateNotification';
 import { LoginModal } from './components/auth/LoginModal';
+import { SettingsModal } from './components/settings/SettingsModal';
 import { PanelProvider, usePanelContext } from './contexts/PanelContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { I18nProvider, useI18n, type Locale } from './i18n';
@@ -370,7 +371,7 @@ function AppContent({
 
   return (
     <div className="app">
-      <MenuBar viewMode={viewMode} onBackToTiling={onBackToTiling} terminalCount={terminals.length} onAddTerminal={onAddTerminal} maxReached={maxReached} uiTheme={uiTheme} onToggleTheme={onToggleTheme} />
+      <MenuBar viewMode={viewMode} onBackToTiling={onBackToTiling} terminalCount={terminals.length} onAddTerminal={onAddTerminal} maxReached={maxReached} />
       <main className="app-content">
         <TerminalGrid
           terminals={terminals}
@@ -484,6 +485,7 @@ function AppContent({
         terminalNames={terminalNames}
       />
 
+      <SettingsModal uiTheme={uiTheme} onToggleTheme={onToggleTheme} />
       <LoginModal />
       <UpdateNotification />
     </div>

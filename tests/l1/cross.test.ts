@@ -1,8 +1,8 @@
 /**
- * CROSS L1 -- 契约层测试（跨功能模块: APP + ONBOARD + PERF + ERROR）
+ * CROSS L1 -- 契约层测试（跨功能模块: APP + SETTINGS + PERF + ERROR）
  * Source: docs/Muxvo_测试_v2/02_modules/test_CROSS.md
  * Total: 12 L1 cases
- *   APP_L1_01~05, ONBOARD_L1_01~02, PERF_L1_01~02, ERROR_L1_01~03
+ *   APP_L1_01~05, SETTINGS_L1_01~02, PERF_L1_01~02, ERROR_L1_01~03
  *
  * RED phase: All tests have real assertions but will FAIL because
  * source modules are not yet implemented.
@@ -166,61 +166,26 @@ describe('CROSS L1 -- 契约层测试', () => {
     });
   });
 
-  // ========== ONBOARD ==========
-  describe('ONBOARD -- 首次使用引导', () => {
-    // ---- ONBOARD_L1_01: 引导步骤数据格式 ----
-    test('ONBOARD_L1_01: 引导步骤数据格式 -- 返回 steps 数组及当前步骤', async () => {
-      const spec = defaultValueCases.find((c) => c.id === 'ONBOARD_L1_01');
+  // ========== SETTINGS ==========
+  describe('SETTINGS -- 设置面板', () => {
+    test('SETTINGS_L1_01: startupTerminalCount 配置默认值 -- 默认为 1', async () => {
+      const spec = defaultValueCases.find((c) => c.id === 'SETTINGS_L1_01');
       expect(spec).toBeDefined();
 
-      // RED phase: verify actual module returns the onboarding steps format
-      const { getOnboardingStatus } = await import('@/main/services/onboard/status');
-      const status = await getOnboardingStatus();
-
-      expect(status).toHaveProperty('steps');
-      expect(status).toHaveProperty('currentStep');
-      expect(status).toHaveProperty('completed');
-      expect(Array.isArray(status.steps)).toBe(true);
-      expect(status.steps.length).toBeGreaterThan(0);
-      expect(typeof status.currentStep).toBe('number');
-      expect(typeof status.completed).toBe('boolean');
-
-      // Each step should have { id, title, content, action }
-      for (const step of status.steps) {
-        expect(step).toHaveProperty('id');
-        expect(step).toHaveProperty('title');
-        expect(step).toHaveProperty('content');
-        expect(step).toHaveProperty('action');
-      }
+      const { createConfigManager } = await import('@/main/services/app/config');
+      const manager = createConfigManager({ configDir: '/tmp/test-nonexistent' });
+      const config = manager.loadConfig();
+      expect(config.startupTerminalCount).toBe(1);
     });
 
-    // ---- ONBOARD_L1_02: CLI 工具检测格式 ----
-    test('ONBOARD_L1_02: CLI 工具检测格式 -- 步骤 2 自动检测 PATH 中的 AI CLI 工具', async () => {
-      const spec = defaultValueCases.find((c) => c.id === 'ONBOARD_L1_02');
+    test('SETTINGS_L1_02: preferences 持久化格式 -- 读写 language 字段', async () => {
+      const spec = defaultValueCases.find((c) => c.id === 'SETTINGS_L1_02');
       expect(spec).toBeDefined();
 
-      // RED phase: verify actual module returns detected tools format
-      const { detectCliTools } = await import('@/main/services/onboard/cli-detection');
-      const result = await detectCliTools();
-
-      expect(result).toHaveProperty('detectedTools');
-      expect(Array.isArray(result.detectedTools)).toBe(true);
-
-      // Each detected tool should have { name, path, version? }
-      for (const tool of result.detectedTools) {
-        expect(tool).toHaveProperty('name');
-        expect(tool).toHaveProperty('path');
-        expect(typeof tool.name).toBe('string');
-        expect(typeof tool.path).toBe('string');
-      }
-
-      // Should scan for claude, codex, gemini
-      const scannedTools = ['claude', 'codex', 'gemini'];
-      const detectedNames = result.detectedTools.map((t: { name: string }) => t.name);
-      for (const toolName of scannedTools) {
-        // At least verify the module knows about these tools
-        expect(result).toHaveProperty('scannedTools');
-      }
+      const { getPreferences } = await import('@/main/services/app/preferences');
+      const result = await getPreferences();
+      expect(result).toHaveProperty('preferences');
+      expect(typeof result.preferences).toBe('object');
     });
   });
 

@@ -33,29 +33,17 @@ describe('L3 -- 完整用户旅程', () => {
 
   // JOURNEY_L3_01: 新用户首次使用完整旅程
   test('JOURNEY_L3_01: 新用户首次使用完整旅程', async () => {
-    // Step 1: Launch Muxvo (first time) -> onboardingCompleted=false
+    // Step 1: Launch Muxvo (first time)
     const app = new MockApp();
     await app.launch();
     expect(app.state).toBe('running');
 
-    const { getOnboardingStatus } = await import('@/modules/onboarding/status');
-    const status = getOnboardingStatus();
-    expect(status.onboardingCompleted).toBe(false);
-
-    // Step 2: Complete 4-step onboarding
-    const { createOnboardingFlow } = await import('@/modules/onboarding/flow');
-    const flow = createOnboardingFlow();
-    expect(flow.totalSteps).toBe(4);
-
-    for (let step = 1; step <= 4; step++) {
-      flow.completeStep(step);
-      expect(flow.currentStep).toBe(step < 4 ? step + 1 : 4);
-    }
-
-    // Step 3: Onboarding complete -> enter empty Grid
-    expect(flow.completed).toBe(true);
-    const statusAfter = getOnboardingStatus();
-    expect(statusAfter.onboardingCompleted).toBe(true);
+    // Step 1-2: Verify settings configuration is available
+    const { createConfigManager } = await import('@/main/services/app/config');
+    const configMgr = createConfigManager({ configDir: '/tmp/test-nonexistent' });
+    const appConfig = configMgr.loadConfig();
+    expect(appConfig.startupTerminalCount).toBe(1);
+    expect(appConfig.theme).toBeDefined();
 
     // Step 4-5: Create terminal
     const createResult = await invokeIpc('terminal:create', {

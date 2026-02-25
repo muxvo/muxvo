@@ -1,0 +1,196 @@
+.settings-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-modal {
+  width: 420px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-dialog);
+  animation: settingsModalIn 0.2s ease-out;
+}
+
+@keyframes settingsModalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.settings-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-modal__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.settings-modal__title svg {
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+}
+
+.settings-modal__close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  font-size: 18px;
+  line-height: 1;
+  transition: all 0.15s;
+}
+
+.settings-modal__close:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.settings-modal__body {
+  padding: 8px 20px 20px;
+}
+
+.settings-modal__section {
+  margin-top: 16px;
+}
+
+.settings-modal__section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.settings-modal__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.settings-modal__label {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.settings-modal__desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* Number selector (for startup terminal count) */
+.settings-modal__num-group {
+  display: flex;
+  gap: 4px;
+}
+
+.settings-modal__num-btn {
+  width: 32px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-modal__num-btn:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.settings-modal__num-btn--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+  font-weight: 600;
+}
+
+/* Radio-style toggle buttons */
+.settings-modal__toggle-group {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.settings-modal__toggle-btn {
+  padding: 5px 14px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.settings-modal__toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.settings-modal__toggle-btn--active {
+  background: var(--accent);
+  color: #000;
+  font-weight: 600;
+}
+
+/* Tour restart button */
+.settings-modal__tour-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.settings-modal__tour-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Light theme adjustments */
+[data-theme="light"] .settings-modal__num-btn--active,
+[data-theme="light"] .settings-modal__toggle-btn--active {
+  color: #fff;
+}
