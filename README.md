@@ -4,7 +4,7 @@ A desktop workbench for AI CLI tools -- Claude Code, Codex, and Gemini CLI.
 
 Muxvo provides a unified interface for managing terminal sessions, browsing chat histories, editing configurations, and discovering skills through a built-in marketplace.
 
-<!-- Screenshots coming soon -->
+![Muxvo Screenshot](docs/screenshot.png)
 
 ## Features
 
