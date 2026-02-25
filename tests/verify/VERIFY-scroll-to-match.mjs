@@ -23,112 +23,112 @@ async function main() {
   await win.waitForTimeout(6000);
   await win.waitForLoadState('networkidle');
 
-  // 1. Click "History" tab to open chat history panel
-  const historyTab = win.locator('button.menu-bar__tab', { hasText: /History|历史/ });
+  // 1. Click "历史聊天" tab to open chat history panel
+  const historyTab = win.locator('button.menu-bar__tab', { hasText: /历史聊天|History/ });
   if (!(await historyTab.isVisible())) {
     console.log('GREEN FAIL: History tab not found');
     await app.close();
     process.exit(1);
   }
   await historyTab.click();
-  await win.waitForTimeout(2000);
-  console.log('History panel opened');
+  await win.waitForTimeout(3000);
+  console.log('History tab clicked');
 
-  await win.screenshot({ path: '/tmp/verify-scroll-01-history.png' });
+  // Wait for session list to finish loading (skeleton disappears, session cards appear)
+  try {
+    await win.locator('.session-card').first().waitFor({ state: 'visible', timeout: 15000 });
+    console.log('Session cards loaded');
+  } catch {
+    // Check if we have sessions at all
+    await win.screenshot({ path: '/tmp/verify-scroll-01-nosessions.png' });
+    console.log('GREEN FAIL: No session cards loaded within 15s');
+    await app.close();
+    process.exit(1);
+  }
 
-  // 2. Type a search query that should match in sessions
-  // Try multiple possible selectors for the search input
-  let searchInput = win.locator('.search-input-wrap__input');
+  // Wait for search input to appear (it renders alongside sessions)
+  await win.waitForTimeout(1000);
+  await win.screenshot({ path: '/tmp/verify-scroll-01-loaded.png' });
+
+  // 2. Find and use the search input
+  const searchInput = win.locator('.search-input-wrap__input');
   if (!(await searchInput.isVisible().catch(() => false))) {
-    // Try alternative selectors
-    searchInput = win.locator('input[placeholder*="搜索"]');
-    if (!(await searchInput.isVisible().catch(() => false))) {
-      searchInput = win.locator('input[placeholder*="search" i]');
-      if (!(await searchInput.isVisible().catch(() => false))) {
-        searchInput = win.locator('.session-list input');
-        if (!(await searchInput.isVisible().catch(() => false))) {
-          // Log all input elements for debugging
-          const allInputs = await win.locator('input').all();
-          console.log(`Found ${allInputs.length} input elements`);
-          for (const inp of allInputs) {
-            const ph = await inp.getAttribute('placeholder').catch(() => '');
-            const cls = await inp.getAttribute('class').catch(() => '');
-            console.log(`  Input: class="${cls}" placeholder="${ph}"`);
-          }
-          console.log('GREEN FAIL: Search input not found in history panel');
-          await win.screenshot({ path: '/tmp/verify-scroll-fail.png' });
-          await app.close();
-          process.exit(1);
-        }
-      }
-    }
+    console.log('GREEN FAIL: Search input not visible after sessions loaded');
+    await app.close();
+    process.exit(1);
   }
 
   // Use a common keyword that likely appears in chat history
   await searchInput.fill('the');
-  await win.waitForTimeout(1000);
+  await win.waitForTimeout(2000);
   console.log('Typed search query "the"');
 
   // 3. Check if any sessions are filtered
-  const sessionItems = win.locator('.session-list__item');
-  const sessionCount = await sessionItems.count();
+  const sessionCards = win.locator('.session-card');
+  let sessionCount = await sessionCards.count();
   console.log(`Found ${sessionCount} filtered sessions`);
 
   if (sessionCount === 0) {
     // Try another common keyword
     await searchInput.fill('a');
-    await win.waitForTimeout(1000);
-    const retryCount = await sessionItems.count();
-    console.log(`Retried with "a", found ${retryCount} sessions`);
-    if (retryCount === 0) {
-      console.log('GREEN FAIL: No sessions match any search query');
-      await app.close();
-      process.exit(1);
+    await win.waitForTimeout(2000);
+    sessionCount = await sessionCards.count();
+    console.log(`Retried with "a", found ${sessionCount} sessions`);
+    if (sessionCount === 0) {
+      await searchInput.fill('function');
+      await win.waitForTimeout(2000);
+      sessionCount = await sessionCards.count();
+      console.log(`Retried with "function", found ${sessionCount} sessions`);
+      if (sessionCount === 0) {
+        console.log('GREEN FAIL: No sessions match any search query');
+        await win.screenshot({ path: '/tmp/verify-scroll-fail.png' });
+        await app.close();
+        process.exit(1);
+      }
     }
   }
 
-  // 4. Click the first filtered session
-  await sessionItems.first().click();
-  await win.waitForTimeout(2000);
-  console.log('Clicked first filtered session');
+  await win.screenshot({ path: '/tmp/verify-scroll-02-searched.png' });
 
-  // 5. Check if the first <mark class="search-highlight"> is visible in the viewport
-  const marks = win.locator('.session-detail mark.search-highlight');
-  const markCount = await marks.count();
-  console.log(`Found ${markCount} highlight marks in session detail`);
+  // 4. Click a session that's NOT the first one (to ensure session switch)
+  const targetIdx = sessionCount > 1 ? 1 : 0;
+  await sessionCards.nth(targetIdx).click();
+  await win.waitForTimeout(3000);
+  console.log(`Clicked session #${targetIdx}`);
 
-  if (markCount === 0) {
-    // Check MarkdownPreview highlights too
-    const mdMarks = win.locator('.session-detail .search-highlight');
-    const mdMarkCount = await mdMarks.count();
-    console.log(`Found ${mdMarkCount} search-highlight elements (including markdown)`);
-    if (mdMarkCount === 0) {
-      console.log('GREEN FAIL: No highlighted keywords found in session detail');
-      await win.screenshot({ path: '/tmp/verify-scroll-fail.png' });
-      await app.close();
-      process.exit(1);
-    }
-  }
+  await win.screenshot({ path: '/tmp/verify-scroll-03-detail.png' });
 
-  // 6. The key assertion: the first highlight mark should be visible in the viewport
-  // (If it scrolled to bottom, the first match would be OFF-screen above)
-  const firstMark = win.locator('.session-detail .search-highlight').first();
-  const isVisible = await firstMark.isVisible();
-  console.log(`First search-highlight visible: ${isVisible}`);
+  // 5. Check for highlighted keywords in the session detail
+  const highlights = win.locator('.session-detail .search-highlight');
+  const highlightCount = await highlights.count();
+  console.log(`Found ${highlightCount} search-highlight elements in detail`);
 
-  if (!isVisible) {
-    console.log('GREEN FAIL: First search-highlight is not visible — panel likely scrolled to bottom');
+  if (highlightCount === 0) {
+    console.log('GREEN FAIL: No highlighted keywords found in session detail');
     await win.screenshot({ path: '/tmp/verify-scroll-fail.png' });
     await app.close();
     process.exit(1);
   }
 
-  // 7. Additional check: the active match should be visible
-  const activeMatch = win.locator('.session-detail .search-highlight--active');
-  const activeCount = await activeMatch.count();
+  // 6. The key assertion: the first highlight should be visible in the viewport
+  // If the panel scrolled to bottom (bug), the first match would be off-screen above
+  const firstHighlight = highlights.first();
+  const isInViewport = await firstHighlight.isVisible();
+  console.log(`First search-highlight visible in viewport: ${isInViewport}`);
+
+  if (!isInViewport) {
+    console.log('GREEN FAIL: First search-highlight is NOT visible — panel likely scrolled to bottom');
+    await win.screenshot({ path: '/tmp/verify-scroll-fail.png' });
+    await app.close();
+    process.exit(1);
+  }
+
+  // 7. Additional: check if the active highlight is visible
+  const activeHighlights = win.locator('.session-detail .search-highlight--active');
+  const activeCount = await activeHighlights.count();
   console.log(`Active match highlights: ${activeCount}`);
 
-  await win.screenshot({ path: '/tmp/verify-scroll-pass.png' });
+  await win.screenshot({ path: '/tmp/verify-scroll-04-pass.png' });
   console.log('GREEN PASS: Session detail scrolled to first keyword match');
 
   await app.close();
