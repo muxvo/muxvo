@@ -48,6 +48,11 @@ interface SessionListProps {
   searching?: boolean;
   /** sessionId → snippet for full-text search matches */
   searchSnippets?: Map<string, string>;
+  /** Match navigation props (bridged from SessionDetail) */
+  matchCurrent?: number;
+  matchTotal?: number;
+  onPrevMatch?: () => void;
+  onNextMatch?: () => void;
 }
 
 /**
@@ -129,7 +134,7 @@ function LoadMoreSentinel({ onVisible }: { onVisible: () => void }) {
   return <div ref={ref} style={{ height: 1 }} />;
 }
 
-export function SessionList({ sessions, selectedId, onSelect, onSessionContextMenu, projects, showProjectName, searchQuery = '', onSearchChange, searching, searchSnippets }: SessionListProps) {
+export function SessionList({ sessions, selectedId, onSelect, onSessionContextMenu, projects, showProjectName, searchQuery = '', onSearchChange, searching, searchSnippets, matchCurrent, matchTotal, onPrevMatch, onNextMatch }: SessionListProps) {
   const { t } = useI18n();
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
@@ -166,6 +171,10 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
             value={searchQuery}
             onChange={onSearchChange}
             placeholder="搜索会话..."
+            matchCurrent={matchCurrent}
+            matchTotal={matchTotal}
+            onPrevMatch={onPrevMatch}
+            onNextMatch={onNextMatch}
           />
         )}
         <div className="session-list__empty">
