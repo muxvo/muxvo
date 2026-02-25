@@ -1,20 +1,19 @@
 /**
  * Auth State Machine - manages authentication flow
  *
- * Original states: LoggedOut -> Authorizing -> LoggedIn
- * Extended states: LoggedOut -> Authorizing -> ExchangingToken -> LoggedIn
+ * 5 states: LoggedOut → Authorizing → LoggedIn (OAuth path)
+ *           LoggedOut → CodeSent → Verifying → LoggedIn (Email path)
  *
- * The original path (LOGIN → AUTH_CALLBACK → TOKEN_RECEIVED → LoggedIn)
- * is fully preserved for backward compatibility.
+ * OAuth path (GitHub / Google):
+ *   LOGIN → Authorizing → AUTH_CALLBACK → Verifying → TOKEN_RECEIVED → LoggedIn
  *
- * New path adds ExchangingToken for backend token exchange:
- * LOGIN → AUTH_CALLBACK → EXCHANGE_TOKEN → ExchangingToken
- * → BACKEND_TOKEN_RECEIVED → LoggedIn
+ * Email path:
+ *   SEND_EMAIL_CODE → CodeSent → VERIFY_CODE → Verifying → TOKEN_RECEIVED → LoggedIn
  */
 
 export type AuthMethod = 'github' | 'google' | 'email';
 
-type AuthState = 'LoggedOut' | 'Authorizing' | 'ExchangingToken' | 'LoggedIn';
+type AuthState = 'LoggedOut' | 'Authorizing' | 'CodeSent' | 'Verifying' | 'LoggedIn';
 
 export interface AuthContext {
   codeVerifier: string;
@@ -28,6 +27,8 @@ export interface AuthContext {
   authMethod?: AuthMethod;
   tokenStorage: string;
   error?: string;
+  emailCodeSentAt?: number;
+  avatarUrl?: string;
 }
 
 function generatePKCE() {
@@ -44,6 +45,25 @@ export function createAuthMachine() {
     tokenStorage: 'safeStorage',
   };
 
+  function resetOAuthContext() {
+    context.codeVerifier = '';
+    context.codeChallenge = '';
+    context.authCode = undefined;
+    context.error = undefined;
+  }
+
+  function resetAll() {
+    resetOAuthContext();
+    context.accessToken = undefined;
+    context.refreshToken = undefined;
+    context.username = undefined;
+    context.userId = undefined;
+    context.email = undefined;
+    context.authMethod = undefined;
+    context.emailCodeSentAt = undefined;
+    context.avatarUrl = undefined;
+  }
+
   function send(event: string, payload?: Record<string, unknown>) {
     switch (state) {
       case 'LoggedOut':
@@ -56,6 +76,14 @@ export function createAuthMachine() {
           if (payload?.authMethod) {
             context.authMethod = payload.authMethod as AuthMethod;
           }
+        } else if (event === 'SEND_EMAIL_CODE') {
+          state = 'CodeSent';
+          context.authMethod = 'email';
+          if (payload?.email) {
+            context.email = payload.email as string;
+          }
+          context.emailCodeSentAt = Date.now();
+          context.error = undefined;
         }
         break;
 
@@ -65,58 +93,87 @@ export function createAuthMachine() {
             context.authCode = payload.authCode as string;
           }
         } else if (event === 'TOKEN_RECEIVED') {
-          // Original path: Authorizing → LoggedIn (preserved for backward compat)
           state = 'LoggedIn';
           context.accessToken = payload?.accessToken as string;
-          context.username = payload?.username as string;
-          context.tokenStorage = 'safeStorage';
-        } else if (event === 'EXCHANGE_TOKEN') {
-          // New path: Authorizing → ExchangingToken (for backend token exchange)
-          state = 'ExchangingToken';
-        } else if (event === 'AUTH_FAILED') {
-          state = 'LoggedOut';
-          context.error = 'GitHub 授权失败';
-          context.codeVerifier = '';
-          context.codeChallenge = '';
-          context.authMethod = undefined;
-        }
-        break;
-
-      case 'ExchangingToken':
-        if (event === 'BACKEND_TOKEN_RECEIVED') {
-          state = 'LoggedIn';
-          context.accessToken = payload?.accessToken as string;
-          context.refreshToken = payload?.refreshToken as string;
-          context.username = payload?.username as string;
-          context.userId = payload?.userId as string;
-          context.email = payload?.email as string;
+          if (payload?.refreshToken) {
+            context.refreshToken = payload.refreshToken as string;
+          }
+          if (payload?.username) {
+            context.username = payload.username as string;
+          }
+          if (payload?.userId) {
+            context.userId = payload.userId as string;
+          }
+          if (payload?.email) {
+            context.email = payload.email as string;
+          }
+          if (payload?.avatarUrl) {
+            context.avatarUrl = payload.avatarUrl as string;
+          }
           context.tokenStorage = 'safeStorage';
         } else if (event === 'AUTH_FAILED') {
           state = 'LoggedOut';
           context.error = (payload?.error as string) || '授权失败';
-          context.codeVerifier = '';
-          context.codeChallenge = '';
+          resetOAuthContext();
           context.authMethod = undefined;
+        }
+        break;
+
+      case 'CodeSent':
+        if (event === 'VERIFY_CODE') {
+          state = 'Verifying';
+        } else if (event === 'RESEND_CODE') {
+          // Stay in CodeSent, update timestamp
+          context.emailCodeSentAt = Date.now();
+        } else if (event === 'AUTH_FAILED') {
+          state = 'LoggedOut';
+          context.error = (payload?.error as string) || '验证码发送失败';
+          context.authMethod = undefined;
+          context.emailCodeSentAt = undefined;
+        } else if (event === 'CANCEL') {
+          state = 'LoggedOut';
+          context.authMethod = undefined;
+          context.emailCodeSentAt = undefined;
+          context.error = undefined;
+        }
+        break;
+
+      case 'Verifying':
+        if (event === 'TOKEN_RECEIVED') {
+          state = 'LoggedIn';
+          context.accessToken = payload?.accessToken as string;
+          if (payload?.refreshToken) {
+            context.refreshToken = payload.refreshToken as string;
+          }
+          if (payload?.username) {
+            context.username = payload.username as string;
+          }
+          if (payload?.userId) {
+            context.userId = payload.userId as string;
+          }
+          if (payload?.email) {
+            context.email = payload.email as string;
+          }
+          if (payload?.avatarUrl) {
+            context.avatarUrl = payload.avatarUrl as string;
+          }
+          context.tokenStorage = 'safeStorage';
+        } else if (event === 'AUTH_FAILED') {
+          state = 'LoggedOut';
+          context.error = (payload?.error as string) || '验证失败';
+          resetOAuthContext();
+          context.authMethod = undefined;
+          context.emailCodeSentAt = undefined;
         }
         break;
 
       case 'LoggedIn':
         if (event === 'LOGOUT') {
           state = 'LoggedOut';
-          context.accessToken = undefined;
-          context.refreshToken = undefined;
-          context.username = undefined;
-          context.userId = undefined;
-          context.email = undefined;
-          context.authMethod = undefined;
-          context.codeVerifier = '';
-          context.codeChallenge = '';
+          resetAll();
         } else if (event === 'TOKEN_EXPIRED') {
           state = 'LoggedOut';
-          context.accessToken = undefined;
-          context.refreshToken = undefined;
-          context.codeVerifier = '';
-          context.codeChallenge = '';
+          resetAll();
         } else if (event === 'TOKEN_REFRESH') {
           // Stay in LoggedIn, update tokens
           context.accessToken = payload?.accessToken as string;
@@ -125,14 +182,7 @@ export function createAuthMachine() {
           }
         } else if (event === 'REFRESH_FAILED') {
           state = 'LoggedOut';
-          context.accessToken = undefined;
-          context.refreshToken = undefined;
-          context.username = undefined;
-          context.userId = undefined;
-          context.email = undefined;
-          context.authMethod = undefined;
-          context.codeVerifier = '';
-          context.codeChallenge = '';
+          resetAll();
           context.error = (payload?.error as string) || 'Token 刷新失败';
         }
         break;

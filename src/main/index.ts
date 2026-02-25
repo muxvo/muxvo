@@ -51,6 +51,7 @@ for (const stream of [process.stdout, process.stderr]) {
 
 let mainWindow: BrowserWindow | null = null;
 let lastBounds: Electron.Rectangle | null = null;
+let pendingDeepLinkUrl: string | null = null;
 
 interface WindowConfig {
   width: number;

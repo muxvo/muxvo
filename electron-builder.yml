@@ -43,3 +43,8 @@ files:
 extraResources: []
 
 npmRebuild: true
+
+protocols:
+  - name: Muxvo
+    schemes:
+      - muxvo

@@ -194,6 +194,11 @@ const api = {
       ipcRenderer.on(IPC_CHANNELS.AUTH.SESSION_EXPIRED, handler);
       return () => ipcRenderer.removeListener(IPC_CHANNELS.AUTH.SESSION_EXPIRED, handler);
     },
+    onStatusChange: (callback: (data: any) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: any) => callback(data);
+      ipcRenderer.on(IPC_CHANNELS.AUTH.STATUS_CHANGE, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.AUTH.STATUS_CHANGE, handler);
+    },
   },
 
   // --- Config domain ---
