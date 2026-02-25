@@ -189,7 +189,7 @@ Config: `electron-builder.yml`. Signing credentials: see `1apple-developer-signi
 ## Cloud Infrastructure
 
 - **GitHub**: `muxvo` org — `muxvo/muxvo` (Public) + `muxvo/server` (Private)
-- **Server**: 47.86.240.83 (Aliyun Hong Kong ECS, Ubuntu 24.04)
+- **Server**: Aliyun Hong Kong ECS, Ubuntu 24.04
 - **Domains**: `muxvo.com` (web), `api.muxvo.com` (Fastify API), `admin.muxvo.com` (admin panel)
 - **CI/CD**: `.github/workflows/` — `ci.yml`, `deploy-server.yml`, `deploy-web.yml`, `release.yml`
 

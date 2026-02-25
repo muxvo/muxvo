@@ -255,7 +255,7 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
                   </span>
                 ))}
               </div>
-              <span className="session-card__count">{formatFileSize(session.fileSize)}</span>
+              <span className="session-card__count">{session.fileSize > 0 ? formatFileSize(session.fileSize) : ''}</span>
             </div>
           </div>
         );

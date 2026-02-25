@@ -67,6 +67,14 @@ rsync --archive --verbose $DRY_RUN \
   --exclude='icon-designs/' \
   --exclude='prototype*.html' \
   --exclude='electron-builder.json5' \
+  --exclude='docs/deployment-plan.md' \
+  --exclude='docs/secrets-checklist.md' \
+  --exclude='docs/auth-backend-design.md' \
+  --exclude='docs/auth-system-plan.md' \
+  --exclude='docs/workflow-audit.md' \
+  --exclude='docs/release-setup.md' \
+  --exclude='PRD.md' \
+  --exclude='*.p12' \
   "$PROJECT_ROOT/" "$TARGET_DIR/"
 
 echo ""
