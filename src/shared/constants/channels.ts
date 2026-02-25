@@ -96,6 +96,7 @@ export const IPC_CHANNELS = {
     REFRESH_TOKEN: 'auth:refresh-token',
     GET_PROFILE: 'auth:get-profile',
     SESSION_EXPIRED: 'auth:session-expired',
+    STATUS_CHANGE: 'auth:status-change',
   },
   ANALYTICS: {
     TRACK: 'analytics:track',
