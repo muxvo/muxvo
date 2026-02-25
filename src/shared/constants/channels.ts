@@ -64,6 +64,13 @@ export const IPC_CHANNELS = {
     SAVE_PREFERENCES: 'app:save-preferences',
     MEMORY_WARNING: 'app:memory-warning',
     DETECT_CLI_TOOLS: 'app:detect-cli-tools',
+    UPDATE_CHECKING: 'app:update-checking',
+    UPDATE_AVAILABLE: 'app:update-available',
+    UPDATE_NOT_AVAILABLE: 'app:update-not-available',
+    UPDATE_DOWNLOADING: 'app:update-downloading',
+    UPDATE_DOWNLOADED: 'app:update-downloaded',
+    UPDATE_ERROR: 'app:update-error',
+    INSTALL_UPDATE: 'app:install-update',
   },
   DISCOVERY: {
     FETCH: 'discovery:fetch',

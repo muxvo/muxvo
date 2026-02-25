@@ -59,6 +59,14 @@ interface WindowConfig {
   y?: number;
 }
 
+function pushToAllWindows(channel: string, payload: unknown): void {
+  BrowserWindow.getAllWindows().forEach((win) => {
+    if (!win.isDestroyed()) {
+      win.webContents.send(channel, payload);
+    }
+  });
+}
+
 function createWindow(windowConfig?: WindowConfig): void {
   const opts: Electron.BrowserWindowConstructorOptions = {
     width: windowConfig?.width ?? 1280,
@@ -225,17 +233,53 @@ app.whenReady().then(() => {
     return { success: true, data: result };
   });
 
+  ipcMain.handle(IPC_CHANNELS.APP.INSTALL_UPDATE, () => {
+    autoUpdater.quitAndInstall();
+  });
+
   // Create window and restore terminals from config
   function launchWindowWithTerminals(): void {
     const config = configManager.loadConfig();
     createWindow(config.window);
 
-    // Auto-update check (production only)
+    // Auto-update (production only)
     if (!is.dev) {
       autoUpdater.logger = null;
       autoUpdater.autoDownload = true;
       autoUpdater.autoInstallOnAppQuit = true;
-      autoUpdater.checkForUpdatesAndNotify();
+
+      autoUpdater.on('checking-for-update', () => {
+        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_CHECKING, {});
+      });
+      autoUpdater.on('update-available', (info) => {
+        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_AVAILABLE, {
+          version: info.version,
+          releaseDate: info.releaseDate,
+        });
+      });
+      autoUpdater.on('update-not-available', () => {
+        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_NOT_AVAILABLE, {});
+      });
+      autoUpdater.on('download-progress', (progress) => {
+        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_DOWNLOADING, {
+          percent: progress.percent,
+          bytesPerSecond: progress.bytesPerSecond,
+          transferred: progress.transferred,
+          total: progress.total,
+        });
+      });
+      autoUpdater.on('update-downloaded', (info) => {
+        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_DOWNLOADED, {
+          version: info.version,
+        });
+      });
+      autoUpdater.on('error', (err) => {
+        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_ERROR, {
+          message: err.message,
+        });
+      });
+
+      autoUpdater.checkForUpdates();
     }
 
     // Restore terminals or create a fresh one after renderer is ready
