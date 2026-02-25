@@ -4,7 +4,7 @@
  * Phase 3: Ligatures (dynamic import) + Image + Search addons
  */
 
-import { Terminal, type IDisposable } from '@xterm/xterm';
+import { Terminal, type IDisposable, type ITerminalAddon } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebglAddon } from '@xterm/addon-webgl';
 import { Unicode11Addon } from '@xterm/addon-unicode11';
@@ -69,7 +69,7 @@ export function createAddonManager(term: Terminal): AddonManager {
       import('@xterm/addon-ligatures/lib/addon-ligatures.mjs').then(({ LigaturesAddon }: { LigaturesAddon: new () => IDisposable }) => {
         try {
           const addon = new LigaturesAddon();
-          term.loadAddon(addon);
+          term.loadAddon(addon as unknown as ITerminalAddon);
           ligaturesAddon = addon;
         } catch (e) {
           console.warn('[AddonManager] Ligatures addon failed to load', e);

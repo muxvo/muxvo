@@ -25,12 +25,12 @@ describe('TERM L1 -- 契约层测试', () => {
 
     test.each(ipcCases)('$id: $description', async ({ channel, input, expectedResponse }) => {
       // Register a stub handler that returns the expected shape
-      handleIpc(channel, async () => ({
+      handleIpc(channel!, async () => ({
         success: true,
         data: expectedResponse,
       }));
 
-      const result = await invokeIpc(channel, input);
+      const result = await invokeIpc(channel!, input);
       expect(result).toBeDefined();
       expect(result.success).toBe(true);
 
@@ -47,7 +47,7 @@ describe('TERM L1 -- 契约层测试', () => {
     test.each(pushCases)('$id: $description', ({ channel, expectedPayload }) => {
       // Verify that push events carry the expected payload shape
       const received: unknown[] = [];
-      onIpcPush(channel, (...args: unknown[]) => {
+      onIpcPush(channel!, (...args: unknown[]) => {
         received.push(args[0]);
       });
 
@@ -56,7 +56,7 @@ describe('TERM L1 -- 契约层测试', () => {
       for (const key of Object.keys(expectedPayload as Record<string, unknown>)) {
         mockPayload[key] = `mock_${key}`;
       }
-      emitIpcPush(channel, mockPayload);
+      emitIpcPush(channel!, mockPayload);
 
       expect(received).toHaveLength(1);
       const payload = received[0] as Record<string, unknown>;

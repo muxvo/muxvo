@@ -5,7 +5,7 @@
 interface TerminalProcessUI {
   statusDotColor: string;
   statusDotAnimation: string;
-  inputEnabled: boolean;
+  inputEnabled?: boolean;
   inputPlaceholder?: string;
   inputHasOptions?: boolean;
 }

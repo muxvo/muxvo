@@ -502,7 +502,7 @@ describe('CHAT L2 -- 规则层测试', () => {
       const { createSyncManager } = await import(
         '@/main/services/chat-sync'
       );
-      const syncManager = createSyncManager();
+      const syncManager = createSyncManager('/tmp/cc', '/tmp/mirror');
 
       // CC has sessions A and B, mirror already has A
       const ccSessions = [
