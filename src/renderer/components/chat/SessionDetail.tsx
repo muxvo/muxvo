@@ -258,16 +258,14 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [currentMatchIdx, setCurrentMatchIdx] = useState(0);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
-  const navScrollingRef = useRef(false);
 
-  // Reset visible count when a different session is selected
+  // Reset when a different session is selected (key change remounts Virtuoso)
   const messageKey = messages.length > 0 ? messages[0].uuid : '';
   useEffect(() => {
     setVisibleCount(MESSAGE_PAGE_SIZE);
     setFirstItemIndex(FIRST_ITEM_INDEX);
     setLoadingOlder(false);
     setCurrentMatchIdx(0);
-    navScrollingRef.current = false;
   }, [messageKey]);
 
   // When searching, expand visibleCount to load ALL messages so we can match across full history
@@ -285,14 +283,22 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
   const visibleMessages = messages.slice(startIndex);
   const hasEarlier = startIndex > 0;
 
-  // Compute match indices: which visibleMessages contain the search query
+  // Compute match indices: which visibleMessages contain the search query (user + assistant)
   const matchIndices = useMemo(() => {
     if (!searchQuery?.trim()) return [];
     const q = searchQuery.toLowerCase();
     const indices: number[] = [];
     for (let i = 0; i < visibleMessages.length; i++) {
       const msg = visibleMessages[i];
-      const text = typeof msg.content === 'string' ? msg.content : '';
+      let text = '';
+      if (typeof msg.content === 'string') {
+        text = msg.content;
+      } else if (Array.isArray(msg.content)) {
+        text = (msg.content as Array<{ type: string; text?: string }>)
+          .filter(b => b.type === 'text' && b.text)
+          .map(b => b.text!)
+          .join('\n');
+      }
       if (text.toLowerCase().includes(q)) {
         indices.push(i);
       }
@@ -300,7 +306,7 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
     return indices;
   }, [visibleMessages, searchQuery]);
 
-  // Auto-scroll to first match when search query changes or session changes
+  // Auto-scroll to first match when search query or session changes
   const prevMatchKey = useRef('');
   useEffect(() => {
     const matchKey = `${messageKey}:${searchQuery}`;
@@ -309,18 +315,16 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
 
     if (matchIndices.length > 0) {
       setCurrentMatchIdx(0);
-      navScrollingRef.current = true;
       setTimeout(() => {
-        virtuosoRef.current?.scrollToIndex({ index: firstItemIndex + matchIndices[0], align: 'center', behavior: 'smooth' });
+        virtuosoRef.current?.scrollToIndex({ index: firstItemIndex + matchIndices[0], align: 'center', behavior: 'auto' });
       }, 150);
-      setTimeout(() => { navScrollingRef.current = false; }, 600);
     }
   }, [matchIndices, messageKey, searchQuery, firstItemIndex]);
 
-  // Auto-scroll to bottom on real-time updates (new messages appended) — only when NOT searching and NOT navigating
+  // Auto-scroll to bottom on real-time updates (new messages appended) — only when NOT searching
   const prevMsgCount = useRef(messages.length);
   useEffect(() => {
-    if (!isSearching && messages.length > prevMsgCount.current && !navScrollingRef.current) {
+    if (!isSearching && messages.length > prevMsgCount.current) {
       virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
     }
     prevMsgCount.current = messages.length;
@@ -330,9 +334,7 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
     if (currentMatchIdx > 0) {
       const newIdx = currentMatchIdx - 1;
       setCurrentMatchIdx(newIdx);
-      navScrollingRef.current = true;
-      virtuosoRef.current?.scrollToIndex({ index: firstItemIndex + matchIndices[newIdx], align: 'center', behavior: 'smooth' });
-      setTimeout(() => { navScrollingRef.current = false; }, 500);
+      virtuosoRef.current?.scrollToIndex({ index: firstItemIndex + matchIndices[newIdx], align: 'center', behavior: 'auto' });
     }
   }, [currentMatchIdx, matchIndices, firstItemIndex]);
 
@@ -340,9 +342,7 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
     if (currentMatchIdx < matchIndices.length - 1) {
       const newIdx = currentMatchIdx + 1;
       setCurrentMatchIdx(newIdx);
-      navScrollingRef.current = true;
-      virtuosoRef.current?.scrollToIndex({ index: firstItemIndex + matchIndices[newIdx], align: 'center', behavior: 'smooth' });
-      setTimeout(() => { navScrollingRef.current = false; }, 500);
+      virtuosoRef.current?.scrollToIndex({ index: firstItemIndex + matchIndices[newIdx], align: 'center', behavior: 'auto' });
     }
   }, [currentMatchIdx, matchIndices, firstItemIndex]);
 
@@ -411,6 +411,7 @@ export function SessionDetail({ messages, loading, searchQuery }: SessionDetailP
         </div>
       )}
       <Virtuoso
+        key={messageKey}
         ref={virtuosoRef}
         data={visibleMessages}
         firstItemIndex={firstItemIndex}
