@@ -28,7 +28,7 @@ const RESOURCE_TYPE_MAP: Record<ResourceType, { paths: string[]; isFile: boolean
   plans: { paths: [join(CLAUDE_DIR, 'plans')], isFile: false },
   tasks: { paths: [join(CLAUDE_DIR, 'tasks')], isFile: false },
   plugins: { paths: [join(CLAUDE_DIR, 'plugins')], isFile: false },
-  mcp: { paths: [join(CLAUDE_DIR, 'mcp.json')], isFile: true },
+  mcp: { paths: [join(CLAUDE_DIR, 'mcp.json'), join(CODEX_DIR, 'config.toml'), join(GEMINI_DIR, 'settings.json')], isFile: true },
 };
 
 /** Derive source tool from directory path */

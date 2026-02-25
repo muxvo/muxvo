@@ -20,8 +20,11 @@ export const CC_SETTINGS_PATH = join(CC_DATA_DIR, 'settings.json');
 /** CC 全局指令 */
 export const CC_CLAUDE_MD_PATH = join(CC_DATA_DIR, 'CLAUDE.md');
 
-/** CC MCP 配置 */
+/** CC MCP 配置（项目级） */
 export const CC_MCP_PATH = join(CC_DATA_DIR, 'mcp.json');
+
+/** CC 全局 MCP 配置 */
+export const CC_GLOBAL_MCP_PATH = join(homedir(), '.claude.json');
 
 /** CC Skills 目录 */
 export const CC_SKILLS_DIR = join(CC_DATA_DIR, 'skills');
@@ -41,6 +44,14 @@ export const CC_PROJECTS_DIR = join(CC_DATA_DIR, 'projects');
 /** CC Plugins 目录 */
 export const CC_PLUGINS_DIR = join(CC_DATA_DIR, 'plugins');
 
+// ---- Codex 数据目录 ----
+
+/** Codex 根数据目录 ~/.codex/ */
+export const CODEX_DATA_DIR = join(homedir(), '.codex');
+
+/** Codex MCP 配置 */
+export const CODEX_MCP_PATH = join(CODEX_DATA_DIR, 'config.toml');
+
 // ---- Gemini CLI 数据目录 ----
 
 /** Gemini CLI 根数据目录 ~/.gemini/ */
@@ -51,6 +62,9 @@ export const GEMINI_SKILLS_DIR = join(GEMINI_DATA_DIR, 'skills');
 
 /** Gemini CLI 全局指令 */
 export const GEMINI_MD_PATH = join(GEMINI_DATA_DIR, 'GEMINI.md');
+
+/** Gemini CLI MCP 配置 */
+export const GEMINI_MCP_PATH = join(GEMINI_DATA_DIR, 'settings.json');
 
 // ---- Muxvo 数据目录子路径（相对于 app.getPath('userData')） ----
 

@@ -22,7 +22,7 @@ export interface Resource {
   path: string;
   /** 最后修改时间（ISO8601） */
   updatedAt?: string;
-  /** 来源工具（'claude' | 'codex'），可选 */
+  /** 来源工具（'claude' | 'codex' | 'gemini'），可选 */
   source?: string;
   /** 级别（'system' | 'project'），可选 */
   level?: 'system' | 'project';
