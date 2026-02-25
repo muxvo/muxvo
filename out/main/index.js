@@ -994,7 +994,6 @@ function createChatProjectReader(opts) {
         if (Array.isArray(mc)) {
           return mc.map((block) => {
             if (block.type === "text" && typeof block.text === "string") return block.text;
-            if (block.type === "tool_result" && typeof block.content === "string") return block.content;
             return "";
           }).filter(Boolean).join("\n");
         }
@@ -1003,6 +1002,35 @@ function createChatProjectReader(opts) {
       const results = [];
       const q = query.toLowerCase();
       const seenSessions = /* @__PURE__ */ new Set();
+      async function searchFile(filePath, projectHash, sessionId) {
+        return new Promise((resolve) => {
+          let found = false;
+          const stream = fs.createReadStream(filePath, { encoding: "utf-8" });
+          const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
+          stream.on("error", () => resolve());
+          rl.on("line", (line) => {
+            if (found) return;
+            const trimmed = line.trim();
+            if (!trimmed) return;
+            try {
+              const obj = JSON.parse(trimmed);
+              if (obj.type !== "user" && obj.type !== "assistant") return;
+              const text = extractSearchableText(obj);
+              if (text.toLowerCase().includes(q)) {
+                const idx = text.toLowerCase().indexOf(q);
+                const snippetStart = Math.max(0, idx - 30);
+                const snippetEnd = Math.min(text.length, idx + query.length + 170);
+                results.push({ projectHash, sessionId, snippet: text.slice(snippetStart, snippetEnd), timestamp: obj.timestamp || "" });
+                found = true;
+                rl.close();
+                stream.destroy();
+              }
+            } catch {
+            }
+          });
+          rl.on("close", () => resolve());
+        });
+      }
       async function searchInDir(baseDir) {
         try {
           const dirs = await fs.promises.readdir(baseDir, { withFileTypes: true });
@@ -1012,40 +1040,21 @@ function createChatProjectReader(opts) {
             const projectPath = path.join(baseDir, projectHash);
             try {
               const files = await fs.promises.readdir(projectPath);
-              for (const f of files) {
-                if (!f.endsWith(".jsonl")) continue;
-                const sessionId = f.replace(/\.jsonl$/, "");
-                const sessionKey = projectHash + "/" + sessionId;
-                if (seenSessions.has(sessionKey)) continue;
-                seenSessions.add(sessionKey);
-                try {
-                  const content = await fs.promises.readFile(path.join(projectPath, f), "utf-8");
-                  const lines = content.split("\n");
-                  for (const line of lines) {
-                    const trimmed = line.trim();
-                    if (!trimmed) continue;
-                    try {
-                      const obj = JSON.parse(trimmed);
-                      if (obj.type !== "user" && obj.type !== "assistant") continue;
-                      const text = extractSearchableText(obj);
-                      if (text.toLowerCase().includes(q)) {
-                        const idx = text.toLowerCase().indexOf(q);
-                        const snippetStart = Math.max(0, idx - 30);
-                        const snippetEnd = Math.min(text.length, idx + query.length + 170);
-                        results.push({
-                          projectHash,
-                          sessionId,
-                          snippet: text.slice(snippetStart, snippetEnd),
-                          timestamp: obj.timestamp || ""
-                        });
-                        break;
-                      }
-                    } catch {
-                    }
+              const jsonlFiles = files.filter((f) => f.endsWith(".jsonl"));
+              const CONCURRENCY = 10;
+              for (let i = 0; i < jsonlFiles.length; i += CONCURRENCY) {
+                const batch = jsonlFiles.slice(i, i + CONCURRENCY);
+                await Promise.all(batch.map(async (f) => {
+                  const sessionId = f.replace(/\.jsonl$/, "");
+                  const sessionKey = projectHash + "/" + sessionId;
+                  if (seenSessions.has(sessionKey)) return;
+                  seenSessions.add(sessionKey);
+                  try {
+                    await searchFile(path.join(projectPath, f), projectHash, sessionId);
+                  } catch (err) {
+                    console.warn("[chat:search] skip file:", f, err);
                   }
-                } catch (err) {
-                  console.warn("[chat:search] skip file:", f, err);
-                }
+                }));
               }
             } catch {
             }
