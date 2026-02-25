@@ -309,7 +309,7 @@ export function createConfigHandlers() {
               { dir: join(projectPath, '.claude', 'skills'), source: 'claude' },
               { dir: join(projectPath, '.codex', 'skills'), source: 'codex' },
               { dir: join(projectPath, '.gemini', 'skills'), source: 'gemini' },
-              { dir: join(projectPath, 'skills'), source: 'codex' },
+              { dir: join(projectPath, 'skills'), source: 'shared' },
             ];
             for (const { dir: dirPath, source } of projectSkillDirs) {
               // Skip if overlaps with system-level path
