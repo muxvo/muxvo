@@ -19,7 +19,9 @@ import { FilePanel } from './components/file/FilePanel';
 import { FileTempView } from './components/file/FileTempView';
 import { TourOverlay } from './components/tour/TourOverlay';
 import { UpdateNotification } from './components/app/UpdateNotification';
+import { LoginModal } from './components/auth/LoginModal';
 import { PanelProvider, usePanelContext } from './contexts/PanelContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { I18nProvider, useI18n, type Locale } from './i18n';
 import { mapExtToFileType, toLocalFileUrl } from './utils/file-tree';
 import './App.css';
@@ -262,29 +264,31 @@ export function App(): JSX.Element {
 
   return (
     <I18nProvider initialLocale={initialLocale}>
-      <PanelProvider>
-        <AppContent
-          terminals={orderedTerminals}
-          viewMode={viewMode}
-          focusedId={focusedId}
-          selectedId={selectedId}
-          maxReached={maxReached}
-          closeConfirm={closeConfirm}
-          uiTheme={uiTheme}
-          onDoubleClick={handleDoubleClick}
-          onSidebarClick={handleSidebarClick}
-          onClick={handleTileClick}
-          onBackToTiling={handleBackToTiling}
-          onAddTerminal={addTerminal}
-          onClose={removeTerminal}
-          onCloseConfirm={handleCloseConfirm}
-          onCloseCancel={handleCloseCancel}
-          onReorder={handleReorder}
-          onRename={handleRename}
-          onToggleTheme={handleToggleTheme}
-          terminalNames={terminalNames}
-        />
-      </PanelProvider>
+      <AuthProvider>
+        <PanelProvider>
+          <AppContent
+            terminals={orderedTerminals}
+            viewMode={viewMode}
+            focusedId={focusedId}
+            selectedId={selectedId}
+            maxReached={maxReached}
+            closeConfirm={closeConfirm}
+            uiTheme={uiTheme}
+            onDoubleClick={handleDoubleClick}
+            onSidebarClick={handleSidebarClick}
+            onClick={handleTileClick}
+            onBackToTiling={handleBackToTiling}
+            onAddTerminal={addTerminal}
+            onClose={removeTerminal}
+            onCloseConfirm={handleCloseConfirm}
+            onCloseCancel={handleCloseCancel}
+            onReorder={handleReorder}
+            onRename={handleRename}
+            onToggleTheme={handleToggleTheme}
+            terminalNames={terminalNames}
+          />
+        </PanelProvider>
+      </AuthProvider>
     </I18nProvider>
   );
 }
@@ -472,6 +476,7 @@ function AppContent({
         terminalNames={terminalNames}
       />
 
+      <LoginModal />
       <UpdateNotification />
     </div>
   );
