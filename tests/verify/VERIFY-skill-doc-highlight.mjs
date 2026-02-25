@@ -15,8 +15,14 @@ async function main() {
     env: { ...process.env, ELECTRON_RENDERER_URL: 'http://localhost:5173' },
   });
 
+  // Polyfill `global` to fix @iarna/toml reference error
+  await app.context().addInitScript(() => { window.global = window; });
+
   const win = await app.firstWindow();
   win.on('pageerror', (err) => console.log(`[PAGE ERROR] ${err.message}`));
+
+  // Reload so the init script takes effect before modules execute
+  await win.reload();
   await win.waitForTimeout(8000);
   await win.waitForLoadState('networkidle');
 
