@@ -1,9 +1,9 @@
 # API 接口契约文档
 
 > 此文档由 Claude Code Hook 自动生成（AST 解析版）
-> 生成时间: 2026-02-25T14:53:30.210Z
+> 生成时间: 2026-02-25T15:01:05.512Z
 > 项目路径: /Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo
-> 扫描文件数: 225
+> 扫描文件数: 224
 > 接口总数: 110
 
 ## 基础信息

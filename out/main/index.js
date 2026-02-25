@@ -1757,25 +1757,26 @@ const DEFAULT_CONFIG = {
     cursorBlink: true
   },
   ftvLeftWidth: 250,
-  ftvRightWidth: 300
+  ftvRightWidth: 300,
+  startupTerminalCount: 1
 };
-let _configDir = null;
+let _configDir$1 = null;
 function initConfigDir(dir) {
-  _configDir = dir;
+  _configDir$1 = dir;
 }
 function getConfigPath(configDir) {
-  const dir = configDir ?? _configDir;
+  const dir = configDir ?? _configDir$1;
   if (!dir) return null;
   return path__namespace.join(dir, "config.json");
 }
 function getTmpPath(configDir) {
-  const dir = configDir ?? _configDir;
+  const dir = configDir ?? _configDir$1;
   if (!dir) return null;
   return path__namespace.join(dir, ".config.json.tmp");
 }
 function createConfigManager(deps) {
   const fsAdapter = fs__namespace;
-  const configDir = _configDir;
+  const configDir = _configDir$1;
   function loadConfig() {
     const configPath = getConfigPath(configDir);
     if (!configPath) return { ...DEFAULT_CONFIG };
@@ -2451,17 +2452,47 @@ function registerFsHandlers() {
     return handlers.selectDirectory(params);
   });
 }
-async function getPreferences() {
-  return {
-    preferences: {
-      theme: "dark",
-      fontSize: 14,
-      locale: "zh-CN"
-    }
-  };
+let _configDir = null;
+function initPrefsDir(dir) {
+  _configDir = dir;
 }
-async function savePreferences(_prefs) {
-  return { success: true };
+function getPrefsPath() {
+  if (!_configDir) return null;
+  return path__namespace.join(_configDir, "preferences.json");
+}
+async function getPreferences() {
+  const prefsPath = getPrefsPath();
+  if (!prefsPath) return { preferences: {} };
+  try {
+    if (!fs__namespace.existsSync(prefsPath)) return { preferences: {} };
+    const raw = fs__namespace.readFileSync(prefsPath, "utf-8");
+    return { preferences: JSON.parse(raw) };
+  } catch {
+    return { preferences: {} };
+  }
+}
+async function savePreferences(prefs) {
+  const prefsPath = getPrefsPath();
+  if (!prefsPath || !_configDir) return { success: true };
+  try {
+    let existing = {};
+    try {
+      if (fs__namespace.existsSync(prefsPath)) {
+        existing = JSON.parse(fs__namespace.readFileSync(prefsPath, "utf-8"));
+      }
+    } catch {
+    }
+    const merged = { ...existing, ...prefs };
+    const tmpPath = prefsPath + ".tmp";
+    if (!fs__namespace.existsSync(_configDir)) {
+      fs__namespace.mkdirSync(_configDir, { recursive: true });
+    }
+    fs__namespace.writeFileSync(tmpPath, JSON.stringify(merged, null, 2), "utf-8");
+    fs__namespace.renameSync(tmpPath, prefsPath);
+    return { success: true };
+  } catch {
+    return { success: true };
+  }
 }
 const SCANNED_TOOLS = ["claude", "codex", "gemini"];
 async function detectCliTools() {
@@ -2478,7 +2509,7 @@ function registerAppHandlers() {
     return getPreferences();
   });
   electron.ipcMain.handle(IPC_CHANNELS.APP.SAVE_PREFERENCES, async (_event, prefs) => {
-    return savePreferences();
+    return savePreferences(prefs);
   });
   electron.ipcMain.handle(IPC_CHANNELS.APP.DETECT_CLI_TOOLS, async () => {
     const result = await detectCliTools();
@@ -3891,6 +3922,7 @@ electron.app.whenReady().then(() => {
     return electron.net.fetch(url.pathToFileURL(filePath).href);
   });
   initConfigDir(electron.app.getPath("userData"));
+  initPrefsDir(electron.app.getPath("userData"));
   const configManager = createConfigManager();
   configManager.loadConfig();
   const ptyAdapter = createRealPtyAdapter();
@@ -3992,8 +4024,11 @@ electron.app.whenReady().then(() => {
             }
           } else {
             const homePath = require("os").homedir();
-            terminalManager.spawn({ cwd: homePath });
-            console.log("[MUXVO] fresh start, created terminal at " + homePath);
+            const count = Math.max(1, Math.min(5, config.startupTerminalCount ?? 1));
+            for (let i = 0; i < count; i++) {
+              terminalManager.spawn({ cwd: homePath });
+            }
+            console.log("[MUXVO] fresh start, created " + count + " terminal(s) at " + homePath);
           }
           const win = electron.BrowserWindow.getAllWindows()[0];
           if (win) {
