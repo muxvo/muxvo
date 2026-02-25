@@ -168,8 +168,8 @@ export function SkillList({ skills, loading, selectedPath, onSelect }: SkillList
                         <div className="skill-list__item-header">
                           <span className="skill-list__item-name">{skill.name}</span>
                           {skill.source && (
-                            <span className={`skill-list__source-badge skill-list__source-badge--${skill.source === 'codex' ? 'cx' : skill.source === 'gemini' ? 'gm' : 'cc'}`}>
-                              {skill.source === 'codex' ? 'CX' : skill.source === 'gemini' ? 'GM' : 'CC'}
+                            <span className={`skill-list__source-badge skill-list__source-badge--${skill.source === 'codex' ? 'cx' : skill.source === 'gemini' ? 'gm' : skill.source === 'shared' ? 'cxgm' : 'cc'}`}>
+                              {skill.source === 'codex' ? 'CX' : skill.source === 'gemini' ? 'GM' : skill.source === 'shared' ? 'CX/GM' : 'CC'}
                             </span>
                           )}
                         </div>
