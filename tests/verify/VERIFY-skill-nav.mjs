@@ -32,61 +32,72 @@ async function main() {
   await win.waitForTimeout(2000);
   console.log('Skills panel opened');
 
-  // 2. Verify skill list loaded
+  // 2. Type search query
   const skillList = win.locator('.skill-list');
-  if (!(await skillList.isVisible())) {
-    console.log('GREEN FAIL: Skill list not visible');
-    await app.close();
-    process.exit(1);
-  }
-
-  // 3. Type search query to filter skills
   const searchInput = skillList.locator('.search-input-wrap__input');
   await searchInput.fill('auto');
   await win.waitForTimeout(500);
   console.log('Typed "auto" in search');
 
-  // 4. Check for ▲▼ nav buttons
+  // 3. Check ▲▼ nav buttons exist
   const navButtons = skillList.locator('.search-input-wrap__nav-btn');
   const navCount = await navButtons.count();
-  console.log(`Found ${navCount} nav buttons`);
-
   if (navCount < 2) {
-    console.log('GREEN FAIL: ▲▼ nav buttons not found');
+    console.log(`GREEN FAIL: Expected 2 nav buttons, got ${navCount}`);
     await win.screenshot({ path: '/tmp/verify-skill-nav-fail.png' });
     await app.close();
     process.exit(1);
   }
+  console.log('▲▼ nav buttons found');
 
-  // 5. Check match count display
-  const navCountText = await skillList.locator('.search-input-wrap__nav-count').textContent();
-  console.log(`Nav count display: "${navCountText}"`);
+  // 4. Check initial match count display (0/N before any selection)
+  const navCountEl = skillList.locator('.search-input-wrap__nav-count');
+  const initial = await navCountEl.textContent();
+  console.log(`Initial nav count: "${initial}"`);
 
-  if (!navCountText || !navCountText.includes('/')) {
-    console.log('GREEN FAIL: Match count not displayed correctly');
-    await win.screenshot({ path: '/tmp/verify-skill-nav-fail.png' });
-    await app.close();
-    process.exit(1);
-  }
-
-  await win.screenshot({ path: '/tmp/verify-skill-nav-01.png' });
-
-  // 6. Click ▼ (next) button and verify selection changes
-  const downBtn = navButtons.nth(1); // ▼ is second button
+  // 5. Click ▼ (next) to select first skill → should show "1/N"
+  const downBtn = navButtons.nth(1);
   await downBtn.click();
   await win.waitForTimeout(300);
-  const afterDown = await skillList.locator('.search-input-wrap__nav-count').textContent();
-  console.log(`After ▼ click: "${afterDown}"`);
+  const after1stDown = await navCountEl.textContent();
+  console.log(`After 1st ▼: "${after1stDown}"`);
 
-  // 7. Click ▲ (prev) button and verify selection changes
-  const upBtn = navButtons.nth(0); // ▲ is first button
+  if (!after1stDown?.startsWith('1/')) {
+    console.log('GREEN FAIL: Expected "1/N" after first ▼ click');
+    await win.screenshot({ path: '/tmp/verify-skill-nav-fail.png' });
+    await app.close();
+    process.exit(1);
+  }
+
+  // 6. Click ▼ again → should show "2/N"
+  await downBtn.click();
+  await win.waitForTimeout(300);
+  const after2ndDown = await navCountEl.textContent();
+  console.log(`After 2nd ▼: "${after2ndDown}"`);
+
+  if (!after2ndDown?.startsWith('2/')) {
+    console.log('GREEN FAIL: Expected "2/N" after second ▼ click');
+    await win.screenshot({ path: '/tmp/verify-skill-nav-fail.png' });
+    await app.close();
+    process.exit(1);
+  }
+
+  // 7. Click ▲ (prev) → should go back to "1/N"
+  const upBtn = navButtons.nth(0);
   await upBtn.click();
   await win.waitForTimeout(300);
-  const afterUp = await skillList.locator('.search-input-wrap__nav-count').textContent();
-  console.log(`After ▲ click: "${afterUp}"`);
+  const afterUp = await navCountEl.textContent();
+  console.log(`After ▲: "${afterUp}"`);
 
-  await win.screenshot({ path: '/tmp/verify-skill-nav-02.png' });
-  console.log('GREEN PASS: ▲▼ nav buttons work in SkillList search');
+  if (!afterUp?.startsWith('1/')) {
+    console.log('GREEN FAIL: Expected "1/N" after ▲ click');
+    await win.screenshot({ path: '/tmp/verify-skill-nav-fail.png' });
+    await app.close();
+    process.exit(1);
+  }
+
+  await win.screenshot({ path: '/tmp/verify-skill-nav-pass.png' });
+  console.log('GREEN PASS: ▲▼ nav buttons work correctly in SkillList search');
 
   await app.close();
   console.log('Done');

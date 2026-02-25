@@ -65,9 +65,10 @@ export function SkillList({ skills, loading, selectedPath, onSelect }: SkillList
   const matchTotal = searchQuery.trim() ? filteredSkills.length : undefined;
 
   const matchCurrent = useMemo(() => {
-    if (!searchQuery.trim() || !selectedPath) return undefined;
+    if (!searchQuery.trim()) return undefined;
+    if (!selectedPath) return filteredSkills.length > 0 ? 0 : undefined;
     const idx = filteredSkills.findIndex(s => s.path === selectedPath);
-    return idx >= 0 ? idx + 1 : undefined;
+    return idx >= 0 ? idx + 1 : 0;
   }, [searchQuery, selectedPath, filteredSkills]);
 
   const onPrevMatch = useCallback(() => {
