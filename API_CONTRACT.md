@@ -1,10 +1,10 @@
 # API 接口契约文档
 
 > 此文档由 Claude Code Hook 自动生成（AST 解析版）
-> 生成时间: 2026-02-25T12:57:28.350Z
+> 生成时间: 2026-02-25T12:59:52.642Z
 > 项目路径: /Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo
 > 扫描文件数: 222
-> 接口总数: 21
+> 接口总数: 23
 
 ## 基础信息
 
@@ -14,6 +14,18 @@
 ## 接口列表
 
 ### main
+
+#### `GET accessToken`
+
+- **位置**: `main/index.ts:85`
+- **调用函数**: `http.get()`
+- **请求参数**: 无额外参数
+
+#### `GET refreshToken`
+
+- **位置**: `main/index.ts:86`
+- **调用函数**: `http.get()`
+- **请求参数**: 无额外参数
 
 #### `GET {成员访问}`
 
@@ -160,6 +172,8 @@
 
 | 方法 | 接口路径 | 所属模块 | 文件位置 |
 |-----|---------|---------|---------|
+| GET | `accessToken` | main | main/index.ts:85 |
+| GET | `refreshToken` | main | main/index.ts:86 |
 | GET | `{成员访问}` | main | main/ipc/fs-watcher-handlers.ts:32 |
 | DELETE | `{成员访问}` | main | main/ipc/fs-watcher-handlers.ts:76 |
 | GET | `{变量:date}` | API 服务 | main/services/analytics/tracker.ts:39 |

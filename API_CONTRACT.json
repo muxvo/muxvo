@@ -1,10 +1,30 @@
 {
-  "generatedAt": "2026-02-25T12:57:28.350Z",
+  "generatedAt": "2026-02-25T12:59:52.642Z",
   "projectPath": "/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo",
-  "totalApis": 21,
+  "totalApis": 23,
   "scannedFiles": 222,
   "categories": {
     "main": [
+      {
+        "path": "accessToken",
+        "method": "GET",
+        "file": "main/index.ts",
+        "line": 85,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "main"
+      },
+      {
+        "path": "refreshToken",
+        "method": "GET",
+        "file": "main/index.ts",
+        "line": 86,
+        "functionName": "http.get",
+        "params": [],
+        "responseFields": [],
+        "category": "main"
+      },
       {
         "path": "{成员访问}",
         "method": "GET",
@@ -231,6 +251,26 @@
     ]
   },
   "apis": [
+    {
+      "path": "accessToken",
+      "method": "GET",
+      "file": "main/index.ts",
+      "line": 85,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "main"
+    },
+    {
+      "path": "refreshToken",
+      "method": "GET",
+      "file": "main/index.ts",
+      "line": 86,
+      "functionName": "http.get",
+      "params": [],
+      "responseFields": [],
+      "category": "main"
+    },
     {
       "path": "{成员访问}",
       "method": "GET",
