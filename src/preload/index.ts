@@ -60,6 +60,11 @@ const api = {
       ipcRenderer.on(IPC_CHANNELS.TERMINAL.CWD_CHANGED, handler);
       return () => ipcRenderer.removeListener(IPC_CHANNELS.TERMINAL.CWD_CHANGED, handler);
     },
+    onZoom: (callback: (direction: string) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, direction: string) => callback(direction);
+      ipcRenderer.on(IPC_CHANNELS.TERMINAL.ZOOM, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.TERMINAL.ZOOM, handler);
+    },
   },
 
   // --- App domain ---

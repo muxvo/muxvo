@@ -241,6 +241,32 @@ app.whenReady().then(() => {
         { role: 'selectAll' },
       ],
     },
+    {
+      label: 'View',
+      submenu: [
+        {
+          label: 'Zoom In',
+          accelerator: 'CommandOrControl+=',
+          click: () => {
+            BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.TERMINAL.ZOOM, 'in');
+          },
+        },
+        {
+          label: 'Zoom Out',
+          accelerator: 'CommandOrControl+-',
+          click: () => {
+            BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.TERMINAL.ZOOM, 'out');
+          },
+        },
+        {
+          label: 'Reset Zoom',
+          accelerator: 'CommandOrControl+0',
+          click: () => {
+            BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.TERMINAL.ZOOM, 'reset');
+          },
+        },
+      ],
+    },
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 
