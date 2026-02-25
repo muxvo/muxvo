@@ -77,26 +77,19 @@
       "priority": "P1"
     },
     {
-      "id": "ONBOARD_L1_01",
-      "description": "引导步骤数据格式 -- 返回 steps 数组及当前步骤",
+      "id": "SETTINGS_L1_01",
+      "description": "startupTerminalCount 配置默认值 -- 默认为 1",
       "type": "default-value",
-      "target": "onboard.stepsFormat",
-      "expectedValue": {
-        "steps": "Array<{ id: number, title: string, content: string, action: string }>",
-        "currentStep": "number",
-        "completed": "boolean"
-      },
+      "target": "config.startupTerminalCount",
+      "expectedValue": { "startupTerminalCount": 1 },
       "priority": "P1"
     },
     {
-      "id": "ONBOARD_L1_02",
-      "description": "CLI 工具检测格式 -- 步骤 2 自动检测 PATH 中的 AI CLI 工具",
+      "id": "SETTINGS_L1_02",
+      "description": "preferences 持久化格式 -- 读写 language 字段",
       "type": "default-value",
-      "target": "onboard.cliDetection",
-      "expectedValue": {
-        "detectedTools": "Array<{ name: string, path: string, version?: string }>",
-        "scannedTools": ["claude", "codex", "gemini"]
-      },
+      "target": "preferences.persistence",
+      "expectedValue": { "language": "string" },
       "priority": "P1"
     },
     {

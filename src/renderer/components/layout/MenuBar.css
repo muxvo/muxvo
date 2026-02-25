@@ -129,74 +129,28 @@ body.name-editing .menu-bar__drag-region {
   cursor: not-allowed;
 }
 
-.menu-bar__theme-btn {
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 14px;
-  cursor: pointer;
-  border: 1px solid var(--border);
-  background: transparent;
+.menu-bar__settings-btn {
+  background: none;
+  border: none;
   color: var(--text-secondary);
-  margin-left: auto;
-  margin-right: 4px;
-  z-index: 2;
-  -webkit-app-region: no-drag;
-  transition: all 0.15s;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-}
-
-.menu-bar__theme-btn:hover {
-  background: var(--accent-glow);
-  color: var(--accent);
-  border-color: rgba(232, 167, 72, 0.3);
-}
-
-.menu-bar__theme-btn svg {
-  width: 14px;
-  height: 14px;
-}
-
-.menu-bar__help-btn {
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-secondary);
-  margin-right: 4px;
-  z-index: 2;
-  -webkit-app-region: no-drag;
   transition: all 0.15s;
-}
-
-.menu-bar__help-btn:hover {
-  background: var(--accent-glow);
-  color: var(--accent);
-  border-color: rgba(232, 167, 72, 0.3);
-}
-
-.menu-bar__lang-btn {
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-secondary);
-  margin-right: 8px;
-  z-index: 2;
   -webkit-app-region: no-drag;
-  transition: all 0.15s;
+  margin-left: auto;
+  z-index: 2;
 }
 
-.menu-bar__lang-btn:hover {
-  background: var(--bg-hover);
+.menu-bar__settings-btn:hover {
   color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.menu-bar__settings-btn svg {
+  width: 16px;
+  height: 16px;
 }
