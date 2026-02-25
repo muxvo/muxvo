@@ -702,13 +702,14 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
                           snippet: text.slice(snippetStart, snippetEnd),
                           timestamp: obj.timestamp || '',
                         });
+                        break; // one result per session is enough
                       }
                     } catch {
                       // skip malformed line
                     }
                   }
-                } catch {
-                  // skip unreadable file
+                } catch (err) {
+                  console.warn('[chat:search] skip file:', f, err);
                 }
               }
             } catch {

@@ -116,7 +116,7 @@ export function createChatMultiSource(opts: MultiSourceOpts) {
       if (geminiReader) tasks.push(geminiReader.search(query));
 
       const results = await Promise.all(tasks);
-      return results.flat().slice(0, 100);
+      return results.flat().slice(0, 500);
     },
   };
 }
