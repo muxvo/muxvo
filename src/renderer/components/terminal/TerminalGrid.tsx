@@ -36,9 +36,11 @@ interface Props {
   onClose?: (id: string) => void;
   onReorder?: (newOrder: string[]) => void;
   onRename?: (id: string, name: string) => void;
+  onAddTerminal?: () => void;
+  maxReached?: boolean;
 }
 
-export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, selectedId, onDoubleClick, onSidebarClick, onClick, onClose, onReorder, onRename }: Props): JSX.Element {
+export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, selectedId, onDoubleClick, onSidebarClick, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached }: Props): JSX.Element {
   const { t } = useI18n();
   if (terminals.length === 0) {
     return (
@@ -50,8 +52,12 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
         height: '100%',
         color: 'var(--text-secondary)',
         fontSize: '13px',
+        position: 'relative',
       }}>
         {t('terminal.noTerminals')}
+        {onAddTerminal && (
+          <button className="terminal-grid__fab" onClick={onAddTerminal} disabled={maxReached} title={t('menu.newTerminal')}>+</button>
+        )}
       </div>
     );
   }
@@ -72,12 +78,14 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
           onClose={onClose}
           onReorder={onReorder}
           onRename={onRename}
+          onAddTerminal={onAddTerminal}
+          maxReached={maxReached}
         />
       );
     }
 
     return (
-      <div style={{ display: 'flex', width: '100%', height: '100%' }}>
+      <div style={{ display: 'flex', width: '100%', height: '100%', position: 'relative' }}>
         {/* Left: focused terminal 75% */}
         <div style={{ width: '75%', height: '100%' }}>
           <TerminalTile key={focusedId} id={focusedId} state={focusedTerminal.state} cwd={focusedTerminal.cwd} customName={focusedTerminal.customName} onRename={onRename} focused onClose={onClose} />
@@ -103,6 +111,9 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
             </div>
           ))}
         </div>
+        {onAddTerminal && (
+          <button className="terminal-grid__fab" onClick={onAddTerminal} disabled={maxReached} title={t('menu.newTerminal')}>+</button>
+        )}
       </div>
     );
   }
@@ -117,6 +128,8 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
       onClose={onClose}
       onReorder={onReorder}
       onRename={onRename}
+      onAddTerminal={onAddTerminal}
+      maxReached={maxReached}
     />
   );
 }
@@ -194,9 +207,11 @@ interface TilingGridProps {
   onClose?: (id: string) => void;
   onReorder?: (newOrder: string[]) => void;
   onRename?: (id: string, name: string) => void;
+  onAddTerminal?: () => void;
+  maxReached?: boolean;
 }
 
-function TilingGrid({ terminals, selectedId, onDoubleClick, onClick, onClose, onReorder, onRename }: TilingGridProps): JSX.Element {
+function TilingGrid({ terminals, selectedId, onDoubleClick, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached }: TilingGridProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const layout = calculateGridLayout(terminals.length);
   const { cols, rows } = layout;
@@ -373,6 +388,11 @@ function TilingGrid({ terminals, selectedId, onDoubleClick, onClick, onClose, on
           }}
         />
       ))}
+
+      {/* FAB: Add terminal */}
+      {onAddTerminal && (
+        <button className="terminal-grid__fab" onClick={onAddTerminal} disabled={maxReached}>+</button>
+      )}
     </div>
   );
 }
