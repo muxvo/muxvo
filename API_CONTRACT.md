@@ -1,10 +1,10 @@
 # API 接口契约文档
 
 > 此文档由 Claude Code Hook 自动生成（AST 解析版）
-> 生成时间: 2026-02-25T06:02:39.789Z
+> 生成时间: 2026-02-25T06:07:52.668Z
 > 项目路径: /Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo
-> 扫描文件数: 211
-> 接口总数: 13
+> 扫描文件数: 213
+> 接口总数: 21
 
 ## 基础信息
 
@@ -77,6 +77,61 @@
 - **调用函数**: `terminals.delete()`
 - **请求参数**: 无额外参数
 
+### 用户认证
+
+#### `POST ${...}${...}`
+
+- **位置**: `main/services/auth/backend-client.ts:50`
+- **调用函数**: `fetch()`
+- **请求参数**: 无额外参数
+- **响应字段**:
+  - `ok`
+  - `json`
+  - `statusText`
+  - `status`
+
+#### `POST /auth/github/init`
+
+- **位置**: `main/services/auth/backend-client.ts:74`
+- **调用函数**: `request()`
+- **请求参数**: 无额外参数
+
+#### `POST /auth/google/init`
+
+- **位置**: `main/services/auth/backend-client.ts:79`
+- **调用函数**: `request()`
+- **请求参数**: 无额外参数
+
+#### `POST /auth/email/send`
+
+- **位置**: `main/services/auth/backend-client.ts:84`
+- **调用函数**: `request()`
+- **请求参数**: 无额外参数
+
+#### `POST /auth/email/verify`
+
+- **位置**: `main/services/auth/backend-client.ts:92`
+- **调用函数**: `request()`
+- **请求参数**: 无额外参数
+
+#### `POST /auth/refresh`
+
+- **位置**: `main/services/auth/backend-client.ts:100`
+- **调用函数**: `request()`
+- **请求参数**: 无额外参数
+
+#### `POST /auth/logout`
+
+- **位置**: `main/services/auth/backend-client.ts:108`
+- **调用函数**: `request()`
+- **请求参数**: 无额外参数
+
+#### `POST /user/me`
+
+- **位置**: `main/services/auth/backend-client.ts:116`
+- **调用函数**: `request()`
+- **请求参数**: 无额外参数
+
 ### 组件
 
 #### `DELETE {变量:p}`
@@ -108,6 +163,14 @@
 | GET | `{成员访问}` | main | main/ipc/fs-watcher-handlers.ts:32 |
 | DELETE | `{成员访问}` | main | main/ipc/fs-watcher-handlers.ts:76 |
 | GET | `{变量:date}` | API 服务 | main/services/analytics/tracker.ts:39 |
+| POST | `${...}${...}` | 用户认证 | main/services/auth/backend-client.ts:50 |
+| POST | `/auth/github/init` | 用户认证 | main/services/auth/backend-client.ts:74 |
+| POST | `/auth/google/init` | 用户认证 | main/services/auth/backend-client.ts:79 |
+| POST | `/auth/email/send` | 用户认证 | main/services/auth/backend-client.ts:84 |
+| POST | `/auth/email/verify` | 用户认证 | main/services/auth/backend-client.ts:92 |
+| POST | `/auth/refresh` | 用户认证 | main/services/auth/backend-client.ts:100 |
+| POST | `/auth/logout` | 用户认证 | main/services/auth/backend-client.ts:108 |
+| POST | `/user/me` | 用户认证 | main/services/auth/backend-client.ts:116 |
 | DELETE | `{变量:key}` | API 服务 | main/services/chat-dual-source.ts:42 |
 | GET | `{变量:cacheKey}` | API 服务 | main/services/chat-dual-source.ts:380 |
 | GET | `{变量:key}` | API 服务 | main/services/chat-watcher.ts:33 |

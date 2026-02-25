@@ -107,7 +107,14 @@ const IPC_CHANNELS = {
   AUTH: {
     LOGIN_GITHUB: "auth:login-github",
     LOGOUT: "auth:logout",
-    GET_STATUS: "auth:get-status"
+    GET_STATUS: "auth:get-status",
+    LOGIN_GOOGLE: "auth:login-google",
+    SEND_EMAIL_CODE: "auth:send-email-code",
+    VERIFY_EMAIL_CODE: "auth:verify-email-code",
+    OAUTH_CALLBACK: "auth:oauth-callback",
+    REFRESH_TOKEN: "auth:refresh-token",
+    GET_PROFILE: "auth:get-profile",
+    SESSION_EXPIRED: "auth:session-expired"
   },
   ANALYTICS: {
     TRACK: "analytics:track",
@@ -1472,15 +1479,11 @@ function createGeminiChatReader(opts) {
       const matching = entries.filter((e) => {
         const hash = e.cwd ? encodeProjectHash$1(e.cwd) : `gemini-${e.folderName}`;
         return hash === projectHash;
-      }).sort((a, b) => b.lastUpdated - a.lastUpdated).slice(0, limit);
-      const summaries = [];
-      for (const entry of matching) {
-        let title = entry.title;
-        if (!title) {
-          title = await extractFirstUserMessage(entry.filePath);
-        }
+      }).sort((a, b) => b.mtime - a.mtime).slice(0, limit);
+      return Promise.all(matching.map(async (entry) => {
+        const title = entry.title || await extractFirstUserMessage(entry.filePath);
         const hash = entry.cwd ? encodeProjectHash$1(entry.cwd) : `gemini-${entry.folderName}`;
-        summaries.push({
+        return {
           sessionId: entry.sessionId,
           projectHash: hash,
           title: title || entry.sessionId,
@@ -1488,21 +1491,16 @@ function createGeminiChatReader(opts) {
           lastModified: entry.mtime,
           fileSize: entry.size,
           source: "gemini"
-        });
-      }
-      return summaries;
+        };
+      }));
     },
     async getAllRecentSessions(limit) {
       const entries = await buildIndex();
-      const sorted = [...entries].sort((a, b) => b.lastUpdated - a.lastUpdated).slice(0, limit);
-      const summaries = [];
-      for (const entry of sorted) {
-        let title = entry.title;
-        if (!title) {
-          title = await extractFirstUserMessage(entry.filePath);
-        }
+      const sorted = [...entries].sort((a, b) => b.mtime - a.mtime).slice(0, limit);
+      return Promise.all(sorted.map(async (entry) => {
+        const title = entry.title || await extractFirstUserMessage(entry.filePath);
         const hash = entry.cwd ? encodeProjectHash$1(entry.cwd) : `gemini-${entry.folderName}`;
-        summaries.push({
+        return {
           sessionId: entry.sessionId,
           projectHash: hash,
           title: title || entry.sessionId,
@@ -1510,9 +1508,8 @@ function createGeminiChatReader(opts) {
           lastModified: entry.mtime,
           fileSize: entry.size,
           source: "gemini"
-        });
-      }
-      return summaries;
+        };
+      }));
     },
     async readSession(_projectHash, sessionId, options) {
       const entries = await buildIndex();

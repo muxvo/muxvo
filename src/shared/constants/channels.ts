@@ -82,6 +82,13 @@ export const IPC_CHANNELS = {
     LOGIN_GITHUB: 'auth:login-github',
     LOGOUT: 'auth:logout',
     GET_STATUS: 'auth:get-status',
+    LOGIN_GOOGLE: 'auth:login-google',
+    SEND_EMAIL_CODE: 'auth:send-email-code',
+    VERIFY_EMAIL_CODE: 'auth:verify-email-code',
+    OAUTH_CALLBACK: 'auth:oauth-callback',
+    REFRESH_TOKEN: 'auth:refresh-token',
+    GET_PROFILE: 'auth:get-profile',
+    SESSION_EXPIRED: 'auth:session-expired',
   },
   ANALYTICS: {
     TRACK: 'analytics:track',

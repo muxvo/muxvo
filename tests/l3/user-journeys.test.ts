@@ -346,6 +346,123 @@ describe('L3 -- 模块完整流程', () => {
     expect(machine.context.tokenStorage).toBe('safeStorage');
     expect(machine.context.username).toBe('testuser');
   });
+
+  // MODULE_L3_09: Backend OAuth 完整流程（含 token exchange）
+  test('MODULE_L3_09: Backend OAuth 完整流程（含 ExchangingToken）', async () => {
+    const { createAuthMachine } = await import('@/modules/auth/auth-machine');
+    const machine = createAuthMachine();
+
+    // LoggedOut -> Authorizing (with authMethod)
+    expect(machine.state).toBe('LoggedOut');
+    machine.send('LOGIN', { authMethod: 'github' });
+    expect(machine.state).toBe('Authorizing');
+    expect(machine.context.authMethod).toBe('github');
+
+    // Authorizing -> ExchangingToken
+    machine.send('AUTH_CALLBACK', { authCode: 'oauth-code' });
+    machine.send('EXCHANGE_TOKEN');
+    expect(machine.state).toBe('ExchangingToken');
+
+    // ExchangingToken -> LoggedIn (with backend tokens)
+    machine.send('BACKEND_TOKEN_RECEIVED', {
+      accessToken: 'jwt_access_token',
+      refreshToken: 'jwt_refresh_token',
+      username: 'backenduser',
+      userId: 'usr_456',
+      email: 'user@example.com',
+    });
+    expect(machine.state).toBe('LoggedIn');
+    expect(machine.context.accessToken).toBe('jwt_access_token');
+    expect(machine.context.refreshToken).toBe('jwt_refresh_token');
+    expect(machine.context.userId).toBe('usr_456');
+    expect(machine.context.email).toBe('user@example.com');
+    expect(machine.context.tokenStorage).toBe('safeStorage');
+  });
+
+  // MODULE_L3_10: 启动时自动恢复登录态
+  test('MODULE_L3_10: 启动时自动恢复登录态（stored token → validate → LoggedIn）', async () => {
+    const { storeTokenPair, getTokenPair, clearToken } = await import(
+      '@/modules/auth/token-storage'
+    );
+
+    // Simulate stored tokens from previous session
+    await storeTokenPair('stored_access', 'stored_refresh');
+    const pair = await getTokenPair();
+    expect(pair.accessToken).toBe('stored_access');
+    expect(pair.refreshToken).toBe('stored_refresh');
+
+    // Machine can fast-track to LoggedIn using stored tokens
+    const { createAuthMachine } = await import('@/modules/auth/auth-machine');
+    const machine = createAuthMachine();
+    machine.send('LOGIN');
+    machine.send('EXCHANGE_TOKEN');
+    machine.send('BACKEND_TOKEN_RECEIVED', {
+      accessToken: pair.accessToken,
+      refreshToken: pair.refreshToken,
+      username: 'restored_user',
+      userId: 'usr_789',
+    });
+    expect(machine.state).toBe('LoggedIn');
+    expect(machine.context.username).toBe('restored_user');
+
+    // Cleanup
+    await clearToken();
+  });
+
+  // MODULE_L3_11: Token 过期 → 自动刷新
+  test('MODULE_L3_11: Token 过期自动刷新（TOKEN_REFRESH 保持 LoggedIn）', async () => {
+    const { createAuthMachine } = await import('@/modules/auth/auth-machine');
+    const machine = createAuthMachine();
+
+    // Bring to LoggedIn
+    machine.send('LOGIN');
+    machine.send('EXCHANGE_TOKEN');
+    machine.send('BACKEND_TOKEN_RECEIVED', {
+      accessToken: 'old_access',
+      refreshToken: 'old_refresh',
+      username: 'user',
+      userId: 'usr_1',
+    });
+    expect(machine.state).toBe('LoggedIn');
+
+    // Simulate token refresh (access token expires, auto-refresh kicks in)
+    machine.send('TOKEN_REFRESH', {
+      accessToken: 'new_access',
+      refreshToken: 'new_refresh',
+    });
+    expect(machine.state).toBe('LoggedIn');
+    expect(machine.context.accessToken).toBe('new_access');
+    expect(machine.context.refreshToken).toBe('new_refresh');
+  });
+
+  // MODULE_L3_12: Auth 失败恢复（刷新失败 → LoggedOut）
+  test('MODULE_L3_12: Auth 失败恢复（REFRESH_FAILED → LoggedOut → 重新登录）', async () => {
+    const { createAuthMachine } = await import('@/modules/auth/auth-machine');
+    const machine = createAuthMachine();
+
+    // Bring to LoggedIn
+    machine.send('LOGIN');
+    machine.send('EXCHANGE_TOKEN');
+    machine.send('BACKEND_TOKEN_RECEIVED', {
+      accessToken: 'access',
+      refreshToken: 'refresh',
+      username: 'user',
+      userId: 'usr_1',
+    });
+    expect(machine.state).toBe('LoggedIn');
+
+    // Refresh fails (e.g., network error, token revoked)
+    machine.send('REFRESH_FAILED', { error: '网络错误' });
+    expect(machine.state).toBe('LoggedOut');
+    expect(machine.context.error).toContain('网络错误');
+    expect(machine.context.accessToken).toBeUndefined();
+    expect(machine.context.refreshToken).toBeUndefined();
+
+    // User can re-login from LoggedOut
+    machine.send('LOGIN', { authMethod: 'email' });
+    expect(machine.state).toBe('Authorizing');
+    expect(machine.context.authMethod).toBe('email');
+  });
 });
 
 // ============================================================
