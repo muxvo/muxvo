@@ -100,57 +100,36 @@ body.name-editing .menu-bar__drag-region {
   color: var(--text-primary);
 }
 
-.menu-bar__add-btn {
+.menu-bar__right-group {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+  align-items: center;
   z-index: 2;
   -webkit-app-region: no-drag;
-  background: var(--accent-glow);
-  color: var(--accent);
-  border: none;
-  font-size: 16px;
-  font-weight: 700;
-  width: 24px;
-  height: 24px;
+  flex-shrink: 0;
+}
+
+.menu-bar__icon-btn {
+  width: 26px;
+  height: 26px;
   border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 150ms, color 150ms;
-  line-height: 1;
-}
-
-.menu-bar__add-btn:hover {
-  background: var(--accent);
-  color: var(--bg-deep);
-}
-
-.menu-bar__add-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.menu-bar__settings-btn {
-  background: none;
+  background: transparent;
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.15s;
-  -webkit-app-region: no-drag;
-  margin-left: auto;
-  z-index: 2;
 }
 
-.menu-bar__settings-btn:hover {
+.menu-bar__icon-btn:hover {
   color: var(--text-primary);
   background: var(--bg-hover);
 }
 
-.menu-bar__settings-btn svg {
-  width: 16px;
-  height: 16px;
+.menu-bar__icon-btn svg {
+  width: 15px;
+  height: 15px;
 }

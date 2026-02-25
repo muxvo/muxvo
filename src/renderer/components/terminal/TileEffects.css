@@ -402,3 +402,47 @@
   background: var(--bg-hover, #3d3d3d);
   color: var(--text-primary, #ccc);
 }
+
+/* === FAB: Add Terminal === */
+.terminal-grid__fab {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #e8a748, #d4943a);
+  color: #0a0e14;
+  border: none;
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(232, 167, 72, 0.3), 0 1px 4px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s;
+  line-height: 1;
+  z-index: 50;
+}
+
+.terminal-grid__fab:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 24px rgba(232, 167, 72, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.terminal-grid__fab:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+}
+
+[data-theme="light"] .terminal-grid__fab {
+  background: linear-gradient(135deg, #d4943a, #c4842a);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(196, 132, 42, 0.3), 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .terminal-grid__fab:hover {
+  box-shadow: 0 6px 24px rgba(196, 132, 42, 0.4), 0 2px 8px rgba(0, 0, 0, 0.15);
+}
