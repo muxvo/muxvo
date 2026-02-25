@@ -35,6 +35,9 @@ export default defineConfig({
   },
   renderer: {
     plugins: [react()],
+    define: {
+      global: 'globalThis',
+    },
     root: resolve(__dirname, 'src/renderer'),
     build: {
       rollupOptions: {
