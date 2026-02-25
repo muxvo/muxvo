@@ -1531,7 +1531,7 @@ function createGeminiChatReader(opts) {
           const msg = msgArray[i];
           if (!msg || !msg.type) continue;
           const timestamp = msg.timestamp || new Date(entry.startTime).toISOString();
-          const uuid = msg.id || `gemini-${sessionId}-${i}`;
+          const uuid = msg.id ? `gemini-${msg.id}` : `gemini-${sessionId}-${i}`;
           if (msg.type === "user") {
             const text = extractTextFromUserContent(msg.content);
             if (!text) continue;
