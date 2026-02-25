@@ -208,7 +208,7 @@ describe('VERIFY Settings Panel', () => {
       const content = fs.readFileSync(menuBarPath, 'utf-8');
 
       expect(content).toContain('OPEN_SETTINGS');
-      expect(content).toContain('settings-btn');
+      expect(content).toContain('icon-btn');
     });
   });
 
