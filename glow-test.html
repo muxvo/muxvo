@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Glow Effect Test — Light & Dark</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'DM Sans', sans-serif;
+    background: #1a1a1a;
+    padding: 30px;
+  }
+
+  h2 { color: #e8a748; font-size: 16px; margin-bottom: 12px; }
+  .section { margin-bottom: 50px; }
+  .label { font-size: 12px; color: #888; margin-bottom: 6px; font-weight: 600; }
+
+  .row { display: flex; gap: 40px; margin-bottom: 30px; }
+  .col { flex: 1; }
+
+  /* ===== Grid container (simulates TerminalGrid) ===== */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    position: relative;
+  }
+  .grid--dark { background: #06080c; }
+  .grid--light { background: #f0f0f0; }
+
+  /* ===== Base tile ===== */
+  .tile {
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.3s ease;
+  }
+  .tile--dark {
+    background: #0a0e14;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  }
+  .tile--light {
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  .tile-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; border-bottom: 1px solid;
+    font-size: 12px; font-family: 'SF Mono', monospace;
+  }
+  .tile--dark .tile-header { background: #0a0e14; border-bottom-color: rgba(255,255,255,0.08); color: #8b949e; }
+  .tile--light .tile-header { background: #fafafa; border-bottom-color: rgba(0,0,0,0.08); color: #666; }
+
+  .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .dot--green { background: #4ade80; box-shadow: 0 0 4px #4ade80; }
+  .dot--red { background: #ef4444; box-shadow: 0 0 6px #ef4444; animation: dotPulse 1s ease-in-out infinite; }
+  @keyframes dotPulse { 0%,100% { opacity:1 } 50% { opacity:0.4 } }
+
+  .tile-body {
+    padding: 10px 14px; font-family: 'SF Mono', monospace;
+    font-size: 11px; line-height: 1.6; min-height: 100px;
+  }
+  .tile--dark .tile-body { color: #8b949e; }
+  .tile--light .tile-body { color: #555; }
+  .q { color: #60a5fa; }
+  .opt { color: #e8a748; }
+
+  /* ===================================================
+     方案 1: 纯粗边框 + 动画（无 shadow，无 margin）
+     =================================================== */
+  @keyframes scheme1 {
+    0%,100% { border-color: rgba(239,68,68,0.6); }
+    50% { border-color: rgba(239,68,68,1); }
+  }
+  .s1 {
+    border: 2.5px solid rgba(239,68,68,0.6);
+    animation: scheme1 2s ease-in-out infinite;
+  }
+  .s1 .tile-header { border-bottom-color: rgba(239,68,68,0.2); }
+
+  /* ===================================================
+     方案 2: 边框 + outline（outline 不受 overflow 裁剪）
+     =================================================== */
+  @keyframes scheme2border {
+    0%,100% { border-color: rgba(239,68,68,0.7); outline-color: rgba(239,68,68,0.2); }
+    50% { border-color: rgba(239,68,68,1); outline-color: rgba(239,68,68,0.5); }
+  }
+  .s2 {
+    border: 2px solid rgba(239,68,68,0.7);
+    outline: 3px solid rgba(239,68,68,0.2);
+    outline-offset: 2px;
+    animation: scheme2border 2.5s ease-in-out infinite;
+  }
+  .s2 .tile-header { border-bottom-color: rgba(239,68,68,0.2); }
+
+  /* ===================================================
+     方案 3: 边框 + box-shadow 外发光 + grid gap 提供空间
+     =================================================== */
+  @keyframes scheme3 {
+    0%,100% {
+      border-color: rgba(239,68,68,0.7);
+      box-shadow: 0 0 12px rgba(239,68,68,0.25), 0 0 36px rgba(239,68,68,0.08);
+    }
+    50% {
+      border-color: rgba(239,68,68,1);
+      box-shadow: 0 0 20px rgba(239,68,68,0.45), 0 0 50px rgba(239,68,68,0.15);
+    }
+  }
+  .s3 {
+    border: 2px solid rgba(239,68,68,0.7);
+    animation: scheme3 2.5s ease-in-out infinite;
+  }
+  .s3 .tile-header { border-bottom-color: rgba(239,68,68,0.2); }
+  /* Grid with larger gap for glow room */
+  .grid--gap20 { gap: 20px; padding: 16px; }
+
+  /* ===================================================
+     方案 4: 边框 + header 红色渐变背景 + badge 加强
+     =================================================== */
+  @keyframes scheme4 {
+    0%,100% { border-color: rgba(239,68,68,0.6); }
+    50% { border-color: rgba(239,68,68,1); }
+  }
+  .s4 {
+    border: 2px solid rgba(239,68,68,0.6);
+    animation: scheme4 2s ease-in-out infinite;
+  }
+  .s4.tile--dark .tile-header {
+    background: linear-gradient(180deg, rgba(239,68,68,0.15) 0%, rgba(239,68,68,0.03) 100%);
+    border-bottom-color: rgba(239,68,68,0.3);
+  }
+  .s4.tile--light .tile-header {
+    background: linear-gradient(180deg, rgba(239,68,68,0.1) 0%, rgba(239,68,68,0.02) 100%);
+    border-bottom-color: rgba(239,68,68,0.2);
+  }
+  .badge {
+    font-size: 11px; font-weight: 700; color: #fff;
+    background: #ef4444; min-width: 18px; height: 18px;
+    line-height: 18px; text-align: center; border-radius: 50%;
+    margin-left: auto; box-shadow: 0 0 8px rgba(239,68,68,0.6);
+    animation: badgePulse 1.5s ease-in-out infinite;
+  }
+  @keyframes badgePulse { 0%,100% { opacity:1 } 50% { opacity:0.6 } }
+
+  /* ===================================================
+     方案 5: 组合 — 边框 + outline + header 染色（推荐）
+     =================================================== */
+  @keyframes scheme5 {
+    0%,100% {
+      border-color: rgba(239,68,68,0.7);
+      outline-color: rgba(239,68,68,0.15);
+    }
+    50% {
+      border-color: rgba(239,68,68,1);
+      outline-color: rgba(239,68,68,0.4);
+    }
+  }
+  .s5 {
+    border: 2px solid rgba(239,68,68,0.7);
+    outline: 3px solid rgba(239,68,68,0.15);
+    outline-offset: 0px;
+    animation: scheme5 2.5s ease-in-out infinite;
+  }
+  .s5.tile--dark .tile-header {
+    background: linear-gradient(180deg, rgba(239,68,68,0.12) 0%, transparent 100%);
+    border-bottom-color: rgba(239,68,68,0.25);
+  }
+  .s5.tile--light .tile-header {
+    background: linear-gradient(180deg, rgba(220,50,50,0.08) 0%, transparent 100%);
+    border-bottom-color: rgba(239,68,68,0.15);
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== 方案 1 ==================== -->
+<div class="section">
+  <h2>方案 1：纯粗边框动画（无 shadow / 无 margin）</h2>
+  <p class="label">最简洁，仅靠 2.5px 红色边框呼吸动画</p>
+  <div class="row">
+    <div class="col">
+      <div class="label">Dark</div>
+      <div class="grid grid--dark">
+        <div class="tile tile--dark s1">
+          <div class="tile-header"><span class="dot dot--red"></span> ~/project/auth</div>
+          <div class="tile-body"><span class="q">Do you want to proceed?</span><br><span class="opt">❯ 1. Yes</span><br>  2. No</div>
+        </div>
+        <div class="tile tile--dark">
+          <div class="tile-header"><span class="dot dot--green"></span> ~/project/api</div>
+          <div class="tile-body">Building components...<br>Processing 12/24 files...</div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="label">Light</div>
+      <div class="grid grid--light">
+        <div class="tile tile--light s1">
+          <div class="tile-header"><span class="dot dot--red"></span> ~/project/auth</div>
+          <div class="tile-body"><span class="q">Do you want to proceed?</span><br><span class="opt">❯ 1. Yes</span><br>  2. No</div>
+        </div>
+        <div class="tile tile--light">
+          <div class="tile-header"><span class="dot dot--green"></span> ~/project/api</div>
+          <div class="tile-body">Building components...<br>Processing 12/24 files...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 方案 2 ==================== -->
+<div class="section">
+  <h2>方案 2：边框 + outline 光环（不受 overflow 裁剪）</h2>
+  <p class="label">outline 不占布局空间，不会挤压其他 tile</p>
+  <div class="row">
+    <div class="col">
+      <div class="label">Dark</div>
+      <div class="grid grid--dark">
+        <div class="tile tile--dark s2">
+          <div class="tile-header"><span class="dot dot--red"></span> ~/project/auth</div>
+          <div class="tile-body"><span class="q">Do you want to proceed?</span><br><span class="opt">❯ 1. Yes</span><br>  2. No</div>
+        </div>
+        <div class="tile tile--dark">
+          <div class="tile-header"><span class="dot dot--green"></span> ~/project/api</div>
+          <div class="tile-body">Building components...<br>Processing 12/24 files...</div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="label">Light</div>
+      <div class="grid grid--light">
+        <div class="tile tile--light s2">
+          <div class="tile-header"><span class="dot dot--red"></span> ~/project/auth</div>
+          <div class="tile-body"><span class="q">Do you want to proceed?</span><br><span class="opt">❯ 1. Yes</span><br>  2. No</div>
+        </div>
+        <div class="tile tile--light">
+          <div class="tile-header"><span class="dot dot--green"></span> ~/project/api</div>
+          <div class="tile-body">Building components...<br>Processing 12/24 files...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 方案 3 ==================== -->
+<div class="section">
+  <h2>方案 3：边框 + box-shadow 外发光（加大 grid gap 20px）</h2>
+  <p class="label">通过加大 grid gap 而非 margin 给发光留空间</p>
+  <div class="row">
+    <div class="col">
+      <div class="label">Dark</div>
+      <div class="grid grid--dark grid--gap20">
+        <div class="tile tile--dark s3">
+          <div class="tile-header"><span class="dot dot--red"></span> ~/project/auth</div>
+          <div class="tile-body"><span class="q">Do you want to proceed?</span><br><span class="opt">❯ 1. Yes</span><br>  2. No</div>
+        </div>
+        <div class="tile tile--dark">
+          <div class="tile-header"><span class="dot dot--green"></span> ~/project/api</div>
+          <div class="tile-body">Building components...<br>Processing 12/24 files...</div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="label">Light</div>
+      <div class="grid grid--light grid--gap20">
+        <div class="tile tile--light s3">
+          <div class="tile-header"><span class="dot dot--red"></span> ~/project/auth</div>
+          <div class="tile-body"><span class="q">Do you want to proceed?</span><br><span class="opt">❯ 1. Yes</span><br>  2. No</div>
+        </div>
+        <div class="tile tile--light">
+          <div class="tile-header"><span class="dot dot--green"></span> ~/project/api</div>
+          <div class="tile-body">Building components...<br>Processing 12/24 files...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 方案 4 ==================== -->
+<div class="section">
+  <h2>方案 4：边框 + header 红色渐变 + badge</h2>
+  <p class="label">不依赖外部空间，header 染色 + badge 配合</p>
+  <div class="row">
+    <div class="col">
+      <div class="label">Dark</div>
+      <div class="grid grid--dark">
+        <div class="tile tile--dark s4">
+          <div class="tile-header"><span class="dot dot--red"></span> ~/project/auth <span class="badge">1</span></div>
+          <div class="tile-body"><span class="q">Do you want to proceed?</span><br><span class="opt">❯ 1. Yes</span><br>  2. No</div>
+        </div>
+        <div class="tile tile--dark">
+          <div class="tile-header"><span class="dot dot--green"></span> ~/project/api</div>
+          <div class="tile-body">Building components...<br>Processing 12/24 files...</div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="label">Light</div>
+      <div class="grid grid--light">
+        <div class="tile tile--light s4">
+          <div class="tile-header"><span class="dot dot--red"></span> ~/project/auth <span class="badge">1</span></div>
+          <div class="tile-body"><span class="q">Do you want to proceed?</span><br><span class="opt">❯ 1. Yes</span><br>  2. No</div>
+        </div>
+        <div class="tile tile--light">
+          <div class="tile-header"><span class="dot dot--green"></span> ~/project/api</div>
+          <div class="tile-body">Building components...<br>Processing 12/24 files...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 方案 5 ==================== -->
+<div class="section">
+  <h2>方案 5：组合 — 边框 + outline + header 染色（推荐）</h2>
+  <p class="label">三层视觉信号叠加：红边框 + outline 光环 + header 渐变</p>
+  <div class="row">
+    <div class="col">
+      <div class="label">Dark</div>
+      <div class="grid grid--dark">
+        <div class="tile tile--dark s5">
+          <div class="tile-header"><span class="dot dot--red"></span> ~/project/auth <span class="badge">1</span></div>
+          <div class="tile-body"><span class="q">Do you want to proceed?</span><br><span class="opt">❯ 1. Yes</span><br>  2. No</div>
+        </div>
+        <div class="tile tile--dark">
+          <div class="tile-header"><span class="dot dot--green"></span> ~/project/api</div>
+          <div class="tile-body">Building components...<br>Processing 12/24 files...</div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="label">Light</div>
+      <div class="grid grid--light">
+        <div class="tile tile--light s5">
+          <div class="tile-header"><span class="dot dot--red"></span> ~/project/auth <span class="badge">1</span></div>
+          <div class="tile-body"><span class="q">Do you want to proceed?</span><br><span class="opt">❯ 1. Yes</span><br>  2. No</div>
+        </div>
+        <div class="tile tile--light">
+          <div class="tile-header"><span class="dot dot--green"></span> ~/project/api</div>
+          <div class="tile-body">Building components...<br>Processing 12/24 files...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
