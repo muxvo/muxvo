@@ -80,7 +80,7 @@ function Nav() {
           >
             GitHub
           </a>
-          <a href="https://github.com/muxvo/muxvo/releases/latest/download/Muxvo-arm64.dmg" className="btn-amber">下载</a>
+          <a href="https://muxvo.com/download/Muxvo-arm64.dmg" className="btn-amber">下载</a>
         </div>
       </div>
     </nav>

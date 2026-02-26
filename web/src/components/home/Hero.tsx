@@ -1,5 +1,4 @@
-const DOWNLOAD_URL =
-  'https://github.com/muxvo/muxvo/releases/latest/download/Muxvo-arm64.dmg';
+const DOWNLOAD_URL = 'https://muxvo.com/download/Muxvo-arm64.dmg';
 
 export function Hero() {
   return (
