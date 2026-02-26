@@ -6,6 +6,7 @@ import { authRoutes } from './routes/auth.js';
 import { userRoutes } from './routes/user.js';
 import { showcaseRoutes } from './routes/showcase.js';
 import { analyticsRoutes } from './routes/analytics.js';
+import { marketplaceRoutes } from './routes/marketplace.js';
 import { loadKeys } from './lib/jwt.js';
 import { AppError } from './lib/errors.js';
 
@@ -58,8 +59,9 @@ export async function buildApp() {
   await app.register(showcaseRoutes, { prefix: '/showcase' });
   await app.register(analyticsRoutes, { prefix: '/analytics' });
 
+  await app.register(marketplaceRoutes, { prefix: '/marketplace' });
+
   // Future plugins:
-  // await app.register(marketplaceRoutes, { prefix: '/marketplace' });
   // await app.register(adminRoutes, { prefix: '/admin' });
 
   return app;
