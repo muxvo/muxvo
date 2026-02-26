@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { randomBytes, randomInt, createHash } from 'node:crypto';
+import { randomBytes, randomInt, createHash, scryptSync, timingSafeEqual } from 'node:crypto';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { redis } from '../db/redis.js';
 import { query } from '../db/index.js';
@@ -102,6 +102,34 @@ const logoutSchema = {
     },
   },
 };
+
+const adminLoginSchema = {
+  body: {
+    type: 'object' as const,
+    required: ['email', 'password'] as const,
+    properties: {
+      email: { type: 'string' as const, format: 'email' },
+      password: { type: 'string' as const, minLength: 1 },
+    },
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Password helpers (scrypt)
+// ---------------------------------------------------------------------------
+
+function hashPassword(password: string): string {
+  const salt = randomBytes(16).toString('hex');
+  const derived = scryptSync(password, salt, 64).toString('hex');
+  return `${salt}:${derived}`;
+}
+
+function verifyPassword(password: string, stored: string): boolean {
+  const [salt, hash] = stored.split(':');
+  if (!salt || !hash) return false;
+  const derived = scryptSync(password, salt, 64);
+  return timingSafeEqual(Buffer.from(hash, 'hex'), derived);
+}
 
 // ---------------------------------------------------------------------------
 // Auth routes plugin
@@ -579,5 +607,51 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     await revokeRefreshToken(tokenHash);
 
     return { success: true };
+  });
+
+  // =========================================================================
+  // Admin Login (email + password)
+  // =========================================================================
+
+  app.post<{
+    Body: { email: string; password: string };
+  }>('/admin-login', { schema: adminLoginSchema }, async (request) => {
+    const { email, password } = request.body;
+
+    // Find user by email with admin role
+    const result = await query<{
+      id: string;
+      email: string;
+      role: string;
+      status: string;
+      password_hash: string | null;
+    }>(
+      `SELECT id, email, role, status, password_hash
+       FROM users
+       WHERE email = $1 AND role = 'admin' AND status = 'active'`,
+      [email],
+    );
+
+    if (result.rows.length === 0) {
+      throw new AuthError('Invalid email or password');
+    }
+
+    const user = result.rows[0];
+
+    if (!user.password_hash) {
+      throw new AuthError('Password not set for this account');
+    }
+
+    if (!verifyPassword(password, user.password_hash)) {
+      throw new AuthError('Invalid email or password');
+    }
+
+    // Issue tokens
+    const tokens = await issueTokenPair(user.id);
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
   });
 };
