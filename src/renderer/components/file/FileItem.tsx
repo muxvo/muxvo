@@ -17,6 +17,7 @@ interface FileItemProps {
   isActive?: boolean;
   expanded?: boolean;
   onClick?: () => void;
+  filePath?: string;
 }
 
 function getFileIcon(type: 'file' | 'folder', ext?: string, expanded?: boolean): string {
@@ -41,8 +42,18 @@ export function FileItem({
   isActive,
   expanded,
   onClick,
+  filePath,
 }: FileItemProps) {
   const { t } = useI18n();
+  const isDraggable = type === 'file' && !!filePath;
+
+  const handleDragStart = (e: React.DragEvent) => {
+    if (!filePath) return;
+    e.dataTransfer.effectAllowed = 'copy';
+    e.dataTransfer.setData('application/x-muxvo-file-paths', JSON.stringify([filePath]));
+    e.dataTransfer.setData('text/plain', filePath);
+  };
+
   const classList = [
     'file-item',
     type === 'folder' ? 'file-item--folder' : '',
@@ -57,6 +68,8 @@ export function FileItem({
       className={classList}
       style={{ paddingLeft: 8 + indent * 20 }}
       onClick={onClick}
+      draggable={isDraggable}
+      onDragStart={isDraggable ? handleDragStart : undefined}
     >
       <span className="file-item__icon">{getFileIcon(type, ext, expanded)}</span>
       <span className="file-item__name">{name}</span>

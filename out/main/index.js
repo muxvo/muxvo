@@ -2692,20 +2692,6 @@ function registerFsImageHandlers() {
     return handlers.writeClipboardImage(params);
   });
 }
-let currentUser;
-async function logout() {
-  currentUser = void 0;
-  return { success: true };
-}
-async function getAuthStatus() {
-  if (currentUser) {
-    return {
-      loggedIn: true,
-      user: currentUser
-    };
-  }
-  return { loggedIn: false };
-}
 function generatePKCE() {
   const verifier = "pkce-verifier-" + Math.random().toString(36).slice(2);
   const challenge = "pkce-challenge-" + Math.random().toString(36).slice(2);
@@ -3242,7 +3228,8 @@ function createAuthManager(options) {
 let authManager = null;
 function getAuthManager() {
   if (!authManager) {
-    const backendUrl = process.env.MUXVO_API_URL || "https://api.muxvo.com";
+    const isProduction = electron.app?.isPackaged ?? false;
+    const backendUrl = process.env.MUXVO_API_URL || (isProduction ? "https://api.muxvo.com" : "http://localhost:3000");
     authManager = createAuthManager({ backendUrl });
   }
   return authManager;
@@ -3263,7 +3250,8 @@ function createAuthHandlers() {
     },
     async logout() {
       try {
-        const result = await logout();
+        const manager = getAuthManager();
+        const result = await manager.logout();
         return { success: true, data: result };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
@@ -3272,7 +3260,8 @@ function createAuthHandlers() {
     },
     async getStatus() {
       try {
-        const result = await getAuthStatus();
+        const manager = getAuthManager();
+        const result = await manager.getStatus();
         return { success: true, data: result };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);

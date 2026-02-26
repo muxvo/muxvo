@@ -10,6 +10,7 @@ import { createAddonManager } from '../../utils/terminal-addon-manager';
 import { resolveTerminalTheme } from '@/shared/constants/terminal-themes';
 import { DEFAULT_TERMINAL_CONFIG } from '@/renderer/stores/terminal-config';
 import { TerminalSearchBar } from './TerminalSearchBar';
+import { shellEscapePaths } from '../../utils/shell-escape';
 import '@xterm/xterm/css/xterm.css';
 
 // Debounced font size persistence to avoid rapid disk writes during zoom
@@ -29,11 +30,42 @@ interface Props {
   terminalId: string;
 }
 
+/** Check if a drag event carries file data (Finder or Muxvo internal) */
+function hasFilePayload(e: React.DragEvent): boolean {
+  return (
+    e.dataTransfer.types.includes('Files') ||
+    e.dataTransfer.types.includes('application/x-muxvo-file-paths')
+  );
+}
+
+/** Extract file paths from a drop event */
+function extractFilePaths(e: React.DragEvent): string[] {
+  // Priority 1: Muxvo internal file drag
+  const muxvoData = e.dataTransfer.getData('application/x-muxvo-file-paths');
+  if (muxvoData) {
+    try {
+      return JSON.parse(muxvoData) as string[];
+    } catch { /* fall through */ }
+  }
+  // Priority 2: System file drop (Finder)
+  if (e.dataTransfer.files.length > 0) {
+    const paths: string[] = [];
+    for (let i = 0; i < e.dataTransfer.files.length; i++) {
+      const p = window.api.getPathForFile(e.dataTransfer.files[i]);
+      if (p) paths.push(p);
+    }
+    return paths;
+  }
+  return [];
+}
+
 export function XTermRenderer({ terminalId }: Props): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const searchAddonRef = useRef<SearchAddon | null>(null);
   const [searchVisible, setSearchVisible] = useState(false);
+  const [fileDropActive, setFileDropActive] = useState(false);
+  const dragEnterCountRef = useRef(0);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -186,9 +218,61 @@ export function XTermRenderer({ terminalId }: Props): JSX.Element {
     };
   }, [terminalId]);
 
+  const handleFileDragOver = (e: React.DragEvent) => {
+    if (hasFilePayload(e)) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'copy';
+    }
+  };
+
+  const handleFileDragEnter = (e: React.DragEvent) => {
+    if (hasFilePayload(e)) {
+      e.preventDefault();
+      e.stopPropagation();
+      dragEnterCountRef.current++;
+      setFileDropActive(true);
+    }
+  };
+
+  const handleFileDragLeave = (e: React.DragEvent) => {
+    if (hasFilePayload(e)) {
+      dragEnterCountRef.current--;
+      if (dragEnterCountRef.current <= 0) {
+        dragEnterCountRef.current = 0;
+        setFileDropActive(false);
+      }
+    }
+  };
+
+  const handleFileDrop = (e: React.DragEvent) => {
+    if (!hasFilePayload(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setFileDropActive(false);
+    dragEnterCountRef.current = 0;
+
+    const paths = extractFilePaths(e);
+    if (paths.length > 0) {
+      const escaped = shellEscapePaths(paths);
+      window.api.terminal.write(terminalId, escaped);
+    }
+  };
+
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+    <div
+      style={{ width: '100%', height: '100%', position: 'relative' }}
+      onDragOver={handleFileDragOver}
+      onDragEnter={handleFileDragEnter}
+      onDragLeave={handleFileDragLeave}
+      onDrop={handleFileDrop}
+    >
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      {fileDropActive && (
+        <div className="xterm-file-drop-overlay">
+          Drop to insert path
+        </div>
+      )}
       {searchAddonRef.current && (
         <TerminalSearchBar
           searchAddon={searchAddonRef.current}

@@ -199,6 +199,7 @@ export function FilePanel({ projectCwd, onClose, onOpenFile }: FilePanelProps) {
               isActive={false}
               expanded={entry.type === 'folder' && entry.path ? expandedFolders.has(entry.path) : undefined}
               onClick={() => handleFileClick(entry)}
+              filePath={entry.path}
             />
           ))}
         </div>
