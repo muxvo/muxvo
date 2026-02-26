@@ -119,5 +119,39 @@ export function createBackendClient(options: BackendClientOptions) {
         },
       });
     },
+
+    /** Track analytics events (batch). accessToken is optional for anonymous reporting. */
+    async trackAnalytics(
+      deviceId: string,
+      events: Array<{ metric: string; value?: number; metadata?: object }>,
+      accessToken?: string,
+    ): Promise<{ success: boolean }> {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'X-Device-ID': deviceId,
+      };
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+      }
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeout);
+
+      try {
+        const response = await fetch(`${baseUrl}/analytics/track`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ events }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) return { success: false };
+        return { success: true };
+      } catch {
+        return { success: false };
+      } finally {
+        clearTimeout(timer);
+      }
+    },
   };
 }
