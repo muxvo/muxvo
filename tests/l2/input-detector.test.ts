@@ -157,6 +157,45 @@ describe('Input Detector L2', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // ink bare-\r rendering (Bug A fix: \r no longer strips content)
+  // ---------------------------------------------------------------------------
+  describe('ink bare-\\r rendering', () => {
+    test('ink erase-line + bare \\r pattern → triggers ESC_CANCEL', () => {
+      // ink renders: ESC[2K + content + \r (per line)
+      const inkOutput = '\x1b[2KDo you want to edit foo.ts?\r\x1b[2K❯ 1. Yes\r\x1b[2K  2. No\r\x1b[2KEsc to cancel\r';
+      expect(detectWaitingInput(inkOutput, 'term-1')).toBe(true);
+    });
+
+    test('ink erase-line pattern preserves combo detection (question + selector)', () => {
+      // ink renders each line with ESC[2K (clear line) + content + \r\n or cursor move
+      const inkOutput = '\x1b[2KDo you want to proceed?\r\n\x1b[2K❯ 1. Yes\r\n\x1b[2K  2. No\r\n';
+      expect(detectWaitingInput(inkOutput, 'term-1')).toBe(true);
+    });
+
+    test('overwrite semantics: \\r followed by new content keeps new content', () => {
+      // "old text\rnew text" → should keep "new text"
+      const output = 'old stuff\rEsc to cancel · Tab\n';
+      expect(detectWaitingInput(output, 'term-1')).toBe(true);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // ESC_CANCEL bypasses exclusion rules (Bug B fix)
+  // ---------------------------------------------------------------------------
+  describe('ESC_CANCEL bypasses exclusion rules', () => {
+    test('Esc to cancel survives [n/m] exclusion in tail', () => {
+      // Buffer has both "Esc to cancel" and a [n/m] progress pattern in tail
+      const output = 'Esc to cancel\nprocessing [1/3]\n';
+      expect(detectWaitingInput(output, 'term-1')).toBe(true);
+    });
+
+    test('Esc to cancel survives percentage exclusion in tail', () => {
+      const output = 'Esc to cancel\n50% done\n';
+      expect(detectWaitingInput(output, 'term-1')).toBe(true);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // Exclusion rules (no false positives)
   // ---------------------------------------------------------------------------
   describe('Exclusion rules', () => {

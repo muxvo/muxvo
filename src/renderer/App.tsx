@@ -524,6 +524,15 @@ function AppContent({
 
       <SettingsModal uiTheme={uiTheme} onToggleTheme={onToggleTheme} />
       <LoginModal />
+      <WaitingInputNotification
+        waitingCount={terminals.filter(t => t.state === 'WaitingInput').length}
+        overlayActive={
+          state.chatHistory.open || state.skillsPanel.open || state.mcpPanel.open ||
+          state.hooksPanel.open || state.pluginsPanel.open ||
+          state.filePanel.open || state.tempView.active
+        }
+        onSwitchToTerminals={() => dispatch({ type: 'CLOSE_ALL' })}
+      />
       <UpdateNotification />
     </div>
   );
