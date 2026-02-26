@@ -137,7 +137,7 @@ export function App(): JSX.Element {
     if (result?.success && result.data) {
       setTerminals((prev) => [...prev, { id: result.data.id, state: 'Running', cwd: home }]);
       setTerminalOrder((prev) => [...prev, result.data.id]);
-      // setSelectedId(result.data.id); // TEMPORARILY REMOVED FOR RED PHASE
+      setSelectedId(result.data.id);
     }
   }, []);
 
