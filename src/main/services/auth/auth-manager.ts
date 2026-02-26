@@ -186,6 +186,12 @@ export function createAuthManager(options: AuthManagerOptions) {
       return { loggedIn: false };
     },
 
+    /** Get current access token (from storage), or null if not logged in */
+    async getAccessToken(): Promise<string | null> {
+      const tokens = await getTokenPair();
+      return tokens.accessToken || null;
+    },
+
     /** Try to restore session from stored tokens on startup */
     async tryRestoreSession() {
       const tokens = await getTokenPair();
