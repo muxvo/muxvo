@@ -21,6 +21,17 @@ import { createTerminalMachine } from '@/shared/machines/terminal-process';
 const MAX_TERMINALS = 20;
 const GRACEFUL_CLOSE_TIMEOUT = 5000;
 
+/** Terminal emulator auto-responses that should NOT trigger USER_INPUT */
+export function isTerminalAutoResponse(data: string): boolean {
+  // Cursor position report: \x1b[row;colR
+  if (/^\x1b\[\d+;\d+R$/.test(data)) return true;
+  // Focus events: \x1b[I (focus in), \x1b[O (focus out)
+  if (/^\x1b\[[IO]$/.test(data)) return true;
+  // Device attributes response: \x1b[?...c
+  if (/^\x1b\[\?[\d;]*c$/.test(data)) return true;
+  return false;
+}
+
 interface SpawnOptions {
   cwd: string;
 }
@@ -177,8 +188,8 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
   function write(id: string, data: string): void {
     const terminal = terminals.get(id);
     if (terminal) {
-      // If waiting for user input, transition back to Running
-      if (terminal.machine.state === 'WaitingInput') {
+      // Only transition back for real user input, not terminal auto-responses
+      if (terminal.machine.state === 'WaitingInput' && !isTerminalAutoResponse(data)) {
         resetInputDetector(id);
         terminal.machine.send('USER_INPUT');
         pushStateChange(id, terminal.machine.state);
