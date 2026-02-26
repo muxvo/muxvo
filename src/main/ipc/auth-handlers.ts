@@ -7,12 +7,8 @@
  *          auth:oauth-callback, auth:refresh-token, auth:get-profile
  */
 
-import { ipcMain, BrowserWindow, shell } from 'electron';
+import { app, ipcMain, BrowserWindow, shell } from 'electron';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
-import {
-  logout as oauthLogout,
-  getAuthStatus,
-} from '@/modules/auth/github-oauth';
 import { createAuthManager } from '@/main/services/auth/auth-manager';
 
 // Lazy singleton auth manager (created on first use)
@@ -20,7 +16,8 @@ let authManager: ReturnType<typeof createAuthManager> | null = null;
 
 export function getAuthManager() {
   if (!authManager) {
-    const backendUrl = process.env.MUXVO_API_URL || 'https://api.muxvo.com';
+    const backendUrl = process.env.MUXVO_API_URL
+      || (app.isPackaged ? 'https://api.muxvo.com' : 'http://localhost:3000');
     authManager = createAuthManager({ backendUrl });
   }
   return authManager;
@@ -43,7 +40,8 @@ export function createAuthHandlers() {
 
     async logout(): Promise<Record<string, unknown>> {
       try {
-        const result = await oauthLogout();
+        const manager = getAuthManager();
+        const result = await manager.logout();
         return { success: true, data: result };
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
@@ -53,7 +51,8 @@ export function createAuthHandlers() {
 
     async getStatus(): Promise<Record<string, unknown>> {
       try {
-        const result = await getAuthStatus();
+        const manager = getAuthManager();
+        const result = await manager.getStatus();
         return { success: true, data: result };
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);

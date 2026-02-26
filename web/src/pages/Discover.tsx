@@ -1,7 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 
 /* ------------------------------------------------------------------ */
-/*  Static skill data                                                 */
+/*  API config                                                         */
+/* ------------------------------------------------------------------ */
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://api.muxvo.com';
+
+/* ------------------------------------------------------------------ */
+/*  Types                                                              */
 /* ------------------------------------------------------------------ */
 type Category = 'Coding' | 'DevOps' | 'Writing' | 'Research' | 'Automation' | 'Other';
 
@@ -15,7 +20,10 @@ interface Skill {
   score: number;
 }
 
-const SKILLS: Skill[] = [
+/* ------------------------------------------------------------------ */
+/*  Static fallback data                                               */
+/* ------------------------------------------------------------------ */
+const FALLBACK_SKILLS: Skill[] = [
   { id: '1',  name: 'Code Review Pro',      description: 'Automated code review with style, security, and performance checks. Provides actionable suggestions inline.',                author: 'muxvo-team',   category: 'Coding',     installs: 2450, score: 9.2 },
   { id: '2',  name: 'Test Generator',        description: 'Generate comprehensive unit tests from source code. Supports Jest, Vitest, and pytest.',                                    author: 'testcraft',    category: 'Coding',     installs: 1830, score: 8.7 },
   { id: '3',  name: 'Architecture Advisor',  description: 'Analyze codebase and suggest architectural improvements. Detects anti-patterns and proposes refactoring strategies.',        author: 'archwise',     category: 'Coding',     installs: 3210, score: 9.0 },
@@ -49,20 +57,67 @@ function formatInstalls(n: number): string {
 }
 
 /* ------------------------------------------------------------------ */
+/*  API fetch hook                                                     */
+/* ------------------------------------------------------------------ */
+function useSkills(search: string, category: 'All' | Category) {
+  const [skills, setSkills] = useState<Skill[]>(FALLBACK_SKILLS);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isFromApi, setIsFromApi] = useState(false);
+
+  const fetchSkills = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    const params = new URLSearchParams();
+    if (search) params.set('q', search);
+    if (category !== 'All') params.set('category', category);
+    params.set('limit', '50');
+
+    try {
+      const res = await fetch(`${API_BASE}/marketplace/search?${params}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setSkills(data.items);
+      setIsFromApi(true);
+    } catch {
+      // API failed — fall back to static data with client-side filtering
+      setIsFromApi(false);
+      setError('Using offline data');
+      setSkills(FALLBACK_SKILLS);
+    } finally {
+      setLoading(false);
+    }
+  }, [search, category]);
+
+  useEffect(() => {
+    // Debounce search input
+    const timer = setTimeout(fetchSkills, search ? 300 : 0);
+    return () => clearTimeout(timer);
+  }, [fetchSkills]);
+
+  return { skills, loading, error, isFromApi };
+}
+
+/* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 export function Discover() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<'All' | Category>('All');
 
+  const { skills, loading, error, isFromApi } = useSkills(search, activeCategory);
+
+  // Client-side filtering as fallback when using static data
   const filtered = useMemo(() => {
-    return SKILLS.filter((s) => {
+    if (isFromApi) return skills;
+    return skills.filter((s) => {
       const matchCategory = activeCategory === 'All' || s.category === activeCategory;
       const q = search.toLowerCase();
       const matchSearch = !q || s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q) || s.author.toLowerCase().includes(q);
       return matchCategory && matchSearch;
     });
-  }, [search, activeCategory]);
+  }, [skills, search, activeCategory, isFromApi]);
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-after)' }}>
@@ -146,6 +201,15 @@ export function Discover() {
             );
           })}
         </div>
+
+        {/* Status indicator */}
+        {error && (
+          <div className="text-center mt-4">
+            <span className="text-xs px-3 py-1 rounded-full" style={{ color: 'var(--text-after-sec)', background: 'var(--bg-after-card)' }}>
+              {error}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* ============ SKILL GRID ============ */}
@@ -166,7 +230,11 @@ export function Discover() {
             .discover-grid { grid-template-columns: 1fr !important; }
           }
         `}</style>
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-20" style={{ color: 'var(--text-after-sec)' }}>
+            <p className="text-lg">Loading skills...</p>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-20" style={{ color: 'var(--text-after-sec)' }}>
             <p className="text-lg mb-2">No skills found</p>
             <p className="text-sm">Try a different search term or category.</p>
