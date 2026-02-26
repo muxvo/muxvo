@@ -47,6 +47,7 @@ export const IPC_CHANNELS = {
     DELETE_SESSION: 'chat:delete-session',
     REVEAL_FILE: 'chat:reveal-file',
     SET_SESSION_NAME: 'chat:set-session-name',
+    RESTORE_SESSION: 'chat:restore-session',
   },
   CONFIG: {
     GET_RESOURCES: 'config:get-resources',
