@@ -62,68 +62,15 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
     );
   }
 
-  // Focused mode layout
-  if (viewMode === 'Focused' && focusedId) {
-    const focusedTerminal = terminals.find((t) => t.id === focusedId);
-    const sidebarTerminals = terminals.filter((t) => t.id !== focusedId);
-
-    if (!focusedTerminal) {
-      // Fallback to tiling if focused terminal not found
-      return (
-        <TilingGrid
-          terminals={terminals}
-          selectedId={selectedId}
-          onDoubleClick={onDoubleClick}
-          onClick={onClick}
-          onClose={onClose}
-          onReorder={onReorder}
-          onRename={onRename}
-          onAddTerminal={onAddTerminal}
-          maxReached={maxReached}
-        />
-      );
-    }
-
-    return (
-      <div style={{ display: 'flex', width: '100%', height: '100%', position: 'relative' }}>
-        {/* Left: focused terminal 75% */}
-        <div style={{ width: '75%', height: '100%' }}>
-          <TerminalTile key={focusedId} id={focusedId} state={focusedTerminal.state} cwd={focusedTerminal.cwd} customName={focusedTerminal.customName} onRename={onRename} focused onClose={onClose} />
-        </div>
-        {/* Right: sidebar 25% */}
-        <div style={{
-          width: '25%',
-          height: '100%',
-          overflowY: 'auto',
-          borderLeft: '1px solid var(--border)',
-        }}>
-          {sidebarTerminals.map((t) => (
-            <div
-              key={t.id}
-              style={{
-                height: `${100 / Math.min(sidebarTerminals.length, 3)}%`,
-                minHeight: '150px',
-                cursor: 'pointer',
-              }}
-              onClick={() => onSidebarClick?.(t.id)}
-            >
-              <TerminalTile id={t.id} state={t.state} cwd={t.cwd} customName={t.customName} onRename={onRename} compact />
-            </div>
-          ))}
-        </div>
-        {onAddTerminal && (
-          <button className="terminal-grid__fab" onClick={onAddTerminal} disabled={maxReached} title={t('menu.newTerminal')}>+</button>
-        )}
-      </div>
-    );
-  }
-
-  // Tiling mode (default)
+  // Always render TilingGrid — focused mode is handled via CSS overlay
+  // to avoid unmounting/remounting XTermRenderer instances
   return (
     <TilingGrid
       terminals={terminals}
       selectedId={selectedId}
+      focusedId={viewMode === 'Focused' ? focusedId : null}
       onDoubleClick={onDoubleClick}
+      onSidebarClick={onSidebarClick}
       onClick={onClick}
       onClose={onClose}
       onReorder={onReorder}
@@ -202,7 +149,9 @@ export function computeTilePlacements(layout: GridLayoutResult, count: number): 
 interface TilingGridProps {
   terminals: TerminalInfo[];
   selectedId?: string | null;
+  focusedId?: string | null;
   onDoubleClick?: (id: string) => void;
+  onSidebarClick?: (id: string) => void;
   onClick?: (id: string) => void;
   onClose?: (id: string) => void;
   onReorder?: (newOrder: string[]) => void;
@@ -211,7 +160,7 @@ interface TilingGridProps {
   maxReached?: boolean;
 }
 
-function TilingGrid({ terminals, selectedId, onDoubleClick, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached }: TilingGridProps): JSX.Element {
+function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebarClick, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached }: TilingGridProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const layout = calculateGridLayout(terminals.length);
   const { cols, rows } = layout;
@@ -290,6 +239,11 @@ function TilingGrid({ terminals, selectedId, onDoubleClick, onClick, onClose, on
     setDragOverId(null);
   }, [draggingId, terminals, onReorder]);
 
+  const isFocusedMode = !!focusedId;
+  const sidebarTerminals = isFocusedMode
+    ? terminals.filter((t) => t.id !== focusedId)
+    : [];
+
   const gridStyle: React.CSSProperties = {
     display: 'grid',
     gridTemplateColumns,
@@ -300,49 +254,71 @@ function TilingGrid({ terminals, selectedId, onDoubleClick, onClick, onClose, on
     height: '100%',
     perspective: '1200px',
     position: 'relative',
-    cursor: resizeManager.cursor,
+    cursor: isFocusedMode ? 'default' : resizeManager.cursor,
   };
 
   return (
     <div
       ref={containerRef}
       style={gridStyle}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
+      onMouseMove={isFocusedMode ? undefined : handleMouseMove}
+      onMouseUp={isFocusedMode ? undefined : handleMouseUp}
     >
       {terminals.map((t, i) => {
+        const isFocused = focusedId === t.id;
         const placement = placements[i];
         const ds: 'none' | 'dragging' | 'drag-over' =
           t.id === draggingId ? 'dragging' :
           t.id === dragOverId ? 'drag-over' : 'none';
 
-        return (
-          <div
-            key={t.id}
-            style={{
+        // In focused mode: focused tile overlays full area, others stay hidden in grid
+        const cellStyle: React.CSSProperties = isFocusedMode
+          ? isFocused
+            ? {
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: sidebarTerminals.length > 0 ? '25%' : 0,
+                bottom: 0,
+                zIndex: 10,
+                overflow: 'hidden',
+              }
+            : {
+                gridRow: placement?.gridRow,
+                gridColumn: placement?.gridColumn,
+                minWidth: 0,
+                minHeight: 0,
+                height: '100%',
+                overflow: 'hidden',
+                visibility: 'hidden',
+              }
+          : {
               gridRow: placement?.gridRow,
               gridColumn: placement?.gridColumn,
               minWidth: 0,
               minHeight: 0,
               height: '100%',
               overflow: 'hidden',
-            }}
-          >
+            };
+
+        return (
+          <div key={t.id} style={cellStyle}>
             <TerminalTile
               id={t.id}
               state={t.state}
               cwd={t.cwd}
               customName={t.customName}
               onRename={onRename}
-              selected={t.id === selectedId}
+              selected={!isFocusedMode && t.id === selectedId}
+              focused={isFocused && isFocusedMode}
               staggerIndex={i}
-              draggable
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              onDragLeave={handleDragLeave}
-              dragState={ds}
+              draggable={!isFocusedMode}
+              onDragStart={!isFocusedMode ? handleDragStart : undefined}
+              onDragEnd={!isFocusedMode ? handleDragEnd : undefined}
+              onDragOver={!isFocusedMode ? handleDragOver : undefined}
+              onDrop={!isFocusedMode ? handleDrop : undefined}
+              onDragLeave={!isFocusedMode ? handleDragLeave : undefined}
+              dragState={!isFocusedMode ? ds : 'none'}
               onDoubleClick={() => onDoubleClick?.(t.id)}
               onClick={() => onClick?.(t.id)}
               onClose={onClose}
@@ -351,8 +327,60 @@ function TilingGrid({ terminals, selectedId, onDoubleClick, onClick, onClose, on
         );
       })}
 
-      {/* Column resize handles */}
-      {cols > 1 && colHandlePositions.map((pct, idx) => (
+      {/* Sidebar overlay in focused mode */}
+      {isFocusedMode && sidebarTerminals.length > 0 && (
+        <div style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          width: '25%',
+          height: '100%',
+          zIndex: 11,
+          borderLeft: '1px solid var(--border)',
+          overflowY: 'auto',
+          background: 'var(--bg-deep)',
+          padding: '6px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '4px',
+        }}>
+          {sidebarTerminals.map((t) => (
+            <div
+              key={`sidebar-${t.id}`}
+              onClick={() => onSidebarClick?.(t.id)}
+              style={{
+                padding: '8px 10px',
+                cursor: 'pointer',
+                borderRadius: '6px',
+                background: 'var(--bg-secondary)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '12px',
+                color: 'var(--text-primary)',
+              }}
+            >
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: t.state === 'WaitingInput' ? 'var(--amber-500, #f59e0b)' :
+                              t.state === 'Running' ? 'var(--green-500, #22c55e)' :
+                              'var(--text-tertiary)',
+                  flexShrink: 0,
+                }}
+              />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {t.customName || t.cwd.split('/').pop() || t.cwd}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Column resize handles (tiling mode only) */}
+      {!isFocusedMode && cols > 1 && colHandlePositions.map((pct, idx) => (
         <ResizeHandle
           key={`col-${idx}`}
           type="col"
@@ -370,8 +398,8 @@ function TilingGrid({ terminals, selectedId, onDoubleClick, onClick, onClose, on
         />
       ))}
 
-      {/* Row resize handles */}
-      {rows > 1 && rowHandlePositions.map((pct, idx) => (
+      {/* Row resize handles (tiling mode only) */}
+      {!isFocusedMode && rows > 1 && rowHandlePositions.map((pct, idx) => (
         <ResizeHandle
           key={`row-${idx}`}
           type="row"

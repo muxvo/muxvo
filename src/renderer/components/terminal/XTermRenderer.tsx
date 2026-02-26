@@ -69,6 +69,7 @@ export function XTermRenderer({ terminalId }: Props): JSX.Element {
 
   useEffect(() => {
     if (!containerRef.current) return;
+    let disposed = false; // Guard: skip async callbacks after unmount
 
     // Create terminal synchronously with defaults (ensures immediate render)
     const term = new Terminal({
@@ -118,6 +119,7 @@ export function XTermRenderer({ terminalId }: Props): JSX.Element {
 
     // Async: load persisted config and apply (theme/font changes take effect live)
     window.api.app.getConfig().then((result) => {
+      if (disposed) return;
       if (result?.data?.terminal) {
         const cfg = { ...DEFAULT_TERMINAL_CONFIG, ...result.data.terminal };
         term.options.theme = resolveTerminalTheme(cfg.themeName);
@@ -125,7 +127,7 @@ export function XTermRenderer({ terminalId }: Props): JSX.Element {
         term.options.fontFamily = cfg.fontFamily;
         term.options.cursorStyle = cfg.cursorStyle;
         term.options.cursorBlink = cfg.cursorBlink;
-        requestAnimationFrame(() => fitAddon.fit());
+        requestAnimationFrame(() => { if (!disposed) fitAddon.fit(); });
       }
     }).catch(() => { /* use defaults on error */ });
 
@@ -151,19 +153,21 @@ export function XTermRenderer({ terminalId }: Props): JSX.Element {
     // Fetch buffered output (captures anything from before subscription)
     console.log(`[MUXVO:restore] XTermRenderer mounted for id=${terminalId}`);
     window.api.terminal.getBuffer(terminalId).then((result: { success: boolean; data?: string }) => {
+      if (disposed) return; // Component unmounted — discard
       if (result?.success && result.data) {
         console.log(`[MUXVO:restore] buffer received for id=${terminalId} bytes=${result.data.length}`);
         term.write(result.data);
       }
       // Flush any live data that arrived during getBuffer round-trip
       for (const data of pendingLiveData) {
+        if (disposed) break;
         term.write(data);
       }
       pendingLiveData.length = 0;
       bufferedDataWritten = true;
 
       // buffer 写入完成后重新 fit，确保列宽与内容匹配
-      requestAnimationFrame(() => fitAddon.fit());
+      requestAnimationFrame(() => { if (!disposed) fitAddon.fit(); });
 
       // Self-verification
       const lines = term.buffer.active.length;
@@ -173,8 +177,12 @@ export function XTermRenderer({ terminalId }: Props): JSX.Element {
       }
     });
 
-    // Resize observer -> fit terminal
-    const observer = new ResizeObserver(() => {
+    // Resize observer -> fit terminal (skip when container is too small, e.g. during layout transition)
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry || disposed) return;
+      const { width, height } = entry.contentRect;
+      if (width < 10 || height < 10) return;
       fitAddon.fit();
     });
     observer.observe(containerRef.current);
@@ -208,6 +216,7 @@ export function XTermRenderer({ terminalId }: Props): JSX.Element {
     const unsubZoom = window.api.terminal.onZoom((direction: string) => handleZoom(direction));
 
     return () => {
+      disposed = true;
       unsubOutput();
       observer.disconnect();
       window.removeEventListener('muxvo:theme-change', onThemeChange);
