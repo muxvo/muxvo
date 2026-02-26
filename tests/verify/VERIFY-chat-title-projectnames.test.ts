@@ -1,10 +1,11 @@
 /**
- * VERIFY: Chat title uses projectNames (projectHash → customName)
+ * VERIFY: Chat title uses sessionCustomTitles (sessionId → customName)
  *
  * Verifies:
- * 1. setSessionName stores by projectHash in config.projectNames (not sessionId in sessionNames)
- * 2. setSessionName succeeds even when no CC session exists for that CWD
- * 3. getSessions applies customTitle from projectNames by matching projectHash
+ * 1. setSessionName finds the most recent session and stores by sessionId in config.sessionCustomTitles
+ * 2. setSessionName returns { success: false } when no sessions exist for that CWD
+ * 3. getSessions applies customTitle from sessionCustomTitles by matching sessionId
+ * 4. Clearing customName removes the entry from sessionCustomTitles
  */
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtempSync, readFileSync, rmSync } from 'fs';
@@ -63,7 +64,7 @@ vi.mock('@/main/services/chat-multi-source', () => ({
   })),
 }));
 
-describe('VERIFY: chat title uses projectNames', () => {
+describe('VERIFY: chat title uses sessionCustomTitles', () => {
   let tempDir: string;
 
   beforeEach(async () => {
@@ -77,7 +78,7 @@ describe('VERIFY: chat title uses projectNames', () => {
     rmSync(tempDir, { recursive: true, force: true });
   });
 
-  test('setSessionName stores customName by projectHash (not sessionId)', async () => {
+  test('setSessionName stores customName by sessionId (not projectHash)', async () => {
     const { createChatHandlers } = await import('@/main/ipc/chat-handlers');
     const handlers = createChatHandlers();
 
@@ -86,56 +87,52 @@ describe('VERIFY: chat title uses projectNames', () => {
       customName: 'My Custom Title',
     });
 
-    // Must succeed and return projectHash
+    // Must succeed and return sessionId
     expect(result.success).toBe(true);
-    expect((result as any).projectHash).toBe('-Users-test-my-project');
+    expect((result as any).sessionId).toBe('session-abc');
 
-    // Verify config.projectNames was written (not sessionNames)
+    // Verify config.sessionCustomTitles was written (not projectNames)
     const configPath = join(tempDir, 'config.json');
     const saved = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(saved.projectNames).toBeDefined();
-    expect(saved.projectNames['-Users-test-my-project']).toBe('My Custom Title');
-    expect(saved.sessionNames).toBeUndefined();
+    expect(saved.sessionCustomTitles).toBeDefined();
+    expect(saved.sessionCustomTitles['session-abc']).toBe('My Custom Title');
+    expect(saved.projectNames).toBeUndefined();
   });
 
-  test('setSessionName succeeds even with no CC sessions for that CWD', async () => {
+  test('setSessionName fails when no sessions exist for that CWD', async () => {
     const { createChatHandlers } = await import('@/main/ipc/chat-handlers');
     const handlers = createChatHandlers();
 
     // Use a path that the mock reader returns NO sessions for
     const result = await handlers.setSessionName({
       cwd: '/nonexistent/fake/project/12345',
-      customName: 'Still Works',
+      customName: 'Should Fail',
     });
 
-    // New logic: always succeeds, no session lookup needed
-    expect(result.success).toBe(true);
-
-    const configPath = join(tempDir, 'config.json');
-    const saved = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(saved.projectNames['-nonexistent-fake-project-12345']).toBe('Still Works');
+    // No sessions → cannot determine sessionId → returns false
+    expect(result.success).toBe(false);
   });
 
-  test('getSessions applies customTitle from projectNames by projectHash', async () => {
+  test('getSessions applies customTitle from sessionCustomTitles by sessionId', async () => {
     const { createChatHandlers } = await import('@/main/ipc/chat-handlers');
     const handlers = createChatHandlers();
 
-    // Step 1: Set a custom name for the project
+    // Step 1: Set a custom name (will apply to session-abc)
     await handlers.setSessionName({
       cwd: '/Users/test/my-project',
-      customName: 'Renamed Project',
+      customName: 'Renamed Session',
     });
 
-    // Step 2: Get sessions — customTitle should be applied
+    // Step 2: Get sessions — customTitle should be applied to session-abc only
     const { sessions } = await handlers.getSessions({ projectHash: '-Users-test-my-project' });
 
     expect(sessions.length).toBeGreaterThan(0);
-    expect(sessions[0].customTitle).toBe('Renamed Project');
+    expect(sessions[0].customTitle).toBe('Renamed Session');
     // Original title still preserved
     expect(sessions[0].title).toBe('Default title from first message');
   });
 
-  test('clearing customName removes it from projectNames', async () => {
+  test('clearing customName removes it from sessionCustomTitles', async () => {
     const { createChatHandlers } = await import('@/main/ipc/chat-handlers');
     const handlers = createChatHandlers();
 
