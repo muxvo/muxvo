@@ -220,13 +220,13 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
             <div className="session-card__footer">
               <div className="session-card__tags">
                 {session.source === 'codex' && (
-                  <span className="session-card__source-badge session-card__source-badge--cx">CX</span>
+                  <span className="source-badge source-badge--cx">CX</span>
                 )}
                 {session.source === 'claude-code' && (
-                  <span className="session-card__source-badge session-card__source-badge--cc">CC</span>
+                  <span className="source-badge source-badge--cc">CC</span>
                 )}
                 {session.source === 'gemini' && (
-                  <span className="session-card__source-badge session-card__source-badge--gm">GM</span>
+                  <span className="source-badge source-badge--gm">GM</span>
                 )}
                 {projectNameMap && session.projectHash && (
                   <span className="session-card__project-badge">

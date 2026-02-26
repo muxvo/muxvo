@@ -168,13 +168,13 @@ export function SkillList({ skills, loading, selectedPath, onSelect, searchQuery
                         <div className="skill-list__item-header">
                           <span className="skill-list__item-name">{skill.name}</span>
                           {skill.source && skill.source !== 'shared' && (
-                            <span className={`skill-list__source-badge skill-list__source-badge--${skill.source === 'codex' ? 'cx' : skill.source === 'gemini' ? 'gm' : 'cc'}`}>
+                            <span className={`source-badge source-badge--${skill.source === 'codex' ? 'cx' : skill.source === 'gemini' ? 'gm' : 'cc'}`}>
                               {skill.source === 'codex' ? 'CX' : skill.source === 'gemini' ? 'GM' : 'CC'}
                             </span>
                           )}
                           {skill.source === 'shared' && (<>
-                            <span className="skill-list__source-badge skill-list__source-badge--cx">CX</span>
-                            <span className="skill-list__source-badge skill-list__source-badge--gm">GM</span>
+                            <span className="source-badge source-badge--cx">CX</span>
+                            <span className="source-badge source-badge--gm">GM</span>
                           </>)}
                         </div>
                         <span className="skill-list__item-desc">{skill.desc}</span>
