@@ -243,8 +243,9 @@ export function App(): JSX.Element {
     setTerminalOrder(prev => [...prev, newId]);
     setSelectedId(newId);
     setTimeout(() => {
-      // RED PHASE: temporarily revert fix to prove test catches the bug
-      window.api.terminal.write(newId, `claude --resume ${info.sessionId}\n`);
+      // Use cd + && to ensure correct cwd before resume, bypassing terminal.create path resolution issues
+      const escapedCwd = info.cwd.replace(/([ ()&|;<>$`"'\\])/g, '\\$1');
+      window.api.terminal.write(newId, `cd ${escapedCwd} && claude --resume ${info.sessionId}\n`);
     }, 500);
   }, []);
 
