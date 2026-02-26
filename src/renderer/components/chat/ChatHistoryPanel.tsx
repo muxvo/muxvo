@@ -351,9 +351,9 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
           onResumeSession={() => {
             const sel = sessions.find(s => s.sessionId === selectedSessionId);
             if (!sel) return;
-            // Get cwd from loaded messages (CC projects have empty displayPath)
-            const msgCwd = messages.find(m => m.cwd)?.cwd;
             const proj = projects.find(p => p.projectHash === sel.projectHash);
+            // Priority: session messages cwd > project displayPath
+            const msgCwd = messages.find(m => m.cwd)?.cwd;
             const cwd = msgCwd || proj?.displayPath;
             if (!cwd) return;
             props.onResumeSession?.({

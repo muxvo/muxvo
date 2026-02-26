@@ -315,12 +315,29 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
             );
             const totalSize = fileStats.reduce((sum, s) => sum + (s?.size || 0), 0);
 
+            // Extract cwd from first session file to populate displayPath
+            let displayPath = '';
+            if (jsonlFiles.length > 0) {
+              try {
+                const lines = await readFirstLines(join(projectPath, jsonlFiles[0]), 10);
+                for (const line of lines) {
+                  try {
+                    const obj = JSON.parse(line.trim());
+                    if (obj.cwd) { displayPath = obj.cwd; break; }
+                  } catch { /* skip non-JSON lines */ }
+                }
+              } catch { /* skip read errors */ }
+            }
+
             const segments = projectHash.split('-').filter(s => s.length > 0);
-            const displayName = segments.length > 0 ? segments[segments.length - 1] : projectHash;
+            const fallbackName = segments.length > 0 ? segments[segments.length - 1] : projectHash;
+            const displayName = displayPath
+              ? displayPath.split('/').filter(Boolean).pop() || fallbackName
+              : fallbackName;
 
             return {
               projectHash,
-              displayPath: '',
+              displayPath,
               displayName,
               sessionCount: jsonlFiles.length,
               totalSize,

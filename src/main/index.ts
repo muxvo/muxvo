@@ -127,7 +127,7 @@ app.on('open-url', (event, url) => {
 // Windows/Linux: second instance receives the deep link URL via argv
 app.on('second-instance', (_event, argv) => {
   // Focus existing window
-  if (mainWindow) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
     if (mainWindow.isMinimized()) mainWindow.restore();
     mainWindow.focus();
   }
