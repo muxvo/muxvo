@@ -122,6 +122,13 @@
   border-bottom-color: rgba(239, 68, 68, 0.2);
 }
 
+/* WaitingInput takes priority over selected/focused border */
+.tile--waiting.tile-selected,
+.tile--waiting.tile-focused {
+  border-color: rgba(239, 68, 68, 0.7);
+  animation: borderGlow 2.5s ease-in-out infinite;
+}
+
 /* Cwd path (clickable, subdued) */
 .tile-cwd {
   font-size: 11px;
