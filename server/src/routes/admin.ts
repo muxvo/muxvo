@@ -188,6 +188,76 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
   );
 
   // =========================================================================
+  // GET /admin/analytics/dau — Daily active users
+  // =========================================================================
+
+  app.get<{
+    Querystring: { from?: string; to?: string };
+  }>('/analytics/dau', async (request) => {
+    const {
+      from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      to = new Date().toISOString().slice(0, 10),
+    } = request.query;
+
+    const result = await query<{ date: string; dau: string; registered_users: string }>(
+      `SELECT date,
+              COUNT(DISTINCT device_id) AS dau,
+              COUNT(DISTINCT user_id) AS registered_users
+       FROM analytics_events
+       WHERE date >= $1 AND date <= $2
+       GROUP BY date
+       ORDER BY date`,
+      [from, to],
+    );
+
+    return {
+      from, to,
+      data: result.rows.map(r => ({
+        date: r.date,
+        dau: Number(r.dau),
+        registered_users: Number(r.registered_users),
+      })),
+    };
+  });
+
+  // =========================================================================
+  // GET /admin/analytics/events — Event metrics
+  // =========================================================================
+
+  app.get<{
+    Querystring: { from?: string; to?: string; metric?: string };
+  }>('/analytics/events', async (request) => {
+    const {
+      from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      to = new Date().toISOString().slice(0, 10),
+      metric,
+    } = request.query;
+
+    let sql = `SELECT date, metric, SUM(value) AS total
+               FROM analytics_events
+               WHERE date >= $1 AND date <= $2`;
+    const params: unknown[] = [from, to];
+
+    if (metric) {
+      sql += ` AND metric = $3`;
+      params.push(metric);
+    }
+
+    sql += ` GROUP BY date, metric ORDER BY date, metric`;
+
+    const result = await query<{ date: string; metric: string; total: string }>(sql, params);
+
+    return {
+      from, to,
+      data: result.rows.map(r => ({
+        date: r.date,
+        metric: r.metric,
+        total: Number(r.total),
+      })),
+    };
+  });
+
+  // =========================================================================
   // PATCH /admin/users/:id/status — Update user status (ban/activate)
   // =========================================================================
 

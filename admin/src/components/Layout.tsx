@@ -19,6 +19,7 @@ export function Layout() {
         <nav className="flex-1 p-3 space-y-1">
           <SidebarLink to="/" label="Dashboard" />
           <SidebarLink to="/users" label="Users" />
+          <SidebarLink to="/analytics" label="Analytics" />
         </nav>
         <div className="p-3 border-t border-gray-800">
           <button
