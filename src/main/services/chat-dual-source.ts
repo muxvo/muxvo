@@ -84,6 +84,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
 
     let title = '';
     let startedAt = '';
+    let cwd = '';
 
     try {
       const lines = await readFirstLines(filePath, 20);
@@ -92,6 +93,10 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
         if (!trimmed) continue;
         try {
           const obj = JSON.parse(trimmed);
+          // Extract cwd from the first entry that has it
+          if (!cwd && obj.cwd) {
+            cwd = obj.cwd as string;
+          }
           if (obj.type === 'user') {
             let rawContent = '';
             const msgContent = obj.message?.content ?? obj.content;
@@ -127,6 +132,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
       lastModified,
       fileSize: stat.size,
       source: 'claude-code' as const,
+      cwd: cwd || undefined,
     };
   }
 

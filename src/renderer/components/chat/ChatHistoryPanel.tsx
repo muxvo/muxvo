@@ -347,24 +347,27 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
           canResume={(() => {
             const sel = sessions.find(s => s.sessionId === selectedSessionId);
             if (!sel) return false;
-            if (messages.length === 0 || loading) return false;
-            return (sel.source || 'claude-code') === 'claude-code';
+            if ((sel.source || 'claude-code') !== 'claude-code') return false;
+            // Need either session-level cwd or loaded messages with cwd
+            const hasCwd = sel.cwd || messages.some(m => m.cwd);
+            if (!hasCwd && (messages.length === 0 || loading)) return false;
+            return !!hasCwd;
           })()}
           onResumeSession={() => {
             const sel = sessions.find(s => s.sessionId === selectedSessionId);
             if (!sel) return;
             const proj = projects.find(p => p.projectHash === sel.projectHash);
-            // Priority: session messages cwd > project displayPath
+            // Priority: session summary cwd > message cwd > project displayPath
             const msgCwd = messages.find(m => m.cwd)?.cwd;
-            const cwd = msgCwd || proj?.displayPath;
+            const cwd = sel.cwd || msgCwd || proj?.displayPath;
 
             console.log('[resume-chat] cwd resolution:', {
               sessionId: sel.sessionId,
               projectHash: sel.projectHash,
+              selCwd: sel.cwd,
               msgCwd,
               displayPath: proj?.displayPath,
               finalCwd: cwd,
-              messagesCount: messages.length,
             });
 
             if (!cwd) {

@@ -44,6 +44,8 @@ export interface SessionSummary {
   source?: ChatSource;
   /** 用户自定义标题（来自终端命名） */
   customTitle?: string;
+  /** Session 级别的工作目录（从 JSONL 提取），用于 resume 功能 */
+  cwd?: string;
 }
 
 /** 消息中的内容块（user 和 assistant 共用） */
