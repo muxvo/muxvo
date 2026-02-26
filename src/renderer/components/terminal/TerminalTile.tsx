@@ -175,6 +175,7 @@ export function TerminalTile({
     !compact ? 'tile-enter' : '',
     focused ? 'tile-focused' : '',
     selected ? 'tile-selected' : '',
+    state === 'WaitingInput' ? 'tile--waiting' : '',
     dragState === 'dragging' ? 'dragging' : '',
     dragState === 'drag-over' ? 'drag-over' : '',
   ].filter(Boolean).join(' ');
