@@ -2,32 +2,27 @@ const FEATURES = [
   {
     icon: '⊞',
     title: '终端不混乱',
-    desc: '多终端平铺网格，告别 6 个窗口和无数次 Cmd+Tab。所有 AI CLI 的运行状态一目了然。',
-  },
-  {
-    icon: '⇄',
-    title: '多 CLI 无缝切换',
-    desc: 'Claude Code、Codex、Gemini CLI — 在同一个界面并行运行，不用纠结该开哪个。',
+    desc: '多终端平铺管理，所有窗口一目了然，不用在一堆终端之间来回切换。',
   },
   {
     icon: '⚙',
-    title: 'Skill · MCP 配置一览',
-    desc: '自动扫描所有 Skill 和 MCP Server 配置。树形浏览，点击编辑，不用记路径。',
+    title: '立刻检测本地所有 Skill',
+    desc: '自动扫描你本地安装的所有 Skill，知道自己装了什么，方便管理。',
   },
   {
-    icon: '🔍',
-    title: '聊天记录随时查',
-    desc: '全文搜索所有 AI 对话记录。跨项目、跨工具，一键找到三天前的架构方案。',
+    icon: '💬',
+    title: '聊天记录方便查看，还能接着对话',
+    desc: '历史聊天记录一目了然，找到之前的对话后可以直接接着聊，不用重新描述上下文。',
   },
   {
     icon: '∞',
-    title: '永久保存，不怕丢',
-    desc: 'Claude Code 30 天自动删除对话？Muxvo 帮你永久保存，随时翻阅。',
+    title: '永久保存聊天记录',
+    desc: 'Claude Code 30 天会自动删除对话记录，Muxvo 帮你永久保存，随时翻阅。',
   },
   {
-    icon: '↩',
-    title: '一键继续对话',
-    desc: '找到历史对话后，直接继续上次的讨论。不用重新描述上下文，AI 记得一切。',
+    icon: '⇄',
+    title: '支持 CC / Codex / Gemini CLI，随时切换',
+    desc: '不只是 Claude Code，还支持 Codex 和 Gemini CLI，在一个界面随时切换任何 CLI 工具。',
   },
 ];
 
