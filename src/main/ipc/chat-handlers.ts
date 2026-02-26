@@ -151,6 +151,28 @@ export function createChatHandlers() {
       await fsp.writeFile(filePath, content, 'utf-8');
       return { outputPath: filePath };
     },
+
+    async restoreSession(params: { projectHash: string; sessionId: string }) {
+      const archivePath = join(homedir(), '.muxvo', 'chat-archive',
+        params.projectHash, `${params.sessionId}.jsonl`);
+      const ccProjectDir = join(homedir(), '.claude', 'projects', params.projectHash);
+      const ccPath = join(ccProjectDir, `${params.sessionId}.jsonl`);
+
+      // 检查 CC 目录中是否已存在（无需恢复）
+      try { await fsp.access(ccPath); return { success: true, restored: false }; } catch {}
+
+      // 检查 archive 中是否存在
+      try { await fsp.access(archivePath); } catch {
+        return { success: false, error: 'archive-not-found' };
+      }
+
+      // 确保 CC 项目目录存在
+      await fsp.mkdir(ccProjectDir, { recursive: true });
+
+      // 复制 archive → CC
+      await fsp.copyFile(archivePath, ccPath);
+      return { success: true, restored: true };
+    },
   };
 }
 
@@ -162,6 +184,7 @@ export function registerChatHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.CHAT.SEARCH, async (_e, p) => handlers.search(p));
   ipcMain.handle(IPC_CHANNELS.CHAT.EXPORT, async (_e, p) => handlers.export(p));
   ipcMain.handle(IPC_CHANNELS.CHAT.SET_SESSION_NAME, async (_e, p) => handlers.setSessionName(p));
+  ipcMain.handle(IPC_CHANNELS.CHAT.RESTORE_SESSION, async (_e, p) => handlers.restoreSession(p));
 
   // Right-click context menu for session cards
   ipcMain.handle(IPC_CHANNELS.CHAT.SHOW_SESSION_MENU, async (_e, p: { x: number; y: number }) => {

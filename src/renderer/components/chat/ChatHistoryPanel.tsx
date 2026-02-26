@@ -347,16 +347,31 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
           canResume={(() => {
             const sel = sessions.find(s => s.sessionId === selectedSessionId);
             if (!sel) return false;
-            if (sel.archiveOnly) return false;
             if ((sel.source || 'claude-code') !== 'claude-code') return false;
             // Need either session-level cwd or loaded messages with cwd
             const hasCwd = sel.cwd || messages.some(m => m.cwd);
             if (!hasCwd && (messages.length === 0 || loading)) return false;
             return !!hasCwd;
           })()}
-          onResumeSession={() => {
+          onResumeSession={async () => {
             const sel = sessions.find(s => s.sessionId === selectedSessionId);
             if (!sel) return;
+
+            // Archive-only session: 先恢复 .jsonl 到 CC 目录
+            if (sel.archiveOnly) {
+              try {
+                const result = await (window.api.chat as any).restoreSession(sel.projectHash, sel.sessionId);
+                if (!result?.success) {
+                  console.error('[resume-chat] restore failed:', result);
+                  return;
+                }
+                console.log('[resume-chat] session restored from archive:', { sessionId: sel.sessionId, restored: result.restored });
+              } catch (err) {
+                console.error('[resume-chat] restore error:', err);
+                return;
+              }
+            }
+
             const proj = projects.find(p => p.projectHash === sel.projectHash);
             // Priority: session summary cwd > message cwd > project displayPath
             const msgCwd = messages.find(m => m.cwd)?.cwd;
