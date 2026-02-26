@@ -75,8 +75,15 @@ export function createChatMultiSource(opts: MultiSourceOpts) {
 
       const results = await Promise.all(tasks);
       const merged = results.flat();
-      merged.sort((a, b) => b.lastModified - a.lastModified);
-      return merged.slice(0, limit);
+      // Deduplicate by sessionId (first occurrence wins = CC priority)
+      const seen = new Set<string>();
+      const deduped = merged.filter(s => {
+        if (seen.has(s.sessionId)) return false;
+        seen.add(s.sessionId);
+        return true;
+      });
+      deduped.sort((a, b) => b.lastModified - a.lastModified);
+      return deduped.slice(0, limit);
     },
 
     async getAllRecentSessions(limit: number): Promise<SessionSummary[]> {
@@ -88,8 +95,15 @@ export function createChatMultiSource(opts: MultiSourceOpts) {
 
       const results = await Promise.all(tasks);
       const merged = results.flat();
-      merged.sort((a, b) => b.lastModified - a.lastModified);
-      return merged.slice(0, limit);
+      // Deduplicate by sessionId (first occurrence wins = CC priority)
+      const seen2 = new Set<string>();
+      const deduped = merged.filter(s => {
+        if (seen2.has(s.sessionId)) return false;
+        seen2.add(s.sessionId);
+        return true;
+      });
+      deduped.sort((a, b) => b.lastModified - a.lastModified);
+      return deduped.slice(0, limit);
     },
 
     async readSession(

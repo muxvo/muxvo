@@ -63,9 +63,12 @@ export function detectWaitingInput(output: string, terminalId?: string): boolean
   // Strip ANSI codes for clean matching
   const clean = stripAnsi(updated);
 
-  // Check exclusions first
+  // Check exclusions only against the tail (recent output), not entire buffer.
+  // Checking the full buffer could permanently block detection if old output
+  // contained progress indicators like [3/10].
+  const tail = clean.slice(-300);
   for (const exclude of EXCLUDE_PATTERNS) {
-    if (exclude.test(clean)) {
+    if (exclude.test(tail)) {
       return false;
     }
   }

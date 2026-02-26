@@ -97,18 +97,23 @@ export function createChatHandlers() {
       const projectHash = encodeProjectHash(cwd);
       if (!projectHash) return { success: false };
 
+      // Find the most recent session for this project (the one the user is currently using)
+      const sessions = await reader.getSessionsForProject(projectHash, 1);
+      if (sessions.length === 0) return { success: false };
+
+      const sessionId = sessions[0].sessionId;
       const cm = createConfigManager();
       const config = cm.loadConfig();
-      const projectNames = { ...(config.projectNames || {}) };
+      const titles = { ...(config.sessionCustomTitles || {}) };
 
       if (customName) {
-        projectNames[projectHash] = customName;
+        titles[sessionId] = customName;
       } else {
-        delete projectNames[projectHash];
+        delete titles[sessionId];
       }
 
-      cm.saveConfig({ ...config, projectNames });
-      return { success: true, projectHash };
+      cm.saveConfig({ ...config, sessionCustomTitles: titles });
+      return { success: true, sessionId };
     },
 
     async export(params: { projectHash: string; sessionId: string; format: string; title?: string }) {
