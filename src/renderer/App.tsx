@@ -240,8 +240,13 @@ export function App(): JSX.Element {
   }, []);
 
   const handleResumeSession = useCallback(async (info: { sessionId: string; cwd: string; source: ChatSource }) => {
+    console.log('[resume-chat] creating terminal:', { cwd: info.cwd, sessionId: info.sessionId });
     const result = await window.api.terminal.create(info.cwd);
-    if (!result?.success || !result.data) return;
+    if (!result?.success || !result.data) {
+      console.error('[resume-chat] terminal creation failed:', result);
+      window.alert(`无法创建终端：${(result as any)?.error || '未知错误'}\n目录: ${info.cwd}`);
+      return;
+    }
     const newId = result.data.id;
     setTerminals(prev => [...prev, { id: newId, state: 'Running', cwd: info.cwd }]);
     setTerminalOrder(prev => [...prev, newId]);

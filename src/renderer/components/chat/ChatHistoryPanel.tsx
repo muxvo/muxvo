@@ -346,7 +346,9 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
           onMatchInfoChange={handleMatchInfoChange}
           canResume={(() => {
             const sel = sessions.find(s => s.sessionId === selectedSessionId);
-            return (sel?.source || 'claude-code') === 'claude-code';
+            if (!sel) return false;
+            if (messages.length === 0 || loading) return false;
+            return (sel.source || 'claude-code') === 'claude-code';
           })()}
           onResumeSession={() => {
             const sel = sessions.find(s => s.sessionId === selectedSessionId);
@@ -355,7 +357,20 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
             // Priority: session messages cwd > project displayPath
             const msgCwd = messages.find(m => m.cwd)?.cwd;
             const cwd = msgCwd || proj?.displayPath;
-            if (!cwd) return;
+
+            console.log('[resume-chat] cwd resolution:', {
+              sessionId: sel.sessionId,
+              projectHash: sel.projectHash,
+              msgCwd,
+              displayPath: proj?.displayPath,
+              finalCwd: cwd,
+              messagesCount: messages.length,
+            });
+
+            if (!cwd) {
+              console.error('[resume-chat] No cwd found, cannot resume');
+              return;
+            }
             props.onResumeSession?.({
               sessionId: sel.sessionId,
               cwd,

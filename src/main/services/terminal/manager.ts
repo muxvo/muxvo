@@ -6,6 +6,7 @@
  */
 
 import { BrowserWindow } from 'electron';
+import { existsSync } from 'fs';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 import type { PtyAdapter, PtyProcess } from './pty-adapter';
 import { getForegroundProcessName } from './foreground-detector';
@@ -63,6 +64,15 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
         success: false,
         state: 'Failed',
         message: '终端启动失败：进程已断开 -- 无效的工作目录',
+      };
+    }
+
+    // Validate cwd path actually exists on disk
+    if (options.cwd && !existsSync(options.cwd)) {
+      return {
+        success: false,
+        state: 'Failed',
+        message: `终端启动失败：工作目录不存在 — ${options.cwd}`,
       };
     }
 
