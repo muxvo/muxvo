@@ -26,6 +26,7 @@ import { PanelProvider, usePanelContext } from './contexts/PanelContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { I18nProvider, useI18n, type Locale } from './i18n';
 import { mapExtToFileType, toLocalFileUrl } from './utils/file-tree';
+import type { ChatSource } from '@/shared/types/chat.types';
 import './App.css';
 
 const MAX_TERMINALS = 20;
@@ -238,6 +239,18 @@ export function App(): JSX.Element {
     });
   }, []);
 
+  const handleResumeSession = useCallback(async (info: { sessionId: string; cwd: string; source: ChatSource }) => {
+    const result = await window.api.terminal.create(info.cwd);
+    if (!result?.success || !result.data) return;
+    const newId = result.data.id;
+    setTerminals(prev => [...prev, { id: newId, state: 'Running', cwd: info.cwd }]);
+    setTerminalOrder(prev => [...prev, newId]);
+    setSelectedId(newId);
+    setTimeout(() => {
+      window.api.terminal.write(newId, `claude --resume ${info.sessionId}\n`);
+    }, 500);
+  }, []);
+
   // Esc key exits focused mode (only when focus is on UI, not inside terminal)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent): void {
@@ -299,6 +312,7 @@ export function App(): JSX.Element {
             onRename={handleRename}
             onToggleTheme={handleToggleTheme}
             terminalNames={terminalNames}
+            onResumeSession={handleResumeSession}
           />
         </PanelProvider>
       </AuthProvider>
@@ -327,6 +341,7 @@ function AppContent({
   onRename,
   onToggleTheme,
   terminalNames,
+  onResumeSession,
 }: {
   terminals: (TerminalEntry & { customName?: string })[];
   viewMode: 'Tiling' | 'Focused';
@@ -347,6 +362,7 @@ function AppContent({
   onRename: (id: string, name: string) => void;
   onToggleTheme: () => void;
   terminalNames: Record<string, string>;
+  onResumeSession: (info: { sessionId: string; cwd: string; source: ChatSource }) => void;
 }): JSX.Element {
   const { state, dispatch } = usePanelContext();
   const { t } = useI18n();
@@ -356,6 +372,12 @@ function AppContent({
     dispatch({ type: 'CLOSE_ALL' });
     await onAddTerminal();
   }, [dispatch, onAddTerminal]);
+
+  // Wrap onResumeSession to close all panels first
+  const handleResumeSession = useCallback(async (info: { sessionId: string; cwd: string; source: ChatSource }) => {
+    dispatch({ type: 'CLOSE_ALL' });
+    await onResumeSession(info);
+  }, [dispatch, onResumeSession]);
 
   // File content loading for FileTempView
   const [fileContent, setFileContent] = useState('');
@@ -424,7 +446,7 @@ function AppContent({
       {/* Chat history overlay (mail-client 3-column view) */}
       {state.chatHistory.open && (
         <div className="chat-history-overlay">
-          <ChatHistoryPanel />
+          <ChatHistoryPanel onResumeSession={handleResumeSession} />
         </div>
       )}
 
