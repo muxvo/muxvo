@@ -28,6 +28,10 @@ web/.env.development
 *.blockmap
 builder-debug.yml
 
+# Auto-generated files (by hooks)
+API_CONTRACT.json
+API_CONTRACT.md
+
 # Claude Code temp
 .claude-tmp/
 
