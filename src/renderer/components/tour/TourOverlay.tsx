@@ -99,15 +99,11 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
 
   // Step 2b: Detect drag resize — relies on "Next" button (no reliable prop to detect)
 
-  // Step 3: Detect focus mode (wait 2s for user to see focused state)
+  // Step 3: Detect focus mode — user clicks "Next" to advance (no auto-advance)
   useEffect(() => {
     if (!state.tour.active || !driverRef.current) return;
-    if (getCurrentActionType() !== 'focus') return;
-    if (viewMode === 'Focused' && prevViewModeRef.current === 'Tiling') {
-      setTimeout(() => moveNext(), 2000);
-    }
     prevViewModeRef.current = viewMode;
-  }, [state.tour.active, viewMode, getCurrentActionType, moveNext]);
+  }, [state.tour.active, viewMode]);
 
   // Step 4: Detect rename
   useEffect(() => {
