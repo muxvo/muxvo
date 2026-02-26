@@ -11,11 +11,10 @@ export function Hero() {
       <div className="mv-hero__text">
         <p className="mv-hero__eyebrow">AI CLI Workbench for macOS</p>
         <h1 className="mv-hero__title">
-          别再切窗口了。
+          让 Claude Code 跑满效率。
         </h1>
         <p className="mv-hero__sub">
-          Claude Code · Codex · Gemini CLI —
-          终端、配置、聊天记录，一个界面全部搞定。
+          裸跑 CC 要切窗口、翻记录、找配置。Muxvo 把这些时间还给你。
         </p>
         <div className="mv-hero__actions">
           <a href={DOWNLOAD_URL} className="btn-amber btn-amber-lg">

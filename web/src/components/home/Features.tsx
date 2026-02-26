@@ -1,28 +1,28 @@
 const FEATURES = [
   {
     icon: '⊞',
-    title: '终端不混乱',
-    desc: '多终端平铺管理，所有窗口一目了然，不用在一堆终端之间来回切换。',
+    title: '多终端平铺，不用切窗口',
+    desc: '所有终端一屏排开，不在一堆窗口之间来回找。省下的是每天几十次的 ⌘Tab。',
   },
   {
     icon: '⚙',
-    title: '立刻检测本地所有 Skill',
-    desc: '自动扫描你本地安装的所有 Skill，知道自己装了什么，方便管理。',
+    title: 'Skill 一览无余',
+    desc: '自动扫描本地所有 Skill 和 MCP，装了什么、在哪里，打开就知道。',
   },
   {
     icon: '💬',
-    title: '聊天记录方便查看，还能接着对话',
-    desc: '历史聊天记录一目了然，找到之前的对话后可以直接接着聊，不用重新描述上下文。',
+    title: '找到记录，接着聊',
+    desc: '历史对话一目了然，找到后直接续聊，不用重新描述上下文。',
   },
   {
     icon: '∞',
-    title: '永久保存聊天记录',
-    desc: 'Claude Code 30 天会自动删除对话记录，Muxvo 帮你永久保存，随时翻阅。',
+    title: '聊天记录永久保存',
+    desc: 'CC 30 天自动删除对话，Muxvo 帮你永久存档，随时翻阅。',
   },
   {
     icon: '⇄',
-    title: '支持 CC / Codex / Gemini CLI，随时切换',
-    desc: '不只是 Claude Code，还支持 Codex 和 Gemini CLI，在一个界面随时切换任何 CLI 工具。',
+    title: 'CC · Codex · Gemini CLI 随时切',
+    desc: '一个界面管理所有 AI CLI 工具，不用开多个终端窗口。',
   },
 ];
 
@@ -33,7 +33,7 @@ export function Features() {
         <div className="mv-features__header fade-up">
           <p className="mv-features__eyebrow">FEATURES</p>
           <h2 className="mv-features__title">
-            不只是终端管理器
+            效率从哪里来
           </h2>
         </div>
         <div className="mv-features__grid">
