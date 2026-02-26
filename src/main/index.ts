@@ -108,6 +108,13 @@ function handleDeepLink(url: string): void {
   }
 }
 
+// ─── Dev/Production Isolation ───
+// Use different app name in dev mode so dev and production instances
+// can run simultaneously (separate user data paths & instance locks)
+if (!app.isPackaged) {
+  app.name = 'Muxvo Dev';
+}
+
 // ─── Single Instance Lock ───
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
