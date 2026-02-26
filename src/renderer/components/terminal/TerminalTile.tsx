@@ -110,11 +110,21 @@ export function TerminalTile({
   };
 
   const handleDragOver = (e: React.DragEvent) => {
+    // Skip file drags — let XTermRenderer handle them
+    if (e.dataTransfer.types.includes('Files') ||
+        e.dataTransfer.types.includes('application/x-muxvo-file-paths')) {
+      return;
+    }
     e.preventDefault();
     onDragOver?.(id);
   };
 
   const handleDrop = (e: React.DragEvent) => {
+    // Skip file drags — let XTermRenderer handle them
+    if (e.dataTransfer.types.includes('Files') ||
+        e.dataTransfer.types.includes('application/x-muxvo-file-paths')) {
+      return;
+    }
     e.preventDefault();
     onDrop?.(id);
   };

@@ -10,7 +10,7 @@
  * Each domain will be wired to real IPC handlers in subsequent tasks (A2, D1, G1, etc.)
  */
 
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, webUtils } from 'electron';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 
 /** Type-safe API exposed to renderer process */
@@ -241,6 +241,9 @@ const api = {
     clear: () =>
       ipcRenderer.invoke(IPC_CHANNELS.ANALYTICS.CLEAR),
   },
+
+  // --- Utility: native file path from drag-and-drop ---
+  getPathForFile: (file: File) => webUtils.getPathForFile(file),
 };
 
 contextBridge.exposeInMainWorld('api', api);

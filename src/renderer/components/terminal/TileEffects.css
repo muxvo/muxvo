@@ -453,3 +453,32 @@
 [data-theme="light"] .terminal-grid__fab:hover {
   box-shadow: 0 6px 24px rgba(196, 132, 42, 0.4), 0 2px 8px rgba(0, 0, 0, 0.15);
 }
+
+/* === File drop overlay (on xterm area) === */
+.xterm-file-drop-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(232, 167, 72, 0.06);
+  border: 2px dashed rgba(232, 167, 72, 0.5);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  pointer-events: none;
+  z-index: 15;
+  animation: dropOverlayFadeIn 0.15s ease;
+}
+
+@keyframes dropOverlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+[data-theme="light"] .xterm-file-drop-overlay {
+  background: rgba(196, 132, 42, 0.06);
+  border-color: rgba(196, 132, 42, 0.5);
+}

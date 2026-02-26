@@ -305,6 +305,7 @@ export function FileTempView({
               isActive={entry.path === filePath || entry.name === fileName}
               expanded={entry.type === 'folder' && entry.path ? expandedFolders.has(entry.path) : undefined}
               onClick={() => handleTreeFileClick(entry)}
+              filePath={entry.path}
             />
           ))}
         </div>
