@@ -18,9 +18,9 @@ export interface SkillItem {
 
 /**
  * Extract project directory name from a project-level skill path.
- * e.g. /Users/rl/.../douban/.codex/skills/test-skill → "douban"
- *      /Users/rl/.../fufuiyouhua/.claude/skills/test-skill → "fufuiyouhua"
- *      /Users/rl/.../douban/skills/test-skill → "douban"
+ * e.g. /Users/alice/.../douban/.codex/skills/test-skill → "douban"
+ *      /Users/alice/.../myproject/.claude/skills/test-skill → "myproject"
+ *      /Users/alice/.../douban/skills/test-skill → "douban"
  */
 function extractProjectName(skillPath: string): string {
   // Match: .../<projectName>/.claude/skills/ or .../<projectName>/.codex/skills/

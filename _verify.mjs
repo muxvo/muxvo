@@ -2,7 +2,7 @@ import { _electron } from '@playwright/test';
 import { resolve } from 'path';
 import { mkdirSync } from 'fs';
 
-const PROJECT = '/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo';
+const PROJECT = new URL('.', import.meta.url).pathname.replace(/\/$/, '');
 const SCREENSHOTS = '/tmp/muxvo-screenshots';
 mkdirSync(SCREENSHOTS, { recursive: true });
 

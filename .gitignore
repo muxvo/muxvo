@@ -19,6 +19,8 @@ Thumbs.db
 .env.local
 .env.*.local
 server/.env
+admin/.env.development
+web/.env.development
 *.pem
 
 # Electron

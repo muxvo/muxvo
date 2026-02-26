@@ -1306,7 +1306,7 @@ Muxvo 不创建自己的数据库，直接读取 CC 已有文件：
   "display": "用户输入的文本",
   "pastedContents": {},
   "timestamp": 1759555019732,
-  "project": "/Users/rl/path/to/project",
+  "project": "/Users/alice/path/to/project",
   "sessionId": "uuid-string"
 }
 ```

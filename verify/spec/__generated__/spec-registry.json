@@ -2,8 +2,8 @@
   "version": "1.0.0",
   "extractedAt": "2026-02-11T13:34:24.406Z",
   "sourceFiles": {
-    "prd": "/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo/PRD.md",
-    "devPlan": "/Users/rl/Nutstore_Files/my_nutstore/520-program/muxvo/DEV-PLAN.md"
+    "prd": "./PRD.md",
+    "devPlan": "./DEV-PLAN.md"
   },
   "ipcChannels": [
     {

@@ -32,7 +32,7 @@ interface SessionIndexEntry {
   title: string;
 }
 
-/** Encode cwd to CC-compatible projectHash: /Users/rl/path → -Users-rl-path
+/** Encode cwd to CC-compatible projectHash: /Users/alice/path → -Users-alice-path
  *  Must match CC's encoding: replace all non-alphanumeric-non-dash chars with '-' */
 function encodeProjectHash(cwd: string): string {
   if (!cwd) return '';
