@@ -103,8 +103,8 @@ export interface MuxvoConfig {
   terminal?: TerminalConfig;
   /** 启动时自动创建的终端数量 (1-5) */
   startupTerminalCount?: number;
-  /** Custom session names: sessionId -> displayName (from terminal rename) */
-  sessionNames?: Record<string, string>;
+  /** Custom project names: projectHash -> displayName (from terminal rename) */
+  projectNames?: Record<string, string>;
 }
 
 /** app:get-preferences 返回的用户偏好 */

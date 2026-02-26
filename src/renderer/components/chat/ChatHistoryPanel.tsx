@@ -253,7 +253,7 @@ export function ChatHistoryPanel() {
     const action = await chatApi.showSessionMenu(x, y);
     if (action === 'export') {
       try {
-        const result = await window.api.chat.export(session.projectHash, session.sessionId, 'markdown', session.title) as { outputPath?: string };
+        const result = await window.api.chat.export(session.projectHash, session.sessionId, 'markdown', session.customTitle || session.title) as { outputPath?: string };
         if (result?.outputPath) {
           const chatApi = window.api.chat as any;
           chatApi.revealFile?.(result.outputPath);
