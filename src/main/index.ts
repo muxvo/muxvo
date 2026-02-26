@@ -230,10 +230,8 @@ let memoryPush: ReturnType<typeof createMemoryPushTimer> | null = null;
 let tracker: AnalyticsTracker | null = null;
 
 app.whenReady().then(() => {
-  // Register muxvo:// protocol handler (packaged app only; dev uses open-url event)
-  if (app.isPackaged) {
-    app.setAsDefaultProtocolClient('muxvo');
-  }
+  // Register muxvo:// protocol handler so OS routes deep links to this app
+  app.setAsDefaultProtocolClient('muxvo');
 
   // Process any deep link URL that arrived before app was ready
   if (pendingDeepLinkUrl) {

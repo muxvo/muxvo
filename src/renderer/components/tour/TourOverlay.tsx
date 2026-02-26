@@ -44,8 +44,7 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
   const moveNext = useCallback(() => {
     setTimeout(() => {
       if (driverRef.current) {
-        const hasTerminal = terminalCount > 0;
-        const totalSteps = getActiveSteps(hasTerminal).length;
+        const totalSteps = TOUR_STEPS.filter(s => !s.needsTerminal || terminalCount > 0).length;
         trackEvent(ANALYTICS_EVENTS.ONBOARDING.STEP, { step: currentStepRef.current, total: totalSteps });
         if (!driverRef.current.hasNextStep()) {
           completeTour();
@@ -54,7 +53,7 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
         }
       }
     }, 300);
-  }, [completeTour, terminalCount, getActiveSteps]);
+  }, [completeTour, terminalCount]);
 
   // Build active steps list (filtered by terminal availability)
   const getActiveSteps = useCallback((hasTerminal: boolean): typeof TOUR_STEPS => {
