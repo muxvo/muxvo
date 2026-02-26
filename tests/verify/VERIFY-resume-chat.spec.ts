@@ -28,12 +28,6 @@ test('Resume Chat: button visible for CC session and click creates terminal', as
   await page.waitForLoadState('networkidle');
 
   try {
-    // ── Debug: capture initial state ───────────────────────────
-    await page.screenshot({ path: '/tmp/e2e-resume-00-debug.png' });
-    const bodyHtml = await page.evaluate(() => document.body.innerHTML.length);
-    const pageUrl = page.url();
-    console.log(`  DEBUG: url=${pageUrl}, body size=${bodyHtml}`);
-
     // ── Step 1: Wait for app to fully load ─────────────────────
     console.log('Step 1: Wait for app to fully load');
     await expect(page.locator('.menu-bar')).toBeVisible({ timeout: 20000 });

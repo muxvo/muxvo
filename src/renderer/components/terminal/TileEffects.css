@@ -18,8 +18,7 @@
 }
 
 .tile:hover {
-  border-color: rgba(232, 167, 72, 0.25);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 60px rgba(232, 167, 72, 0.05);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 /* Gloss overlay on hover (radial gradient following cursor) */
@@ -40,7 +39,7 @@
 }
 
 .tile:hover::after {
-  opacity: 1;
+  opacity: 0;
 }
 
 /* === Tile header === */
