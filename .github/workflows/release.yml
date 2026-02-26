@@ -77,6 +77,9 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
+      - name: Create stable download link
+        run: cp dist/*.dmg dist/Muxvo-arm64.dmg
+
       - name: Upload to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:

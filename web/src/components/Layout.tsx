@@ -86,7 +86,7 @@ function Nav() {
           >
             GitHub
           </a>
-          <button className="btn-amber">Download</button>
+          <a href="https://github.com/muxvo/muxvo/releases/latest/download/Muxvo-arm64.dmg" className="btn-amber">Download</a>
         </div>
       </div>
     </nav>
