@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { trackError } from '@/renderer/hooks/useAnalytics';
 
 export interface SkillItem {
   name: string;
@@ -110,6 +111,7 @@ export function useSkills(): UseSkillsResult {
       setSkills(items);
     } catch (err) {
       if (abortedRef.current) return;
+      trackError('ipc', { channel: 'config:getResources', message: err instanceof Error ? err.message : String(err) });
       setError(err instanceof Error ? err.message : 'Failed to load skills');
       setSkills([]);
     } finally {

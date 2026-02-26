@@ -11,6 +11,8 @@
 import { usePanelContext } from '@/renderer/contexts/PanelContext';
 import { useI18n } from '@/renderer/i18n';
 import { AuthButton } from '@/renderer/components/auth/AuthButton';
+import { trackEvent } from '@/renderer/hooks/useAnalytics';
+import { ANALYTICS_EVENTS } from '@/shared/constants/analytics-events';
 import './MenuBar.css';
 
 type TabId = 'terminals' | 'skills' | 'mcp' | 'hooks' | 'plugins' | 'chat';
@@ -59,31 +61,47 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0
 
     if (tab === 'skills') {
       closeAllPanels();
-      if (!skillsOpen) dispatch({ type: 'OPEN_SKILLS_PANEL' });
+      if (!skillsOpen) {
+        trackEvent(ANALYTICS_EVENTS.SCREEN.VIEW, { name: 'skills' });
+        dispatch({ type: 'OPEN_SKILLS_PANEL' });
+      }
       return;
     }
 
     if (tab === 'mcp') {
       closeAllPanels();
-      if (!mcpOpen) dispatch({ type: 'OPEN_MCP_PANEL' });
+      if (!mcpOpen) {
+        trackEvent(ANALYTICS_EVENTS.SCREEN.VIEW, { name: 'mcp' });
+        dispatch({ type: 'OPEN_MCP_PANEL' });
+      }
       return;
     }
 
     if (tab === 'hooks') {
       closeAllPanels();
-      if (!hooksOpen) dispatch({ type: 'OPEN_HOOKS_PANEL' });
+      if (!hooksOpen) {
+        trackEvent(ANALYTICS_EVENTS.SCREEN.VIEW, { name: 'hooks' });
+        dispatch({ type: 'OPEN_HOOKS_PANEL' });
+      }
       return;
     }
 
     if (tab === 'plugins') {
       closeAllPanels();
-      if (!pluginsOpen) dispatch({ type: 'OPEN_PLUGINS_PANEL' });
+      if (!pluginsOpen) {
+        trackEvent(ANALYTICS_EVENTS.SCREEN.VIEW, { name: 'plugins' });
+        dispatch({ type: 'OPEN_PLUGINS_PANEL' });
+      }
       return;
     }
 
     if (tab === 'chat') {
       closeAllPanels();
-      if (!chatOpen) dispatch({ type: 'OPEN_CHAT_HISTORY' });
+      if (!chatOpen) {
+        trackEvent(ANALYTICS_EVENTS.SCREEN.VIEW, { name: 'chat' });
+        trackEvent(ANALYTICS_EVENTS.CHAT.OPEN);
+        dispatch({ type: 'OPEN_CHAT_HISTORY' });
+      }
     }
   }
 
@@ -136,7 +154,10 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0
         <AuthButton />
         <button
           className="menu-bar__icon-btn"
-          onClick={() => dispatch({ type: 'OPEN_SETTINGS' })}
+          onClick={() => {
+            trackEvent(ANALYTICS_EVENTS.SCREEN.VIEW, { name: 'settings' });
+            dispatch({ type: 'OPEN_SETTINGS' });
+          }}
           title={t('settings.title')}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

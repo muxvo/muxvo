@@ -9,6 +9,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { FileItem } from './FileItem';
 import type { FileEntry as IpcFileEntry } from '@/shared/types/fs.types';
+import { trackEvent } from '@/renderer/hooks/useAnalytics';
+import { ANALYTICS_EVENTS } from '@/shared/constants/analytics-events';
 import './FilePanel.css';
 
 interface FileEntry {
@@ -161,7 +163,9 @@ export function FilePanel({ projectCwd, onClose, onOpenFile }: FilePanelProps) {
         handleFolderToggle(entry);
       } else {
         const filePath = entry.path || `${projectCwd}/${entry.name}`;
-        onOpenFile(filePath, entry.ext || entry.name.split('.').pop() || '');
+        const ext = entry.ext || entry.name.split('.').pop() || '';
+        trackEvent(ANALYTICS_EVENTS.FILE.PREVIEW, { file_type: ext });
+        onOpenFile(filePath, ext);
       }
     },
     [projectCwd, onOpenFile, handleFolderToggle]

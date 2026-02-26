@@ -9,6 +9,8 @@ import 'driver.js/dist/driver.css';
 import { usePanelContext } from '@/renderer/contexts/PanelContext';
 import { useI18n } from '@/renderer/i18n';
 import { TOUR_STEPS } from '@/renderer/features/tour/steps';
+import { trackEvent } from '@/renderer/hooks/useAnalytics';
+import { ANALYTICS_EVENTS } from '@/shared/constants/analytics-events';
 import './TourOverlay.css';
 
 interface Props {
@@ -28,12 +30,13 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
   const prevHasNameRef = useRef<boolean>(Object.values(terminalNames).some(n => n && n.length > 0));
   const prevTerminalOrderRef = useRef<string[]>(terminalOrder);
 
-  const completeTour = useCallback(() => {
+  const completeTour = useCallback((skipped = false) => {
     document.body.classList.remove('tour-drag-active');
     if (driverRef.current) {
       driverRef.current.destroy();
       driverRef.current = null;
     }
+    trackEvent(ANALYTICS_EVENTS.ONBOARDING.COMPLETE, { skipped });
     dispatch({ type: 'COMPLETE_TOUR' });
     window.api.app.savePreferences({ tourCompleted: true }).catch(() => {});
   }, [dispatch]);
@@ -41,6 +44,9 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
   const moveNext = useCallback(() => {
     setTimeout(() => {
       if (driverRef.current) {
+        const hasTerminal = terminalCount > 0;
+        const totalSteps = getActiveSteps(hasTerminal).length;
+        trackEvent(ANALYTICS_EVENTS.ONBOARDING.STEP, { step: currentStepRef.current, total: totalSteps });
         if (!driverRef.current.hasNextStep()) {
           completeTour();
         } else {
@@ -48,7 +54,7 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
         }
       }
     }, 300);
-  }, [completeTour]);
+  }, [completeTour, terminalCount, getActiveSteps]);
 
   // Build active steps list (filtered by terminal availability)
   const getActiveSteps = useCallback((hasTerminal: boolean): typeof TOUR_STEPS => {
@@ -197,7 +203,7 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
         document.body.classList.toggle('tour-drag-active', needsPassThrough);
       },
       onCloseClick: () => {
-        completeTour();
+        completeTour(true);
       },
       onDestroyed: () => {
         dispatch({ type: 'COMPLETE_TOUR' });

@@ -27,6 +27,8 @@ import { PanelProvider, usePanelContext } from './contexts/PanelContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { I18nProvider, useI18n, type Locale } from './i18n';
 import { mapExtToFileType, toLocalFileUrl } from './utils/file-tree';
+import { trackEvent, trackError } from './hooks/useAnalytics';
+import { ANALYTICS_EVENTS } from '@/shared/constants/analytics-events';
 import type { ChatSource } from '@/shared/types/chat.types';
 import './App.css';
 
@@ -140,6 +142,9 @@ export function App(): JSX.Element {
       setTerminals((prev) => [...prev, { id: result.data.id, state: 'Running', cwd: home }]);
       setTerminalOrder((prev) => [...prev, result.data.id]);
       setSelectedId(result.data.id);
+      trackEvent(ANALYTICS_EVENTS.TERMINAL.CREATE, { cwd: home });
+    } else {
+      trackError('terminal', { type: 'spawn_fail' });
     }
   }, []);
 
@@ -153,6 +158,7 @@ export function App(): JSX.Element {
     }
     // No active process or just shell — close directly
     await window.api.terminal.close(id);
+    trackEvent(ANALYTICS_EVENTS.TERMINAL.CLOSE, { had_process: false });
     setTerminals((prev) => prev.filter((t) => t.id !== id));
     setTerminalOrder((prev) => prev.filter((tid) => tid !== id));
     setTerminalNames((prev) => { const next = { ...prev }; delete next[id]; return next; });
@@ -162,6 +168,7 @@ export function App(): JSX.Element {
     const { terminalId } = closeConfirm;
     setCloseConfirm({ open: false, terminalId: '', processName: '' });
     await window.api.terminal.close(terminalId, true);
+    trackEvent(ANALYTICS_EVENTS.TERMINAL.CLOSE, { had_process: true });
     setTerminals((prev) => prev.filter((t) => t.id !== terminalId));
     setTerminalOrder((prev) => prev.filter((tid) => tid !== terminalId));
     setTerminalNames((prev) => { const next = { ...prev }; delete next[terminalId]; return next; });
@@ -226,6 +233,7 @@ export function App(): JSX.Element {
       }).catch(() => {});
       // Notify all XTermRenderer instances to update theme
       window.dispatchEvent(new CustomEvent('muxvo:theme-change', { detail: { theme: next } }));
+      trackEvent(ANALYTICS_EVENTS.THEME.SWITCH, { to: next });
       return next;
     });
   }, []);

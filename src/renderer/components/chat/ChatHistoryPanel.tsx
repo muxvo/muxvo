@@ -15,6 +15,8 @@ import { SessionDetail } from './SessionDetail';
 import type { SessionDetailHandle } from './SessionDetail';
 import { useI18n } from '@/renderer/i18n';
 import type { ProjectInfo, SessionSummary, SessionMessage, SearchResult, ChatSource } from '@/shared/types/chat.types';
+import { trackEvent, trackError } from '@/renderer/hooks/useAnalytics';
+import { ANALYTICS_EVENTS } from '@/shared/constants/analytics-events';
 import './ChatHistoryPanel.css';
 
 
@@ -121,9 +123,11 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
     searchTimerRef.current = setTimeout(() => {
       window.api.chat.search(searchQuery.trim())
         .then((result: { results?: SearchResult[] }) => {
-          setSearchResults(result?.results || []);
+          const results = result?.results || [];
+          setSearchResults(results);
+          trackEvent(ANALYTICS_EVENTS.CHAT.SEARCH, { query_length: searchQuery.trim().length, result_count: results.length });
         })
-        .catch((err) => { console.error('[chat:search]', err); setSearchResults([]); })
+        .catch((err) => { trackError('ipc', { channel: 'chat:search', message: String(err) }); console.error('[chat:search]', err); setSearchResults([]); })
         .finally(() => setSearching(false));
     }, 300);
 
@@ -186,7 +190,7 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
     setProjectsLoading(true);
     window.api.chat.getProjects().then((result: { projects?: ProjectInfo[] }) => {
       setProjects(result?.projects || []);
-    }).catch(() => setProjects([]))
+    }).catch((err) => { trackError('ipc', { channel: 'chat:getProjects', message: String(err) }); setProjects([]); })
     .finally(() => setProjectsLoading(false));
   }, []);
 
@@ -197,7 +201,7 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
     const hash = selectedProjectHash || '__all__';
     window.api.chat.getSessions(hash).then((result: { sessions?: SessionSummary[] }) => {
       setSessions(result?.sessions || []);
-    }).catch(() => setSessions([]))
+    }).catch((err) => { trackError('ipc', { channel: 'chat:getSessions', message: String(err) }); setSessions([]); })
     .finally(() => setSessionsLoading(false));
   }, [selectedProjectHash, projectsLoading]);
 
@@ -229,7 +233,7 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
     setLoading(true);
     window.api.chat.getSession(projectHash, selectedSessionId)
       .then((result: { messages?: SessionMessage[] }) => setMessages(result?.messages || []))
-      .catch(() => setMessages([]))
+      .catch((err) => { trackError('ipc', { channel: 'chat:getSession', message: String(err) }); setMessages([]); })
       .finally(() => setLoading(false));
   }, [selectedSessionId]);
 
@@ -259,6 +263,7 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
       try {
         const result = await window.api.chat.export(session.projectHash, session.sessionId, 'markdown', session.customTitle || session.title) as { outputPath?: string };
         if (result?.outputPath) {
+          trackEvent(ANALYTICS_EVENTS.CHAT.EXPORT, { format: 'markdown' });
           const chatApi = window.api.chat as any;
           chatApi.revealFile?.(result.outputPath);
         }
@@ -390,6 +395,7 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
               console.error('[resume-chat] No cwd found, cannot resume');
               return;
             }
+            trackEvent(ANALYTICS_EVENTS.CHAT.RESUME, { source: sel.source || 'claude-code' });
             props.onResumeSession?.({
               sessionId: sel.sessionId,
               cwd,

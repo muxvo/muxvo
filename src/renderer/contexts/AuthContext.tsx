@@ -3,7 +3,7 @@
  * Follows PanelContext pattern (createContext + useReducer + Provider + Hook)
  */
 
-import { createContext, useContext, useReducer, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useReducer, useEffect, useCallback, useRef, type ReactNode } from 'react';
 
 // ── Types ──
 
@@ -78,8 +78,19 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 // ── Provider ──
 
+const OAUTH_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
+
 export function AuthProvider({ children }: { children: ReactNode }): JSX.Element {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  const oauthTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear OAuth timeout when status changes away from loading
+  useEffect(() => {
+    if (state.status !== 'loading' && oauthTimerRef.current) {
+      clearTimeout(oauthTimerRef.current);
+      oauthTimerRef.current = null;
+    }
+  }, [state.status]);
 
   // Check login status on mount + listen for push events
   useEffect(() => {
@@ -116,6 +127,9 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
             provider: u.provider || 'github',
           },
         });
+      } else if (data && !data.success) {
+        // OAuth callback failed — clear loading state
+        dispatch({ type: 'LOGIN_FAILED', error: data.error || '登录失败，请重试' });
       }
     });
 
@@ -142,8 +156,10 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
         });
       } else {
         // OAuth flow opened browser - login will complete via deep link callback
-        // Don't treat as failure, keep loading state
-        // The session-expired or getStatus polling will update state
+        // Set timeout to clear loading state if callback never arrives
+        oauthTimerRef.current = setTimeout(() => {
+          dispatch({ type: 'LOGIN_FAILED', error: '登录超时，请重试' });
+        }, OAUTH_TIMEOUT_MS);
       }
     } catch {
       dispatch({ type: 'LOGIN_FAILED', error: 'GitHub 登录失败' });
@@ -165,6 +181,11 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
             provider: 'google',
           },
         });
+      } else {
+        // OAuth flow opened browser - set timeout
+        oauthTimerRef.current = setTimeout(() => {
+          dispatch({ type: 'LOGIN_FAILED', error: '登录超时，请重试' });
+        }, OAUTH_TIMEOUT_MS);
       }
     } catch {
       dispatch({ type: 'LOGIN_FAILED', error: 'Google 登录失败' });

@@ -12,6 +12,8 @@ import { MarkdownWysiwyg } from '@/renderer/components/markdown/MarkdownWysiwyg'
 import { MarkdownPreview } from '@/renderer/components/markdown/MarkdownPreview';
 import { UnsavedPromptDialog } from '@/renderer/components/file/UnsavedPromptDialog';
 import { mapExtToFileType, toLocalFileUrl } from '@/renderer/utils/file-tree';
+import { trackEvent } from '@/renderer/hooks/useAnalytics';
+import { ANALYTICS_EVENTS } from '@/shared/constants/analytics-events';
 import './SkillsPanel.css';
 
 export function SkillsPanel(): JSX.Element {
@@ -143,6 +145,7 @@ export function SkillsPanel(): JSX.Element {
       setShowUnsavedPrompt(true);
       return;
     }
+    trackEvent(ANALYTICS_EVENTS.SKILL.SELECT, { skill_path: path });
     setSelectedSkillPath(path);
     setSelectedFilePath(null);
     setEditContent('');
@@ -153,6 +156,7 @@ export function SkillsPanel(): JSX.Element {
     if (!isDirty || !selectedFilePath) return;
     const result = await window.api.fs.writeFile(selectedFilePath, editContent);
     if (result?.success) {
+      trackEvent(ANALYTICS_EVENTS.SKILL.EDIT);
       setFileContent(editContent);
       setIsDirty(false);
     }

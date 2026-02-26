@@ -32,6 +32,7 @@ import { registerFsWatcherHandlers } from './ipc/fs-watcher-handlers';
 import { registerFsImageHandlers } from './ipc/fs-image-handlers';
 import { registerAuthHandlers, getAuthManager } from './ipc/auth-handlers';
 import { registerAnalyticsHandlers } from './ipc/analytics-handlers';
+import type { AnalyticsTracker } from './services/analytics/tracker';
 import { autoUpdater } from 'electron-updater';
 import { createChatWatcher } from './services/chat-watcher';
 import { createChatArchiveManager } from './services/chat-archive';
@@ -103,6 +104,10 @@ function handleDeepLink(url: string): void {
       });
     }).catch((err) => {
       console.error('[MUXVO:deeplink] OAuth callback failed:', err);
+      pushToAllWindows(IPC_CHANNELS.AUTH.STATUS_CHANGE, {
+        success: false,
+        error: err instanceof Error ? err.message : 'OAuth 回调处理失败',
+      });
     });
   } catch (err) {
     console.error('[MUXVO:deeplink] Failed to parse URL:', err);
@@ -222,6 +227,7 @@ let chatWatcher: ReturnType<typeof createChatWatcher> | null = null;
 let chatArchive: ReturnType<typeof createChatArchiveManager> | null = null;
 let configWatcher: ReturnType<typeof createConfigWatcher> | null = null;
 let memoryPush: ReturnType<typeof createMemoryPushTimer> | null = null;
+let tracker: AnalyticsTracker | null = null;
 
 app.whenReady().then(() => {
   // Register muxvo:// protocol handler (packaged app only; dev uses open-url event)
@@ -308,7 +314,7 @@ app.whenReady().then(() => {
   registerFsImageHandlers();
   registerAppHandlers();
   registerAuthHandlers();
-  const { tracker } = registerAnalyticsHandlers();
+  ({ tracker } = registerAnalyticsHandlers());
 
   chatWatcher = createChatWatcher();
   chatArchive = createChatArchiveManager();
@@ -466,7 +472,7 @@ app.whenReady().then(() => {
   launchWindowWithTerminals();
 
   // Analytics: track session start
-  tracker.track({
+  tracker?.track({
     event: 'session.start',
     params: { version: app.getVersion(), platform: process.platform, restored_count: 0 },
   });
@@ -513,6 +519,15 @@ function saveWindowBoundsAndClearTerminals(): void {
 }
 
 app.on('window-all-closed', () => {
+  // Analytics: track session end
+  tracker?.track({
+    event: 'session.end',
+    params: {
+      duration_sec: Math.floor((Date.now() - sessionStartTime) / 1000),
+      terminal_count: terminalManager ? terminalManager.list().length : 0,
+    },
+  });
+
   // Config already saved in mainWindow 'close' event
   // Clean up all terminal processes
   if (terminalManager) {
