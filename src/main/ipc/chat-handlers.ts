@@ -65,13 +65,13 @@ export function createChatHandlers() {
         sessions = await reader.getSessionsForProject(params.projectHash, 500);
       }
 
-      // Apply custom session names from config
+      // Apply custom project names from config
       const cm = createConfigManager();
       const config = cm.loadConfig();
-      const sessionNames = config.sessionNames || {};
-      if (Object.keys(sessionNames).length > 0) {
+      const projectNames = config.projectNames || {};
+      if (Object.keys(projectNames).length > 0) {
         sessions = sessions.map(s => {
-          const customName = sessionNames[s.sessionId];
+          const customName = projectNames[s.projectHash];
           return customName ? { ...s, customTitle: customName } : s;
         });
       }
@@ -97,23 +97,18 @@ export function createChatHandlers() {
       const projectHash = encodeProjectHash(cwd);
       if (!projectHash) return { success: false };
 
-      // Find most recent session for this project
-      const sessions = await reader.getSessionsForProject(projectHash, 1);
-      if (sessions.length === 0) return { success: false };
-
-      const sessionId = sessions[0].sessionId;
       const cm = createConfigManager();
       const config = cm.loadConfig();
-      const sessionNames = { ...(config.sessionNames || {}) };
+      const projectNames = { ...(config.projectNames || {}) };
 
       if (customName) {
-        sessionNames[sessionId] = customName;
+        projectNames[projectHash] = customName;
       } else {
-        delete sessionNames[sessionId];
+        delete projectNames[projectHash];
       }
 
-      cm.saveConfig({ ...config, sessionNames });
-      return { success: true, sessionId };
+      cm.saveConfig({ ...config, projectNames });
+      return { success: true, projectHash };
     },
 
     async export(params: { projectHash: string; sessionId: string; format: string; title?: string }) {

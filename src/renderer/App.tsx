@@ -114,6 +114,16 @@ export function App(): JSX.Element {
       }));
       setTerminals(entries);
       setTerminalOrder(entries.map((e) => e.id));
+      // Initialize customNames from restored terminals
+      const names: Record<string, string> = {};
+      for (const e of list) {
+        if ((e as any).customName) {
+          names[e.id] = (e as any).customName;
+        }
+      }
+      if (Object.keys(names).length > 0) {
+        setTerminalNames(prev => ({ ...prev, ...names }));
+      }
     });
 
     // Listen for cwd changes (OSC 7 detection from main process)
