@@ -52,6 +52,11 @@ export function FileItem({
     e.dataTransfer.effectAllowed = 'copy';
     e.dataTransfer.setData('application/x-muxvo-file-paths', JSON.stringify([filePath]));
     e.dataTransfer.setData('text/plain', filePath);
+    document.body.classList.add('dragging-file');
+  };
+
+  const handleDragEnd = () => {
+    document.body.classList.remove('dragging-file');
   };
 
   const classList = [
@@ -70,6 +75,7 @@ export function FileItem({
       onClick={onClick}
       draggable={isDraggable}
       onDragStart={isDraggable ? handleDragStart : undefined}
+      onDragEnd={isDraggable ? handleDragEnd : undefined}
     >
       <span className="file-item__icon">{getFileIcon(type, ext, expanded)}</span>
       <span className="file-item__name">{name}</span>

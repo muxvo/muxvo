@@ -121,3 +121,8 @@
   padding: 1px 4px;
   border-radius: 3px;
 }
+
+/* Overlay 在拖拽文件时变为穿透，让 drag 事件到达终端 */
+body.dragging-file .file-panel-overlay {
+  pointer-events: none;
+}
