@@ -99,21 +99,23 @@
   50% { opacity: 0.6; }
 }
 
-/* WaitingInput: tile border glow (Scheme 3) */
+/* WaitingInput: tile border glow — outline not clipped by parent overflow */
 @keyframes borderGlow {
   0%, 100% {
     border-color: rgba(239, 68, 68, 0.7);
-    box-shadow: 0 0 12px rgba(239, 68, 68, 0.25), 0 0 36px rgba(239, 68, 68, 0.08);
+    outline-color: rgba(239, 68, 68, 0.2);
   }
   50% {
     border-color: rgba(239, 68, 68, 1);
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.45), 0 0 50px rgba(239, 68, 68, 0.15);
+    outline-color: rgba(239, 68, 68, 0.5);
   }
 }
 
 .tile--waiting {
   animation: borderGlow 2.5s ease-in-out infinite;
   border: 2px solid rgba(239, 68, 68, 0.7);
+  outline: 3px solid rgba(239, 68, 68, 0.2);
+  outline-offset: 2px;
 }
 
 .tile--waiting .tile-header {

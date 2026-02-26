@@ -294,8 +294,8 @@ function TilingGrid({ terminals, selectedId, onDoubleClick, onClick, onClose, on
     display: 'grid',
     gridTemplateColumns,
     gridTemplateRows,
-    gap: '16px',
-    padding: '12px',
+    gap: '6px',
+    padding: '6px',
     width: '100%',
     height: '100%',
     perspective: '1200px',
@@ -325,6 +325,7 @@ function TilingGrid({ terminals, selectedId, onDoubleClick, onClick, onClose, on
               minWidth: 0,
               minHeight: 0,
               height: '100%',
+              overflow: 'hidden',
             }}
           >
             <TerminalTile

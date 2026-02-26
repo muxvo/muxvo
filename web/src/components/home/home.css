@@ -1,38 +1,5 @@
 /* ============================================================
-   CSS VARIABLES (Home page design tokens)
-   ============================================================ */
-:root {
-  /* Before side (cold, lifeless) */
-  --bg-before: #14161e;
-  --bg-before-card: #1c1e28;
-  --border-before: #2a2d38;
-  --text-before: #a0a4b0;
-  --text-before-dim: #5a5e6a;
-
-  /* After side (warm, vibrant) */
-  --bg-after: #06080c;
-  --bg-after-card: #0d1117;
-  --border-after: #1e2530;
-  --border-after-active: rgba(232,167,72,0.4);
-  --text-after: #f5f5f5;
-  --text-after-sec: #9ca3af;
-
-  /* Brand */
-  --amber: #e8a748;
-  --amber-light: #f5c563;
-  --amber-hover: #f0c060;
-  --amber-glow: rgba(232,167,72,0.12);
-  --amber-border: rgba(232,167,72,0.4);
-  --amber-muted: rgba(232,167,72,0.12);
-  --success: #4ade80;
-
-  /* Fonts */
-  --font-display: 'DM Sans', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-}
-
-/* ============================================================
-   BASE (applied to home page scope)
+   HOME PAGE BASE
    ============================================================ */
 .home-page {
   font-family: var(--font-display);
@@ -43,867 +10,515 @@
   -webkit-font-smoothing: antialiased;
 }
 
-.home-page a {
-  color: inherit;
-  text-decoration: none;
-}
-
 /* ============================================================
-   UTILITY CLASSES
+   HERO SECTION
    ============================================================ */
-.text-amber {
-  color: var(--amber);
-}
-
-/* ============================================================
-   BUTTON UTILITIES
-   ============================================================ */
-.btn-amber {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--amber);
-  color: #06080c;
-  padding: 8px 20px;
-  border-radius: 8px;
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 14px;
-  border: none;
-  cursor: pointer;
-  transition: opacity 0.2s, box-shadow 0.2s;
-}
-
-.btn-amber:hover {
-  opacity: 0.9;
-  box-shadow: 0 0 16px rgba(232,167,72,0.3);
-}
-
-.btn-amber-lg {
-  padding: 14px 32px;
-  font-size: 15px;
-  border-radius: 8px;
-}
-
-.btn-ghost {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 1px solid var(--border-after);
-  color: var(--text-after);
-  padding: 14px 32px;
-  border-radius: 8px;
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 15px;
-  cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
-}
-
-.btn-ghost:hover {
-  border-color: var(--amber);
-  color: var(--amber);
-}
-
-/* ============================================================
-   HERO LABELS
-   ============================================================ */
-.label-before {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-before-dim);
-}
-
-.label-after {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--amber);
-}
-
-/* ============================================================
-   HERO SPLIT LAYOUT
-   ============================================================ */
-/* Note: Layout already adds pt-16 (64px) for the fixed nav,
-   so hero uses calc(100vh - 64px) and reduced top padding */
-.hero-split {
-  display: flex;
-  min-height: calc(100vh - 64px);
+.hero {
+  text-align: center;
+  padding: 100px 24px 80px;
   position: relative;
-}
-
-.hero-before,
-.hero-after {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  padding: 56px 48px 80px;
-}
-
-.hero-before {
-  background: var(--bg-before);
-  justify-content: flex-end;
-}
-
-.hero-after {
   background: var(--bg-after);
-  justify-content: flex-start;
 }
 
 .hero-content {
-  max-width: 480px;
+  max-width: 720px;
+  margin: 0 auto;
 }
 
-.hero-title-before {
-  font-size: 48px;
+.hero-title {
+  font-size: 56px;
   font-weight: 700;
-  line-height: 1.15;
-  color: var(--text-before);
-  letter-spacing: -0.02em;
-  margin-top: 16px;
-}
-
-.hero-title-after {
-  font-size: 48px;
-  font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
   color: var(--text-after);
-  letter-spacing: -0.02em;
-  margin-top: 16px;
 }
 
-.hero-desc-before {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--text-before-dim);
-  margin-top: 16px;
-  letter-spacing: 0.02em;
+.hero-subtitle {
+  font-size: 18px;
+  color: var(--text-after-sec);
+  margin-top: 20px;
+  line-height: 1.7;
 }
 
-/* ============================================================
-   DIVIDER (Vertical amber line)
-   ============================================================ */
-.hero-divider {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 2px;
-  transform: translateX(-50%) scaleY(0);
-  transform-origin: center;
-  z-index: 10;
-  background: linear-gradient(
-    to bottom,
-    transparent 10%,
-    rgba(232,167,72,0.4) 30%,
-    var(--amber) 50%,
-    rgba(232,167,72,0.4) 70%,
-    transparent 90%
-  );
+.hero-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 36px;
+  flex-wrap: wrap;
 }
 
-.hero-divider--visible {
-  animation: divider-grow 0.6s ease-out forwards;
-}
-
-@keyframes divider-grow {
-  from { transform: translateX(-50%) scaleY(0); }
-  to   { transform: translateX(-50%) scaleY(1); }
-}
-
-.hero-divider-dot {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 8px;
-  height: 8px;
-  background: var(--amber);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 11;
-  box-shadow: 0 0 12px rgba(232,167,72,0.4);
-  animation: glow-pulse 3s ease-in-out infinite;
-}
-
-@keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(232,167,72,0.3); }
-  50%      { box-shadow: 0 0 16px rgba(232,167,72,0.5); }
-}
-
-/* ============================================================
-   MOCK WINDOWS (Hero Before side)
-   ============================================================ */
-.mock-windows {
+/* Hero Mock */
+.hero-mock {
+  max-width: 1000px;
+  margin: 64px auto 0;
   position: relative;
-  height: 220px;
-  margin-top: 32px;
 }
 
-.mock-win {
-  position: absolute;
-  background: var(--bg-before-card);
-  border: 1px solid var(--border-before);
-  border-radius: 8px;
+.mock-app {
+  background: var(--bg-after-card);
+  border: 1px solid rgba(232, 167, 72, 0.25);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    0 0 80px rgba(232, 167, 72, 0.1),
+    0 4px 32px rgba(0, 0, 0, 0.4);
+}
+
+.mock-app-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-after);
+  background: var(--bg-after-card);
+}
+
+.mock-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.mock-dot--red { background: #ff5f57; }
+.mock-dot--yellow { background: #febc2e; }
+.mock-dot--green { background: #28c840; }
+
+.mock-app-name {
+  font-family: var(--font-display);
+  font-size: 12px;
+  color: var(--text-after-sec);
+  margin-left: 8px;
+  font-weight: 600;
+}
+
+.mock-app-body {
+  display: grid;
+  grid-template-columns: 7fr 3fr;
+  gap: 1px;
+  background: var(--border-after);
+}
+
+.mock-app-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 1px;
+  background: var(--border-after);
+}
+
+.mock-terminal {
+  background: var(--bg-after);
   padding: 12px;
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--text-before-dim);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  line-height: 1.6;
+  color: var(--text-after-sec);
 }
 
-.mock-win-titlebar {
-  display: flex;
-  gap: 5px;
+.mock-terminal-tab {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--amber);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   margin-bottom: 8px;
 }
 
-.mock-win-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--border-before);
-}
-
-.mock-win-path {
-  font-size: 10px;
-  color: var(--border-before);
-  margin-bottom: 4px;
-}
-
-.mock-win-line {
-  color: var(--text-before-dim);
-  opacity: 0.5;
+.mock-terminal-line {
   line-height: 1.6;
 }
 
-.mock-win--1 {
-  top: 0;
-  left: 0;
-  width: 200px;
-  transform: rotate(-3deg);
-  z-index: 1;
-}
-
-.mock-win--2 {
-  top: 20px;
-  left: 100px;
-  width: 190px;
-  transform: rotate(2deg);
-  z-index: 2;
-}
-
-.mock-win--3 {
-  top: 60px;
-  left: 30px;
-  width: 220px;
-  transform: rotate(5deg);
-  z-index: 3;
-}
-
-.mock-win--4 {
-  top: 90px;
-  left: 140px;
-  width: 180px;
-  transform: rotate(-1deg);
-  z-index: 4;
-}
-
-/* ============================================================
-   AFTER SCREENSHOT (Hero After side)
-   ============================================================ */
-.after-screenshot {
-  margin-top: 32px;
-  background: var(--bg-after-card);
-  border: 1px solid var(--border-after-active);
-  border-radius: 8px;
-  padding: 3px;
-  box-shadow: 0 0 48px rgba(232,167,72,0.1);
-}
-
-.after-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3px;
-}
-
-.after-pane {
+/* Sidebar in hero mock */
+.mock-app-sidebar {
   background: var(--bg-after);
   padding: 12px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--text-after-sec);
-  line-height: 1.5;
-  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.after-pane-title {
-  font-size: 9px;
+.mock-sidebar-section {
+  font-size: 11px;
+}
+
+.mock-sidebar-title {
+  font-size: 10px;
+  font-weight: 700;
   color: var(--amber);
+  margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 6px;
-  font-weight: 700;
 }
 
-.after-pane-prompt {
-  color: var(--amber);
+.mock-sidebar-item {
+  font-size: 11px;
+  color: var(--text-after-sec);
+  padding: 2px 0;
+  line-height: 1.5;
 }
 
-.after-pane-success {
-  color: var(--success);
-}
-
-/* ============================================================
-   TYPING ANIMATION
-   ============================================================ */
-.typing-block {
-  margin-top: 20px;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  line-height: 1.7;
-  min-height: 48px;
-}
-
-.typing-prompt {
-  color: var(--amber);
-}
-
-.typing-cmd {
-  color: var(--text-after);
-}
-
-.typing-cursor {
-  display: inline-block;
-  width: 2px;
-  height: 1.1em;
-  background: var(--amber);
-  vertical-align: text-bottom;
-  animation: cursor-blink 1.06s step-end infinite;
-}
-
-@keyframes cursor-blink {
-  50% { opacity: 0; }
-}
-
-.typing-feedback {
-  color: var(--success);
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.typing-feedback--visible {
-  opacity: 1;
+.mock-sidebar-item--dim {
+  color: var(--text-before-dim);
 }
 
 /* ============================================================
-   COMPARE SECTIONS
+   SHARED COLORS
    ============================================================ */
-.compare-section {
-  display: flex;
-  min-height: 500px;
-  position: relative;
-}
+.c-prompt { color: var(--amber); }
+.c-dim { color: var(--text-after-sec); opacity: 0.6; }
+.c-success { color: var(--success); }
 
-.compare-section--reversed {
-  flex-direction: row-reverse;
-}
-
-.compare-before,
-.compare-after {
-  flex: 1;
-  padding: 80px 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.compare-before {
-  background: var(--bg-before);
-}
-
-.compare-after {
+/* ============================================================
+   FEATURE SECTIONS
+   ============================================================ */
+.feature-section {
+  padding: 100px 24px;
   background: var(--bg-after);
 }
 
-.compare-before .compare-inner,
-.compare-after .compare-inner {
-  max-width: 480px;
-  width: 100%;
+.feature-section--alt {
+  background: var(--bg-after-card);
 }
 
-.compare-divider {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 1px;
-  transform: translateX(-50%);
-  z-index: 5;
-  background: linear-gradient(to bottom, transparent 10%, rgba(232, 167, 72, 0.25) 50%, transparent 90%);
+.feature-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: center;
 }
 
-.compare-label {
+.feature-inner--reversed {
+  direction: rtl;
+}
+
+.feature-inner--reversed > * {
+  direction: ltr;
+}
+
+.feature-badge {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  display: inline-block;
-  margin-bottom: 4px;
-}
-
-.label-problem {
-  color: var(--text-before-dim);
-}
-
-.label-solution {
   color: var(--amber);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: var(--amber-muted);
+  padding: 4px 12px;
+  border-radius: 4px;
+  display: inline-block;
 }
 
-.compare-title {
-  font-size: 28px;
+.feature-title {
+  font-size: 36px;
   font-weight: 700;
   line-height: 1.2;
-  margin-top: 8px;
-  letter-spacing: -0.01em;
-}
-
-.compare-before .compare-title {
-  color: var(--text-before);
-}
-
-.compare-after .compare-title {
+  letter-spacing: -0.02em;
   color: var(--text-after);
+  margin-top: 16px;
 }
 
-.compare-desc {
+.feature-desc {
   font-size: 16px;
-  line-height: 1.7;
-  margin-top: 12px;
-}
-
-.compare-before .compare-desc {
-  color: var(--text-before-dim);
-}
-
-.compare-after .compare-desc {
   color: var(--text-after-sec);
+  margin-top: 16px;
+  line-height: 1.7;
 }
 
-/* ============================================================
-   BEFORE MOCK: Enhanced overlapping windows
-   ============================================================ */
-.mock-windows-enhanced {
-  position: relative;
-  height: 220px;
-  margin-top: 24px;
-}
-
-.mock-windows-enhanced .mock-win-e {
-  position: absolute;
-  background: var(--bg-before-card);
-  border: 1px solid var(--border-before);
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-before-dim);
-  line-height: 1.5;
-  width: 220px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-}
-
-.mock-windows-enhanced .mock-titlebar {
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
   display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-bottom: 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--border-before);
+  flex-direction: column;
+  gap: 10px;
 }
 
-.mock-windows-enhanced .mock-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--border-before);
-}
-
-.mock-windows-enhanced .mock-titlebar-text {
-  font-size: 10px;
-  color: var(--text-before-dim);
-  margin-left: 6px;
-}
-
-.mock-windows-enhanced .mock-cmd {
-  color: var(--text-before-dim);
-}
-
-.mock-windows-enhanced .mock-output {
-  color: var(--text-before-dim);
-  opacity: 0.5;
-}
-
-.mock-windows-enhanced .mock-win-1 {
-  top: 0;
-  left: 0;
-  transform: rotate(-3deg);
-  z-index: 1;
-}
-
-.mock-windows-enhanced .mock-win-2 {
-  top: 20px;
-  left: 100px;
-  transform: rotate(2deg);
-  z-index: 2;
-}
-
-.mock-windows-enhanced .mock-win-3 {
-  top: 50px;
-  left: 40px;
-  transform: rotate(4deg);
-  z-index: 3;
-}
-
-.mock-windows-enhanced .mock-win-4 {
-  top: 80px;
-  left: 140px;
-  transform: rotate(-1deg);
-  z-index: 4;
-  height: 28px;
-  overflow: hidden;
-}
-
-/* ============================================================
-   BEFORE MOCK: File list (lost conversations)
-   ============================================================ */
-.mock-file-list {
-  margin-top: 24px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-before-dim);
-  background: var(--bg-before-card);
-  border: 1px solid var(--border-before);
-  border-radius: 8px;
-  padding: 14px 16px;
-}
-
-.mock-file-list .file-path-header {
-  font-size: 11px;
-  color: var(--text-before-dim);
-  opacity: 0.6;
-  margin-bottom: 10px;
-}
-
-.mock-file-list .file-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 5px 0;
-  border-bottom: 1px solid var(--border-before);
-}
-
-.mock-file-list .file-item:last-child {
-  border-bottom: none;
-}
-
-.mock-file-list .file-name {
-  color: var(--text-before-dim);
-}
-
-.mock-file-list .file-size {
-  font-size: 10px;
-  color: var(--text-before-dim);
-  opacity: 0.5;
-}
-
-.mock-file-list .file-unknown {
-  color: #e05252;
+.feature-list li {
   font-size: 14px;
-  font-weight: 700;
-  margin-left: 6px;
-}
-
-.mock-file-list .file-more {
-  font-size: 11px;
-  color: var(--text-before-dim);
-  opacity: 0.4;
-  margin-top: 8px;
-  text-align: center;
-}
-
-/* ============================================================
-   BEFORE MOCK: GitHub search (skill discovery)
-   ============================================================ */
-.mock-github-search {
-  margin-top: 24px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  background: var(--bg-before-card);
-  border: 1px solid var(--border-before);
-  border-radius: 8px;
-  padding: 14px 16px;
-}
-
-.mock-github-search .gh-search-bar {
+  color: var(--text-after-sec);
   display: flex;
-  align-items: center;
-  background: var(--bg-before);
-  border: 1px solid var(--border-before);
-  border-radius: 6px;
-  padding: 8px 12px;
-  margin-bottom: 10px;
+  align-items: baseline;
+  gap: 10px;
 }
 
-.mock-github-search .gh-search-icon {
-  color: var(--text-before-dim);
-  opacity: 0.5;
-  margin-right: 8px;
-  font-size: 13px;
-}
-
-.mock-github-search .gh-search-text {
-  color: var(--text-before-dim);
-  font-size: 12px;
-}
-
-.mock-github-search .gh-results-count {
-  font-size: 11px;
-  color: var(--text-before-dim);
-  opacity: 0.5;
-  margin-bottom: 12px;
-}
-
-.mock-github-search .gh-repo-item {
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border-before);
-}
-
-.mock-github-search .gh-repo-item:last-child {
-  border-bottom: none;
-}
-
-.mock-github-search .gh-repo-name {
-  color: var(--text-before);
-  font-size: 13px;
-}
-
-.mock-github-search .gh-repo-meta {
-  display: flex;
-  gap: 12px;
-  margin-top: 4px;
+.feature-list li .text-amber {
   font-size: 10px;
-  color: var(--text-before-dim);
-  opacity: 0.6;
-}
-
-.mock-github-search .gh-quality-unknown {
-  color: var(--text-before-dim);
-  opacity: 0.5;
-  font-style: italic;
 }
 
 /* ============================================================
-   AFTER MOCK: Terminal grid
+   MOCK: 4-Grid Terminal
    ============================================================ */
-.mock-grid {
-  margin-top: 24px;
+.mock-grid-4 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2px;
   background: var(--bg-after-card);
   border: 1px solid var(--border-after-active);
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 0 32px rgba(232, 167, 72, 0.08);
+  box-shadow: 0 0 40px rgba(232, 167, 72, 0.08);
 }
 
-.mock-grid .grid-pane {
+.mock-pane {
   background: var(--bg-after);
   padding: 14px;
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--text-after-sec);
+}
+
+.mock-pane-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-after);
+}
+
+.mock-pane-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.mock-pane-dot--active { background: var(--success); }
+.mock-pane-dot--idle { background: var(--amber); }
+
+.mock-pane-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--amber);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mock-pane-path {
+  font-size: 9px;
+  color: var(--text-after-sec);
+  opacity: 0.5;
+  margin-left: auto;
+}
+
+.mock-pane-body {
   line-height: 1.6;
 }
 
-.mock-grid .grid-pane-title {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  color: var(--amber);
-  margin-bottom: 4px;
-}
-
-.mock-grid .grid-pane-path {
-  font-size: 9px;
-  color: var(--text-after-sec);
-  opacity: 0.6;
-  margin-bottom: 6px;
-}
-
-.mock-grid .grid-pane-output {
-  font-size: 10px;
-  color: var(--text-after-sec);
-  line-height: 1.5;
-}
-
-.mock-grid .grid-pane-success {
-  color: var(--success);
+.mock-line {
+  font-size: 11px;
+  line-height: 1.6;
 }
 
 /* ============================================================
-   AFTER MOCK: Search UI (chat search)
+   MOCK: Config Panel
    ============================================================ */
-.mock-search-ui {
-  margin-top: 24px;
+.mock-config-panel {
+  display: grid;
+  grid-template-columns: 200px 1fr;
   background: var(--bg-after-card);
   border: 1px solid var(--border-after-active);
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 0 32px rgba(232, 167, 72, 0.08);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(232, 167, 72, 0.08);
+  min-height: 320px;
 }
 
-.mock-search-ui .search-input-row {
-  display: flex;
-  align-items: center;
+.mock-config-sidebar {
   background: var(--bg-after);
-  border: 1px solid var(--border-after-active);
-  border-radius: 6px;
-  padding: 10px 14px;
+  padding: 14px;
+  border-right: 1px solid var(--border-after);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.mock-config-group {
   margin-bottom: 14px;
 }
 
-.mock-search-ui .search-icon {
+.mock-config-group-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-after-sec);
+  margin-bottom: 6px;
+}
+
+.mock-config-item {
+  font-size: 12px;
+  color: var(--text-after-sec);
+  opacity: 0.7;
+  padding: 4px 8px 4px 16px;
+  border-radius: 4px;
+  cursor: default;
+}
+
+.mock-config-item--active {
+  background: var(--amber-muted);
+  color: var(--amber);
+  opacity: 1;
+  font-weight: 600;
+}
+
+.mock-config-content {
+  background: var(--bg-after);
+  padding: 14px 18px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.mock-config-content-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-after);
+}
+
+.mock-config-content-path {
+  font-size: 10px;
+  color: var(--text-after-sec);
+  opacity: 0.5;
+}
+
+.mock-config-content-body {
+  color: var(--text-after-sec);
+  line-height: 1.7;
+}
+
+.mock-code-line {
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+/* ============================================================
+   MOCK: History Panel
+   ============================================================ */
+.mock-history-panel {
+  background: var(--bg-after-card);
+  border: 1px solid var(--border-after-active);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(232, 167, 72, 0.08);
+}
+
+.mock-history-search {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-after);
+  background: var(--bg-after);
+}
+
+.mock-history-search-icon {
   color: var(--amber);
   margin-right: 10px;
   font-size: 14px;
 }
 
-.mock-search-ui .search-text {
+.mock-history-search-text {
   font-family: var(--font-mono);
   font-size: 13px;
   color: var(--text-after);
 }
 
-.mock-search-ui .search-result-item {
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border-after);
-  font-family: var(--font-mono);
-  font-size: 11px;
+.mock-history-list {
+  padding: 0;
 }
 
-.mock-search-ui .search-result-item:last-child {
+.mock-history-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-after);
+  background: var(--bg-after);
+}
+
+.mock-history-item:last-child {
   border-bottom: none;
 }
 
-.mock-search-ui .search-result-header {
-  font-size: 11px;
-  color: var(--text-after-sec);
-  opacity: 0.7;
-  margin-bottom: 4px;
+.mock-history-item--saved {
+  background: rgba(232, 167, 72, 0.04);
 }
 
-.mock-search-ui .search-result-snippet {
+.mock-history-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 11px;
+}
+
+.mock-history-item-tool {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--amber);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mock-history-item-project {
+  color: var(--text-after-sec);
+  opacity: 0.7;
+}
+
+.mock-history-item-date {
+  color: var(--text-after-sec);
+  opacity: 0.5;
+  margin-left: auto;
+}
+
+.mock-history-item-badge {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--success);
+  background: rgba(74, 222, 128, 0.1);
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+.mock-history-item-snippet {
+  font-family: var(--font-mono);
   font-size: 12px;
   color: var(--text-after-sec);
   line-height: 1.5;
 }
 
-.mock-search-ui .search-highlight {
-  color: var(--amber);
-  font-weight: 600;
-}
-
-/* ============================================================
-   AFTER MOCK: Skill market cards
-   ============================================================ */
-.mock-skill-market {
-  margin-top: 24px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.mock-skill-market .skill-card {
-  background: var(--bg-after-card);
-  border: 1px solid var(--border-after);
-  border-radius: 8px;
-  padding: 14px;
-  font-family: var(--font-mono);
-  transition: border-color 0.2s;
-}
-
-.mock-skill-market .skill-card:hover {
-  border-color: var(--border-after-active);
-}
-
-.mock-skill-market .skill-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-after);
-  margin-bottom: 6px;
-  font-family: var(--font-display);
-}
-
-.mock-skill-market .skill-score {
+.mock-history-item-action {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--amber);
-  margin-bottom: 4px;
+  margin-top: 8px;
+  cursor: default;
 }
 
-.mock-skill-market .skill-installs {
-  font-size: 10px;
+.mock-history-note {
+  padding: 10px 16px;
+  font-size: 11px;
   color: var(--text-after-sec);
   opacity: 0.7;
-  margin-bottom: 10px;
-}
-
-.mock-skill-market .skill-btn {
-  display: inline-block;
-  background: var(--amber);
-  color: var(--bg-after);
-  font-family: var(--font-display);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 5px 14px;
-  border-radius: 5px;
-  border: none;
-  cursor: pointer;
-}
-
-.mock-skill-market .skill-btn--installed {
-  background: transparent;
-  border: 1px solid var(--success);
-  color: var(--success);
+  background: var(--bg-after);
+  border-top: 1px solid var(--border-after);
 }
 
 /* ============================================================
-   PANORAMA SECTION
+   PRODUCT OVERVIEW SECTION
    ============================================================ */
-.panorama {
-  padding: 120px 0;
+.overview-section {
+  padding: 120px 24px;
   text-align: center;
+  background: var(--bg-after-card);
   position: relative;
-  background: var(--bg-after);
 }
 
-.panorama-header {
+.overview-header {
   max-width: 800px;
   margin: 0 auto;
-  padding: 0 24px;
-  position: relative;
-  z-index: 1;
 }
 
-.panorama-header h2 {
+.overview-title {
   font-size: 48px;
   font-weight: 700;
   color: var(--text-after);
@@ -911,20 +526,19 @@
   line-height: 1.15;
 }
 
-.panorama-header p {
+.overview-subtitle {
   font-size: 18px;
   color: var(--text-after-sec);
   margin-top: 12px;
 }
 
-.panorama-frame {
-  position: relative;
+.overview-mock {
   max-width: 1100px;
-  width: 90vw;
   margin: 48px auto 0;
+  position: relative;
 }
 
-.panorama-frame::before {
+.overview-mock::before {
   content: '';
   position: absolute;
   top: -60px;
@@ -933,161 +547,179 @@
   bottom: -60px;
   background: radial-gradient(
     ellipse at center,
-    rgba(232,167,72,0.12),
-    rgba(232,167,72,0.04) 40%,
+    rgba(232, 167, 72, 0.1),
+    rgba(232, 167, 72, 0.03) 40%,
     transparent 70%
   );
   pointer-events: none;
-  z-index: 0;
 }
 
-.panorama-shot {
+.overview-frame {
   position: relative;
   z-index: 1;
-  display: grid;
-  grid-template-columns: 7fr 3fr;
-  gap: 2px;
   background: var(--bg-after-card);
-  border: 1px solid rgba(232,167,72,0.25);
+  border: 1px solid rgba(232, 167, 72, 0.25);
   border-radius: 12px;
   overflow: hidden;
   box-shadow:
-    0 0 80px rgba(232,167,72,0.12),
-    0 4px 32px rgba(0,0,0,0.4);
+    0 0 80px rgba(232, 167, 72, 0.1),
+    0 4px 32px rgba(0, 0, 0, 0.4);
 }
 
-.p-main {
+.overview-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-after);
+  background: var(--bg-after-card);
+}
+
+.overview-titlebar-text {
+  font-family: var(--font-display);
+  font-size: 12px;
+  color: var(--text-after-sec);
+  margin-left: 8px;
+  font-weight: 600;
+}
+
+.overview-body {
+  display: grid;
+  grid-template-columns: 7fr 3fr;
+  gap: 1px;
+  background: var(--border-after);
+}
+
+.overview-main {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
-  gap: 2px;
+  gap: 1px;
+  background: var(--border-after);
 }
 
-.p-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.p-pane {
+.overview-pane {
   background: var(--bg-after);
   padding: 12px;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-after-sec);
   line-height: 1.5;
+  text-align: left;
 }
 
-.p-pane-title {
+.overview-pane-tab {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--amber);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.overview-pane-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.overview-pane-dot--active { background: var(--success); }
+.overview-pane-dot--idle { background: var(--amber); }
+
+.overview-pane-content {
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+/* Sidebar */
+.overview-sidebar {
+  background: var(--bg-after);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+
+.overview-sidebar-block {
+  font-size: 11px;
+}
+
+.overview-sidebar-title {
   font-size: 10px;
   font-weight: 700;
   color: var(--amber);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 6px;
-}
-
-.p-pane-path {
-  font-size: 10px;
-  color: var(--border-after);
   margin-bottom: 4px;
 }
 
-.p-pane-prompt {
-  color: var(--amber);
-}
-
-.p-pane-success {
-  color: var(--success);
-}
-
-.p-pane--sidebar {
-  font-family: var(--font-display);
-  font-size: 12px;
-}
-
-.p-pane--sidebar .p-sidebar-title {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--amber);
+.overview-sidebar-meta {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-after-sec);
+  opacity: 0.6;
   margin-bottom: 6px;
 }
 
-.p-pane--sidebar .p-sidebar-meta {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--text-after-sec);
-  margin-bottom: 8px;
-}
-
-.p-pane--sidebar .p-sidebar-item {
+.overview-sidebar-item {
   font-size: 11px;
   color: var(--text-after-sec);
   padding: 2px 0;
   line-height: 1.5;
 }
 
-.p-pane--sidebar .p-sidebar-item-amber {
-  color: var(--amber);
-  font-size: 10px;
-}
-
-.p-pane--sidebar .p-sidebar-item-dim {
+.overview-sidebar-item--dim {
   color: var(--text-before-dim);
 }
 
-/* ============================================================
-   BLUEPRINT CORNERS
-   ============================================================ */
-.blueprint-corner {
-  position: absolute;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: rgba(232,167,72,0.35);
-  z-index: 2;
-  line-height: 1;
-  pointer-events: none;
+.overview-status {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
 }
 
-.blueprint-corner--tl { top: -16px; left: -8px; }
-.blueprint-corner--tr { top: -16px; right: -8px; }
-.blueprint-corner--bl { bottom: -16px; left: -8px; }
-.blueprint-corner--br { bottom: -16px; right: -8px; }
+.overview-status--online { background: var(--success); }
 
 /* ============================================================
    CTA SECTION
    ============================================================ */
-.cta-section {
+.cta {
   text-align: center;
   padding: 120px 24px;
   position: relative;
   background: linear-gradient(
     180deg,
-    var(--bg-before) 0%,
-    #0e1018 25%,
+    var(--bg-after-card) 0%,
     var(--bg-after) 50%
   );
 }
 
 .cta-glow {
   position: absolute;
-  top: 35%;
+  top: 30%;
   left: 50%;
   transform: translateX(-50%);
   width: 600px;
   height: 400px;
   background: radial-gradient(
     ellipse at center,
-    rgba(232,167,72,0.1),
-    rgba(232,167,72,0.03) 50%,
+    rgba(232, 167, 72, 0.1),
+    rgba(232, 167, 72, 0.03) 50%,
     transparent 70%
   );
   pointer-events: none;
 }
 
-.cta-before-text {
+.cta-lead {
   font-size: 16px;
-  color: var(--text-before-dim);
+  color: var(--text-after-sec);
   position: relative;
   z-index: 1;
 }
@@ -1121,166 +753,41 @@
 }
 
 /* ============================================================
-   SCROLL ANIMATIONS
-   ============================================================ */
-.fade-left {
-  opacity: 0;
-  transform: translateX(-20px);
-  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-}
-
-.fade-right {
-  opacity: 0;
-  transform: translateX(20px);
-  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-}
-
-.fade-up {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-}
-
-.fade-left.visible,
-.fade-right.visible,
-.fade-up.visible {
-  opacity: 1;
-  transform: none;
-}
-
-.stagger > * {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-}
-
-.stagger > *:nth-child(1) { transition-delay: 0ms; }
-.stagger > *:nth-child(2) { transition-delay: 80ms; }
-.stagger > *:nth-child(3) { transition-delay: 160ms; }
-.stagger > *:nth-child(4) { transition-delay: 240ms; }
-.stagger > *:nth-child(5) { transition-delay: 320ms; }
-.stagger > *:nth-child(6) { transition-delay: 400ms; }
-.stagger > *:nth-child(7) { transition-delay: 480ms; }
-.stagger > *:nth-child(8) { transition-delay: 560ms; }
-
-.stagger.visible > * {
-  opacity: 1;
-  transform: none;
-}
-
-/* ============================================================
    RESPONSIVE: Tablet (<=1023px)
    ============================================================ */
 @media (max-width: 1023px) {
-  .hero-split {
-    flex-direction: column;
+  .hero-title {
+    font-size: 42px;
   }
 
-  .hero-before,
-  .hero-after {
-    padding: 40px 24px 60px;
-    justify-content: center;
+  .feature-inner,
+  .feature-inner--reversed {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    direction: ltr;
   }
 
-  .hero-content {
-    max-width: 100%;
+  .feature-title {
+    font-size: 30px;
   }
 
-  .hero-title-before,
-  .hero-title-after {
+  .mock-config-panel {
+    grid-template-columns: 160px 1fr;
+    min-height: 260px;
+  }
+
+  .overview-title {
     font-size: 36px;
   }
 
-  .hero-divider {
-    display: none;
-  }
-
-  .hero-after {
-    position: relative;
-  }
-
-  .hero-after::before {
-    content: '';
-    display: block;
-    position: absolute;
-    top: 0;
-    left: 10%;
-    right: 10%;
-    height: 2px;
-    background: linear-gradient(to right, transparent, var(--amber), transparent);
-  }
-
-  .compare-section {
-    flex-direction: column;
-  }
-
-  .compare-section--reversed {
-    flex-direction: column;
-  }
-
-  .compare-divider {
-    display: none;
-  }
-
-  .compare-before,
-  .compare-after {
-    padding: 48px 24px;
-  }
-
-  .compare-after {
-    position: relative;
-  }
-
-  .compare-after::before {
-    content: '';
-    display: block;
-    position: absolute;
-    top: 0;
-    left: 10%;
-    right: 10%;
-    height: 1px;
-    background: linear-gradient(to right, transparent, rgba(232, 167, 72, 0.4), transparent);
-  }
-
-  .compare-title {
-    font-size: 24px;
-  }
-
-  .compare-desc {
-    font-size: 15px;
-  }
-
-  .mock-windows-enhanced {
-    height: 180px;
-  }
-
-  .mock-windows-enhanced .mock-win-e {
-    width: 180px;
-    font-size: 10px;
-  }
-
-  .mock-skill-market {
+  .overview-body {
     grid-template-columns: 1fr;
   }
 
-  .panorama {
-    padding: 80px 0;
-  }
-
-  .panorama-header h2 {
-    font-size: 36px;
-  }
-
-  .panorama-shot {
-    grid-template-columns: 1fr;
-  }
-
-  .p-sidebar {
+  .overview-sidebar {
     flex-direction: row;
-  }
-
-  .blueprint-corner {
-    display: none;
+    gap: 16px;
+    flex-wrap: wrap;
   }
 
   .cta-headline {
@@ -1292,99 +799,84 @@
    RESPONSIVE: Mobile (<=767px)
    ============================================================ */
 @media (max-width: 767px) {
-  .hero-title-before,
-  .hero-title-after {
-    font-size: 32px;
+  .hero {
+    padding: 72px 20px 48px;
   }
 
-  .mock-win--3,
-  .mock-win--4 {
-    display: none;
+  .hero-title {
+    font-size: 36px;
   }
 
-  .mock-windows {
-    height: 140px;
+  .hero-subtitle {
+    font-size: 16px;
   }
 
-  .mock-win {
-    width: 170px;
-    font-size: 10px;
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .mock-win--1 {
-    width: 170px;
+  .hero-actions .btn-amber-lg,
+  .hero-actions .btn-ghost {
+    width: 100%;
   }
 
-  .mock-win--2 {
-    width: 170px;
-    left: 60px;
+  .hero-mock {
+    margin-top: 40px;
   }
 
-  .compare-before,
-  .compare-after {
-    padding: 36px 20px;
-  }
-
-  .compare-title {
-    font-size: 22px;
-  }
-
-  .compare-desc {
-    font-size: 14px;
-  }
-
-  .mock-windows-enhanced {
-    height: 160px;
-  }
-
-  .mock-windows-enhanced .mock-win-e {
-    width: 150px;
-    font-size: 9px;
-  }
-
-  .mock-windows-enhanced .mock-win-2 {
-    left: 70px;
-  }
-
-  .mock-windows-enhanced .mock-win-4 {
-    left: 100px;
-  }
-
-  .mock-grid {
+  .mock-app-body {
     grid-template-columns: 1fr;
   }
 
-  .mock-skill-market {
+  .mock-app-main {
     grid-template-columns: 1fr;
   }
 
-  .mock-github-search .gh-repo-meta {
-    flex-wrap: wrap;
-    gap: 6px;
+  .feature-section {
+    padding: 64px 20px;
   }
 
-  .panorama {
-    padding: 64px 0;
+  .feature-title {
+    font-size: 26px;
   }
 
-  .panorama-header h2 {
+  .feature-desc {
+    font-size: 15px;
+  }
+
+  .mock-grid-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .mock-config-panel {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .mock-config-sidebar {
+    border-right: none;
+    border-bottom: 1px solid var(--border-after);
+  }
+
+  .overview-section {
+    padding: 64px 20px;
+  }
+
+  .overview-title {
     font-size: 28px;
   }
 
-  .panorama-frame {
-    width: 95vw;
-  }
-
-  .p-main {
+  .overview-main {
     grid-template-columns: 1fr;
   }
 
-  .p-sidebar {
+  .overview-sidebar {
     flex-direction: column;
   }
 
-  .cta-section {
-    padding: 80px 24px;
+  .cta {
+    padding: 80px 20px;
   }
 
   .cta-headline {
@@ -1406,24 +898,9 @@
    REDUCED MOTION
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {
-  .hero-divider-dot {
-    animation: none;
-  }
-
-  .typing-cursor {
-    animation: none;
-    opacity: 1;
-  }
-
-  .hero-divider {
-    transform: translateX(-50%) scaleY(1);
-    animation: none;
-  }
-
   .fade-left,
   .fade-right,
-  .fade-up,
-  .stagger > * {
+  .fade-up {
     opacity: 1;
     transform: none;
     transition: none;
