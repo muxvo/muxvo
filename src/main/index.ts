@@ -33,6 +33,8 @@ import { registerFsImageHandlers } from './ipc/fs-image-handlers';
 import { registerAuthHandlers, getAuthManager } from './ipc/auth-handlers';
 import { registerAnalyticsHandlers } from './ipc/analytics-handlers';
 import type { AnalyticsTracker } from './services/analytics/tracker';
+import { getDeviceId } from './services/analytics/device-id';
+import { createBackendClient } from './services/auth/backend-client';
 import { autoUpdater } from 'electron-updater';
 import { createChatWatcher } from './services/chat-watcher';
 import { createChatArchiveManager } from './services/chat-archive';
@@ -312,7 +314,25 @@ app.whenReady().then(() => {
   registerFsImageHandlers();
   registerAppHandlers();
   registerAuthHandlers();
-  ({ tracker } = registerAnalyticsHandlers());
+
+  // Create backend client for analytics upload
+  const isProduction = app.isPackaged;
+  const backendUrl = process.env.MUXVO_API_URL
+    || (isProduction ? 'https://api.muxvo.com' : 'http://localhost:3000');
+  const analyticsBackendClient = createBackendClient({ baseUrl: backendUrl });
+
+  const uploadToServer = async (events: Array<{ metric: string; value?: number; metadata?: object }>) => {
+    try {
+      const deviceId = getDeviceId();
+      const accessToken = await getAuthManager().getAccessToken() ?? undefined;
+      const result = await analyticsBackendClient.trackAnalytics(deviceId, events, accessToken);
+      return result.success;
+    } catch {
+      return false;
+    }
+  };
+
+  ({ tracker } = registerAnalyticsHandlers({ upload: uploadToServer }));
 
   chatWatcher = createChatWatcher();
   chatArchive = createChatArchiveManager();
@@ -542,6 +562,11 @@ app.on('window-all-closed', () => {
   }
   if (memoryPush) {
     memoryPush.stop();
+  }
+  // Flush pending analytics before quit and stop upload timer
+  if (tracker) {
+    tracker.flush();
+    tracker.dispose();
   }
 
   if (process.platform !== 'darwin') {

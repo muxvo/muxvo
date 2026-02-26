@@ -3,7 +3,7 @@
 import { ipcMain } from 'electron';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 import { createAnalyticsTracker } from '@/main/services/analytics/tracker';
-import type { AnalyticsTracker } from '@/main/services/analytics/tracker';
+import type { AnalyticsTracker, TrackerOptions } from '@/main/services/analytics/tracker';
 import type {
   TrackEvent,
   AnalyticsSummaryRequest,
@@ -52,8 +52,8 @@ export function createAnalyticsHandlers(tracker: AnalyticsTracker) {
   };
 }
 
-export function registerAnalyticsHandlers(): { tracker: AnalyticsTracker } {
-  const tracker = createAnalyticsTracker();
+export function registerAnalyticsHandlers(trackerOptions?: TrackerOptions): { tracker: AnalyticsTracker } {
+  const tracker = createAnalyticsTracker(trackerOptions);
   const handlers = createAnalyticsHandlers(tracker);
 
   ipcMain.handle(
