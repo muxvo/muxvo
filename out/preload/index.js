@@ -255,6 +255,8 @@ const api = {
     track: (event, params) => electron.ipcRenderer.invoke(IPC_CHANNELS.ANALYTICS.TRACK, { event, params }),
     getSummary: (startDate, endDate) => electron.ipcRenderer.invoke(IPC_CHANNELS.ANALYTICS.GET_SUMMARY, { startDate, endDate }),
     clear: () => electron.ipcRenderer.invoke(IPC_CHANNELS.ANALYTICS.CLEAR)
-  }
+  },
+  // --- Utility: native file path from drag-and-drop ---
+  getPathForFile: (file) => electron.webUtils.getPathForFile(file)
 };
 electron.contextBridge.exposeInMainWorld("api", api);
