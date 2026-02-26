@@ -145,12 +145,14 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
         });
 
         return { success: true, state: machine.state, id, pid: proc.pid };
-      } catch {
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.error(`[MUXVO] PTY spawn failed: ${errMsg}`);
         machine.send('SPAWN_FAILURE');
         return {
           success: false,
           state: 'Failed',
-          message: '终端启动失败：进程已断开 -- PTY 创建失败',
+          message: `终端启动失败: ${errMsg}`,
         };
       }
     }

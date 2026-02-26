@@ -18,7 +18,8 @@
     "test:coverage": "vitest run --coverage",
     "pack": "electron-vite build && electron-builder --dir",
     "dist": "electron-vite build && electron-builder",
-    "dist:mac": "electron-vite build && electron-builder --mac"
+    "dist:mac": "electron-vite build && electron-builder --mac",
+    "postinstall": "chmod +x node_modules/node-pty/prebuilds/darwin-arm64/spawn-helper node_modules/node-pty/prebuilds/darwin-x64/spawn-helper 2>/dev/null; echo 'node-pty spawn-helper permissions fixed'"
   },
   "dependencies": {
     "@electron-toolkit/utils": "^4.0.0",
