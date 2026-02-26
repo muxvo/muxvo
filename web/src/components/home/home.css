@@ -1,596 +1,174 @@
-/* ============================================================
-   HOME PAGE BASE
-   ============================================================ */
+/* ==========================================================
+   MUXVO HOME — "Command Center" aesthetic
+   Deep space black + amber slice + dense terminal mock
+   ========================================================== */
+
 .home-page {
-  font-family: var(--font-display);
   background: var(--bg-after);
   color: var(--text-after);
-  line-height: 1.6;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
-/* ============================================================
-   HERO SECTION
-   ============================================================ */
-.hero {
+/* ==========================================================
+   HERO
+   ========================================================== */
+.mv-hero {
+  position: relative;
   text-align: center;
-  padding: 100px 24px 80px;
-  position: relative;
-  background: var(--bg-after);
-}
-
-.hero-content {
-  max-width: 720px;
-  margin: 0 auto;
-}
-
-.hero-title {
-  font-size: 56px;
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  color: var(--text-after);
-}
-
-.hero-subtitle {
-  font-size: 18px;
-  color: var(--text-after-sec);
-  margin-top: 20px;
-  line-height: 1.7;
-}
-
-.hero-actions {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  margin-top: 36px;
-  flex-wrap: wrap;
-}
-
-/* Hero Mock */
-.hero-mock {
-  max-width: 1000px;
-  margin: 64px auto 0;
-  position: relative;
-}
-
-.mock-app {
-  background: var(--bg-after-card);
-  border: 1px solid rgba(232, 167, 72, 0.25);
-  border-radius: 12px;
+  padding: 80px 24px 0;
   overflow: hidden;
-  box-shadow:
-    0 0 80px rgba(232, 167, 72, 0.1),
-    0 4px 32px rgba(0, 0, 0, 0.4);
 }
 
-.mock-app-titlebar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--border-after);
-  background: var(--bg-after-card);
-}
-
-.mock-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.mock-dot--red { background: #ff5f57; }
-.mock-dot--yellow { background: #febc2e; }
-.mock-dot--green { background: #28c840; }
-
-.mock-app-name {
-  font-family: var(--font-display);
-  font-size: 12px;
-  color: var(--text-after-sec);
-  margin-left: 8px;
-  font-weight: 600;
-}
-
-.mock-app-body {
-  display: grid;
-  grid-template-columns: 7fr 3fr;
-  gap: 1px;
-  background: var(--border-after);
-}
-
-.mock-app-main {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 1px;
-  background: var(--border-after);
-}
-
-.mock-terminal {
-  background: var(--bg-after);
-  padding: 12px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1.6;
-  color: var(--text-after-sec);
-}
-
-.mock-terminal-tab {
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--amber);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 8px;
-}
-
-.mock-terminal-line {
-  line-height: 1.6;
-}
-
-/* Sidebar in hero mock */
-.mock-app-sidebar {
-  background: var(--bg-after);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.mock-sidebar-section {
-  font-size: 11px;
-}
-
-.mock-sidebar-title {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--amber);
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.mock-sidebar-item {
-  font-size: 11px;
-  color: var(--text-after-sec);
-  padding: 2px 0;
-  line-height: 1.5;
-}
-
-.mock-sidebar-item--dim {
-  color: var(--text-before-dim);
-}
-
-/* ============================================================
-   SHARED COLORS
-   ============================================================ */
-.c-prompt { color: var(--amber); }
-.c-dim { color: var(--text-after-sec); opacity: 0.6; }
-.c-success { color: var(--success); }
-
-/* ============================================================
-   FEATURE SECTIONS
-   ============================================================ */
-.feature-section {
-  padding: 100px 24px;
-  background: var(--bg-after);
-}
-
-.feature-section--alt {
-  background: var(--bg-after-card);
-}
-
-.feature-inner {
-  max-width: 1100px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 64px;
-  align-items: center;
-}
-
-.feature-inner--reversed {
-  direction: rtl;
-}
-
-.feature-inner--reversed > * {
-  direction: ltr;
-}
-
-.feature-badge {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--amber);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  background: var(--amber-muted);
-  padding: 4px 12px;
-  border-radius: 4px;
-  display: inline-block;
-}
-
-.feature-title {
-  font-size: 36px;
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-  color: var(--text-after);
-  margin-top: 16px;
-}
-
-.feature-desc {
-  font-size: 16px;
-  color: var(--text-after-sec);
-  margin-top: 16px;
-  line-height: 1.7;
-}
-
-.feature-list {
-  list-style: none;
-  padding: 0;
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.feature-list li {
-  font-size: 14px;
-  color: var(--text-after-sec);
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-}
-
-.feature-list li .text-amber {
-  font-size: 10px;
-}
-
-/* ============================================================
-   MOCK: 4-Grid Terminal
-   ============================================================ */
-.mock-grid-4 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2px;
-  background: var(--bg-after-card);
-  border: 1px solid var(--border-after-active);
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 0 40px rgba(232, 167, 72, 0.08);
-}
-
-.mock-pane {
-  background: var(--bg-after);
-  padding: 14px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-after-sec);
-}
-
-.mock-pane-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border-after);
-}
-
-.mock-pane-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-}
-
-.mock-pane-dot--active { background: var(--success); }
-.mock-pane-dot--idle { background: var(--amber); }
-
-.mock-pane-label {
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--amber);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.mock-pane-path {
-  font-size: 9px;
-  color: var(--text-after-sec);
-  opacity: 0.5;
-  margin-left: auto;
-}
-
-.mock-pane-body {
-  line-height: 1.6;
-}
-
-.mock-line {
-  font-size: 11px;
-  line-height: 1.6;
-}
-
-/* ============================================================
-   MOCK: Config Panel
-   ============================================================ */
-.mock-config-panel {
-  display: grid;
-  grid-template-columns: 200px 1fr;
-  background: var(--bg-after-card);
-  border: 1px solid var(--border-after-active);
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 0 40px rgba(232, 167, 72, 0.08);
-  min-height: 320px;
-}
-
-.mock-config-sidebar {
-  background: var(--bg-after);
-  padding: 14px;
-  border-right: 1px solid var(--border-after);
-  font-family: var(--font-mono);
-  font-size: 12px;
-}
-
-.mock-config-group {
-  margin-bottom: 14px;
-}
-
-.mock-config-group-title {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-after-sec);
-  margin-bottom: 6px;
-}
-
-.mock-config-item {
-  font-size: 12px;
-  color: var(--text-after-sec);
-  opacity: 0.7;
-  padding: 4px 8px 4px 16px;
-  border-radius: 4px;
-  cursor: default;
-}
-
-.mock-config-item--active {
-  background: var(--amber-muted);
-  color: var(--amber);
-  opacity: 1;
-  font-weight: 600;
-}
-
-.mock-config-content {
-  background: var(--bg-after);
-  padding: 14px 18px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-}
-
-.mock-config-content-header {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 14px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border-after);
-}
-
-.mock-config-content-path {
-  font-size: 10px;
-  color: var(--text-after-sec);
-  opacity: 0.5;
-}
-
-.mock-config-content-body {
-  color: var(--text-after-sec);
-  line-height: 1.7;
-}
-
-.mock-code-line {
-  font-size: 12px;
-  line-height: 1.7;
-}
-
-/* ============================================================
-   MOCK: History Panel
-   ============================================================ */
-.mock-history-panel {
-  background: var(--bg-after-card);
-  border: 1px solid var(--border-after-active);
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 0 40px rgba(232, 167, 72, 0.08);
-}
-
-.mock-history-search {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border-after);
-  background: var(--bg-after);
-}
-
-.mock-history-search-icon {
-  color: var(--amber);
-  margin-right: 10px;
-  font-size: 14px;
-}
-
-.mock-history-search-text {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--text-after);
-}
-
-.mock-history-list {
-  padding: 0;
-}
-
-.mock-history-item {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border-after);
-  background: var(--bg-after);
-}
-
-.mock-history-item:last-child {
-  border-bottom: none;
-}
-
-.mock-history-item--saved {
-  background: rgba(232, 167, 72, 0.04);
-}
-
-.mock-history-item-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-  font-size: 11px;
-}
-
-.mock-history-item-tool {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--amber);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.mock-history-item-project {
-  color: var(--text-after-sec);
-  opacity: 0.7;
-}
-
-.mock-history-item-date {
-  color: var(--text-after-sec);
-  opacity: 0.5;
-  margin-left: auto;
-}
-
-.mock-history-item-badge {
-  font-size: 9px;
-  font-weight: 600;
-  color: var(--success);
-  background: rgba(74, 222, 128, 0.1);
-  padding: 2px 8px;
-  border-radius: 3px;
-}
-
-.mock-history-item-snippet {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-after-sec);
-  line-height: 1.5;
-}
-
-.mock-history-item-action {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--amber);
-  margin-top: 8px;
-  cursor: default;
-}
-
-.mock-history-note {
-  padding: 10px 16px;
-  font-size: 11px;
-  color: var(--text-after-sec);
-  opacity: 0.7;
-  background: var(--bg-after);
-  border-top: 1px solid var(--border-after);
-}
-
-/* ============================================================
-   PRODUCT OVERVIEW SECTION
-   ============================================================ */
-.overview-section {
-  padding: 120px 24px;
-  text-align: center;
-  background: var(--bg-after-card);
-  position: relative;
-}
-
-.overview-header {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.overview-title {
-  font-size: 48px;
-  font-weight: 700;
-  color: var(--text-after);
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-}
-
-.overview-subtitle {
-  font-size: 18px;
-  color: var(--text-after-sec);
-  margin-top: 12px;
-}
-
-.overview-mock {
-  max-width: 1100px;
-  margin: 48px auto 0;
-  position: relative;
-}
-
-.overview-mock::before {
-  content: '';
+/* Radial amber glow behind mock */
+.mv-hero__glow {
   position: absolute;
-  top: -60px;
-  left: -40px;
-  right: -40px;
-  bottom: -60px;
+  top: 40%;
+  left: 50%;
+  width: 900px;
+  height: 600px;
+  transform: translate(-50%, -50%);
   background: radial-gradient(
     ellipse at center,
-    rgba(232, 167, 72, 0.1),
-    rgba(232, 167, 72, 0.03) 40%,
+    rgba(232, 167, 72, 0.07) 0%,
     transparent 70%
   );
   pointer-events: none;
 }
 
-.overview-frame {
+/* Text */
+.mv-hero__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 20px;
+}
+
+.mv-hero__title {
+  font-size: clamp(40px, 6vw, 72px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  color: var(--text-after);
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.mv-hero__sub {
+  font-size: clamp(15px, 1.6vw, 18px);
+  color: var(--text-after-sec);
+  margin-top: 20px;
+  line-height: 1.7;
+  max-width: 540px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.mv-hero__actions {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 32px;
+  flex-wrap: wrap;
+}
+
+/* ---- Mock ---- */
+.mv-hero__mock {
   position: relative;
   z-index: 1;
-  background: var(--bg-after-card);
-  border: 1px solid rgba(232, 167, 72, 0.25);
+  max-width: 1060px;
+  margin: 56px auto 0;
+}
+
+/* Perspective shadow under mock */
+.mv-hero__mock::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 10%;
+  right: 10%;
+  height: 60px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(232, 167, 72, 0.12),
+    transparent 70%
+  );
+  filter: blur(20px);
+  pointer-events: none;
+}
+
+.mv-mock {
+  border: 1px solid rgba(232, 167, 72, 0.2);
   border-radius: 12px;
   overflow: hidden;
+  background: #080a0f;
   box-shadow:
-    0 0 80px rgba(232, 167, 72, 0.1),
-    0 4px 32px rgba(0, 0, 0, 0.4);
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 2px 40px rgba(0, 0, 0, 0.6),
+    0 0 120px rgba(232, 167, 72, 0.06);
 }
 
-.overview-titlebar {
+/* -- Title bar -- */
+.mv-mock__bar {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 14px;
+  gap: 7px;
+  padding: 11px 16px;
+  background: #0c0e14;
   border-bottom: 1px solid var(--border-after);
-  background: var(--bg-after-card);
 }
 
-.overview-titlebar-text {
+.mv-mock__dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+.mv-mock__dot--r { background: #ff5f57; }
+.mv-mock__dot--y { background: #febc2e; }
+.mv-mock__dot--g { background: #28c840; }
+
+.mv-mock__bar-title {
   font-family: var(--font-display);
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--text-after-sec);
-  margin-left: 8px;
+  margin-left: 6px;
+  margin-right: auto;
+}
+
+.mv-mock__bar-tabs {
+  display: flex;
+  gap: 2px;
+}
+
+.mv-mock__bar-tab {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 4px 12px;
+  border-radius: 4px;
+  color: var(--text-after-sec);
+  opacity: 0.5;
+  letter-spacing: 0.02em;
+}
+
+.mv-mock__bar-tab--active {
+  background: rgba(232, 167, 72, 0.1);
+  color: var(--amber);
+  opacity: 1;
   font-weight: 600;
 }
 
-.overview-body {
+/* -- Body grid -- */
+.mv-mock__body {
   display: grid;
-  grid-template-columns: 7fr 3fr;
-  gap: 1px;
-  background: var(--border-after);
+  grid-template-columns: 1fr 260px;
+  min-height: 340px;
 }
 
-.overview-main {
+.mv-mock__terminals {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
@@ -598,110 +176,264 @@
   background: var(--border-after);
 }
 
-.overview-pane {
+/* -- Terminal pane -- */
+.mv-term {
   background: var(--bg-after);
-  padding: 12px;
+  padding: 12px 14px;
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--text-after-sec);
-  line-height: 1.5;
-  text-align: left;
+  display: flex;
+  flex-direction: column;
 }
 
-.overview-pane-tab {
+.mv-term__head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.mv-term__status {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.mv-term__status--on { background: var(--success); box-shadow: 0 0 6px rgba(74, 222, 128, 0.4); }
+.mv-term__status--idle { background: var(--amber); }
+
+.mv-term__name {
   font-size: 9px;
   font-weight: 700;
-  color: var(--amber);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 8px;
+  letter-spacing: 0.07em;
+  color: var(--amber);
+}
+
+.mv-term__path {
+  font-size: 9px;
+  color: var(--text-after-sec);
+  opacity: 0.35;
+  margin-left: auto;
+}
+
+.mv-term__body {
+  flex: 1;
+}
+
+.mv-term__line {
+  line-height: 1.65;
+  font-size: 11px;
+}
+
+.mv-term__line--dim { opacity: 0.5; }
+.mv-term__line--ok { color: var(--success); }
+
+.mv-term__prompt {
+  color: var(--amber);
+}
+
+/* -- Sidebar -- */
+.mv-mock__sidebar {
+  background: #090b10;
+  border-left: 1px solid var(--border-after);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow: hidden;
+}
+
+.mv-mock__sb-section {}
+
+.mv-mock__sb-head {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-after);
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.overview-pane-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-}
-
-.overview-pane-dot--active { background: var(--success); }
-.overview-pane-dot--idle { background: var(--amber); }
-
-.overview-pane-content {
-  font-size: 10px;
-  line-height: 1.6;
-}
-
-/* Sidebar */
-.overview-sidebar {
-  background: var(--bg-after);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  text-align: left;
-}
-
-.overview-sidebar-block {
-  font-size: 11px;
-}
-
-.overview-sidebar-title {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--amber);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 4px;
-}
-
-.overview-sidebar-meta {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--text-after-sec);
-  opacity: 0.6;
   margin-bottom: 6px;
 }
 
-.overview-sidebar-item {
+.mv-mock__sb-icon {
+  font-size: 12px;
+}
+
+.mv-mock__sb-meta {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-after-sec);
+  opacity: 0.5;
+  margin-bottom: 8px;
+}
+
+.mv-mock__sb-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
   font-size: 11px;
   color: var(--text-after-sec);
-  padding: 2px 0;
-  line-height: 1.5;
 }
 
-.overview-sidebar-item--dim {
-  color: var(--text-before-dim);
+.mv-mock__sb-tag {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--amber);
+  background: rgba(232, 167, 72, 0.08);
+  padding: 2px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
 }
 
-.overview-status {
-  display: inline-block;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  margin-right: 4px;
-  vertical-align: middle;
+.mv-mock__sb-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  color: var(--text-after-sec);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.overview-status--online { background: var(--success); }
+.mv-mock__sb-time {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-after-sec);
+  opacity: 0.35;
+  margin-left: auto;
+  flex-shrink: 0;
+}
 
-/* ============================================================
-   CTA SECTION
-   ============================================================ */
-.cta {
-  text-align: center;
-  padding: 120px 24px;
+.mv-mock__sb-more {
+  font-size: 10px;
+  color: var(--text-after-sec);
+  opacity: 0.3;
+  margin-top: 4px;
+}
+
+/* ==========================================================
+   FEATURES — compact card grid
+   ========================================================== */
+.mv-features {
+  padding: 100px 24px;
   position: relative;
+}
+
+/* Subtle top divider */
+.mv-features::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(600px, 80%);
+  height: 1px;
   background: linear-gradient(
-    180deg,
-    var(--bg-after-card) 0%,
-    var(--bg-after) 50%
+    to right,
+    transparent,
+    rgba(232, 167, 72, 0.3),
+    transparent
   );
 }
 
-.cta-glow {
+.mv-features__inner {
+  max-width: 1060px;
+  margin: 0 auto;
+}
+
+.mv-features__header {
+  text-align: center;
+  margin-bottom: 56px;
+}
+
+.mv-features__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: var(--amber);
+  margin-bottom: 12px;
+}
+
+.mv-features__title {
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-after);
+  line-height: 1.15;
+}
+
+/* Grid */
+.mv-features__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border-after);
+  border: 1px solid var(--border-after);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Card */
+.mv-fcard {
+  background: var(--bg-after);
+  padding: 32px 28px;
+  transition: background 0.25s;
+}
+
+.mv-fcard:hover {
+  background: var(--bg-after-card);
+}
+
+.mv-fcard__icon {
+  font-size: 22px;
+  margin-bottom: 14px;
+  line-height: 1;
+  /* Prevent emoji sizing inconsistencies */
+  display: inline-block;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(232, 167, 72, 0.06);
+  border: 1px solid rgba(232, 167, 72, 0.12);
+  border-radius: 8px;
+}
+
+.mv-fcard__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-after);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.mv-fcard__desc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-after-sec);
+}
+
+/* ==========================================================
+   CTA
+   ========================================================== */
+.mv-cta {
+  text-align: center;
+  padding: 100px 24px 120px;
+  position: relative;
+  overflow: hidden;
+}
+
+.mv-cta__glow {
   position: absolute;
   top: 30%;
   left: 50%;
@@ -710,193 +442,129 @@
   height: 400px;
   background: radial-gradient(
     ellipse at center,
-    rgba(232, 167, 72, 0.1),
-    rgba(232, 167, 72, 0.03) 50%,
+    rgba(232, 167, 72, 0.08),
     transparent 70%
   );
   pointer-events: none;
 }
 
-.cta-lead {
-  font-size: 16px;
+.mv-cta__inner {
+  position: relative;
+  z-index: 1;
+}
+
+.mv-cta__lead {
+  font-size: 15px;
   color: var(--text-after-sec);
-  position: relative;
-  z-index: 1;
 }
 
-.cta-headline {
-  font-size: 56px;
-  font-weight: 700;
+.mv-cta__title {
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 800;
   color: var(--text-after);
-  margin-top: 16px;
-  position: relative;
-  z-index: 1;
-  letter-spacing: -0.02em;
+  margin-top: 12px;
+  letter-spacing: -0.03em;
 }
 
-.cta-buttons {
+.mv-cta__buttons {
   display: flex;
-  gap: 16px;
+  gap: 14px;
   justify-content: center;
-  margin-top: 32px;
-  position: relative;
-  z-index: 1;
+  margin-top: 28px;
   flex-wrap: wrap;
 }
 
-.cta-note {
-  font-size: 14px;
+.mv-cta__note {
+  font-family: var(--font-mono);
+  font-size: 12px;
   color: var(--text-after-sec);
+  opacity: 0.6;
   margin-top: 16px;
-  position: relative;
-  z-index: 1;
+  letter-spacing: 0.02em;
 }
 
-/* ============================================================
-   RESPONSIVE: Tablet (<=1023px)
-   ============================================================ */
+/* ==========================================================
+   RESPONSIVE — Tablet
+   ========================================================== */
 @media (max-width: 1023px) {
-  .hero-title {
-    font-size: 42px;
-  }
-
-  .feature-inner,
-  .feature-inner--reversed {
-    grid-template-columns: 1fr;
-    gap: 40px;
-    direction: ltr;
-  }
-
-  .feature-title {
-    font-size: 30px;
-  }
-
-  .mock-config-panel {
-    grid-template-columns: 160px 1fr;
-    min-height: 260px;
-  }
-
-  .overview-title {
-    font-size: 36px;
-  }
-
-  .overview-body {
+  .mv-mock__body {
     grid-template-columns: 1fr;
   }
 
-  .overview-sidebar {
+  .mv-mock__sidebar {
+    border-left: none;
+    border-top: 1px solid var(--border-after);
     flex-direction: row;
-    gap: 16px;
+    gap: 24px;
     flex-wrap: wrap;
   }
 
-  .cta-headline {
-    font-size: 40px;
+  .mv-mock__sb-section {
+    min-width: 180px;
+    flex: 1;
+  }
+
+  .mv-features__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .mv-mock__bar-tabs {
+    display: none;
   }
 }
 
-/* ============================================================
-   RESPONSIVE: Mobile (<=767px)
-   ============================================================ */
-@media (max-width: 767px) {
-  .hero {
-    padding: 72px 20px 48px;
+/* ==========================================================
+   RESPONSIVE — Mobile
+   ========================================================== */
+@media (max-width: 639px) {
+  .mv-hero {
+    padding: 56px 20px 0;
   }
 
-  .hero-title {
-    font-size: 36px;
-  }
-
-  .hero-subtitle {
-    font-size: 16px;
-  }
-
-  .hero-actions {
+  .mv-hero__actions {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .hero-actions .btn-amber-lg,
-  .hero-actions .btn-ghost {
+  .mv-hero__actions .btn-amber-lg,
+  .mv-hero__actions .btn-ghost {
     width: 100%;
   }
 
-  .hero-mock {
-    margin-top: 40px;
-  }
-
-  .mock-app-body {
+  .mv-mock__terminals {
     grid-template-columns: 1fr;
   }
 
-  .mock-app-main {
-    grid-template-columns: 1fr;
-  }
-
-  .feature-section {
-    padding: 64px 20px;
-  }
-
-  .feature-title {
-    font-size: 26px;
-  }
-
-  .feature-desc {
-    font-size: 15px;
-  }
-
-  .mock-grid-4 {
-    grid-template-columns: 1fr;
-  }
-
-  .mock-config-panel {
-    grid-template-columns: 1fr;
-    min-height: auto;
-  }
-
-  .mock-config-sidebar {
-    border-right: none;
-    border-bottom: 1px solid var(--border-after);
-  }
-
-  .overview-section {
-    padding: 64px 20px;
-  }
-
-  .overview-title {
-    font-size: 28px;
-  }
-
-  .overview-main {
-    grid-template-columns: 1fr;
-  }
-
-  .overview-sidebar {
+  .mv-mock__sidebar {
     flex-direction: column;
   }
 
-  .cta {
-    padding: 80px 20px;
+  .mv-features {
+    padding: 72px 20px;
   }
 
-  .cta-headline {
-    font-size: 32px;
+  .mv-features__grid {
+    grid-template-columns: 1fr;
   }
 
-  .cta-buttons {
+  .mv-cta {
+    padding: 72px 20px 96px;
+  }
+
+  .mv-cta__buttons {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .cta-buttons .btn-amber-lg,
-  .cta-buttons .btn-ghost {
+  .mv-cta__buttons .btn-amber-lg,
+  .mv-cta__buttons .btn-ghost {
     width: 100%;
   }
 }
 
-/* ============================================================
+/* ==========================================================
    REDUCED MOTION
-   ============================================================ */
+   ========================================================== */
 @media (prefers-reduced-motion: reduce) {
   .fade-left,
   .fade-right,

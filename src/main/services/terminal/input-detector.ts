@@ -15,8 +15,14 @@ const ANSI_RE = /\x1b\[[0-9;]*[A-Za-z]|\x1b\][^\x07\x1b]*[\x07]|\x1b\].*?\x1b\\|
 
 function stripAnsi(str: string): string {
   const noAnsi = str.replace(ANSI_RE, '');
-  // Normalize \r\n → \n, then handle bare \r (line overwrite from ink/cursor redraws)
-  return noAnsi.replace(/\r\n/g, '\n').replace(/[^\n]*\r/g, '');
+  // Normalize \r\n → \n
+  const noRN = noAnsi.replace(/\r\n/g, '\n');
+  // Handle bare \r (ink/cursor redraws):
+  //   - "old\rnew" → keep "new" (overwrite semantics)
+  //   - "content\r" at end → keep "content" (ink moves cursor back, no overwrite yet)
+  return noRN
+    .replace(/[^\n]*\r([^\n\r]+)/g, '$1')
+    .replace(/\r/g, '');
 }
 
 // --- Precise signal: "Esc to cancel" is unique to Claude Code approval prompts ---
@@ -63,6 +69,13 @@ export function detectWaitingInput(output: string, terminalId?: string): boolean
   // Strip ANSI codes for clean matching
   const clean = stripAnsi(updated);
 
+  // 1. Precise signal: "Esc to cancel" (unique to Claude Code)
+  //    Highest precision — bypass exclusion rules entirely
+  if (ESC_CANCEL_PATTERN.test(clean)) {
+    buffers.delete(key);
+    return true;
+  }
+
   // Check exclusions only against the tail (recent output), not entire buffer.
   // Checking the full buffer could permanently block detection if old output
   // contained progress indicators like [3/10].
@@ -73,32 +86,20 @@ export function detectWaitingInput(output: string, terminalId?: string): boolean
     }
   }
 
-  let matched = false;
-
-  // 1. Precise signal: "Esc to cancel" (unique to Claude Code)
-  if (ESC_CANCEL_PATTERN.test(clean)) {
-    matched = true;
-  }
-
   // 2. Combo detection: question ending with ? + numbered selector ❯
-  if (!matched && QUESTION_LINE_PATTERN.test(clean) && NUMBERED_OPTION_PATTERN.test(clean)) {
-    matched = true;
+  if (QUESTION_LINE_PATTERN.test(clean) && NUMBERED_OPTION_PATTERN.test(clean)) {
+    buffers.delete(key);
+    return true;
   }
 
   // 3. Generic interactive patterns
-  if (!matched) {
-    for (const pattern of GENERIC_PATTERNS) {
-      if (pattern.test(clean)) {
-        matched = true;
-        break;
-      }
+  for (const pattern of GENERIC_PATTERNS) {
+    if (pattern.test(clean)) {
+      buffers.delete(key);
+      return true;
     }
   }
 
-  if (matched) {
-    buffers.delete(key); // Reset only this terminal's buffer
-    return true;
-  }
   return false;
 }
 

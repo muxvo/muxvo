@@ -1,18 +1,23 @@
-const DOWNLOAD_URL = 'https://github.com/muxvo/muxvo/releases/latest/download/Muxvo-arm64.dmg';
+const DOWNLOAD_URL =
+  'https://github.com/muxvo/muxvo/releases/latest/download/Muxvo-arm64.dmg';
 
 export function Hero() {
   return (
-    <section className="hero">
-      <div className="hero-content fade-up">
-        <h1 className="hero-title">
-          AI CLI 的<span className="text-amber">工作台</span>
+    <section className="mv-hero">
+      {/* Ambient glow */}
+      <div className="mv-hero__glow" />
+
+      {/* Text block */}
+      <div className="mv-hero__text">
+        <p className="mv-hero__eyebrow">AI CLI Workbench for macOS</p>
+        <h1 className="mv-hero__title">
+          别再切窗口了。
         </h1>
-        <p className="hero-subtitle">
-          终端管理 · 配置浏览 · 聊天历史 · 永久保存
-          <br />
-          Claude Code / Codex / Gemini CLI — 在一个界面无缝切换
+        <p className="mv-hero__sub">
+          Claude Code · Codex · Gemini CLI —
+          终端、配置、聊天记录，一个界面全部搞定。
         </p>
-        <div className="hero-actions">
+        <div className="mv-hero__actions">
           <a href={DOWNLOAD_URL} className="btn-amber btn-amber-lg">
             Download for macOS
           </a>
@@ -27,75 +32,153 @@ export function Hero() {
         </div>
       </div>
 
-      {/* App Mock */}
-      <div className="hero-mock fade-up">
-        <div className="mock-app">
-          <div className="mock-app-titlebar">
-            <span className="mock-dot mock-dot--red" />
-            <span className="mock-dot mock-dot--yellow" />
-            <span className="mock-dot mock-dot--green" />
-            <span className="mock-app-name">Muxvo</span>
-          </div>
-          <div className="mock-app-body">
-            <div className="mock-app-main">
-              <div className="mock-terminal">
-                <div className="mock-terminal-tab">CLAUDE CODE</div>
-                <div className="mock-terminal-line">
-                  <span className="c-prompt">$</span> claude &quot;review PR #42&quot;
-                </div>
-                <div className="mock-terminal-line c-dim">Reading diff...</div>
-                <div className="mock-terminal-line c-success">Found 3 issues in src/auth.ts</div>
-              </div>
-              <div className="mock-terminal">
-                <div className="mock-terminal-tab">CODEX</div>
-                <div className="mock-terminal-line">
-                  <span className="c-prompt">$</span> codex &quot;generate tests&quot;
-                </div>
-                <div className="mock-terminal-line c-dim">Creating test suite...</div>
-                <div className="mock-terminal-line c-success">12 tests generated, coverage 94%</div>
-              </div>
-              <div className="mock-terminal">
-                <div className="mock-terminal-tab">GEMINI CLI</div>
-                <div className="mock-terminal-line">
-                  <span className="c-prompt">$</span> gemini chat
-                </div>
-                <div className="mock-terminal-line c-dim">How can I help you today?</div>
-                <div className="mock-terminal-line">
-                  <span className="c-prompt">&gt;</span> Explain the auth flow
-                </div>
-              </div>
-              <div className="mock-terminal">
-                <div className="mock-terminal-tab">DEV SERVER</div>
-                <div className="mock-terminal-line">
-                  <span className="c-prompt">$</span> npm run dev
-                </div>
-                <div className="mock-terminal-line c-success">Server on :3000</div>
-                <div className="mock-terminal-line c-dim">Watching for changes...</div>
-              </div>
+      {/* App mockup — the hero's hero */}
+      <div className="mv-hero__mock fade-up">
+        <div className="mv-mock">
+          {/* Title bar */}
+          <div className="mv-mock__bar">
+            <span className="mv-mock__dot mv-mock__dot--r" />
+            <span className="mv-mock__dot mv-mock__dot--y" />
+            <span className="mv-mock__dot mv-mock__dot--g" />
+            <span className="mv-mock__bar-title">Muxvo</span>
+            <div className="mv-mock__bar-tabs">
+              <span className="mv-mock__bar-tab mv-mock__bar-tab--active">Terminals</span>
+              <span className="mv-mock__bar-tab">Chat</span>
+              <span className="mv-mock__bar-tab">Config</span>
             </div>
-            <div className="mock-app-sidebar">
-              <div className="mock-sidebar-section">
-                <div className="mock-sidebar-title">Chat History</div>
-                <div className="mock-sidebar-item">Today · PR Review</div>
-                <div className="mock-sidebar-item">Today · Test Gen</div>
-                <div className="mock-sidebar-item mock-sidebar-item--dim">Yesterday · Auth Flow</div>
+          </div>
+
+          {/* Body: terminals + sidebar */}
+          <div className="mv-mock__body">
+            {/* 4 terminal panes */}
+            <div className="mv-mock__terminals">
+              <Terminal
+                name="CLAUDE CODE"
+                path="~/acme-api"
+                active
+                lines={[
+                  { prompt: true, text: 'claude "fix auth middleware"' },
+                  { dim: true, text: 'Reading src/middleware/auth.ts...' },
+                  { success: true, text: '✓ Fixed 2 issues, 1 file changed' },
+                ]}
+              />
+              <Terminal
+                name="CODEX"
+                path="~/acme-api"
+                active
+                lines={[
+                  { prompt: true, text: 'codex "add rate limiting"' },
+                  { dim: true, text: 'Analyzing API routes...' },
+                  { success: true, text: '✓ Added to 4 endpoints' },
+                ]}
+              />
+              <Terminal
+                name="GEMINI CLI"
+                path="~/acme-web"
+                active
+                lines={[
+                  { prompt: true, text: 'gemini chat' },
+                  { dim: true, text: 'How can I help?' },
+                  { text: '> Explain the auth flow' },
+                ]}
+              />
+              <Terminal
+                name="DEV SERVER"
+                path="~/acme-api"
+                lines={[
+                  { prompt: true, text: 'npm run dev' },
+                  { success: true, text: 'Listening on :3000' },
+                  { dim: true, text: 'GET /api/users 200 12ms' },
+                ]}
+              />
+            </div>
+
+            {/* Sidebar */}
+            <div className="mv-mock__sidebar">
+              {/* Chat History */}
+              <div className="mv-mock__sb-section">
+                <div className="mv-mock__sb-head">
+                  <span className="mv-mock__sb-icon">💬</span>
+                  Chat History
+                </div>
+                <div className="mv-mock__sb-meta">14 sessions · 3 projects</div>
+                <SbItem label="Fix auth bug" tag="Claude" time="just now" />
+                <SbItem label="Rate limiting" tag="Codex" time="2h ago" />
+                <SbItem label="Auth flow Q&A" tag="Gemini" time="yesterday" />
+                <div className="mv-mock__sb-more">+ 11 more sessions</div>
               </div>
-              <div className="mock-sidebar-section">
-                <div className="mock-sidebar-title">Config</div>
-                <div className="mock-sidebar-item">
-                  <span className="text-amber">Skills</span> · 8 installed
+
+              {/* Config */}
+              <div className="mv-mock__sb-section">
+                <div className="mv-mock__sb-head">
+                  <span className="mv-mock__sb-icon">⚙️</span>
+                  Config
                 </div>
-                <div className="mock-sidebar-item">
-                  <span className="text-amber">MCP</span> · 3 servers
-                </div>
-                <div className="mock-sidebar-item">
-                  <span className="text-amber">CLAUDE.md</span> · project-a
-                </div>
+                <div className="mv-mock__sb-meta">8 skills · 3 MCP servers</div>
+                <SbItem label="commit-msg" tag="Skill" />
+                <SbItem label="code-review" tag="Skill" />
+                <SbItem label="filesystem" tag="MCP" />
+                <SbItem label="github" tag="MCP" />
               </div>
             </div>
           </div>
         </div>
       </div>
     </section>
+  );
+}
+
+/* ---- sub-components ---- */
+
+function Terminal({
+  name,
+  path,
+  active,
+  lines,
+}: {
+  name: string;
+  path: string;
+  active?: boolean;
+  lines: { prompt?: boolean; dim?: boolean; success?: boolean; text: string }[];
+}) {
+  return (
+    <div className="mv-term">
+      <div className="mv-term__head">
+        <span
+          className={`mv-term__status ${active ? 'mv-term__status--on' : 'mv-term__status--idle'}`}
+        />
+        <span className="mv-term__name">{name}</span>
+        <span className="mv-term__path">{path}</span>
+      </div>
+      <div className="mv-term__body">
+        {lines.map((l, i) => (
+          <div
+            key={i}
+            className={`mv-term__line${l.dim ? ' mv-term__line--dim' : ''}${l.success ? ' mv-term__line--ok' : ''}`}
+          >
+            {l.prompt && <span className="mv-term__prompt">$ </span>}
+            {l.text}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SbItem({
+  label,
+  tag,
+  time,
+}: {
+  label: string;
+  tag: string;
+  time?: string;
+}) {
+  return (
+    <div className="mv-mock__sb-item">
+      <span className="mv-mock__sb-tag">{tag}</span>
+      <span className="mv-mock__sb-label">{label}</span>
+      {time && <span className="mv-mock__sb-time">{time}</span>}
+    </div>
   );
 }
