@@ -1,22 +1,43 @@
 import type { FastifyPluginAsync, FastifyRequest } from 'fastify';
 import { query } from '../db/index.js';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, optionalAuthenticate } from '../middleware/auth.js';
 import { ValidationError } from '../lib/errors.js';
 
 // ---------------------------------------------------------------------------
 // Route schemas
 // ---------------------------------------------------------------------------
 
+const singleEventSchema = {
+  type: 'object' as const,
+  required: ['metric'] as const,
+  properties: {
+    metric: { type: 'string' as const, minLength: 1, maxLength: 100 },
+    value: { type: 'number' as const },
+    metadata: { type: 'object' as const },
+  },
+  additionalProperties: false,
+};
+
 const trackSchema = {
   body: {
-    type: 'object' as const,
-    required: ['metric'] as const,
-    properties: {
-      metric: { type: 'string' as const, minLength: 1, maxLength: 100 },
-      value: { type: 'number' as const },
-      metadata: { type: 'object' as const },
-    },
-    additionalProperties: false,
+    oneOf: [
+      // Single event: { metric, value?, metadata? }
+      singleEventSchema,
+      // Batch events: { events: [{ metric, value?, metadata? }] }
+      {
+        type: 'object' as const,
+        required: ['events'] as const,
+        properties: {
+          events: {
+            type: 'array' as const,
+            items: singleEventSchema,
+            minItems: 1,
+            maxItems: 100,
+          },
+        },
+        additionalProperties: false,
+      },
+    ],
   },
 };
 
@@ -43,42 +64,172 @@ const clearQuerySchema = {
   },
 };
 
+const dauQuerySchema = {
+  querystring: {
+    type: 'object' as const,
+    properties: {
+      from: { type: 'string' as const },
+      to: { type: 'string' as const },
+    },
+    additionalProperties: false,
+  },
+};
+
+const eventsQuerySchema = {
+  querystring: {
+    type: 'object' as const,
+    properties: {
+      from: { type: 'string' as const },
+      to: { type: 'string' as const },
+      metric: { type: 'string' as const },
+    },
+    additionalProperties: false,
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Type helpers
+// ---------------------------------------------------------------------------
+
+interface TrackEvent {
+  metric: string;
+  value?: number;
+  metadata?: object;
+}
+
+type TrackBody =
+  | TrackEvent
+  | { events: TrackEvent[] };
+
 // ---------------------------------------------------------------------------
 // Analytics routes plugin
 // ---------------------------------------------------------------------------
 
 export const analyticsRoutes: FastifyPluginAsync = async (app) => {
-  // All routes in this plugin require authentication
-  app.addHook('preHandler', authenticate);
-
   // =========================================================================
-  // POST /analytics/track — Record an analytics event
+  // POST /analytics/track — Record analytics event(s)
+  //   Mixed auth: X-Device-ID required + Bearer token optional
   // =========================================================================
 
   app.post<{
-    Body: { metric: string; value?: number; metadata?: object };
-  }>('/track', { schema: trackSchema }, async (request) => {
-    const { metric, value = 1, metadata = {} } = request.body;
+    Body: TrackBody;
+  }>('/track', { schema: trackSchema, preHandler: [optionalAuthenticate] }, async (request) => {
+    const deviceId = request.headers['x-device-id'] as string | undefined;
 
-    await query(
-      `INSERT INTO analytics_daily (date, metric, value, metadata)
-       VALUES (CURRENT_DATE, $1, $2, $3)
-       ON CONFLICT (date, metric)
-       DO UPDATE SET value = analytics_daily.value + EXCLUDED.value,
-                     metadata = EXCLUDED.metadata`,
-      [metric, value, JSON.stringify(metadata)],
-    );
+    if (!deviceId) {
+      throw new ValidationError('X-Device-ID header is required');
+    }
 
-    return { success: true };
+    const userId = (request as FastifyRequest & { userId?: string }).userId ?? null;
+
+    // Normalise to array
+    const events: TrackEvent[] =
+      'events' in request.body ? request.body.events : [request.body];
+
+    for (const event of events) {
+      const { metric, value = 1, metadata = {} } = event;
+
+      await query(
+        `INSERT INTO analytics_events (date, device_id, user_id, metric, value, metadata)
+         VALUES (CURRENT_DATE, $1, $2, $3, $4, $5)`,
+        [deviceId, userId, metric, value, JSON.stringify(metadata)],
+      );
+    }
+
+    return { success: true, tracked: events.length };
   });
 
   // =========================================================================
-  // GET /analytics/summary — Get analytics summary
+  // GET /analytics/dau — Daily active users (admin)
+  // =========================================================================
+
+  app.get<{
+    Querystring: { from?: string; to?: string };
+  }>('/dau', { schema: dauQuerySchema, preHandler: [authenticate] }, async (request) => {
+    const {
+      from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 10),
+      to = new Date().toISOString().slice(0, 10),
+    } = request.query;
+
+    const result = await query<{
+      date: string;
+      dau: string;
+      registered_users: string;
+    }>(
+      `SELECT date,
+              COUNT(DISTINCT device_id) AS dau,
+              COUNT(DISTINCT user_id)   AS registered_users
+       FROM analytics_events
+       WHERE date >= $1 AND date <= $2
+       GROUP BY date
+       ORDER BY date`,
+      [from, to],
+    );
+
+    return {
+      from,
+      to,
+      data: result.rows.map((r) => ({
+        date: r.date,
+        dau: Number(r.dau),
+        registered_users: Number(r.registered_users),
+      })),
+    };
+  });
+
+  // =========================================================================
+  // GET /analytics/events — Event aggregation (admin)
+  // =========================================================================
+
+  app.get<{
+    Querystring: { from?: string; to?: string; metric?: string };
+  }>('/events', { schema: eventsQuerySchema, preHandler: [authenticate] }, async (request) => {
+    const {
+      from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 10),
+      to = new Date().toISOString().slice(0, 10),
+      metric,
+    } = request.query;
+
+    let sql = `SELECT date, metric, SUM(value) AS total
+               FROM analytics_events
+               WHERE date >= $1 AND date <= $2`;
+    const params: unknown[] = [from, to];
+
+    if (metric) {
+      sql += ` AND metric = $3`;
+      params.push(metric);
+    }
+
+    sql += ` GROUP BY date, metric ORDER BY date, metric`;
+
+    const result = await query<{
+      date: string;
+      metric: string;
+      total: string;
+    }>(sql, params);
+
+    return {
+      from,
+      to,
+      data: result.rows.map((r) => ({
+        date: r.date,
+        metric: r.metric,
+        total: Number(r.total),
+      })),
+    };
+  });
+
+  // =========================================================================
+  // GET /analytics/summary — Get analytics summary (legacy, analytics_daily)
   // =========================================================================
 
   app.get<{
     Querystring: { from?: string; to?: string; metrics?: string };
-  }>('/summary', { schema: summaryQuerySchema }, async (request) => {
+  }>('/summary', { schema: summaryQuerySchema, preHandler: [authenticate] }, async (request) => {
     const {
       from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
         .toISOString()
@@ -115,12 +266,12 @@ export const analyticsRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // =========================================================================
-  // DELETE /analytics/ — Clear analytics data before a given date
+  // DELETE /analytics/ — Clear analytics data before a given date (legacy)
   // =========================================================================
 
   app.delete<{
     Querystring: { before: string };
-  }>('/', { schema: clearQuerySchema }, async (request) => {
+  }>('/', { schema: clearQuerySchema, preHandler: [authenticate] }, async (request) => {
     const { before } = request.query;
 
     if (!before) {
@@ -138,10 +289,10 @@ export const analyticsRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // =========================================================================
-  // GET /analytics/metrics — List all recorded metric names
+  // GET /analytics/metrics — List all recorded metric names (legacy)
   // =========================================================================
 
-  app.get('/metrics', async () => {
+  app.get('/metrics', { preHandler: [authenticate] }, async () => {
     const result = await query<{ metric: string }>(
       `SELECT DISTINCT metric FROM analytics_daily ORDER BY metric`,
     );
