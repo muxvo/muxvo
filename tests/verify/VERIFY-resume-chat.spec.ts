@@ -5,42 +5,34 @@
  * 1. Resume button is visible in SessionDetail for CC sessions
  * 2. Clicking the button closes chat panel and creates a new terminal
  *
- * Run: npx playwright test tests/verify/VERIFY-resume-chat.spec.ts --config=playwright-verify.config.ts
+ * Run: npx electron-vite build && npx playwright test tests/verify/VERIFY-resume-chat.spec.ts --config=playwright-verify.config.ts
  */
 
 import { test, expect, _electron as electron } from '@playwright/test';
 import { resolve } from 'path';
-
-const PROJECT = resolve(__dirname, '../..');
+import { pathToFileURL } from 'url';
 
 test('Resume Chat: button visible for CC session and click creates terminal', async () => {
+  const rendererUrl = pathToFileURL(resolve(process.cwd(), 'out/renderer/index.html')).href;
+
   const app = await electron.launch({
-    args: [resolve(PROJECT, 'out/main/index.js')],
-    cwd: PROJECT,
+    args: ['.'],
+    cwd: process.cwd(),
     timeout: 30000,
     env: {
       ...process.env,
-      ELECTRON_RENDERER_URL: 'http://localhost:5173',
+      ELECTRON_RENDERER_URL: rendererUrl,
     },
   });
   const page = await app.firstWindow();
-  await page.waitForTimeout(6000);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 
   try {
-    // ── Debug: capture initial page state ──────────────────────
-    await page.screenshot({ path: '/tmp/e2e-resume-debug-init.png' });
-    const bodyLen = await page.evaluate(() => document.body.innerHTML.length);
-    const url = page.url();
-    console.log(`  DEBUG: url=${url}, body.innerHTML.length=${bodyLen}`);
-    const errors: string[] = [];
-    page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
-    page.on('pageerror', err => errors.push(err.message));
-
     // ── Step 1: Wait for app to fully load ─────────────────────
     console.log('Step 1: Wait for app to fully load');
     await expect(page.locator('.menu-bar')).toBeVisible({ timeout: 20000 });
     await expect(page.locator('.tile').first()).toBeVisible({ timeout: 15000 });
+    await page.waitForTimeout(1000);
     const initialTiles = await page.locator('.tile').count();
     console.log(`  Initial terminals: ${initialTiles}`);
 
