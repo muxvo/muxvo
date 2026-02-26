@@ -30,7 +30,7 @@ export const TOUR_STEPS: TourStep[] = [
     side: 'bottom',
     interactive: true,
     actionType: 'create-terminal',
-    showButtons: ['close'],
+    showButtons: ['next', 'close'],
   },
   {
     id: 'drag-reorder',
@@ -63,7 +63,7 @@ export const TOUR_STEPS: TourStep[] = [
     needsTerminal: true,
     interactive: true,
     actionType: 'focus',
-    showButtons: ['close'],
+    showButtons: ['next', 'close'],
   },
   {
     id: 'rename-terminal',
@@ -74,7 +74,7 @@ export const TOUR_STEPS: TourStep[] = [
     needsTerminal: true,
     interactive: true,
     actionType: 'rename',
-    showButtons: ['close'],
+    showButtons: ['next', 'close'],
   },
   {
     id: 'open-files',
@@ -85,6 +85,6 @@ export const TOUR_STEPS: TourStep[] = [
     needsTerminal: true,
     interactive: true,
     actionType: 'open-file',
-    showButtons: ['close'],
+    showButtons: ['next', 'close'],
   },
 ];

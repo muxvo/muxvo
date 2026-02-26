@@ -365,6 +365,15 @@ function AppContent({
   const { state, dispatch } = usePanelContext();
   const { t } = useI18n();
 
+  // Auto-start tour on first launch (tourCompleted not set)
+  useEffect(() => {
+    window.api.app.getPreferences().then((result: any) => {
+      if (result?.success && !result.data?.tourCompleted) {
+        setTimeout(() => dispatch({ type: 'START_TOUR' }), 1500);
+      }
+    }).catch(() => {});
+  }, [dispatch]);
+
   // Wrap onAddTerminal to close all panels first (switch back to terminal tab)
   const handleAddTerminal = useCallback(async () => {
     dispatch({ type: 'CLOSE_ALL' });
