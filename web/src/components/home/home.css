@@ -187,6 +187,11 @@
   flex-direction: column;
 }
 
+/* Main terminal spans full left column */
+.mv-term--main {
+  grid-row: 1 / -1;
+}
+
 .mv-term__head {
   display: flex;
   align-items: center;
@@ -358,7 +363,7 @@
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.1em;
   color: var(--amber);
   margin-bottom: 12px;
 }
@@ -374,7 +379,7 @@
 /* Grid */
 .mv-features__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 1px;
   background: var(--border-after);
   border: 1px solid var(--border-after);
@@ -502,10 +507,6 @@
   .mv-mock__sb-section {
     min-width: 180px;
     flex: 1;
-  }
-
-  .mv-features__grid {
-    grid-template-columns: repeat(2, 1fr);
   }
 
   .mv-mock__bar-tabs {

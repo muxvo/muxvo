@@ -32,12 +32,6 @@ function Nav() {
           <span className="font-bold text-lg" style={{ color: 'var(--amber)' }}>
             Muxvo
           </span>
-          <span
-            className="text-[11px] whitespace-nowrap hidden md:inline"
-            style={{ color: 'var(--text-after-sec)' }}
-          >
-            Not a terminal — a workbench
-          </span>
         </Link>
 
         {/* Hamburger */}
@@ -68,17 +62,17 @@ function Nav() {
             className="text-sm transition-colors duration-150 hover:!text-[var(--amber)]"
             style={{ color: 'var(--text-after-sec)' }}
           >
-            Features
+            功能
           </Link>
           <Link
             to="/discover"
             className="text-sm transition-colors duration-150 hover:!text-[var(--amber)]"
             style={{ color: 'var(--text-after-sec)' }}
           >
-            Discover
+            发现
           </Link>
           <a
-            href="https://github.com/nicepkg/muxvo"
+            href="https://github.com/muxvo/muxvo"
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm transition-colors duration-150 hover:!text-[var(--amber)]"
@@ -86,7 +80,7 @@ function Nav() {
           >
             GitHub
           </a>
-          <a href="https://github.com/muxvo/muxvo/releases/latest/download/Muxvo-arm64.dmg" className="btn-amber">Download</a>
+          <a href="https://github.com/muxvo/muxvo/releases/latest/download/Muxvo-arm64.dmg" className="btn-amber">下载</a>
         </div>
       </div>
     </nav>
@@ -105,53 +99,39 @@ function Footer() {
       />
 
       {/* Grid */}
-      <div className="max-w-[1200px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+      <div className="max-w-[1200px] mx-auto grid grid-cols-2 md:grid-cols-3 gap-8">
         <div>
           <h5
-            className="text-[13px] font-semibold uppercase tracking-wide mb-3"
+            className="text-[13px] font-semibold tracking-wide mb-3"
             style={{ color: 'var(--text-after)' }}
           >
-            Product
+            产品
           </h5>
-          <FooterLink href="/#features">Features</FooterLink>
-          <FooterLink href="/discover">Discover</FooterLink>
-          <FooterLink href="/#download">Download</FooterLink>
-          <FooterLink href="#">Changelog</FooterLink>
+          <FooterLink href="/#features">功能</FooterLink>
+          <FooterLink href="/discover">发现</FooterLink>
+          <FooterLink href="/#download">下载</FooterLink>
         </div>
         <div>
           <h5
-            className="text-[13px] font-semibold uppercase tracking-wide mb-3"
+            className="text-[13px] font-semibold tracking-wide mb-3"
             style={{ color: 'var(--text-after)' }}
           >
-            Resources
+            资源
           </h5>
-          <FooterLink href="#">Documentation</FooterLink>
-          <FooterLink href="https://github.com/nicepkg/muxvo" external>
+          <FooterLink href="https://github.com/muxvo/muxvo" external>
             GitHub
           </FooterLink>
-          <FooterLink href="#">Blog</FooterLink>
         </div>
         <div>
           <h5
-            className="text-[13px] font-semibold uppercase tracking-wide mb-3"
+            className="text-[13px] font-semibold tracking-wide mb-3"
             style={{ color: 'var(--text-after)' }}
           >
-            Community
+            法律
           </h5>
-          <FooterLink href="#">Discord</FooterLink>
-          <FooterLink href="#">Twitter</FooterLink>
-          <FooterLink href="#">Contributing</FooterLink>
-        </div>
-        <div>
-          <h5
-            className="text-[13px] font-semibold uppercase tracking-wide mb-3"
-            style={{ color: 'var(--text-after)' }}
-          >
-            Legal
-          </h5>
-          <FooterLink href="#">Privacy</FooterLink>
-          <FooterLink href="#">Terms</FooterLink>
-          <FooterLink href="#">License (MIT)</FooterLink>
+          <FooterLink href="https://github.com/muxvo/muxvo/blob/main/LICENSE" external>
+            MIT 开源协议
+          </FooterLink>
         </div>
       </div>
 
@@ -162,12 +142,6 @@ function Footer() {
       >
         <span className="font-bold text-base" style={{ color: 'var(--amber)' }}>
           Muxvo
-        </span>
-        <span
-          className="text-[13px]"
-          style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-after-sec)' }}
-        >
-          Not a terminal, not an IDE — a <span className="text-amber">workbench</span>.
         </span>
         <span className="text-[13px]" style={{ color: 'var(--text-after-sec)' }}>
           &copy; 2026 Muxvo. MIT License.

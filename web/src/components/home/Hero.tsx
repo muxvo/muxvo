@@ -9,16 +9,16 @@ export function Hero() {
 
       {/* Text block */}
       <div className="mv-hero__text">
-        <p className="mv-hero__eyebrow">AI CLI Workbench for macOS</p>
+        <p className="mv-hero__eyebrow">为 Claude Code 重度用户打造</p>
         <h1 className="mv-hero__title">
-          让 Claude Code 跑满效率。
+          Claude Code，效率拉满。
         </h1>
         <p className="mv-hero__sub">
-          裸跑 CC 要切窗口、翻记录、找配置。Muxvo 把这些时间还给你。
+          在终端里用 CC，切窗口、翻记录、找配置全靠自己。Muxvo 帮你省掉这些时间。
         </p>
         <div className="mv-hero__actions">
           <a href={DOWNLOAD_URL} className="btn-amber btn-amber-lg">
-            Download for macOS
+            下载 macOS 版
           </a>
           <a
             href="https://github.com/muxvo/muxvo"
@@ -26,7 +26,7 @@ export function Hero() {
             rel="noopener noreferrer"
             className="btn-ghost"
           >
-            View on GitHub
+            GitHub 源码
           </a>
         </div>
       </div>
@@ -49,36 +49,29 @@ export function Hero() {
 
           {/* Body: terminals + sidebar */}
           <div className="mv-mock__body">
-            {/* 4 terminal panes */}
+            {/* Terminal panes: CC main + Dev Server auxiliary */}
             <div className="mv-mock__terminals">
               <Terminal
                 name="CLAUDE CODE"
                 path="~/acme-api"
                 active
+                main
                 lines={[
                   { prompt: true, text: 'claude "fix auth middleware"' },
                   { dim: true, text: 'Reading src/middleware/auth.ts...' },
+                  { dim: true, text: 'Found 2 issues in validateToken()' },
+                  { dim: true, text: 'Applying fix...' },
                   { success: true, text: '✓ Fixed 2 issues, 1 file changed' },
                 ]}
               />
               <Terminal
-                name="CODEX"
-                path="~/acme-api"
-                active
-                lines={[
-                  { prompt: true, text: 'codex "add rate limiting"' },
-                  { dim: true, text: 'Analyzing API routes...' },
-                  { success: true, text: '✓ Added to 4 endpoints' },
-                ]}
-              />
-              <Terminal
-                name="GEMINI CLI"
+                name="CLAUDE CODE"
                 path="~/acme-web"
                 active
                 lines={[
-                  { prompt: true, text: 'gemini chat' },
-                  { dim: true, text: 'How can I help?' },
-                  { text: '> Explain the auth flow' },
+                  { prompt: true, text: 'claude "add dark mode toggle"' },
+                  { dim: true, text: 'Scanning theme configuration...' },
+                  { success: true, text: '✓ Added toggle, 3 files changed' },
                 ]}
               />
               <Terminal
@@ -101,9 +94,9 @@ export function Hero() {
                   Chat History
                 </div>
                 <div className="mv-mock__sb-meta">14 sessions · 3 projects</div>
-                <SbItem label="Fix auth bug" tag="Claude" time="just now" />
-                <SbItem label="Rate limiting" tag="Codex" time="2h ago" />
-                <SbItem label="Auth flow Q&A" tag="Gemini" time="yesterday" />
+                <SbItem label="Fix auth middleware" tag="CC" time="just now" />
+                <SbItem label="Add dark mode" tag="CC" time="2h ago" />
+                <SbItem label="Refactor DB layer" tag="CC" time="yesterday" />
                 <div className="mv-mock__sb-more">+ 11 more sessions</div>
               </div>
 
@@ -133,15 +126,17 @@ function Terminal({
   name,
   path,
   active,
+  main,
   lines,
 }: {
   name: string;
   path: string;
   active?: boolean;
+  main?: boolean;
   lines: { prompt?: boolean; dim?: boolean; success?: boolean; text: string }[];
 }) {
   return (
-    <div className="mv-term">
+    <div className={`mv-term${main ? ' mv-term--main' : ''}`}>
       <div className="mv-term__head">
         <span
           className={`mv-term__status ${active ? 'mv-term__status--on' : 'mv-term__status--idle'}`}

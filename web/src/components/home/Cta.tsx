@@ -9,7 +9,7 @@ export function Cta() {
         <h2 className="mv-cta__title">试试 Muxvo</h2>
         <div className="mv-cta__buttons">
           <a href={DOWNLOAD_URL} className="btn-amber btn-amber-lg">
-            Download for macOS
+            下载 macOS 版
           </a>
           <a
             href="https://github.com/muxvo/muxvo"
@@ -17,7 +17,7 @@ export function Cta() {
             rel="noopener noreferrer"
             className="btn-ghost"
           >
-            View on GitHub
+            GitHub 源码
           </a>
         </div>
         <p className="mv-cta__note">免费开源 · macOS · MIT License</p>
