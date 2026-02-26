@@ -46,6 +46,8 @@ export interface SessionSummary {
   customTitle?: string;
   /** Session 级别的工作目录（从 JSONL 提取），用于 resume 功能 */
   cwd?: string;
+  /** true 表示此 session 仅在 archive 中，CC 已删除原文件，无法 resume */
+  archiveOnly?: boolean;
 }
 
 /** 消息中的内容块（user 和 assistant 共用） */

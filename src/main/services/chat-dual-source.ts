@@ -463,12 +463,14 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
             return cached.data.title ? cached.data : null;
           }
 
-          const filePath = ccFileNames.has(file.fileName)
+          const isFromCC = ccFileNames.has(file.fileName);
+          const filePath = isFromCC
             ? join(ccProjectPath, file.fileName)
             : join(archiveProjectsDir!, projectHash, file.fileName);
 
           try {
             const summary = await extractSessionSummary(projectHash, filePath, file.fileName);
+            if (!isFromCC) summary.archiveOnly = true;
             summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
             return summary.title ? summary : null;
           } catch {
@@ -489,8 +491,8 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
       /**
        * Collect file entries from a base directory (CC or archive).
        */
-      async function collectFilesFromBase(baseDir: string): Promise<{ projectHash: string; fileName: string; filePath: string; mtime: number }[]> {
-        const collected: { projectHash: string; fileName: string; filePath: string; mtime: number }[] = [];
+      async function collectFilesFromBase(baseDir: string): Promise<{ projectHash: string; fileName: string; filePath: string; mtime: number; archiveOnly?: boolean }[]> {
+        const collected: { projectHash: string; fileName: string; filePath: string; mtime: number; archiveOnly?: boolean }[] = [];
         try {
           const dirs = await fsp.readdir(baseDir, { withFileTypes: true });
           const projectDirs = dirs.filter(d => d.isDirectory());
@@ -553,7 +555,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
         const ccKeySet = new Set(ccFiles.map(f => f.projectHash + '/' + f.fileName));
         for (const af of archiveFiles) {
           if (!ccKeySet.has(af.projectHash + '/' + af.fileName)) {
-            ccFiles.push(af);
+            ccFiles.push({ ...af, archiveOnly: true });
           }
         }
       }
@@ -573,6 +575,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
 
           try {
             const summary = await extractSessionSummary(file.projectHash, file.filePath, file.fileName);
+            if (file.archiveOnly) summary.archiveOnly = true;
             summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
             return summary.title ? summary : null;
           } catch {
