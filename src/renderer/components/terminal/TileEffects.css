@@ -302,7 +302,14 @@
 
 .tile-selected {
   border-color: var(--accent);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(232, 167, 72, 0.3);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    0 0 0 2px rgba(232, 167, 72, 0.6),
+    0 0 20px rgba(232, 167, 72, 0.15);
+}
+
+.tile-selected .tile-name {
+  color: var(--accent);
 }
 
 /* === Status dot breathing pulse === */
