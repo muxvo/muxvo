@@ -52,7 +52,7 @@ export function createAnalyticsHandlers(tracker: AnalyticsTracker) {
   };
 }
 
-export function registerAnalyticsHandlers(): void {
+export function registerAnalyticsHandlers(): { tracker: AnalyticsTracker } {
   const tracker = createAnalyticsTracker();
   const handlers = createAnalyticsHandlers(tracker);
 
@@ -73,6 +73,8 @@ export function registerAnalyticsHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.ANALYTICS.CLEAR, async () => {
     return handlers.clear();
   });
+
+  return { tracker };
 }
 
 // Legacy exports

@@ -53,6 +53,7 @@ for (const stream of [process.stdout, process.stderr]) {
 let mainWindow: BrowserWindow | null = null;
 let lastBounds: Electron.Rectangle | null = null;
 let pendingDeepLinkUrl: string | null = null;
+const sessionStartTime = Date.now();
 
 interface WindowConfig {
   width: number;
@@ -307,7 +308,7 @@ app.whenReady().then(() => {
   registerFsImageHandlers();
   registerAppHandlers();
   registerAuthHandlers();
-  registerAnalyticsHandlers();
+  const { tracker } = registerAnalyticsHandlers();
 
   chatWatcher = createChatWatcher();
   chatArchive = createChatArchiveManager();
@@ -463,6 +464,12 @@ app.whenReady().then(() => {
   }
 
   launchWindowWithTerminals();
+
+  // Analytics: track session start
+  tracker.track({
+    event: 'session.start',
+    params: { version: app.getVersion(), platform: process.platform, restored_count: 0 },
+  });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
