@@ -6,8 +6,7 @@ export function Cta() {
     <section className="mv-cta" id="download">
       <div className="mv-cta__glow" />
       <div className="mv-cta__inner fade-up">
-        <p className="mv-cta__lead">还在终端窗口之间来回切换？</p>
-        <h2 className="mv-cta__title">掌控全局。</h2>
+        <h2 className="mv-cta__title">试试 Muxvo</h2>
         <div className="mv-cta__buttons">
           <a href={DOWNLOAD_URL} className="btn-amber btn-amber-lg">
             Download for macOS
