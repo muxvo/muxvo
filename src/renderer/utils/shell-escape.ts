@@ -4,10 +4,11 @@
 
 /** Shell-escape a single file path for safe insertion into a terminal. */
 export function shellEscapePath(path: string): string {
-  return path; // BROKEN: no escaping
+  if (/^[a-zA-Z0-9_.\/~:-]+$/.test(path)) return path;
+  return "'" + path.replace(/'/g, "'" + '"' + "'" + '"' + "'") + "'";
 }
 
 /** Escape multiple paths and join with spaces. */
 export function shellEscapePaths(paths: string[]): string {
-  return paths.join(' '); // BROKEN: no escaping
+  return paths.map(shellEscapePath).join(' ');
 }

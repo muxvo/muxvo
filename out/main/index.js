@@ -1859,10 +1859,10 @@ function createChatHandlers() {
       }
       const cm = createConfigManager();
       const config = cm.loadConfig();
-      const sessionNames = config.sessionNames || {};
-      if (Object.keys(sessionNames).length > 0) {
+      const projectNames = config.projectNames || {};
+      if (Object.keys(projectNames).length > 0) {
         sessions = sessions.map((s) => {
-          const customName = sessionNames[s.sessionId];
+          const customName = projectNames[s.projectHash];
           return customName ? { ...s, customTitle: customName } : s;
         });
       }
@@ -1882,19 +1882,16 @@ function createChatHandlers() {
       if (!cwd) return { success: false };
       const projectHash = encodeProjectHash(cwd);
       if (!projectHash) return { success: false };
-      const sessions = await reader.getSessionsForProject(projectHash, 1);
-      if (sessions.length === 0) return { success: false };
-      const sessionId = sessions[0].sessionId;
       const cm = createConfigManager();
       const config = cm.loadConfig();
-      const sessionNames = { ...config.sessionNames || {} };
+      const projectNames = { ...config.projectNames || {} };
       if (customName) {
-        sessionNames[sessionId] = customName;
+        projectNames[projectHash] = customName;
       } else {
-        delete sessionNames[sessionId];
+        delete projectNames[projectHash];
       }
-      cm.saveConfig({ ...config, sessionNames });
-      return { success: true, sessionId };
+      cm.saveConfig({ ...config, projectNames });
+      return { success: true, projectHash };
     },
     async export(params) {
       const messages = await reader.readSession(params.projectHash, params.sessionId);
@@ -4003,12 +4000,16 @@ electron.app.whenReady().then(() => {
       mainWindow.webContents.once("did-finish-load", () => {
         setTimeout(() => {
           if (!terminalManager) return;
+          const restoredNames = {};
           if (terminalsToRestore) {
             console.log("[MUXVO:restore] did-finish-load, restoring " + terminalsToRestore.length + " terminals");
             for (const terminal of terminalsToRestore) {
               const result = terminalManager.spawn({ cwd: terminal.cwd });
               if (result.success && result.id) {
                 console.log("[MUXVO:restore] spawned id=" + result.id + " cwd=" + terminal.cwd);
+                if (terminal.customName) {
+                  restoredNames[result.id] = terminal.customName;
+                }
               }
             }
           } else {
@@ -4025,7 +4026,8 @@ electron.app.whenReady().then(() => {
             win.webContents.send(IPC_CHANNELS.TERMINAL.LIST_UPDATED, list.map((t) => ({
               id: t.id,
               state: t.state,
-              cwd: t.cwd
+              cwd: t.cwd,
+              customName: restoredNames[t.id] || void 0
             })));
           }
           const manager = getAuthManager();
@@ -4060,9 +4062,13 @@ function saveTerminalConfig(configManager) {
   if (!terminalManager) return;
   const existing = configManager.loadConfig();
   const terminals = terminalManager.list();
+  const projectNames = existing.projectNames || {};
   configManager.saveConfig({
     ...existing,
-    openTerminals: terminals.map((t) => ({ cwd: t.cwd }))
+    openTerminals: terminals.map((t) => ({
+      cwd: t.cwd,
+      customName: projectNames[t.cwd.replace(/[^a-zA-Z0-9-]/g, "-")] || void 0
+    }))
   });
 }
 function saveWindowBoundsAndClearTerminals() {
