@@ -402,6 +402,8 @@ app.whenReady().then(() => {
         setTimeout(() => {
           if (!terminalManager) return;
 
+          const restoredNames: Record<string, string> = {};
+
           if (terminalsToRestore) {
             // Crash recovery: restore previous terminals
             console.log('[MUXVO:restore] did-finish-load, restoring ' + terminalsToRestore.length + ' terminals');
@@ -409,6 +411,9 @@ app.whenReady().then(() => {
               const result = terminalManager.spawn({ cwd: terminal.cwd });
               if (result.success && result.id) {
                 console.log('[MUXVO:restore] spawned id=' + result.id + ' cwd=' + terminal.cwd);
+                if (terminal.customName) {
+                  restoredNames[result.id] = terminal.customName;
+                }
               }
             }
           } else {
@@ -427,6 +432,7 @@ app.whenReady().then(() => {
             const list = terminalManager.list();
             win.webContents.send(IPC_CHANNELS.TERMINAL.LIST_UPDATED, list.map((t) => ({
               id: t.id, state: t.state, cwd: t.cwd,
+              customName: restoredNames[t.id] || undefined,
             })));
           }
 
@@ -469,9 +475,13 @@ function saveTerminalConfig(configManager: ReturnType<typeof createConfigManager
   if (!terminalManager) return;
   const existing = configManager.loadConfig();
   const terminals = terminalManager.list();
+  const projectNames = existing.projectNames || {};
   configManager.saveConfig({
     ...existing,
-    openTerminals: terminals.map((t) => ({ cwd: t.cwd })),
+    openTerminals: terminals.map((t) => ({
+      cwd: t.cwd,
+      customName: projectNames[t.cwd.replace(/[^a-zA-Z0-9-]/g, '-')] || undefined,
+    })),
   });
 }
 

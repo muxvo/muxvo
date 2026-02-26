@@ -255,7 +255,7 @@ export function TerminalTile({
         '--stagger-index': staggerIndex ?? 0,
       } as React.CSSProperties}
       onDoubleClick={onDoubleClick}
-      onClick={onClick}
+      onMouseDown={onClick}
       onMouseMove={handleMouseMove}
       onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
