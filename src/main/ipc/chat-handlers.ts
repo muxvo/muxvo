@@ -65,13 +65,13 @@ export function createChatHandlers() {
         sessions = await reader.getSessionsForProject(params.projectHash, 500);
       }
 
-      // Apply custom project names from config
+      // Apply custom session titles from config (per-session naming)
       const cm = createConfigManager();
       const config = cm.loadConfig();
-      const projectNames = config.projectNames || {};
-      if (Object.keys(projectNames).length > 0) {
+      const titles = config.sessionCustomTitles || {};
+      if (Object.keys(titles).length > 0) {
         sessions = sessions.map(s => {
-          const customName = projectNames[s.projectHash];
+          const customName = titles[s.sessionId];
           return customName ? { ...s, customTitle: customName } : s;
         });
       }
