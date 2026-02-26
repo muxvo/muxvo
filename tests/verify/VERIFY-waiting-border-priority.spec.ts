@@ -1,12 +1,15 @@
 /**
  * VERIFY: Dual-state visibility — selected(amber border) + waiting(red outline).
  *
- * When a terminal is both selected AND waiting for input, BOTH states must
- * be visible simultaneously:
- *   - border: amber (selected) — user knows which terminal is active
- *   - outline: red (waiting) — user knows it needs yes/no input
+ * Bug: When both selected + waiting, the `borderGlow` animation animates
+ * border-color to red, overriding the static amber from .tile-selected.
+ * User can't tell which terminal is selected.
  *
- * This test loads the real CSS in a browser and checks computed styles.
+ * Fix: Compound selector applies `outlineGlow` (only animates outline-color)
+ * instead of `borderGlow`, so amber border stays visible.
+ *
+ * Key assertion: animation-name on dual-state element must be `outlineGlow`,
+ * not `borderGlow`.
  */
 import { test, expect, chromium } from '@playwright/test';
 import { readFileSync } from 'fs';
@@ -15,7 +18,7 @@ import { resolve } from 'path';
 const PROJECT = resolve(__dirname, '../..');
 
 test.describe('VERIFY: Dual-state selected + waiting visibility', () => {
-  test('selected+waiting → amber border + red outline (both visible)', async () => {
+  test('selected+waiting uses outlineGlow (not borderGlow) to preserve amber border', async () => {
     const browser = await chromium.launch();
     const page = await browser.newPage();
 
@@ -25,13 +28,11 @@ test.describe('VERIFY: Dual-state selected + waiting visibility', () => {
       'utf-8'
     );
 
-    // Disable animations to test static CSS specificity
     await page.setContent(`
       <html>
       <head>
         <style>${themeCss}</style>
         <style>${tileEffectsCss}</style>
-        <style>*, *::before, *::after { animation: none !important; }</style>
       </head>
       <body>
         <div id="waiting-only" class="tile tile--waiting" style="width:100px;height:100px;"></div>
@@ -42,41 +43,31 @@ test.describe('VERIFY: Dual-state selected + waiting visibility', () => {
       </html>
     `);
 
-    async function getStyles(selector: string) {
+    async function getAnimationName(selector: string) {
       return page.evaluate((sel) => {
         const el = document.querySelector(sel)!;
-        const cs = getComputedStyle(el);
-        return {
-          borderColor: cs.borderColor,
-          outlineColor: cs.outlineColor,
-          outlineWidth: cs.outlineWidth,
-          outlineStyle: cs.outlineStyle,
-        };
+        return getComputedStyle(el).animationName;
       }, selector);
     }
 
-    // Case 1: waiting-only → red border + red outline
-    const waitingOnly = await getStyles('#waiting-only');
-    expect(waitingOnly.borderColor).toMatch(/rgba?\(239/);
-    expect(waitingOnly.outlineStyle).not.toBe('none');
+    // waiting-only → borderGlow (full red border + outline animation)
+    const waitingAnim = await getAnimationName('#waiting-only');
+    expect(waitingAnim).toBe('borderGlow');
 
-    // Case 2: selected-only → amber border, no outline
-    const selectedOnly = await getStyles('#selected-only');
-    expect(selectedOnly.borderColor).toMatch(/rgba?\(232/);
+    // selected-only → no meaningful animation (just tileEnter or none)
+    const selectedAnim = await getAnimationName('#selected-only');
+    expect(selectedAnim).not.toContain('borderGlow');
+    expect(selectedAnim).not.toContain('outlineGlow');
 
-    // Case 3: CRITICAL — both selected + waiting
-    const both = await getStyles('#both');
-    // Border should be AMBER (selected state visible)
-    expect(both.borderColor).toMatch(/rgba?\(232/);
-    // Outline should be RED (waiting state visible)
-    expect(both.outlineColor).toMatch(/rgba?\(239/);
-    expect(both.outlineStyle).not.toBe('none');
+    // CRITICAL: both selected + waiting → outlineGlow (NOT borderGlow)
+    // borderGlow would animate border-color to red, hiding the amber selected state
+    // outlineGlow only animates outline-color, keeping amber border visible
+    const bothAnim = await getAnimationName('#both');
+    expect(bothAnim).toBe('outlineGlow');
 
-    // Case 4: both focused + waiting → same pattern
-    const bothFocused = await getStyles('#both-focused');
-    // Outline should be RED
-    expect(bothFocused.outlineColor).toMatch(/rgba?\(239/);
-    expect(bothFocused.outlineStyle).not.toBe('none');
+    // both focused + waiting → same: outlineGlow
+    const bothFocusedAnim = await getAnimationName('#both-focused');
+    expect(bothFocusedAnim).toBe('outlineGlow');
 
     await browser.close();
   });
