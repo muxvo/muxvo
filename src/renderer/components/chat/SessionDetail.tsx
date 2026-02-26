@@ -26,6 +26,8 @@ interface SessionDetailProps {
   loading?: boolean;
   searchQuery?: string;
   onMatchInfoChange?: (current: number, total: number) => void;
+  onResumeSession?: () => void;
+  canResume?: boolean;
 }
 
 /** Escape special regex characters */
@@ -257,7 +259,7 @@ export function formatMessagesAsMarkdown(messages: SessionMessage[]): string {
 const MESSAGE_PAGE_SIZE = 50;
 const FIRST_ITEM_INDEX = 100000;
 
-export const SessionDetail = forwardRef<SessionDetailHandle, SessionDetailProps>(function SessionDetail({ messages, loading, searchQuery, onMatchInfoChange }, ref) {
+export const SessionDetail = forwardRef<SessionDetailHandle, SessionDetailProps>(function SessionDetail({ messages, loading, searchQuery, onMatchInfoChange, onResumeSession, canResume }, ref) {
   const { t } = useI18n();
   const [visibleCount, setVisibleCount] = useState(MESSAGE_PAGE_SIZE);
   const [firstItemIndex, setFirstItemIndex] = useState(FIRST_ITEM_INDEX);
@@ -420,6 +422,18 @@ export const SessionDetail = forwardRef<SessionDetailHandle, SessionDetailProps>
 
   return (
     <div className="session-detail">
+      {canResume && (
+        <div className="session-detail__resume-bar">
+          <button className="session-detail__resume-btn" onClick={() => onResumeSession?.()}>
+            <svg className="session-detail__resume-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 2.5C2 1.67 2 1.25 2.17 1.05C2.32 0.88 2.54 0.79 2.76 0.82C3.02 0.85 3.31 1.15 3.9 1.74L7.1 4.94C7.55 5.39 7.77 5.62 7.85 5.88C7.93 6.11 7.93 6.36 7.85 6.59C7.77 6.85 7.55 7.08 7.1 7.53L3.9 10.73C3.31 11.32 3.02 11.62 2.76 11.65C2.54 11.68 2.32 11.59 2.17 11.42C2 11.22 2 10.8 2 9.97V2.5Z" fill="currentColor"/>
+              <path d="M9 2.5C9 1.67 9 1.25 9.17 1.05C9.32 0.88 9.54 0.79 9.76 0.82C10.02 0.85 10.31 1.15 10.9 1.74L14.1 4.94C14.55 5.39 14.77 5.62 14.85 5.88C14.93 6.11 14.93 6.36 14.85 6.59C14.77 6.85 14.55 7.08 14.1 7.53L10.9 10.73C10.31 11.32 10.02 11.62 9.76 11.65C9.54 11.68 9.32 11.59 9.17 11.42C9 11.22 9 10.8 9 9.97V2.5Z" fill="currentColor"/>
+              <rect x="2" y="13" width="12" height="2" rx="1" fill="currentColor"/>
+            </svg>
+            {t('chat.resumeSession')}
+          </button>
+        </div>
+      )}
       <Virtuoso
         key={messageKey}
         ref={virtuosoRef}

@@ -62,6 +62,44 @@
   cursor: default;
 }
 
+/* Resume Session Bar */
+.session-detail__resume-bar {
+  display: flex;
+  justify-content: center;
+  padding: 8px 12px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.session-detail__resume-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  background: var(--accent, #3b82f6);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.session-detail__resume-btn:hover {
+  background: var(--accent-hover, #2563eb);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.session-detail__resume-btn:active {
+  transform: scale(0.97);
+}
+
+.session-detail__resume-icon {
+  flex-shrink: 0;
+}
+
 /* Message Bubble */
 .message-bubble {
   margin-bottom: 16px;

@@ -14,7 +14,7 @@ import { SessionList } from './SessionList';
 import { SessionDetail } from './SessionDetail';
 import type { SessionDetailHandle } from './SessionDetail';
 import { useI18n } from '@/renderer/i18n';
-import type { ProjectInfo, SessionSummary, SessionMessage, SearchResult } from '@/shared/types/chat.types';
+import type { ProjectInfo, SessionSummary, SessionMessage, SearchResult, ChatSource } from '@/shared/types/chat.types';
 import './ChatHistoryPanel.css';
 
 
@@ -76,7 +76,11 @@ function ArchiveBanner({ onDismiss }: { onDismiss: () => void }) {
   );
 }
 
-export function ChatHistoryPanel() {
+interface ChatHistoryPanelProps {
+  onResumeSession?: (info: { sessionId: string; cwd: string; source: ChatSource }) => void;
+}
+
+export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
   const { t } = useI18n();
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
   const [selectedProjectHash, setSelectedProjectHash] = useState<string | null>(null);
@@ -340,6 +344,21 @@ export function ChatHistoryPanel() {
           loading={loading}
           searchQuery={searchQuery}
           onMatchInfoChange={handleMatchInfoChange}
+          canResume={(() => {
+            const sel = sessions.find(s => s.sessionId === selectedSessionId);
+            return (sel?.source || 'claude-code') === 'claude-code';
+          })()}
+          onResumeSession={() => {
+            const sel = sessions.find(s => s.sessionId === selectedSessionId);
+            if (!sel) return;
+            const proj = projects.find(p => p.projectHash === sel.projectHash);
+            if (!proj) return;
+            props.onResumeSession?.({
+              sessionId: sel.sessionId,
+              cwd: proj.displayPath,
+              source: sel.source || 'claude-code',
+            });
+          }}
         />
       </div>
       </div>

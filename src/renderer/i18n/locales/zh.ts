@@ -44,6 +44,8 @@ export const zh = {
   'chat.copySessionMarkdown': '复制会话为 Markdown',
   'chat.deleteSession': '删除聊天记录',
   'chat.deleteConfirm': '确定删除此聊天记录？删除后无法恢复。',
+  'chat.resumeSession': '继续聊天',
+  'chat.resumeTooltip': '在终端中继续此对话',
   'cwd.title': '切换工作目录',
   'cwd.current': '当前:',
   'cwd.quickPaths': '快捷路径',

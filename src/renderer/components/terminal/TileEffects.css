@@ -293,10 +293,7 @@
 
 .tile-selected {
   border-color: var(--accent);
-  box-shadow:
-    0 0 0 2px var(--accent),
-    0 0 30px rgba(232, 167, 72, 0.25),
-    0 4px 16px rgba(0, 0, 0, 0.3);
+  border-width: 2px;
 }
 
 .tile-selected .tile-name {

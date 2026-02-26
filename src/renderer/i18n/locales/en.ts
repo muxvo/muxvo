@@ -44,6 +44,8 @@ export const en = {
   'chat.copySessionMarkdown': 'Copy Session as Markdown',
   'chat.deleteSession': 'Delete Session',
   'chat.deleteConfirm': 'Delete this session? This cannot be undone.',
+  'chat.resumeSession': 'Resume Chat',
+  'chat.resumeTooltip': 'Continue this conversation in terminal',
   'cwd.title': 'Change Working Directory',
   'cwd.current': 'Current:',
   'cwd.quickPaths': 'Quick Paths',
