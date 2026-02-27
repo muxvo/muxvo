@@ -47,13 +47,16 @@ export function createBackendClient(options: BackendClientOptions) {
     const timer = setTimeout(() => controller.abort(), timeout);
 
     try {
+      const headers: Record<string, string> = { ...init?.headers as Record<string, string> };
+      // Only set Content-Type when there's a body (Fastify rejects empty JSON body)
+      if (init?.body) {
+        headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+      }
+
       const response = await fetch(`${baseUrl}${path}`, {
         ...init,
         signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          ...init?.headers,
-        },
+        headers,
       });
 
       if (!response.ok) {
