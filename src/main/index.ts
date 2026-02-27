@@ -497,10 +497,14 @@ app.whenReady().then(() => {
   // Device heartbeat: register device info and check blocked status
   (async () => {
     try {
+      console.log('[MUXVO:device] Starting heartbeat...');
       const deviceInfo = getDeviceInfo();
       const deviceId = getDeviceId();
+      console.log('[MUXVO:device] deviceId=' + deviceId + ' platform=' + deviceInfo.platform);
       const accessToken = await getAuthManager().getAccessToken().catch(() => null) ?? undefined;
+      console.log('[MUXVO:device] Sending heartbeat to server...');
       const result = await analyticsBackendClient.deviceHeartbeat(deviceId, deviceInfo, accessToken);
+      console.log('[MUXVO:device] Heartbeat result:', JSON.stringify(result));
 
       if (result?.status === 'blocked' && mainWindow && !mainWindow.isDestroyed()) {
         dialog.showMessageBoxSync(mainWindow, {
