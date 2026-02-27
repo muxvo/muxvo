@@ -522,7 +522,7 @@ function AppContent({
             dispatch({ type: 'CLOSE_TEMP_VIEW' });
             onDoubleClick(id);
           }}
-          onCloseTerminal={removeTerminal}
+          onCloseTerminal={onClose}
         />
       )}
 
