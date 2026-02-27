@@ -244,6 +244,7 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
   const sidebarTerminals = isFocusedMode
     ? terminals.filter((t) => t.id !== focusedId)
     : [];
+  const sidebarCount = Math.min(sidebarTerminals.length, 3);
 
   const gridStyle: React.CSSProperties = {
     display: 'grid',
@@ -284,15 +285,21 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
                 zIndex: 10,
                 overflow: 'hidden',
               }
-            : {
-                gridRow: placement?.gridRow,
-                gridColumn: placement?.gridColumn,
-                minWidth: 0,
-                minHeight: 0,
-                height: '100%',
-                overflow: 'hidden',
-                visibility: 'hidden',
-              }
+            : (() => {
+                const idx = sidebarTerminals.findIndex(s => s.id === t.id);
+                return {
+                  position: 'absolute' as const,
+                  right: 0,
+                  top: `${(idx * 100) / sidebarCount}%`,
+                  width: '25%',
+                  height: `${100 / sidebarCount}%`,
+                  minHeight: '150px',
+                  zIndex: 11,
+                  overflow: 'hidden',
+                  borderLeft: '1px solid var(--border)',
+                  background: 'var(--bg-deep)',
+                };
+              })()
           : {
               gridRow: placement?.gridRow,
               gridColumn: placement?.gridColumn,
@@ -302,8 +309,10 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
               overflow: 'hidden',
             };
 
+        const isSidebarTile = isFocusedMode && !isFocused;
+
         return (
-          <div key={t.id} style={cellStyle}>
+          <div key={t.id} style={cellStyle} onClick={isSidebarTile ? () => onSidebarClick?.(t.id) : undefined}>
             <TerminalTile
               id={t.id}
               state={t.state}
@@ -312,6 +321,7 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
               onRename={onRename}
               selected={!isFocusedMode && t.id === selectedId}
               focused={isFocused && isFocusedMode}
+              compact={isSidebarTile}
               staggerIndex={i}
               draggable={!isFocusedMode}
               onDragStart={!isFocusedMode ? handleDragStart : undefined}
@@ -327,41 +337,6 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
           </div>
         );
       })}
-
-      {/* Sidebar overlay in focused mode */}
-      {isFocusedMode && sidebarTerminals.length > 0 && (
-        <div style={{
-          position: 'absolute',
-          right: 0,
-          top: 0,
-          width: '25%',
-          height: '100%',
-          zIndex: 11,
-          borderLeft: '1px solid var(--border)',
-          overflowY: 'auto',
-          background: 'var(--bg-deep)',
-        }}>
-          {sidebarTerminals.map((t) => (
-            <div
-              key={`sidebar-${t.id}`}
-              style={{
-                height: `${100 / Math.min(sidebarTerminals.length, 3)}%`,
-                minHeight: '150px',
-                cursor: 'pointer',
-              }}
-              onClick={() => onSidebarClick?.(t.id)}
-            >
-              <TerminalTile
-                id={t.id}
-                state={t.state}
-                cwd={t.cwd}
-                customName={t.customName}
-                compact
-              />
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Column resize handles (tiling mode only) */}
       {!isFocusedMode && cols > 1 && colHandlePositions.map((pct, idx) => (

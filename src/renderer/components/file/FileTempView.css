@@ -233,22 +233,7 @@
   border-color: var(--accent);
 }
 
-/* === Right column: terminal sidebar === */
-.file-temp-view__sidebar {
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  flex-shrink: 0;
-  border-left: 1px solid var(--border);
-  /* Fade in after file tree slides */
-  opacity: 0;
-  transition: opacity 0.3s ease 0.15s;
-}
-.file-temp-view--entered .file-temp-view__sidebar {
-  opacity: 1;
-}
-.file-temp-view__sidebar-item {
-  cursor: pointer;
-  min-height: 150px;
-  height: 33.33%;
+/* === Right column: terminal sidebar (entered state) === */
+.file-temp-view__sidebar--entered {
+  opacity: 1 !important;
 }

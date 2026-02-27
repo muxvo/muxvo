@@ -9,7 +9,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useI18n } from '@/renderer/i18n';
 import { MarkdownWysiwyg } from '@/renderer/components/markdown/MarkdownWysiwyg';
-import { TerminalTile } from '@/renderer/components/terminal/TerminalTile';
+import { TerminalSidebar } from '@/renderer/components/terminal/TerminalSidebar';
 import { UnsavedPromptDialog } from './UnsavedPromptDialog';
 import { FileItem } from './FileItem';
 import { type TreeEntry, mapIpcToTree, insertAfter, removeChildren } from '@/renderer/utils/file-tree';
@@ -385,20 +385,12 @@ export function FileTempView({
       />
 
       {/* Right column: terminal sidebar */}
-      <div
-        className="file-temp-view__sidebar"
-        style={{ width: rightWidth }}
-      >
-        {sidebarTerminals.map((t) => (
-          <div
-            key={t.id}
-            className="file-temp-view__sidebar-item"
-            onClick={() => onSelectTerminal(t.id)}
-          >
-            <TerminalTile id={t.id} state={t.state} cwd={t.cwd} compact />
-          </div>
-        ))}
-      </div>
+      <TerminalSidebar
+        terminals={sidebarTerminals}
+        onSelect={onSelectTerminal}
+        style={{ width: rightWidth, flexShrink: 0, opacity: 0, transition: 'opacity 0.3s ease 0.15s' }}
+        className={entered ? 'file-temp-view__sidebar--entered' : ''}
+      />
 
       {/* Unsaved changes dialog */}
       {showUnsavedPrompt && (
