@@ -19,7 +19,7 @@ type Mode = 'view' | 'edit' | 'add';
 
 /** Scope display config */
 const SCOPE_LABELS: Record<string, { label: string; cls: string }> = {
-  global: { label: 'Global', cls: 'mcp-panel__scope--global' },
+  global: { label: 'CC', cls: 'mcp-panel__scope--cc' },
   project: { label: 'Project', cls: 'mcp-panel__scope--project' },
   desktop: { label: 'Desktop', cls: 'mcp-panel__scope--desktop' },
   codex: { label: 'Codex', cls: 'mcp-panel__scope--codex' },
