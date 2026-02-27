@@ -103,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
             username: u.displayName || u.username || u.email || '',
             email: u.email,
             avatarUrl: u.avatarUrl || '',
-            provider: u.provider || 'github',
+            provider: u.provider || u.identities?.[0]?.provider || 'unknown',
           },
         });
       }
@@ -124,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
             username: u.displayName || u.username || u.email || '',
             email: u.email,
             avatarUrl: u.avatarUrl || '',
-            provider: u.provider || 'github',
+            provider: u.provider || u.identities?.[0]?.provider || 'unknown',
           },
         });
       } else if (data && !data.success) {

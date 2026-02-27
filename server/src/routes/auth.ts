@@ -35,19 +35,28 @@ function sendDeepLinkRedirect(
   reply: import('fastify').FastifyReply,
   tokens: { accessToken: string; refreshToken: string },
 ): import('fastify').FastifyReply {
-  const appScheme = APP_SCHEME();
-  const params = new URLSearchParams({
-    accessToken: tokens.accessToken,
-    refreshToken: tokens.refreshToken,
-  });
-  const deepLinkUrl = `${appScheme}://auth/callback?${params.toString()}`;
+  // Polling mechanism handles token delivery to Electron app.
+  // Show a clean success page instead of triggering muxvo:// deep link
+  // (which causes an ugly browser confirmation dialog).
+  void tokens; // tokens already stored in Redis for polling
 
   return reply.type('text/html').send(`<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Login Success</title></head>
+<html><head><meta charset="utf-8"><title>Login Success</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f8f9fa}
+.card{text-align:center;padding:48px 40px;background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);max-width:400px}
+.icon{width:64px;height:64px;margin:0 auto 20px;background:#e8f5e9;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.icon svg{width:32px;height:32px;color:#4caf50}
+h1{font-size:20px;font-weight:600;color:#1a1a1a;margin-bottom:8px}
+p{font-size:14px;color:#666;line-height:1.5}
+</style></head>
 <body>
-<p>登录成功，正在返回 Muxvo...</p>
-<script>window.location.href=${JSON.stringify(deepLinkUrl)};setTimeout(function(){document.getElementById('f').style.display='block'},3000)</script>
-<p id="f" style="display:none">如果没有自动跳转，<a href="${deepLinkUrl}">请点击此处打开 Muxvo</a></p>
+<div class="card">
+<div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+<h1>登录成功</h1>
+<p>请返回 Muxvo 应用，登录将自动完成。<br>你可以关闭此页面。</p>
+</div>
 </body></html>`);
 }
 
