@@ -340,41 +340,24 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
           borderLeft: '1px solid var(--border)',
           overflowY: 'auto',
           background: 'var(--bg-deep)',
-          padding: '6px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '4px',
         }}>
           {sidebarTerminals.map((t) => (
             <div
               key={`sidebar-${t.id}`}
-              onClick={() => onSidebarClick?.(t.id)}
               style={{
-                padding: '8px 10px',
+                height: `${100 / Math.min(sidebarTerminals.length, 3)}%`,
+                minHeight: '150px',
                 cursor: 'pointer',
-                borderRadius: '6px',
-                background: 'var(--bg-secondary)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '12px',
-                color: 'var(--text-primary)',
               }}
+              onClick={() => onSidebarClick?.(t.id)}
             >
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  background: t.state === 'WaitingInput' ? 'var(--amber-500, #f59e0b)' :
-                              t.state === 'Running' ? 'var(--green-500, #22c55e)' :
-                              'var(--text-tertiary)',
-                  flexShrink: 0,
-                }}
+              <TerminalTile
+                id={t.id}
+                state={t.state}
+                cwd={t.cwd}
+                customName={t.customName}
+                compact
               />
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {t.customName || t.cwd.split('/').pop() || t.cwd}
-              </span>
             </div>
           ))}
         </div>
