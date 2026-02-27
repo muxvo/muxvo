@@ -11,7 +11,7 @@
  * - Config persistence (save on close, restore on launch)
  */
 
-import { app, BrowserWindow, ipcMain, shell, protocol, net, Menu, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, protocol, net, Menu, dialog, nativeImage } from 'electron';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
 import { is } from '@electron-toolkit/utils';
@@ -382,8 +382,10 @@ app.whenReady().then(() => {
 
     // >>> TEMP DEMO: 模拟原生更新对话框，演示完删除 <<<
     setTimeout(async () => {
+      const iconPath = join(__dirname, '../../build/icon.icns');
       const { response } = await dialog.showMessageBox({
         type: 'info',
+        icon: nativeImage.createFromPath(iconPath),
         title: 'Muxvo 有可用更新',
         message: '发现新版本 v0.3.0',
         detail: '是否立即下载？下载完成后将在下次启动时自动更新。',
@@ -403,8 +405,10 @@ app.whenReady().then(() => {
       autoUpdater.autoInstallOnAppQuit = true;
 
       autoUpdater.on('update-available', async (info) => {
+        const iconPath = join(__dirname, '../../build/icon.icns');
         const { response } = await dialog.showMessageBox({
           type: 'info',
+          icon: nativeImage.createFromPath(iconPath),
           title: 'Muxvo 有可用更新',
           message: `发现新版本 v${info.version}`,
           detail: '是否立即下载？下载完成后将在下次启动时自动更新。',
