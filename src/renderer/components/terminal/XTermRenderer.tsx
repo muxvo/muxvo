@@ -26,6 +26,16 @@ function saveTerminalFontSize(size: number): void {
   }, 500);
 }
 
+/**
+ * Strip zsh PROMPT_EOL_MARK sequences from buffer data.
+ * zsh outputs \e[7m%\e[27m + spaces + \r + spaces + \r to mark incomplete lines.
+ * This is designed to be invisible at the original width, but when replayed at a
+ * different (narrower) width, line wrapping makes the `%` visible.
+ */
+function stripPromptEolMark(data: string): string {
+  return data.replace(/\x1b\[7m%\x1b\[27m[^\n]*?\r[^\n]*?\r/g, '');
+}
+
 interface Props {
   terminalId: string;
 }
@@ -156,7 +166,7 @@ export function XTermRenderer({ terminalId }: Props): JSX.Element {
       if (disposed) return; // Component unmounted — discard
       if (result?.success && result.data) {
         console.log(`[MUXVO:restore] buffer received for id=${terminalId} bytes=${result.data.length}`);
-        term.write(result.data);
+        term.write(stripPromptEolMark(result.data));
       }
       // Flush any live data that arrived during getBuffer round-trip
       for (const data of pendingLiveData) {
