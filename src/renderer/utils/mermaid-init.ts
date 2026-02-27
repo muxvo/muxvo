@@ -24,9 +24,11 @@ function initMermaid(): void {
 }
 
 // Re-initialize on theme change
-window.addEventListener('muxvo:theme-change', () => {
-  initMermaid();
-});
+if (typeof window !== 'undefined') {
+  window.addEventListener('muxvo:theme-change', () => {
+    initMermaid();
+  });
+}
 
 /**
  * Render a mermaid diagram to SVG string.
