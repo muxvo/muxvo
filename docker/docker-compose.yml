@@ -14,8 +14,7 @@ services:
       - DATABASE_URL=postgresql://muxvo:${DB_PASSWORD}@postgres:5432/muxvo
       - REDIS_URL=redis://redis:6379
     volumes:
-      - ../server/jwt-private.pem:/app/jwt-private.pem:ro
-      - ../server/jwt-public.pem:/app/jwt-public.pem:ro
+      - jwt-keys:/app/data
     depends_on:
       postgres:
         condition: service_healthy
@@ -65,3 +64,4 @@ services:
 volumes:
   pgdata:
   redisdata:
+  jwt-keys:

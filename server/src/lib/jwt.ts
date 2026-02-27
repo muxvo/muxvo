@@ -1,5 +1,6 @@
-import { readFile } from 'node:fs/promises';
-import { createHash, randomUUID } from 'node:crypto';
+import { readFile, stat, writeFile, rm, mkdir } from 'node:fs/promises';
+import { createHash, randomUUID, generateKeyPairSync } from 'node:crypto';
+import { dirname } from 'node:path';
 import { importPKCS8, importSPKI, SignJWT, jwtVerify } from 'jose';
 import type { JWTPayload } from 'jose';
 
@@ -11,7 +12,44 @@ let privateKey: CryptoKey;
 let publicKey: CryptoKey;
 
 /**
+ * Ensure JWT key files exist. If missing or corrupted (e.g. Docker created
+ * empty directories instead of files), auto-generate a new RSA 2048 key pair.
+ */
+async function ensureKeyFiles(privatePath: string, publicPath: string): Promise<void> {
+  // Clean up any directories that Docker may have created in place of files
+  for (const p of [privatePath, publicPath]) {
+    try {
+      const s = await stat(p);
+      if (s.isDirectory()) await rm(p, { recursive: true });
+    } catch { /* not found — will generate below */ }
+  }
+
+  const [privOk, pubOk] = await Promise.all([
+    stat(privatePath).then((s) => s.isFile()).catch(() => false),
+    stat(publicPath).then((s) => s.isFile()).catch(() => false),
+  ]);
+
+  if (privOk && pubOk) return;
+
+  console.warn('[jwt] Key files missing or invalid, generating new RSA 2048 key pair...');
+  const pair = generateKeyPairSync('rsa', {
+    modulusLength: 2048,
+    publicKeyEncoding: { type: 'spki', format: 'pem' },
+    privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+  });
+
+  // Ensure parent directories exist
+  await mkdir(dirname(privatePath), { recursive: true });
+  await mkdir(dirname(publicPath), { recursive: true });
+
+  await writeFile(privatePath, pair.privateKey as string, 'utf-8');
+  await writeFile(publicPath, pair.publicKey as string, 'utf-8');
+  console.warn('[jwt] New key pair written to', privatePath, publicPath);
+}
+
+/**
  * Load RSA key-pair from PEM files specified by env vars.
+ * Auto-generates keys if files are missing or corrupted.
  * Must be called once before signing / verifying.
  */
 export async function loadKeys(): Promise<void> {
@@ -23,6 +61,8 @@ export async function loadKeys(): Promise<void> {
       'JWT_PRIVATE_KEY_PATH and JWT_PUBLIC_KEY_PATH must be set',
     );
   }
+
+  await ensureKeyFiles(privatePath, publicPath);
 
   const [privPem, pubPem] = await Promise.all([
     readFile(privatePath, 'utf-8'),
