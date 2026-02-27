@@ -1,5 +1,12 @@
 import 'dotenv/config';
+import { ProxyAgent, setGlobalDispatcher } from 'undici';
 import { buildApp } from './app.js';
+
+// Enable HTTP proxy for outgoing fetch (Google OAuth needs proxy in China)
+const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+if (proxyUrl) {
+  setGlobalDispatcher(new ProxyAgent(proxyUrl));
+}
 
 const PORT = Number(process.env.PORT) || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
