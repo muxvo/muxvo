@@ -323,33 +323,19 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
 
       {/* Sidebar scroll container (focused mode only) */}
       {isFocusedMode && sidebarTerminals.length > 0 && (
-        <div style={{
-          position: 'absolute',
-          right: 0,
-          top: 0,
-          width: '25%',
-          height: '100%',
-          zIndex: 11,
-          overflowY: 'auto',
-          borderLeft: '1px solid var(--border)',
-          background: 'var(--bg-deep)',
-        }}>
-          {sidebarTerminals.map((t) => (
-            <div key={t.id} style={{
-              height: `${100 / Math.min(sidebarTerminals.length, 3)}%`,
-              minHeight: '150px',
-            }} onClick={() => onSidebarClick?.(t.id)}>
-              <TerminalTile
-                id={t.id}
-                state={t.state}
-                cwd={t.cwd}
-                customName={t.customName}
-                compact
-                onClose={onClose}
-              />
-            </div>
-          ))}
-        </div>
+        <TerminalSidebar
+          terminals={sidebarTerminals}
+          onSelect={onSidebarClick}
+          onClose={onClose}
+          style={{
+            position: 'absolute',
+            right: 0,
+            top: 0,
+            width: '25%',
+            height: '100%',
+            zIndex: 11,
+          }}
+        />
       )}
 
       {/* Column resize handles (tiling mode only) */}

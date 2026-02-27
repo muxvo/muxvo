@@ -95,7 +95,7 @@ export function UpdateNotification() {
     return () => cleanups.forEach(fn => fn());
   }, []);
 
-  // >>> TEMP DEMO: 模拟更新流程，演示完删除 <<<
+  // >>> TEMP DEMO: 模拟更新流程，演示完删除 (replay) <<<
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
     timers.push(setTimeout(() => { setVersion('0.3.0'); setState('available'); }, 3000));
