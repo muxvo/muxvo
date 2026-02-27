@@ -387,19 +387,21 @@ export function FileTempView({
         </div>
       </div>
 
-      {/* Right resize handle */}
-      <div
-        className="file-temp-view__resize-handle"
-        onMouseDown={(e) => handleMouseDown('right', e)}
-      />
-
-      {/* Right column: terminal sidebar */}
-      <TerminalSidebar
-        terminals={sidebarTerminals}
-        onSelect={onSelectTerminal}
-        style={{ width: rightWidth, flexShrink: 0, opacity: 0, transition: 'opacity 0.3s ease 0.15s' }}
-        className={entered ? 'file-temp-view__sidebar--entered' : ''}
-      />
+      {/* Right resize handle + terminal sidebar (only when other terminals exist) */}
+      {sidebarTerminals.length > 0 && (
+        <>
+          <div
+            className="file-temp-view__resize-handle"
+            onMouseDown={(e) => handleMouseDown('right', e)}
+          />
+          <TerminalSidebar
+            terminals={sidebarTerminals}
+            onSelect={onSelectTerminal}
+            style={{ width: rightWidth, flexShrink: 0, opacity: 0, transition: 'opacity 0.3s ease 0.15s' }}
+            className={entered ? 'file-temp-view__sidebar--entered' : ''}
+          />
+        </>
+      )}
 
       {/* Unsaved changes dialog */}
       {showUnsavedPrompt && (
