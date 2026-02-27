@@ -11,7 +11,7 @@
  * - Config persistence (save on close, restore on launch)
  */
 
-import { app, BrowserWindow, ipcMain, shell, protocol, net, Menu } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, protocol, net, Menu, dialog } from 'electron';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
 import { is } from '@electron-toolkit/utils';
@@ -34,6 +34,7 @@ import { registerAuthHandlers, getAuthManager } from './ipc/auth-handlers';
 import { registerAnalyticsHandlers } from './ipc/analytics-handlers';
 import type { AnalyticsTracker } from './services/analytics/tracker';
 import { getDeviceId } from './services/analytics/device-id';
+import { getDeviceInfo } from './services/analytics/device-info';
 import { createBackendClient } from './services/auth/backend-client';
 import { autoUpdater } from 'electron-updater';
 import { createChatWatcher } from './services/chat-watcher';

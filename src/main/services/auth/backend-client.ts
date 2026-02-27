@@ -153,5 +153,39 @@ export function createBackendClient(options: BackendClientOptions) {
         clearTimeout(timer);
       }
     },
+
+    /** Send device heartbeat to register/update device info */
+    async deviceHeartbeat(
+      deviceId: string,
+      info: { platform: string; arch: string; os_version: string; app_version: string; hostname: string },
+      accessToken?: string,
+    ): Promise<{ device_id: string; status: string } | null> {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'X-Device-ID': deviceId,
+      };
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+      }
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeout);
+
+      try {
+        const response = await fetch(`${baseUrl}/devices/heartbeat`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(info),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) return null;
+        return (await response.json()) as { device_id: string; status: string };
+      } catch {
+        return null;
+      } finally {
+        clearTimeout(timer);
+      }
+    },
   };
 }
