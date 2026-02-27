@@ -85,6 +85,7 @@ jobs:
         with:
           files: |
             dist/*.dmg
+            dist/*.zip
             dist/*.blockmap
             dist/latest-mac.yml
         env:

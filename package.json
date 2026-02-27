@@ -1,6 +1,6 @@
 {
   "name": "muxvo",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": true,
   "description": "Electron desktop workbench for AI CLI tools",
   "main": "./out/main/index.js",
