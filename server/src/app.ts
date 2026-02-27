@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import type { FastifyError } from 'fastify';
+import cors from '@fastify/cors';
 import dbPlugin from './plugins/db.js';
 import { healthRoutes } from './routes/health.js';
 import { authRoutes } from './routes/auth.js';
@@ -50,6 +51,15 @@ export async function buildApp() {
   await loadKeys();
 
   // Infrastructure plugins
+  await app.register(cors, {
+    origin: [
+      'https://admin.muxvo.com',
+      'https://muxvo.com',
+      'https://www.muxvo.com',
+      ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:5173', 'http://localhost:5174'] : []),
+    ],
+    credentials: true,
+  });
   await app.register(dbPlugin);
 
   // Register route plugins

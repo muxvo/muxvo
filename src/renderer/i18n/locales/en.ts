@@ -136,7 +136,7 @@ export const en = {
   'tour.prev': 'Previous',
   'tour.done': 'Done',
   'tour.step1.title': 'Create Terminal',
-  'tour.step1.desc': 'Click the + button in the top right to create your first terminal!',
+  'tour.step1.desc': 'Click the + button to create your first terminal!',
   'tour.step2a.title': 'Move Terminals',
   'tour.step2a.desc': 'Drag a terminal title bar to rearrange the order. Give it a try!',
   'tour.step2b.title': 'Resize Terminals',
@@ -148,7 +148,7 @@ export const en = {
   'tour.step5.title': 'Open Files',
   'tour.step5.desc': 'Click the "File" button to open the file browser for this directory!',
   'tour.noTerminal.title': 'Create a Terminal First',
-  'tour.noTerminal.desc': 'Click the + button to create a terminal, then click ? again to see the full feature tour.',
+  'tour.noTerminal.desc': 'Click the + button to create a terminal and start the full feature tour.',
   // Auth
   'auth.loginButton': 'Login',
   'auth.modalTitle': 'Login to Muxvo',

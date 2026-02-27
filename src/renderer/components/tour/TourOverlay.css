@@ -103,12 +103,22 @@ body.tour-drag-active .driver-overlay {
   pointer-events: none !important;
 }
 
-/* 交互步骤的高亮元素脉冲动画 */
+/* 游戏化高亮：让需要点击的元素明亮发光 */
 .driver-active .driver-active-element {
-  animation: tour-pulse 2s ease-in-out infinite;
+  animation: tour-pulse 1.8s ease-in-out infinite;
+  filter: brightness(1.15);
+  outline: 2px solid rgba(232, 167, 72, 0.6);
+  outline-offset: 3px;
+  border-radius: 8px;
+  z-index: 100001;
+  position: relative;
 }
 
 @keyframes tour-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 167, 72, 0); }
-  50% { box-shadow: 0 0 0 4px rgba(232, 167, 72, 0.3); }
+  0%, 100% {
+    box-shadow: 0 0 8px 2px rgba(232, 167, 72, 0.2), 0 0 0 0 rgba(232, 167, 72, 0);
+  }
+  50% {
+    box-shadow: 0 0 16px 6px rgba(232, 167, 72, 0.45), 0 0 0 4px rgba(232, 167, 72, 0.7);
+  }
 }

@@ -24,7 +24,7 @@ export interface TourStep {
 export const TOUR_STEPS: TourStep[] = [
   {
     id: 'create-terminal',
-    selector: '.menu-bar__add-btn',
+    selector: '.terminal-grid__fab',
     i18nTitleKey: 'tour.step1.title',
     i18nDescKey: 'tour.step1.desc',
     side: 'bottom',

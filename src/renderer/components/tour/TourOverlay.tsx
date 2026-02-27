@@ -161,7 +161,7 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
     // If no terminals, add a prompt step
     if (!hasTerminal) {
       steps.push({
-        element: '.menu-bar__add-btn',
+        element: '.terminal-grid__fab',
         disableActiveInteraction: false,
         popover: {
           title: t('tour.noTerminal.title'),
@@ -176,7 +176,7 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
     const driverInstance = driver({
       showProgress: true,
       animate: true,
-      overlayColor: 'rgba(6, 8, 12, 0.8)',
+      overlayColor: 'rgba(6, 8, 12, 0.85)',
       stagePadding: 8,
       stageRadius: 10,
       popoverClass: 'tour-popover',

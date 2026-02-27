@@ -136,7 +136,7 @@ export const zh = {
   'tour.prev': '上一步',
   'tour.done': '完成',
   'tour.step1.title': '新建终端',
-  'tour.step1.desc': '点击右上角的 + 按钮，创建你的第一个终端吧！',
+  'tour.step1.desc': '点击 + 按钮，创建你的第一个终端吧！',
   'tour.step2a.title': '移动终端',
   'tour.step2a.desc': '拖拽终端的标题栏，可以调整终端的排列顺序。试试拖一下！',
   'tour.step2b.title': '调整大小',
@@ -148,7 +148,7 @@ export const zh = {
   'tour.step5.title': '打开文件',
   'tour.step5.desc': '点击"文件"按钮，打开当前目录的文件浏览器！',
   'tour.noTerminal.title': '请先创建终端',
-  'tour.noTerminal.desc': '点击 + 按钮创建一个终端后，再次点击 ? 按钮即可查看完整的功能导览。',
+  'tour.noTerminal.desc': '点击 + 按钮创建一个终端，即可开始完整的功能导览。',
   // Auth
   'auth.loginButton': '登录',
   'auth.modalTitle': 'Muxvo 登录',
