@@ -1,0 +1,13 @@
+/* TerminalSidebar — shared vertical terminal list */
+.terminal-sidebar {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  border-left: 1px solid var(--border);
+  background: var(--bg-deep);
+}
+
+.terminal-sidebar__item {
+  min-height: 150px;
+  cursor: pointer;
+}
