@@ -15,6 +15,9 @@ mac:
     - target: dmg
       arch:
         - arm64
+    - target: zip
+      arch:
+        - arm64
         # - x64  # Intel Mac support: adds ~10min build time, enable when needed
   hardenedRuntime: true
   gatekeeperAssess: false
