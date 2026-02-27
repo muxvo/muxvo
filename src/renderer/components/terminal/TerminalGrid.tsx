@@ -63,7 +63,8 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
   }
 
   // Always render TilingGrid — focused mode is handled via CSS overlay
-  // to avoid unmounting/remounting XTermRenderer instances
+  // to avoid unmounting/remounting XTermRenderer instances.
+  // NOTE: TilingGrid renders its own FAB inside, sharing the same .terminal-grid__fab class.
   return (
     <TilingGrid
       terminals={terminals}

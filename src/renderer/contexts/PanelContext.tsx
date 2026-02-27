@@ -150,7 +150,7 @@ function panelReducer(state: PanelState, action: PanelAction): PanelState {
     case 'CLOSE_SETTINGS':
       return { ...state, settingsModal: { open: false } };
     case 'CLOSE_ALL':
-      return { ...initialState };
+      return { ...initialState, tour: state.tour };
     default:
       return state;
   }
