@@ -166,8 +166,13 @@ export function XTermRenderer({ terminalId }: Props): JSX.Element {
       pendingLiveData.length = 0;
       bufferedDataWritten = true;
 
-      // buffer 写入完成后重新 fit，确保列宽与内容匹配
-      requestAnimationFrame(() => { if (!disposed) fitAddon.fit(); });
+      // buffer 写入完成后重新 fit + scrollToBottom，确保列宽与内容匹配且 viewport 显示最新内容
+      requestAnimationFrame(() => {
+        if (!disposed) {
+          fitAddon.fit();
+          term.scrollToBottom();
+        }
+      });
 
       // Self-verification
       const lines = term.buffer.active.length;

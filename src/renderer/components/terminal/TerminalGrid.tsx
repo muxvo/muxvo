@@ -244,8 +244,6 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
   const sidebarTerminals = isFocusedMode
     ? terminals.filter((t) => t.id !== focusedId)
     : [];
-  const sidebarCount = Math.min(sidebarTerminals.length, 3);
-
   const gridStyle: React.CSSProperties = {
     display: 'grid',
     gridTemplateColumns,
@@ -273,33 +271,19 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
           t.id === draggingId ? 'dragging' :
           t.id === dragOverId ? 'drag-over' : 'none';
 
-        // In focused mode: focused tile overlays full area, others stay hidden in grid
+        // In focused mode: non-focused terminals rendered in sidebar container below
+        if (isFocusedMode && !isFocused) return null;
+
         const cellStyle: React.CSSProperties = isFocusedMode
-          ? isFocused
-            ? {
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: sidebarTerminals.length > 0 ? '25%' : 0,
-                bottom: 0,
-                zIndex: 10,
-                overflow: 'hidden',
-              }
-            : (() => {
-                const idx = sidebarTerminals.findIndex(s => s.id === t.id);
-                return {
-                  position: 'absolute' as const,
-                  right: 0,
-                  top: `${(idx * 100) / sidebarCount}%`,
-                  width: '25%',
-                  height: `${100 / sidebarCount}%`,
-                  minHeight: '150px',
-                  zIndex: 11,
-                  overflow: 'hidden',
-                  borderLeft: '1px solid var(--border)',
-                  background: 'var(--bg-deep)',
-                };
-              })()
+          ? {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: sidebarTerminals.length > 0 ? '25%' : 0,
+              bottom: 0,
+              zIndex: 10,
+              overflow: 'hidden',
+            }
           : {
               gridRow: placement?.gridRow,
               gridColumn: placement?.gridColumn,
@@ -309,10 +293,8 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
               overflow: 'hidden',
             };
 
-        const isSidebarTile = isFocusedMode && !isFocused;
-
         return (
-          <div key={t.id} style={cellStyle} onClick={isSidebarTile ? () => onSidebarClick?.(t.id) : undefined}>
+          <div key={t.id} style={cellStyle}>
             <TerminalTile
               id={t.id}
               state={t.state}
@@ -321,7 +303,7 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
               onRename={onRename}
               selected={!isFocusedMode && t.id === selectedId}
               focused={isFocused && isFocusedMode}
-              compact={isSidebarTile}
+              compact={false}
               staggerIndex={i}
               draggable={!isFocusedMode}
               onDragStart={!isFocusedMode ? handleDragStart : undefined}
@@ -337,6 +319,37 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
           </div>
         );
       })}
+
+      {/* Sidebar scroll container (focused mode only) */}
+      {isFocusedMode && sidebarTerminals.length > 0 && (
+        <div style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          width: '25%',
+          height: '100%',
+          zIndex: 11,
+          overflowY: 'auto',
+          borderLeft: '1px solid var(--border)',
+          background: 'var(--bg-deep)',
+        }}>
+          {sidebarTerminals.map((t) => (
+            <div key={t.id} style={{
+              height: `${100 / Math.min(sidebarTerminals.length, 3)}%`,
+              minHeight: '150px',
+            }} onClick={() => onSidebarClick?.(t.id)}>
+              <TerminalTile
+                id={t.id}
+                state={t.state}
+                cwd={t.cwd}
+                customName={t.customName}
+                compact
+                onClose={onClose}
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Column resize handles (tiling mode only) */}
       {!isFocusedMode && cols > 1 && colHandlePositions.map((pct, idx) => (

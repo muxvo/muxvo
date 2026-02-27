@@ -1,4 +1,4 @@
--- Up
+-- Up Migration
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE users (
@@ -14,5 +14,5 @@ CREATE TABLE users (
 
 CREATE INDEX idx_users_email ON users(email);
 
--- Down
+-- Down Migration
 DROP TABLE IF EXISTS users;

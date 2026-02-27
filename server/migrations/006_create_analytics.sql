@@ -1,4 +1,4 @@
--- Up
+-- Up Migration
 CREATE TABLE analytics_daily (
     date DATE NOT NULL,
     metric VARCHAR(100) NOT NULL,
@@ -9,5 +9,5 @@ CREATE TABLE analytics_daily (
 
 CREATE INDEX idx_analytics_date ON analytics_daily(date, metric);
 
--- Down
+-- Down Migration
 DROP TABLE IF EXISTS analytics_daily;

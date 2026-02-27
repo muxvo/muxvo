@@ -1,4 +1,4 @@
--- Up
+-- Up Migration
 CREATE TABLE showcases (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id),
@@ -35,7 +35,7 @@ CREATE INDEX idx_showcases_user ON showcases(user_id, status);
 CREATE INDEX idx_showcases_slug ON showcases(slug) WHERE status = 'published';
 CREATE INDEX idx_showcase_comments_showcase ON showcase_comments(showcase_id);
 
--- Down
+-- Down Migration
 DROP TABLE IF EXISTS showcase_comments;
 DROP TABLE IF EXISTS showcase_likes;
 DROP TABLE IF EXISTS showcases;

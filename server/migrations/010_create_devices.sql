@@ -1,4 +1,4 @@
--- Up
+-- Up Migration
 CREATE TABLE devices (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   device_id VARCHAR(36) NOT NULL UNIQUE,
@@ -18,5 +18,5 @@ CREATE TABLE devices (
 CREATE INDEX idx_devices_user ON devices(user_id);
 CREATE INDEX idx_devices_status ON devices(status);
 
--- Down
+-- Down Migration
 DROP TABLE IF EXISTS devices;

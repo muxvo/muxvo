@@ -1,4 +1,4 @@
--- Up
+-- Up Migration
 
 CREATE TABLE marketplace_skills (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -34,6 +34,6 @@ INSERT INTO marketplace_skills (name, description, author, category, installs, s
   ('Log Analyzer',         'Parse and analyze application logs to find patterns, anomalies, and root causes for errors.',                               'logwise',      'Research',    440, 7.6),
   ('Workflow Automator',   'Build multi-step automation pipelines triggered by file changes, webhooks, or schedules.',                                  'automate-io',  'Automation',  380, 7.2);
 
--- Down
+-- Down Migration
 
 DROP TABLE IF EXISTS marketplace_skills;

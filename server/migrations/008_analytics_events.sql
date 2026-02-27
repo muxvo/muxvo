@@ -1,4 +1,4 @@
--- Up
+-- Up Migration
 
 -- Analytics events table (per-device/user event tracking)
 -- Supports hybrid auth: anonymous device_id + optional user_id
@@ -17,6 +17,6 @@ CREATE INDEX IF NOT EXISTS idx_ae_date_metric ON analytics_events(date, metric);
 CREATE INDEX IF NOT EXISTS idx_ae_device ON analytics_events(device_id, date);
 CREATE INDEX IF NOT EXISTS idx_ae_user ON analytics_events(user_id, date);
 
--- Down
+-- Down Migration
 
 DROP TABLE IF EXISTS analytics_events;
