@@ -178,6 +178,6 @@ export const en = {
   'settings.lang': 'Interface Language',
   'settings.langZh': '中文',
   'settings.langEn': 'English',
-  'settings.restartTour': 'Restart Feature Tour',
-  'settings.restartTourDesc': 'View the feature tour tutorial again',
+  'settings.restartTour': 'Beginner Guide',
+  'settings.restartTourDesc': 'View the beginner guide again',
 } as const;

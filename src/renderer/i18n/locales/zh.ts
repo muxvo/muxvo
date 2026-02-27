@@ -178,6 +178,6 @@ export const zh = {
   'settings.lang': '界面语言',
   'settings.langZh': '中文',
   'settings.langEn': 'English',
-  'settings.restartTour': '重新开始功能导览',
-  'settings.restartTourDesc': '再次查看功能导览教程',
+  'settings.restartTour': '新手引导',
+  'settings.restartTourDesc': '再次查看新手引导教程',
 } as const;
