@@ -1,4 +1,4 @@
--- Up Migration
+-- Up
 CREATE TABLE email_verifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) NOT NULL,
@@ -12,5 +12,5 @@ CREATE TABLE email_verifications (
 
 CREATE INDEX idx_email_verifications_email ON email_verifications(email, purpose) WHERE verified_at IS NULL;
 
--- Down Migration
+-- Down
 DROP TABLE IF EXISTS email_verifications;

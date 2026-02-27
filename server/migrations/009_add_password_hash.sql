@@ -1,5 +1,5 @@
--- Up Migration
+-- Up
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
 
--- Down Migration
+-- Down
 ALTER TABLE users DROP COLUMN IF EXISTS password_hash;
