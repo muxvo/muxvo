@@ -417,6 +417,38 @@ app.whenReady().then(() => {
         promptUpdate(info.version);
       });
 
+      autoUpdater.on('download-progress', (progress) => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.setProgressBar(progress.percent / 100);
+        }
+      });
+
+      autoUpdater.on('update-downloaded', (info) => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.setProgressBar(-1); // 清除进度条
+        }
+        dialog.showMessageBox({
+          type: 'info',
+          title: '下载完成',
+          message: `v${info.version} 已下载完成`,
+          detail: '下次启动 Muxvo 时将自动更新。',
+          buttons: ['好的'],
+        });
+      });
+
+      autoUpdater.on('error', (err) => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.setProgressBar(-1);
+        }
+        dialog.showMessageBox({
+          type: 'error',
+          title: '更新下载失败',
+          message: '下载更新时出错',
+          detail: err.message,
+          buttons: ['知道了'],
+        });
+      });
+
       autoUpdater.checkForUpdates();
     }
 
