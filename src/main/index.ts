@@ -317,7 +317,9 @@ app.whenReady().then(() => {
   registerAuthHandlers();
 
   // Create backend client for analytics upload
-  const backendUrl = process.env.MUXVO_API_URL || 'https://api.muxvo.com';
+  const isProduction = app?.isPackaged ?? false;
+  const backendUrl = process.env.MUXVO_API_URL
+    || (isProduction ? 'https://api.muxvo.com' : 'http://localhost:3100');
   const analyticsBackendClient = createBackendClient({ baseUrl: backendUrl });
 
   // Re-send heartbeat after login so server can associate user_id with device
