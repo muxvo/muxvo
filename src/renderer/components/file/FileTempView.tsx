@@ -137,6 +137,15 @@ export function FileTempView({
     });
   }, []);
 
+  // Force all tiling terminals to re-sync PTY size after this overlay closes
+  useEffect(() => {
+    return () => {
+      requestAnimationFrame(() => {
+        window.dispatchEvent(new CustomEvent('muxvo:terminal-refit'));
+      });
+    };
+  }, []);
+
   // Load file tree
   useEffect(() => {
     setExpandedFolders(new Set());

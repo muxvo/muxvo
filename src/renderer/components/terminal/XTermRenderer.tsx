@@ -29,6 +29,7 @@ function saveTerminalFontSize(size: number): void {
 
 interface Props {
   terminalId: string;
+  suppressResize?: boolean;
 }
 
 /** Check if a drag event carries file data (Finder or Muxvo internal) */
@@ -60,7 +61,7 @@ function extractFilePaths(e: React.DragEvent): string[] {
   return [];
 }
 
-export function XTermRenderer({ terminalId }: Props): JSX.Element {
+export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const searchAddonRef = useRef<SearchAddon | null>(null);
@@ -193,9 +194,11 @@ export function XTermRenderer({ terminalId }: Props): JSX.Element {
     });
     observer.observe(containerRef.current);
 
-    // Notify Main process of terminal size changes
+    // Notify Main process of terminal size changes (skip for compact/sidebar instances)
     term.onResize(({ cols, rows }) => {
-      window.api.terminal.resize(terminalId, cols, rows);
+      if (!suppressResize) {
+        window.api.terminal.resize(terminalId, cols, rows);
+      }
     });
 
     // Listen for UI theme changes to update xterm theme live
@@ -221,12 +224,23 @@ export function XTermRenderer({ terminalId }: Props): JSX.Element {
     window.addEventListener('muxvo:terminal-zoom', onZoomEvent);
     const unsubZoom = window.api.terminal.onZoom((direction: string) => handleZoom(direction));
 
+    // Listen for force-refit requests (e.g. after FileTempView overlay closes)
+    const onRefit = () => {
+      if (!disposed && !suppressResize) {
+        fitAddon.fit();
+        // Force re-send dimensions even if cols/rows unchanged (another instance may have altered PTY size)
+        window.api.terminal.resize(terminalId, term.cols, term.rows);
+      }
+    };
+    window.addEventListener('muxvo:terminal-refit', onRefit);
+
     return () => {
       disposed = true;
       unsubOutput();
       observer.disconnect();
       window.removeEventListener('muxvo:theme-change', onThemeChange);
       window.removeEventListener('muxvo:terminal-zoom', onZoomEvent);
+      window.removeEventListener('muxvo:terminal-refit', onRefit);
       unsubZoom();
       addonManager.disposeAll();
       term.dispose();
