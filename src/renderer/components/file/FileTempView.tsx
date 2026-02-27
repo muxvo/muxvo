@@ -279,11 +279,6 @@ export function FileTempView({
 
   return (
     <div className={`file-temp-view ${entered ? 'file-temp-view--entered' : ''}`}>
-      {/* Close button */}
-      <button className="file-temp-view__close" onClick={handleCloseRequest}>
-        &#x2715;
-      </button>
-
       {/* Left column: file tree */}
       <div
         className={`file-temp-view__files ${entered ? 'file-temp-view__files--entered' : ''}`}
@@ -338,6 +333,9 @@ export function FileTempView({
           >
             {getTagLabel(fileType)}
           </span>
+          <button className="file-temp-view__close" onClick={handleCloseRequest}>
+            &#x2715;
+          </button>
         </div>
         <div className="file-temp-view__content-body">
           {fileType === 'image' && content && (
