@@ -18,7 +18,7 @@ export function getAuthManager() {
   if (!authManager) {
     const isProduction = app?.isPackaged ?? false;
     const backendUrl = process.env.MUXVO_API_URL
-      || (isProduction ? 'https://api.muxvo.com' : 'http://localhost:3000');
+      || (isProduction ? 'https://api.muxvo.com' : 'http://localhost:3100');
     authManager = createAuthManager({ backendUrl });
   }
   return authManager;
