@@ -494,6 +494,29 @@ app.whenReady().then(() => {
     params: { version: app.getVersion(), platform: process.platform, restored_count: 0 },
   });
 
+  // Device heartbeat: register device info and check blocked status
+  (async () => {
+    try {
+      const deviceInfo = getDeviceInfo();
+      const deviceId = getDeviceId();
+      const accessToken = await getAuthManager().getAccessToken().catch(() => null) ?? undefined;
+      const result = await analyticsBackendClient.deviceHeartbeat(deviceId, deviceInfo, accessToken);
+
+      if (result?.status === 'blocked' && mainWindow && !mainWindow.isDestroyed()) {
+        dialog.showMessageBoxSync(mainWindow, {
+          type: 'error',
+          title: '设备已被限制',
+          message: '此设备已被管理员禁止使用 Muxvo。',
+          detail: '如有疑问请联系支持。',
+          buttons: ['退出'],
+        });
+        app.quit();
+      }
+    } catch (err) {
+      console.warn('[MUXVO:device] Heartbeat failed:', err);
+    }
+  })();
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       launchWindowWithTerminals();

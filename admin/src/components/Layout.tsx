@@ -20,6 +20,7 @@ export function Layout() {
           <SidebarLink to="/" label="Dashboard" />
           <SidebarLink to="/users" label="Users" />
           <SidebarLink to="/analytics" label="Analytics" />
+          <SidebarLink to="/devices" label="Devices" />
         </nav>
         <div className="p-3 border-t border-gray-800">
           <button

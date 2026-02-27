@@ -4,6 +4,7 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Users } from './pages/Users';
 import { Analytics } from './pages/Analytics';
+import { Devices } from './pages/Devices';
 import { hasToken } from './lib/api';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -27,6 +28,7 @@ export function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/users" element={<Users />} />
         <Route path="/analytics" element={<Analytics />} />
+        <Route path="/devices" element={<Devices />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
