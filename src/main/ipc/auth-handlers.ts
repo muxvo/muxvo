@@ -17,9 +17,7 @@ let authManager: ReturnType<typeof createAuthManager> | null = null;
 
 export function getAuthManager() {
   if (!authManager) {
-    const isProduction = app?.isPackaged ?? false;
-    const backendUrl = process.env.MUXVO_API_URL
-      || (isProduction ? 'https://api.muxvo.com' : 'http://localhost:3100');
+    const backendUrl = process.env.MUXVO_API_URL || 'https://api.muxvo.com';
     authManager = createAuthManager({ backendUrl });
   }
   return authManager;
@@ -42,9 +40,7 @@ function startOAuthPolling(
   state: string,
   manager: ReturnType<typeof createAuthManager>,
 ): void {
-  const isProduction = app?.isPackaged ?? false;
-  const backendUrl = process.env.MUXVO_API_URL
-    || (isProduction ? 'https://api.muxvo.com' : 'http://localhost:3100');
+  const backendUrl = process.env.MUXVO_API_URL || 'https://api.muxvo.com';
   const client = createBackendClient({ baseUrl: backendUrl });
 
   let attempts = 0;
