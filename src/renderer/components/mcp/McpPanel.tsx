@@ -8,7 +8,7 @@
  * Escape: edit/add mode → back to view, view mode → close panel.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { usePanelContext } from '@/renderer/contexts/PanelContext';
 import { useMcpConfig } from '@/renderer/hooks/useMcpConfig';
 import { useI18n } from '@/renderer/i18n';
@@ -38,6 +38,19 @@ export function McpPanel(): JSX.Element {
   const [selected, setSelected] = useState<McpServerConfig | null>(null);
   const [mode, setMode] = useState<Mode>('view');
   const [leftWidth, setLeftWidth] = useState(280);
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+
+  const toggleGroup = useCallback((key: string) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }, []);
 
   // Form state
   const [formName, setFormName] = useState('');
@@ -143,8 +156,8 @@ export function McpPanel(): JSX.Element {
     [leftWidth],
   );
 
-  // Group servers by scope
-  const grouped = groupByScope(servers);
+  // Group servers by level (system vs project)
+  const groups = useMemo(() => groupByLevel(servers), [servers]);
 
   return (
     <div className="mcp-panel">
@@ -167,28 +180,39 @@ export function McpPanel(): JSX.Element {
           ) : servers.length === 0 ? (
             <div className="mcp-panel__empty">{t('mcp.noServers')}</div>
           ) : (
-            Object.keys(grouped).map((scope) => {
-              const items = grouped[scope];
-              if (!items?.length) return null;
+            groups.map((group) => {
+              const isCollapsed = collapsed.has(group.key);
               return (
-                <div key={scope} className="mcp-panel__scope-group">
-                  <div className="mcp-panel__scope-label">
-                    <span className={`mcp-panel__scope-badge ${(SCOPE_LABELS[scope] || { cls: '' }).cls}`}>
-                      {(SCOPE_LABELS[scope] || { label: scope }).label}
+                <div key={group.key} className="mcp-panel__group">
+                  <div
+                    className="mcp-panel__group-header"
+                    onClick={() => toggleGroup(group.key)}
+                  >
+                    <span className={`mcp-panel__group-arrow${isCollapsed ? '' : ' mcp-panel__group-arrow--open'}`}>
+                      &#9654;
                     </span>
+                    <span className="mcp-panel__group-label">{group.label}</span>
+                    <span className="mcp-panel__group-count">{group.servers.length}</span>
                   </div>
-                  {items.map((s) => (
-                    <div
-                      key={`${s.scope}:${s.name}`}
-                      className={`mcp-panel__item${selected?.name === s.name && selected?.scope === s.scope ? ' mcp-panel__item--active' : ''}`}
-                      onClick={() => { setSelected(s); setMode('view'); }}
-                    >
-                      <div className="mcp-panel__item-name">{s.name}</div>
-                      <span className={`mcp-panel__type-badge mcp-panel__type-badge--${s.type}`}>
-                        {s.type.toUpperCase()}
-                      </span>
+                  {!isCollapsed && (
+                    <div className="mcp-panel__group-items">
+                      {group.servers.map((s) => (
+                        <div
+                          key={`${s.scope}:${s.name}`}
+                          className={`mcp-panel__item${selected?.name === s.name && selected?.scope === s.scope ? ' mcp-panel__item--active' : ''}`}
+                          onClick={() => { setSelected(s); setMode('view'); }}
+                        >
+                          <div className="mcp-panel__item-name">{s.name}</div>
+                          <span className={`mcp-panel__scope-badge ${(SCOPE_LABELS[s.scope] || { cls: '' }).cls}`}>
+                            {(SCOPE_LABELS[s.scope] || { label: s.scope }).label}
+                          </span>
+                          <span className={`mcp-panel__type-badge mcp-panel__type-badge--${s.type}`}>
+                            {s.type.toUpperCase()}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
               );
             })
@@ -469,13 +493,22 @@ function ServerForm({
 
 // ── Helpers ──
 
-function groupByScope(servers: McpServerConfig[]): Record<string, McpServerConfig[]> {
-  const result: Record<string, McpServerConfig[]> = {};
+const PROJECT_SCOPES = new Set(['project', 'codex-project', 'gemini-project']);
+
+function groupByLevel(servers: McpServerConfig[]): { key: string; label: string; servers: McpServerConfig[] }[] {
+  const system: McpServerConfig[] = [];
+  const project: McpServerConfig[] = [];
   for (const s of servers) {
-    if (!result[s.scope]) result[s.scope] = [];
-    result[s.scope].push(s);
+    if (PROJECT_SCOPES.has(s.scope)) {
+      project.push(s);
+    } else {
+      system.push(s);
+    }
   }
-  return result;
+  const groups: { key: string; label: string; servers: McpServerConfig[] }[] = [];
+  if (system.length) groups.push({ key: 'system', label: '系统', servers: system });
+  if (project.length) groups.push({ key: 'project', label: '项目', servers: project });
+  return groups;
 }
 
 function safeParseJson(str: string): Record<string, string> | undefined {
