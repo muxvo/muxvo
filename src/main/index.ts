@@ -373,9 +373,7 @@ app.whenReady().then(() => {
     return { success: true, data: result };
   });
 
-  ipcMain.handle(IPC_CHANNELS.APP.INSTALL_UPDATE, () => {
-    autoUpdater.quitAndInstall();
-  });
+  // INSTALL_UPDATE handler removed — update installs automatically on next quit
 
   // Create window and restore terminals from config
   function launchWindowWithTerminals(): void {
@@ -383,40 +381,25 @@ app.whenReady().then(() => {
     createWindow(config.window);
 
     // Auto-update (production only)
+    // Flow: detect → native dialog asks user → user approves → silent download → auto-install on next quit
     if (!is.dev) {
       autoUpdater.logger = null;
-      autoUpdater.autoDownload = true;
+      autoUpdater.autoDownload = false;
       autoUpdater.autoInstallOnAppQuit = true;
 
-      autoUpdater.on('checking-for-update', () => {
-        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_CHECKING, {});
-      });
-      autoUpdater.on('update-available', (info) => {
-        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_AVAILABLE, {
-          version: info.version,
-          releaseDate: info.releaseDate,
+      autoUpdater.on('update-available', async (info) => {
+        const { response } = await dialog.showMessageBox({
+          type: 'info',
+          title: 'Muxvo 有可用更新',
+          message: `发现新版本 v${info.version}`,
+          detail: '是否立即下载？下载完成后将在下次启动时自动更新。',
+          buttons: ['立即下载', '暂不更新'],
+          defaultId: 0,
+          cancelId: 1,
         });
-      });
-      autoUpdater.on('update-not-available', () => {
-        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_NOT_AVAILABLE, {});
-      });
-      autoUpdater.on('download-progress', (progress) => {
-        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_DOWNLOADING, {
-          percent: progress.percent,
-          bytesPerSecond: progress.bytesPerSecond,
-          transferred: progress.transferred,
-          total: progress.total,
-        });
-      });
-      autoUpdater.on('update-downloaded', (info) => {
-        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_DOWNLOADED, {
-          version: info.version,
-        });
-      });
-      autoUpdater.on('error', (err) => {
-        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_ERROR, {
-          message: err.message,
-        });
+        if (response === 0) {
+          autoUpdater.downloadUpdate();
+        }
       });
 
       autoUpdater.checkForUpdates();

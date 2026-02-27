@@ -19,7 +19,6 @@ import { PluginPanel } from './components/plugin/PluginPanel';
 import { FilePanel } from './components/file/FilePanel';
 import { FileTempView } from './components/file/FileTempView';
 import { TourOverlay } from './components/tour/TourOverlay';
-import { UpdateNotification } from './components/app/UpdateNotification';
 import { WaitingInputNotification } from './components/terminal/WaitingInputNotification';
 import { LoginModal } from './components/auth/LoginModal';
 import { SettingsModal } from './components/settings/SettingsModal';
@@ -552,7 +551,6 @@ function AppContent({
         }
         onSwitchToTerminals={() => dispatch({ type: 'CLOSE_ALL' })}
       />
-      <UpdateNotification />
     </div>
   );
 }
