@@ -6,56 +6,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-
-// Inline the reducer logic to test it directly (same as PanelContext.tsx)
-// We import the actual reducer behavior by reproducing the state shape
-
-interface PanelState {
-  filePanel: { open: boolean; terminalId: string | null };
-  tempView: { active: boolean; contentKey: string | null; projectCwd: string | null; terminalId: string | null };
-  chatHistory: { open: boolean };
-  skillsPanel: { open: boolean };
-  mcpPanel: { open: boolean };
-  hooksPanel: { open: boolean };
-  pluginsPanel: { open: boolean };
-  menuDropdown: { open: boolean; type: 'mcp' | null };
-  tour: { active: boolean };
-  settingsModal: { open: boolean };
-}
-
-const initialState: PanelState = {
-  filePanel: { open: false, terminalId: null },
-  tempView: { active: false, contentKey: null, projectCwd: null, terminalId: null },
-  chatHistory: { open: false },
-  skillsPanel: { open: false },
-  mcpPanel: { open: false },
-  hooksPanel: { open: false },
-  pluginsPanel: { open: false },
-  menuDropdown: { open: false, type: null },
-  tour: { active: false },
-  settingsModal: { open: false },
-};
-
-type PanelAction =
-  | { type: 'START_TOUR' }
-  | { type: 'COMPLETE_TOUR' }
-  | { type: 'CLOSE_ALL' }
-  | { type: 'OPEN_CHAT_HISTORY' };
-
-function panelReducer(state: PanelState, action: PanelAction): PanelState {
-  switch (action.type) {
-    case 'START_TOUR':
-      return { ...initialState, tour: { active: true } };
-    case 'COMPLETE_TOUR':
-      return { ...state, tour: { active: false } };
-    case 'OPEN_CHAT_HISTORY':
-      return { ...state, chatHistory: { open: true } };
-    case 'CLOSE_ALL':
-      return { ...initialState, tour: state.tour }; // FIX: preserve tour
-    default:
-      return state;
-  }
-}
+import { panelReducer, initialState } from '@/renderer/contexts/PanelContext';
 
 describe('VERIFY: CLOSE_ALL preserves tour state', () => {
   test('CLOSE_ALL does NOT deactivate tour when tour is active', () => {

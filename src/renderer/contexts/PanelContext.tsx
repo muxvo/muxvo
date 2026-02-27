@@ -20,7 +20,7 @@ export interface PanelState {
   settingsModal: { open: boolean };
 }
 
-const initialState: PanelState = {
+export const initialState: PanelState = {
   filePanel: { open: false, terminalId: null },
   tempView: { active: false, contentKey: null, projectCwd: null, terminalId: null },
   chatHistory: { open: false },
@@ -59,7 +59,7 @@ type PanelAction =
 
 // ── Reducer ──
 
-function panelReducer(state: PanelState, action: PanelAction): PanelState {
+export function panelReducer(state: PanelState, action: PanelAction): PanelState {
   switch (action.type) {
     case 'OPEN_FILE_PANEL':
       return {
