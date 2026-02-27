@@ -138,6 +138,17 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
     return null;
   }, []);
 
+  // === Sync refs when tour starts (must run BEFORE step detection effects) ===
+  useEffect(() => {
+    if (state.tour.active) {
+      prevTerminalCountRef.current = terminalCount;
+      prevTerminalOrderRef.current = terminalOrder;
+      prevViewModeRef.current = viewMode;
+      prevHasNameRef.current = Object.values(terminalNames).some(n => n && n.length > 0);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.tour.active]);
+
   // === Action detection effects ===
 
   // Step 1: Detect terminal created → destroy & reinit from step 2 (FAB element gets remounted)
