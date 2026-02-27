@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Muxvo 更新提醒 - 3种方案对比</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #1a1a2e; color: #e0e0e0; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; }
+
+  h1 { text-align: center; padding: 32px 0 8px; font-size: 22px; color: #fff; }
+  .subtitle { text-align: center; color: #888; font-size: 14px; margin-bottom: 32px; }
+
+  .demos { display: flex; gap: 24px; padding: 0 32px 40px; justify-content: center; flex-wrap: wrap; }
+
+  .demo-card {
+    width: 380px; border-radius: 12px; overflow: hidden;
+    border: 1px solid #2a2a4a; background: #16162a; flex-shrink: 0;
+  }
+  .demo-label {
+    padding: 12px 16px; font-size: 14px; font-weight: 600;
+    background: #1e1e3a; border-bottom: 1px solid #2a2a4a; color: #a0a0d0;
+  }
+  .demo-label span { font-size: 12px; font-weight: 400; color: #666; margin-left: 8px; }
+
+  /* Mock app background */
+  .mock-app {
+    position: relative; height: 340px; background: #0d0d1a;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .mock-app::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 24px, #ffffff06 24px, #ffffff06 25px),
+      repeating-linear-gradient(90deg, transparent, transparent 24px, #ffffff06 24px, #ffffff06 25px);
+  }
+  .mock-terminal {
+    width: 85%; height: 70%; background: #111; border-radius: 8px; border: 1px solid #333;
+    padding: 12px; font-family: 'SF Mono', Monaco, monospace; font-size: 11px; color: #0f0;
+    line-height: 1.6; opacity: 0.5;
+  }
+  .mock-terminal .prompt { color: #6cf; }
+  .mock-terminal .cmd { color: #aaa; }
+
+  /* ========== 方案 A: 居中模态弹窗 ========== */
+  .modal-backdrop {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center; z-index: 10;
+  }
+  .modal-box {
+    width: 300px; background: #1e1e3a; border-radius: 12px;
+    border: 1px solid #3a3a6a; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    padding: 24px; text-align: center;
+  }
+  .modal-icon {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;
+    font-size: 24px; color: #fff;
+  }
+  .modal-title { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 8px; }
+  .modal-desc { font-size: 13px; color: #999; line-height: 1.5; margin-bottom: 20px; }
+  .modal-version {
+    display: inline-block; padding: 2px 10px; border-radius: 10px;
+    background: #4facfe22; color: #4facfe; font-size: 12px; font-weight: 500;
+    margin-bottom: 16px;
+  }
+  .modal-buttons { display: flex; gap: 10px; }
+  .btn-primary {
+    flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer;
+    background: linear-gradient(135deg, #4facfe, #00c6fb); color: #fff;
+    font-size: 14px; font-weight: 600;
+  }
+  .btn-secondary {
+    flex: 1; padding: 10px; border: 1px solid #3a3a6a; border-radius: 8px; cursor: pointer;
+    background: transparent; color: #999; font-size: 14px;
+  }
+
+  /* ========== 方案 B: 顶部横幅 ========== */
+  .top-banner {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+    background: linear-gradient(90deg, #4facfe, #00c6fb);
+    padding: 10px 20px; display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; color: #fff;
+  }
+  .banner-left { display: flex; align-items: center; gap: 10px; }
+  .banner-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: #fff;
+    animation: pulse-banner 1.5s infinite;
+  }
+  @keyframes pulse-banner { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .banner-buttons { display: flex; gap: 8px; }
+  .banner-btn {
+    padding: 5px 14px; border-radius: 6px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: none;
+  }
+  .banner-btn-primary { background: #fff; color: #4facfe; }
+  .banner-btn-dismiss { background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
+
+  /* ========== 方案 C: 系统原生对话框 ========== */
+  .native-backdrop {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.3);
+    display: flex; align-items: flex-start; justify-content: center;
+    padding-top: 60px; z-index: 10;
+  }
+  .native-dialog {
+    width: 280px; background: #2a2a2a; border-radius: 10px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6); overflow: hidden;
+    border: 1px solid #444;
+  }
+  .native-body { padding: 20px 20px 16px; text-align: center; }
+  .native-app-icon {
+    width: 48px; height: 48px; border-radius: 10px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: #fff; font-weight: bold;
+  }
+  .native-title { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 8px; }
+  .native-desc { font-size: 12px; color: #aaa; line-height: 1.5; }
+  .native-buttons { border-top: 1px solid #444; display: flex; }
+  .native-btn {
+    flex: 1; padding: 12px; text-align: center; font-size: 13px;
+    cursor: pointer; border: none; background: transparent;
+  }
+  .native-btn:first-child { color: #999; border-right: 1px solid #444; }
+  .native-btn:last-child { color: #4facfe; font-weight: 600; }
+
+  /* Progress bar for all */
+  .progress-section { margin: 12px 0 4px; }
+  .progress-track { height: 4px; border-radius: 2px; background: #ffffff15; }
+  .progress-fill { height: 4px; border-radius: 2px; background: linear-gradient(90deg, #4facfe, #00f2fe); width: 72%; }
+  .progress-text { font-size: 11px; color: #888; margin-top: 4px; text-align: right; }
+
+  /* Tabs */
+  .tabs { display: flex; justify-content: center; gap: 0; margin-bottom: 24px; }
+  .tab {
+    padding: 10px 24px; cursor: pointer; font-size: 14px; color: #888;
+    border-bottom: 2px solid transparent; transition: all 0.2s;
+  }
+  .tab:hover { color: #ccc; }
+  .tab.active { color: #4facfe; border-bottom-color: #4facfe; }
+
+  /* States */
+  .state-row { display: flex; gap: 24px; padding: 0 32px 40px; justify-content: center; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<h1>Muxvo 更新提醒 · 方案对比</h1>
+<p class="subtitle">下载完成后的提醒样式，点击可查看不同状态</p>
+
+<div class="demos">
+
+  <!-- 方案 A: 居中模态弹窗 -->
+  <div class="demo-card">
+    <div class="demo-label">方案 A · 居中模态弹窗 <span>类似 VS Code</span></div>
+    <div class="mock-app">
+      <div class="mock-terminal">
+        <div><span class="prompt">~/project $</span> <span class="cmd">claude "add auth"</span></div>
+        <div>I'll help you add authentication...</div>
+        <div>Creating src/auth/login.ts...</div>
+        <div><span class="prompt">~/project $</span> <span class="cmd">▊</span></div>
+      </div>
+      <div class="modal-backdrop">
+        <div class="modal-box">
+          <div class="modal-icon">↑</div>
+          <div class="modal-title">发现新版本</div>
+          <div class="modal-version">v0.3.0</div>
+          <div class="modal-desc">新版本已下载完成，重启应用即可完成更新</div>
+          <div class="modal-buttons">
+            <button class="btn-secondary">稍后提醒</button>
+            <button class="btn-primary">立即重启</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 方案 B: 顶部横幅 -->
+  <div class="demo-card">
+    <div class="demo-label">方案 B · 顶部横幅 <span>不阻断操作</span></div>
+    <div class="mock-app">
+      <div class="mock-terminal">
+        <div><span class="prompt">~/project $</span> <span class="cmd">claude "add auth"</span></div>
+        <div>I'll help you add authentication...</div>
+        <div>Creating src/auth/login.ts...</div>
+        <div><span class="prompt">~/project $</span> <span class="cmd">▊</span></div>
+      </div>
+      <div class="top-banner">
+        <div class="banner-left">
+          <div class="banner-dot"></div>
+          <span>新版本 v0.3.0 已就绪，重启即可更新</span>
+        </div>
+        <div class="banner-buttons">
+          <button class="banner-btn banner-btn-dismiss">忽略</button>
+          <button class="banner-btn banner-btn-primary">立即重启</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 方案 C: 系统原生对话框 -->
+  <div class="demo-card">
+    <div class="demo-label">方案 C · 系统原生对话框 <span>macOS 风格</span></div>
+    <div class="mock-app">
+      <div class="mock-terminal">
+        <div><span class="prompt">~/project $</span> <span class="cmd">claude "add auth"</span></div>
+        <div>I'll help you add authentication...</div>
+        <div>Creating src/auth/login.ts...</div>
+        <div><span class="prompt">~/project $</span> <span class="cmd">▊</span></div>
+      </div>
+      <div class="native-backdrop">
+        <div class="native-dialog">
+          <div class="native-body">
+            <div class="native-app-icon">M</div>
+            <div class="native-title">Muxvo 有可用更新</div>
+            <div class="native-desc">版本 0.3.0 已下载完成。<br>是否立即重启以完成更新？</div>
+          </div>
+          <div class="native-buttons">
+            <button class="native-btn">稍后</button>
+            <button class="native-btn">立即重启</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
