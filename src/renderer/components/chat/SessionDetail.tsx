@@ -364,7 +364,7 @@ export const SessionDetail = forwardRef<SessionDetailHandle, SessionDetailProps>
 
   // Report match info to parent
   useEffect(() => {
-    onMatchInfoChange?.(currentMatchIdx + 1, matchIndices.length);
+    onMatchInfoChange?.(matchIndices.length > 0 ? currentMatchIdx + 1 : 0, matchIndices.length);
   }, [currentMatchIdx, matchIndices.length, onMatchInfoChange]);
 
   const handleStartReached = useCallback(() => {
