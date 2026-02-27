@@ -30,7 +30,7 @@ import { registerFsHandlers } from './ipc/fs-handlers';
 import { registerAppHandlers } from './ipc/app-handlers';
 import { registerFsWatcherHandlers } from './ipc/fs-watcher-handlers';
 import { registerFsImageHandlers } from './ipc/fs-image-handlers';
-import { registerAuthHandlers, getAuthManager } from './ipc/auth-handlers';
+import { registerAuthHandlers, getAuthManager, configureAuthManager } from './ipc/auth-handlers';
 import { registerAnalyticsHandlers } from './ipc/analytics-handlers';
 import type { AnalyticsTracker } from './services/analytics/tracker';
 import { getDeviceId } from './services/analytics/device-id';
@@ -319,6 +319,20 @@ app.whenReady().then(() => {
   // Create backend client for analytics upload
   const backendUrl = process.env.MUXVO_API_URL || 'https://api.muxvo.com';
   const analyticsBackendClient = createBackendClient({ baseUrl: backendUrl });
+
+  // Re-send heartbeat after login so server can associate user_id with device
+  configureAuthManager({
+    onLoginSuccess: async () => {
+      try {
+        const deviceId = getDeviceId();
+        const deviceInfo = getDeviceInfo();
+        const accessToken = await getAuthManager().getAccessToken() ?? undefined;
+        await analyticsBackendClient.deviceHeartbeat(deviceId, deviceInfo, accessToken);
+      } catch (err) {
+        console.warn('[MUXVO:device] Post-login heartbeat failed:', err);
+      }
+    },
+  });
 
   const uploadToServer = async (events: Array<{ metric: string; value?: number; metadata?: object }>) => {
     try {

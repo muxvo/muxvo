@@ -9,18 +9,24 @@
 
 import { app, ipcMain, BrowserWindow, shell } from 'electron';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
-import { createAuthManager } from '@/main/services/auth/auth-manager';
+import { createAuthManager, type AuthManagerOptions } from '@/main/services/auth/auth-manager';
 import { createBackendClient } from '@/main/services/auth/backend-client';
 
 // Lazy singleton auth manager (created on first use)
 let authManager: ReturnType<typeof createAuthManager> | null = null;
+let authManagerExtraOptions: Partial<AuthManagerOptions> = {};
+
+/** Pre-configure options (e.g. onLoginSuccess) before first getAuthManager() call */
+export function configureAuthManager(opts: Partial<AuthManagerOptions>): void {
+  authManagerExtraOptions = opts;
+}
 
 export function getAuthManager() {
   if (!authManager) {
     const isProduction = app?.isPackaged ?? false;
     const backendUrl = process.env.MUXVO_API_URL
       || (isProduction ? 'https://api.muxvo.com' : 'http://localhost:3100');
-    authManager = createAuthManager({ backendUrl });
+    authManager = createAuthManager({ backendUrl, ...authManagerExtraOptions });
   }
   return authManager;
 }

@@ -14,6 +14,7 @@ const TOKEN_REFRESH_INTERVAL_MS = 12 * 60 * 1000; // 12 minutes (before 15min ex
 export interface AuthManagerOptions {
   backendUrl: string;
   backendTimeout?: number;
+  onLoginSuccess?: () => void;
 }
 
 export function createAuthManager(options: AuthManagerOptions) {
@@ -97,6 +98,7 @@ export function createAuthManager(options: AuthManagerOptions) {
           email: result.user.email || email,
         });
         startRefreshTimer();
+        options.onLoginSuccess?.();
         return { success: true, user: result.user };
       } catch (err) {
         machine.send('AUTH_FAILED', {
@@ -121,6 +123,7 @@ export function createAuthManager(options: AuthManagerOptions) {
           email: user.email || '',
         });
         startRefreshTimer();
+        options.onLoginSuccess?.();
         return { success: true, user };
       } catch (err) {
         machine.send('AUTH_FAILED', {
@@ -209,6 +212,7 @@ export function createAuthManager(options: AuthManagerOptions) {
           email: user.email || '',
         });
         startRefreshTimer();
+        options.onLoginSuccess?.();
         return { success: true, user };
       } catch {
         // Token may be expired, try refresh
@@ -225,6 +229,7 @@ export function createAuthManager(options: AuthManagerOptions) {
             email: user.email || '',
           });
           startRefreshTimer();
+          options.onLoginSuccess?.();
           return { success: true, user };
         } catch {
           await clearToken();
