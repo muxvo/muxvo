@@ -33,6 +33,8 @@ interface SessionListProps {
   matchTotal?: number;
   onPrevMatch?: () => void;
   onNextMatch?: () => void;
+  /** Number of matching sessions for search result count display */
+  sessionResultCount?: number;
 }
 
 /**
@@ -114,7 +116,7 @@ function LoadMoreSentinel({ onVisible }: { onVisible: () => void }) {
   return <div ref={ref} style={{ height: 1 }} />;
 }
 
-export function SessionList({ sessions, selectedId, onSelect, onSessionContextMenu, projects, showProjectName, searchQuery = '', onSearchChange, searching, searchSnippets, matchCurrent, matchTotal, onPrevMatch, onNextMatch }: SessionListProps) {
+export function SessionList({ sessions, selectedId, onSelect, onSessionContextMenu, projects, showProjectName, searchQuery = '', onSearchChange, searching, searchSnippets, matchCurrent, matchTotal, onPrevMatch, onNextMatch, sessionResultCount }: SessionListProps) {
   const { t } = useI18n();
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
@@ -151,14 +153,16 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
             value={searchQuery}
             onChange={onSearchChange}
             placeholder="搜索会话..."
-            matchCurrent={matchCurrent}
-            matchTotal={matchTotal}
-            onPrevMatch={onPrevMatch}
-            onNextMatch={onNextMatch}
+            {...(selectedId
+              ? { matchCurrent, matchTotal, onPrevMatch, onNextMatch }
+              : { resultCount: sessionResultCount }
+            )}
           />
         )}
-        <div className="session-list__empty">
-          {searchQuery ? '无匹配会话' : t('chat.noSessions')}
+        <div className="session-list__cards">
+          <div className="session-list__empty">
+            {searchQuery ? '无匹配会话' : t('chat.noSessions')}
+          </div>
         </div>
       </div>
     );
@@ -176,13 +180,14 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
           value={searchQuery}
           onChange={onSearchChange}
           placeholder="搜索会话..."
-          matchCurrent={matchCurrent}
-          matchTotal={matchTotal}
-          onPrevMatch={onPrevMatch}
-          onNextMatch={onNextMatch}
+          {...(selectedId
+            ? { matchCurrent, matchTotal, onPrevMatch, onNextMatch }
+            : { resultCount: sessionResultCount }
+          )}
         />
       )}
 
+      <div className="session-list__cards">
       {visibleSessions.map((session) => {
         const displayTitle = session.customTitle || session.title;
         const title = displayTitle.slice(0, 50);
@@ -252,6 +257,7 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
       {hasMore && (
         <LoadMoreSentinel onVisible={() => setVisibleCount(prev => prev + PAGE_SIZE)} />
       )}
+      </div>
     </div>
   );
 }

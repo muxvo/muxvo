@@ -30,6 +30,8 @@ interface SearchInputProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  /** Result count for simple mode (no nav) */
+  resultCount?: number;
   /** Match navigation: current match (1-based) */
   matchCurrent?: number;
   /** Match navigation: total matches */
@@ -38,8 +40,10 @@ interface SearchInputProps {
   onNextMatch?: () => void;
 }
 
-export function SearchInput({ value, onChange, placeholder = 'Search...', matchCurrent, matchTotal, onPrevMatch, onNextMatch }: SearchInputProps) {
-  const showNav = Boolean(value?.trim());
+export function SearchInput({ value, onChange, placeholder = 'Search...', resultCount, matchCurrent, matchTotal, onPrevMatch, onNextMatch }: SearchInputProps) {
+  const hasQuery = Boolean(value?.trim());
+  const showResultCount = hasQuery && resultCount != null && resultCount >= 0 && matchTotal == null;
+  const showNav = hasQuery && matchTotal != null && matchTotal > 0;
   return (
     <div className="search-input-wrap">
       <input
@@ -48,8 +52,11 @@ export function SearchInput({ value, onChange, placeholder = 'Search...', matchC
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        style={showNav ? { paddingRight: 110 } : undefined}
+        style={showResultCount || showNav ? { paddingRight: 110 } : undefined}
       />
+      {showResultCount && (
+        <span className="search-input-wrap__result-count">{resultCount} 个结果</span>
+      )}
       {showNav && (
         <div className="search-input-wrap__nav">
           <span className="search-input-wrap__nav-count">{matchCurrent}/{matchTotal}</span>
@@ -57,7 +64,7 @@ export function SearchInput({ value, onChange, placeholder = 'Search...', matchC
           <button className="search-input-wrap__nav-btn" onClick={onNextMatch} disabled={!matchTotal || (matchCurrent != null && matchCurrent >= (matchTotal ?? 0))}>&#9660;</button>
         </div>
       )}
-      {value && !showNav && (
+      {value && !showResultCount && !showNav && (
         <button
           className="search-input-wrap__clear"
           onClick={() => onChange('')}
@@ -65,7 +72,7 @@ export function SearchInput({ value, onChange, placeholder = 'Search...', matchC
           &times;
         </button>
       )}
-      {showNav && (
+      {(showResultCount || showNav) && (
         <button
           className="search-input-wrap__clear search-input-wrap__clear--with-nav"
           onClick={() => onChange('')}

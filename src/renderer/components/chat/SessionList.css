@@ -23,6 +23,17 @@
   flex-shrink: 0;
 }
 
+.session-list > .search-input-wrap {
+  flex-shrink: 0;
+}
+
+.session-list__cards {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
 .session-list__sort {
   display: flex;
   gap: 2px;

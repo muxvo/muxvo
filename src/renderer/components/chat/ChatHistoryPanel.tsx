@@ -336,6 +336,7 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
             onSearchChange={setSearchQuery}
             searching={searching}
             searchSnippets={searchSnippets}
+            sessionResultCount={sessionResultCount}
             matchCurrent={matchInfo.current}
             matchTotal={matchInfo.total}
             onPrevMatch={() => detailRef.current?.goToPrevMatch()}
