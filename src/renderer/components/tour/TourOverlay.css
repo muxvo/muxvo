@@ -110,8 +110,6 @@ body.tour-drag-active .driver-overlay {
   outline: 2px solid rgba(232, 167, 72, 0.6);
   outline-offset: 3px;
   border-radius: 8px;
-  z-index: 100001;
-  position: relative;
 }
 
 @keyframes tour-pulse {
