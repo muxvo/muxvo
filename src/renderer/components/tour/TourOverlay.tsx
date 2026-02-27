@@ -44,8 +44,7 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
   const moveNext = useCallback(() => {
     setTimeout(() => {
       if (driverRef.current) {
-        const totalSteps = TOUR_STEPS.filter(s => !s.needsTerminal || terminalCount > 0).length;
-        trackEvent(ANALYTICS_EVENTS.ONBOARDING.STEP, { step: currentStepRef.current, total: totalSteps });
+        trackEvent(ANALYTICS_EVENTS.ONBOARDING.STEP, { step: currentStepRef.current, total: TOUR_STEPS.length });
         if (!driverRef.current.hasNextStep()) {
           completeTour();
         } else {
@@ -53,26 +52,16 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
         }
       }
     }, 300);
-  }, [completeTour, terminalCount]);
-
-  // Build active steps list (filtered by terminal availability)
-  const getActiveSteps = useCallback((hasTerminal: boolean): typeof TOUR_STEPS => {
-    return TOUR_STEPS.filter(step => {
-      if (step.needsTerminal && !hasTerminal) return false;
-      return true;
-    });
-  }, []);
+  }, [completeTour]);
 
   // Get the actionType of the current active step
   const getCurrentActionType = useCallback(() => {
-    const hasTerminal = terminalCount > 0;
-    const activeSteps = getActiveSteps(hasTerminal);
     const idx = currentStepRef.current;
-    if (idx >= 0 && idx < activeSteps.length) {
-      return activeSteps[idx].actionType;
+    if (idx >= 0 && idx < TOUR_STEPS.length) {
+      return TOUR_STEPS[idx].actionType;
     }
     return null;
-  }, [terminalCount, getActiveSteps]);
+  }, []);
 
   // === Action detection effects ===
 
@@ -135,9 +124,6 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
       return;
     }
 
-    const hasTerminal = terminalCount > 0;
-    const activeSteps = getActiveSteps(hasTerminal);
-
     // Reset refs
     prevTerminalCountRef.current = terminalCount;
     prevTerminalOrderRef.current = terminalOrder;
@@ -145,8 +131,8 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
     prevHasNameRef.current = Object.values(terminalNames).some(n => n && n.length > 0);
     currentStepRef.current = 0;
 
-    // Build driver.js steps
-    const steps: DriveStep[] = activeSteps.map((step) => ({
+    // Build driver.js steps — always include all steps (step 1 creates terminal, so steps 2-6 will have valid selectors)
+    const steps: DriveStep[] = TOUR_STEPS.map((step) => ({
       ...(step.selector ? { element: step.selector } : {}),
       disableActiveInteraction: !step.interactive,
       popover: {
@@ -157,21 +143,6 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
         showButtons: step.showButtons as any[],
       },
     }));
-
-    // If no terminals, add a prompt step
-    if (!hasTerminal) {
-      steps.push({
-        element: '.terminal-grid__fab',
-        disableActiveInteraction: false,
-        popover: {
-          title: t('tour.noTerminal.title'),
-          description: t('tour.noTerminal.desc'),
-          side: 'bottom',
-          popoverClass: 'tour-popover',
-          showButtons: ['close'] as any[],
-        },
-      });
-    }
 
     const driverInstance = driver({
       showProgress: true,
@@ -192,7 +163,7 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
           currentStepRef.current = idx;
         }
         // For drag steps, toggle body class to override driver.js global pointer-events: none
-        const step = activeSteps[idx ?? 0];
+        const step = TOUR_STEPS[idx ?? 0];
         const needsPassThrough = step?.actionType === 'drag-reorder'
           || step?.actionType === 'drag-resize';
         document.body.classList.toggle('tour-drag-active', needsPassThrough);

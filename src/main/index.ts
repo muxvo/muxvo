@@ -316,9 +316,7 @@ app.whenReady().then(() => {
   registerAuthHandlers();
 
   // Create backend client for analytics upload
-  const isProduction = app.isPackaged;
-  const backendUrl = process.env.MUXVO_API_URL
-    || (isProduction ? 'https://api.muxvo.com' : 'http://localhost:3000');
+  const backendUrl = process.env.MUXVO_API_URL || 'https://api.muxvo.com';
   const analyticsBackendClient = createBackendClient({ baseUrl: backendUrl });
 
   const uploadToServer = async (events: Array<{ metric: string; value?: number; metadata?: object }>) => {
