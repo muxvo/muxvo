@@ -95,6 +95,19 @@ export function UpdateNotification() {
     return () => cleanups.forEach(fn => fn());
   }, []);
 
+  // >>> TEMP DEMO: 模拟更新流程，演示完删除 <<<
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    timers.push(setTimeout(() => { setVersion('0.3.0'); setState('available'); }, 3000));
+    timers.push(setTimeout(() => { setPercent(15); setState('downloading'); }, 5000));
+    timers.push(setTimeout(() => { setPercent(45); }, 6000));
+    timers.push(setTimeout(() => { setPercent(78); }, 7000));
+    timers.push(setTimeout(() => { setPercent(100); }, 8000));
+    timers.push(setTimeout(() => { setVersion('0.3.0'); setState('downloaded'); }, 9000));
+    return () => timers.forEach(clearTimeout);
+  }, []);
+  // >>> END TEMP DEMO <<<
+
   // Auto-dismiss error after 5s
   useEffect(() => {
     if (state === 'error') {

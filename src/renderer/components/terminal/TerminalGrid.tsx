@@ -16,6 +16,7 @@ import { calculateGridLayout, GridLayoutResult } from '@/shared/utils/grid-layou
 import { createGridResizeManager } from '@/renderer/stores/grid-resize';
 import { createDragManager } from '@/renderer/stores/drag-manager';
 import { TerminalTile } from './TerminalTile';
+import { TerminalSidebar } from './TerminalSidebar';
 import { ResizeHandle } from './ResizeHandle';
 
 interface TerminalInfo {
