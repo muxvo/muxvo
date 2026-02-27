@@ -114,9 +114,9 @@
 /* Tour complete toast */
 .tour-complete-toast {
   position: fixed;
-  top: 48px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%) translateY(-20px);
+  transform: translate(-50%, -50%) scale(0.9);
   opacity: 0;
   z-index: 9999;
   background: var(--bg-elevated);
@@ -135,5 +135,5 @@
 
 .tour-complete-toast--visible {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translate(-50%, -50%) scale(1);
 }
