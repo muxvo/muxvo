@@ -26,6 +26,31 @@ function env(name: string, fallback?: string): string {
 
 const APP_SCHEME = () => env('APP_SCHEME', 'muxvo');
 
+/**
+ * Send HTML page that triggers deep link to Muxvo app.
+ * Browsers block 302 redirects to custom schemes (muxvo://),
+ * so we use JavaScript window.location.href instead.
+ */
+function sendDeepLinkRedirect(
+  reply: import('fastify').FastifyReply,
+  tokens: { accessToken: string; refreshToken: string },
+): import('fastify').FastifyReply {
+  const appScheme = APP_SCHEME();
+  const params = new URLSearchParams({
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+  });
+  const deepLinkUrl = `${appScheme}://auth/callback?${params.toString()}`;
+
+  return reply.type('text/html').send(`<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Login Success</title></head>
+<body>
+<p>登录成功，正在返回 Muxvo...</p>
+<script>window.location.href=${JSON.stringify(deepLinkUrl)};setTimeout(function(){document.getElementById('f').style.display='block'},3000)</script>
+<p id="f" style="display:none">如果没有自动跳转，<a href="${deepLinkUrl}">请点击此处打开 Muxvo</a></p>
+</body></html>`);
+}
+
 // ---------------------------------------------------------------------------
 // PKCE helpers
 // ---------------------------------------------------------------------------
@@ -275,16 +300,8 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     // Issue tokens
     const tokens = await issueTokenPair(user.id);
 
-    // Redirect to app custom URL scheme
-    const appScheme = APP_SCHEME();
-    const redirectParams = new URLSearchParams({
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-    });
-
-    return reply.redirect(
-      `${appScheme}://auth/callback?${redirectParams.toString()}`,
-    );
+    // Redirect to app via deep link (HTML + JS, not 302)
+    return sendDeepLinkRedirect(reply, tokens);
   });
 
   // =========================================================================
@@ -400,16 +417,8 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     // Issue tokens
     const tokens = await issueTokenPair(user.id);
 
-    // Redirect to app custom URL scheme
-    const appScheme = APP_SCHEME();
-    const redirectParams = new URLSearchParams({
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-    });
-
-    return reply.redirect(
-      `${appScheme}://auth/callback?${redirectParams.toString()}`,
-    );
+    // Redirect to app via deep link (HTML + JS, not 302)
+    return sendDeepLinkRedirect(reply, tokens);
   });
 
   // =========================================================================
