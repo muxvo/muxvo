@@ -1,5 +1,6 @@
 /**
  * VERIFY: Full Auth Flow — End-to-End Automated
+ * [TEST-ONLY] 此文件仅用于本地集成测试，需本地 server + postgres + redis 运行
  *
  * Tests the ENTIRE auth infrastructure automatically:
  * 1. GitHub OAuth init → correct authUrl
@@ -12,6 +13,7 @@
 import { describe, test, expect } from 'vitest';
 import { execSync } from 'child_process';
 
+// [TEST] 以下地址仅用于本地测试环境，生产环境使用 https://api.muxvo.com
 const SERVER_URL = 'http://localhost:3100';
 const EXPECTED_CLIENT_ID = 'Ov23li9S2prPOvtgBXpg';
 const EXPECTED_REDIRECT_URI = 'http://localhost:3100/auth/github/callback';

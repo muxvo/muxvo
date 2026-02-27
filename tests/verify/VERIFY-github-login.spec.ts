@@ -1,5 +1,6 @@
 /**
  * VERIFY: GitHub OAuth Login Flow
+ * [TEST-ONLY] 此文件仅用于本地 E2E 测试，需本地 server 运行在 localhost:3100
  *
  * Tests that clicking GitHub login button in Muxvo:
  * 1. Opens the login modal
@@ -21,7 +22,7 @@ test.beforeAll(async () => {
     env: {
       ...process.env,
       ELECTRON_RENDERER_URL: 'http://localhost:5173',
-      MUXVO_API_URL: 'http://localhost:3100',
+      MUXVO_API_URL: 'http://localhost:3100', // [TEST] 本地测试服务器
     },
   });
   window = await app.firstWindow();
@@ -66,5 +67,5 @@ test('GitHub login button opens GitHub authorization page', async () => {
   expect(result.data?.authUrl).toBeDefined();
   expect(result.data.authUrl).toContain('client_id=Ov23li9S2prPOvtgBXpg');
   expect(result.data.authUrl).toContain('redirect_uri=');
-  expect(result.data.authUrl).toContain('localhost%3A3100');
+  expect(result.data.authUrl).toContain('localhost%3A3100'); // [TEST] 验证本地测试回调地址
 });

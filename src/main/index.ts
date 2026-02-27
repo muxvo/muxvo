@@ -11,7 +11,7 @@
  * - Config persistence (save on close, restore on launch)
  */
 
-import { app, BrowserWindow, ipcMain, shell, protocol, net, Menu, dialog, nativeImage } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, protocol, net, Menu, dialog } from 'electron';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
 import { is } from '@electron-toolkit/utils';
@@ -380,40 +380,23 @@ app.whenReady().then(() => {
     const config = configManager.loadConfig();
     createWindow(config.window);
 
-    // >>> TEMP DEMO: 模拟原生更新对话框，演示完删除 <<<
-    setTimeout(async () => {
-      const iconPath = join(__dirname, '../../build/icon.icns');
-      if (process.platform === 'darwin') {
-        app.dock.setIcon(nativeImage.createFromPath(iconPath));
-      }
-      const { response } = await dialog.showMessageBox({
-        type: 'info',
-        icon: nativeImage.createFromPath(iconPath),
-        title: 'Muxvo 有可用更新',
-        message: '发现新版本 v0.3.0',
-        detail: '是否立即下载？下载完成后将在下次启动时自动更新。',
-        buttons: ['立即下载', '暂不更新'],
-        defaultId: 0,
-        cancelId: 1,
-      });
-      console.log('用户选择:', response === 0 ? '立即下载' : '暂不更新');
-    }, 3000);
-    // >>> END TEMP DEMO <<<
-
     // Auto-update (production only)
-    // Flow: detect → native dialog asks user → user approves → silent download → auto-install on next quit
+    // Flow: detect → native dialog → user approves → silent download → auto-install on next quit
+    // If user dismisses, remind with increasing intervals: 4h → 1d → 3d → 7d (max 4 reminders per version)
     if (!is.dev) {
       autoUpdater.logger = null;
       autoUpdater.autoDownload = false;
       autoUpdater.autoInstallOnAppQuit = true;
 
-      autoUpdater.on('update-available', async (info) => {
-        const iconPath = join(__dirname, '../../build/icon.icns');
+      let updateDismissCount = 0;
+      let updateReminderTimer: ReturnType<typeof setTimeout> | null = null;
+      const REMIND_INTERVALS = [4 * 3600_000, 24 * 3600_000, 3 * 24 * 3600_000, 7 * 24 * 3600_000]; // 4h, 1d, 3d, 7d
+
+      async function promptUpdate(version: string): Promise<void> {
         const { response } = await dialog.showMessageBox({
           type: 'info',
-          icon: nativeImage.createFromPath(iconPath),
           title: 'Muxvo 有可用更新',
-          message: `发现新版本 v${info.version}`,
+          message: `发现新版本 v${version}`,
           detail: '是否立即下载？下载完成后将在下次启动时自动更新。',
           buttons: ['立即下载', '暂不更新'],
           defaultId: 0,
@@ -421,7 +404,17 @@ app.whenReady().then(() => {
         });
         if (response === 0) {
           autoUpdater.downloadUpdate();
+        } else if (updateDismissCount < REMIND_INTERVALS.length) {
+          const delay = REMIND_INTERVALS[updateDismissCount];
+          updateDismissCount++;
+          updateReminderTimer = setTimeout(() => promptUpdate(version), delay);
         }
+      }
+
+      autoUpdater.on('update-available', (info) => {
+        updateDismissCount = 0;
+        if (updateReminderTimer) clearTimeout(updateReminderTimer);
+        promptUpdate(info.version);
       });
 
       autoUpdater.checkForUpdates();

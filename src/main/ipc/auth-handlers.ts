@@ -7,7 +7,7 @@
  *          auth:oauth-callback, auth:refresh-token, auth:get-profile
  */
 
-import { app, ipcMain, BrowserWindow, shell } from 'electron';
+import { ipcMain, BrowserWindow, shell } from 'electron';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 import { createAuthManager } from '@/main/services/auth/auth-manager';
 import { createBackendClient } from '@/main/services/auth/backend-client';
