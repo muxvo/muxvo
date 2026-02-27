@@ -53,12 +53,11 @@ describe('VERIFY: Tour step definitions have no next button', () => {
     }
   });
 
-  test('drag-resize step is removed (5 steps total)', async () => {
+  test('drag-reorder step is removed (4 steps total)', async () => {
     const { TOUR_STEPS } = await import('@/renderer/features/tour/steps');
-    expect(TOUR_STEPS.length).toBe(5);
+    expect(TOUR_STEPS.length).toBe(4);
     expect(TOUR_STEPS.map(s => s.id)).toEqual([
       'create-terminal',
-      'drag-reorder',
       'focus-terminal',
       'rename-terminal',
       'open-files',

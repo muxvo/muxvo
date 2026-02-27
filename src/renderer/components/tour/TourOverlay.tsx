@@ -17,12 +17,11 @@ const ADVANCE_DELAY = 500; // 0.5s delay before auto-advancing
 
 interface Props {
   terminalCount: number;
-  terminalOrder: string[];
   viewMode: 'Tiling' | 'Focused';
   terminalNames: Record<string, string>;
 }
 
-export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNames }: Props): null {
+export function TourOverlay({ terminalCount, viewMode, terminalNames }: Props): null {
   const { state, dispatch } = usePanelContext();
   const { t } = useI18n();
   const driverRef = useRef<Driver | null>(null);
@@ -30,10 +29,8 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
   const prevTerminalCountRef = useRef<number>(terminalCount);
   const prevViewModeRef = useRef<'Tiling' | 'Focused'>(viewMode);
   const prevHasNameRef = useRef<boolean>(Object.values(terminalNames).some(n => n && n.length > 0));
-  const prevTerminalOrderRef = useRef<string[]>(terminalOrder);
 
   const completeTour = useCallback((skipped = false) => {
-    document.body.classList.remove('tour-drag-active');
     if (driverRef.current) {
       driverRef.current.destroy();
       driverRef.current = null;
@@ -69,7 +66,6 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
   useEffect(() => {
     if (state.tour.active) {
       prevTerminalCountRef.current = terminalCount;
-      prevTerminalOrderRef.current = terminalOrder;
       prevViewModeRef.current = viewMode;
       prevHasNameRef.current = Object.values(terminalNames).some(n => n && n.length > 0);
     }
@@ -78,28 +74,19 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
 
   // === Action detection effects ===
 
-  // Step 1: Detect terminal created
+  // Step 1: Detect terminal created — hide overlay so user can see new terminal
   useEffect(() => {
     if (!state.tour.active || !driverRef.current) return;
     if (getCurrentActionType() !== 'create-terminal') return;
     if (terminalCount > prevTerminalCountRef.current) {
+      const overlay = document.querySelector('.driver-overlay') as HTMLElement;
+      if (overlay) overlay.style.display = 'none';
       moveNext();
     }
     prevTerminalCountRef.current = terminalCount;
   }, [state.tour.active, terminalCount, getCurrentActionType, moveNext]);
 
-  // Step 2: Detect drag reorder (terminal order changed)
-  useEffect(() => {
-    if (!state.tour.active || !driverRef.current) return;
-    if (getCurrentActionType() !== 'drag-reorder') return;
-    const prev = prevTerminalOrderRef.current;
-    if (prev.length > 0 && terminalOrder.length === prev.length && terminalOrder.some((id, i) => id !== prev[i])) {
-      moveNext();
-    }
-    prevTerminalOrderRef.current = terminalOrder;
-  }, [state.tour.active, terminalOrder, getCurrentActionType, moveNext]);
-
-  // Step 3: Detect focus mode (viewMode changed to Focused)
+  // Step 2: Detect focus mode (viewMode changed to Focused)
   useEffect(() => {
     if (!state.tour.active || !driverRef.current) return;
     if (getCurrentActionType() !== 'focus') return;
@@ -109,7 +96,7 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
     prevViewModeRef.current = viewMode;
   }, [state.tour.active, viewMode, getCurrentActionType, moveNext]);
 
-  // Step 4: Detect rename
+  // Step 3: Detect rename
   useEffect(() => {
     if (!state.tour.active || !driverRef.current) return;
     if (getCurrentActionType() !== 'rename') return;
@@ -120,7 +107,7 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
     prevHasNameRef.current = hasName;
   }, [state.tour.active, terminalNames, getCurrentActionType, moveNext]);
 
-  // Step 5: Detect file panel opened → complete tour after delay
+  // Step 4: Detect file panel opened → complete tour after delay
   useEffect(() => {
     if (!state.tour.active || !driverRef.current) return;
     if (getCurrentActionType() !== 'open-file') return;
@@ -141,7 +128,6 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
 
     // Reset refs
     prevTerminalCountRef.current = terminalCount;
-    prevTerminalOrderRef.current = terminalOrder;
     prevViewModeRef.current = viewMode;
     prevHasNameRef.current = Object.values(terminalNames).some(n => n && n.length > 0);
     currentStepRef.current = 0;
@@ -177,9 +163,6 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
         if (idx !== undefined) {
           currentStepRef.current = idx;
         }
-        const step = TOUR_STEPS[idx ?? 0];
-        const needsPassThrough = step?.actionType === 'drag-reorder';
-        document.body.classList.toggle('tour-drag-active', needsPassThrough);
       },
       onCloseClick: () => {
         completeTour(true);
@@ -194,7 +177,6 @@ export function TourOverlay({ terminalCount, terminalOrder, viewMode, terminalNa
     driverRef.current = driverInstance;
 
     return () => {
-      document.body.classList.remove('tour-drag-active');
       if (driverRef.current) {
         driverRef.current.destroy();
         driverRef.current = null;

@@ -93,16 +93,6 @@
   border-right-color: var(--bg-elevated);
 }
 
-/* Drag steps: override driver.js global pointer-events: none */
-body.tour-drag-active .app-content,
-body.tour-drag-active .app-content * {
-  pointer-events: auto !important;
-}
-body.tour-drag-active .driver-overlay {
-  visibility: hidden;
-  pointer-events: none !important;
-}
-
 /* 游戏化高亮：让需要点击的元素明亮发光 */
 .driver-active .driver-active-element {
   animation: tour-pulse 1.8s ease-in-out infinite;
