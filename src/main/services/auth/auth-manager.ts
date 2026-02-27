@@ -96,6 +96,7 @@ export function createAuthManager(options: AuthManagerOptions) {
           username: result.user.displayName || email,
           userId: result.user.id,
           email: result.user.email || email,
+          avatarUrl: result.user.avatarUrl || '',
         });
         startRefreshTimer();
         options.onLoginSuccess?.();
@@ -121,6 +122,7 @@ export function createAuthManager(options: AuthManagerOptions) {
           username: user.displayName || user.email || '',
           userId: user.id,
           email: user.email || '',
+          avatarUrl: user.avatarUrl || '',
         });
         startRefreshTimer();
         options.onLoginSuccess?.();
@@ -180,7 +182,7 @@ export function createAuthManager(options: AuthManagerOptions) {
           loggedIn: true,
           user: {
             username: machine.context.username || '',
-            avatarUrl: '',
+            avatarUrl: machine.context.avatarUrl || '',
             userId: machine.context.userId,
             email: machine.context.email,
           },
@@ -210,6 +212,7 @@ export function createAuthManager(options: AuthManagerOptions) {
           username: user.displayName || user.email || '',
           userId: user.id,
           email: user.email || '',
+          avatarUrl: user.avatarUrl || '',
         });
         startRefreshTimer();
         options.onLoginSuccess?.();
@@ -227,6 +230,7 @@ export function createAuthManager(options: AuthManagerOptions) {
             username: user.displayName || user.email || '',
             userId: user.id,
             email: user.email || '',
+            avatarUrl: user.avatarUrl || '',
           });
           startRefreshTimer();
           options.onLoginSuccess?.();
