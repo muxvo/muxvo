@@ -7,7 +7,7 @@
  *          auth:oauth-callback, auth:refresh-token, auth:get-profile
  */
 
-import { ipcMain, BrowserWindow, shell } from 'electron';
+import { app, ipcMain, BrowserWindow, shell } from 'electron';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 import { createAuthManager } from '@/main/services/auth/auth-manager';
 import { createBackendClient } from '@/main/services/auth/backend-client';
@@ -17,7 +17,9 @@ let authManager: ReturnType<typeof createAuthManager> | null = null;
 
 export function getAuthManager() {
   if (!authManager) {
-    const backendUrl = process.env.MUXVO_API_URL || 'https://api.muxvo.com';
+    const isProduction = app?.isPackaged ?? false;
+    const backendUrl = process.env.MUXVO_API_URL
+      || (isProduction ? 'https://api.muxvo.com' : 'http://localhost:3100');
     authManager = createAuthManager({ backendUrl });
   }
   return authManager;
@@ -40,7 +42,9 @@ function startOAuthPolling(
   state: string,
   manager: ReturnType<typeof createAuthManager>,
 ): void {
-  const backendUrl = process.env.MUXVO_API_URL || 'https://api.muxvo.com';
+  const isProduction = app?.isPackaged ?? false;
+  const backendUrl = process.env.MUXVO_API_URL
+    || (isProduction ? 'https://api.muxvo.com' : 'http://localhost:3100');
   const client = createBackendClient({ baseUrl: backendUrl });
 
   let attempts = 0;
