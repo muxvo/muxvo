@@ -39,7 +39,7 @@ interface SearchInputProps {
 }
 
 export function SearchInput({ value, onChange, placeholder = 'Search...', matchCurrent, matchTotal, onPrevMatch, onNextMatch }: SearchInputProps) {
-  const showNav = Boolean(value?.trim());
+  const showNav = value && matchTotal != null && matchTotal > 0;
   return (
     <div className="search-input-wrap">
       <input
@@ -53,8 +53,8 @@ export function SearchInput({ value, onChange, placeholder = 'Search...', matchC
       {showNav && (
         <div className="search-input-wrap__nav">
           <span className="search-input-wrap__nav-count">{matchCurrent}/{matchTotal}</span>
-          <button className="search-input-wrap__nav-btn" onClick={onPrevMatch} disabled={!matchTotal || (matchCurrent != null && matchCurrent <= 1)}>&#9650;</button>
-          <button className="search-input-wrap__nav-btn" onClick={onNextMatch} disabled={!matchTotal || (matchCurrent != null && matchCurrent >= (matchTotal ?? 0))}>&#9660;</button>
+          <button className="search-input-wrap__nav-btn" onClick={onPrevMatch} disabled={matchCurrent != null && matchCurrent <= 1}>&#9650;</button>
+          <button className="search-input-wrap__nav-btn" onClick={onNextMatch} disabled={matchCurrent != null && matchCurrent >= (matchTotal ?? 0)}>&#9660;</button>
         </div>
       )}
       {value && !showNav && (
