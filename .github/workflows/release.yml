@@ -89,3 +89,19 @@ jobs:
             dist/latest-mac.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy DMG to website server
+        env:
+          SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SERVER_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts
+
+          VERSION=$(node -p "require('./package.json').version")
+
+          scp -i ~/.ssh/deploy_key "dist/Muxvo-${VERSION}-arm64.dmg" "root@${SERVER_HOST}:/var/www/muxvo-downloads/"
+          ssh -i ~/.ssh/deploy_key "root@${SERVER_HOST}" \
+            "cd /var/www/muxvo-downloads && ln -sf Muxvo-${VERSION}-arm64.dmg Muxvo-arm64.dmg"

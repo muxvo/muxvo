@@ -2,7 +2,7 @@
  * Tour step definitions — maps each onboarding step to a UI element
  */
 
-export type ActionType = 'create-terminal' | 'observe' | 'focus' | 'rename' | 'open-file';
+export type ActionType = 'create-terminal' | 'observe' | 'drag-reorder' | 'focus' | 'rename' | 'open-file';
 export type AllowedButton = 'next' | 'previous' | 'close';
 
 export interface TourStep {
@@ -30,6 +30,17 @@ export const TOUR_STEPS: TourStep[] = [
     side: 'bottom',
     interactive: true,
     actionType: 'create-terminal',
+    showButtons: ['close'],
+  },
+  {
+    id: 'drag-reorder',
+    selector: '',
+    i18nTitleKey: 'tour.step2a.title',
+    i18nDescKey: 'tour.step2a.desc',
+    side: 'top',
+    needsTerminal: true,
+    interactive: true,
+    actionType: 'drag-reorder',
     showButtons: ['close'],
   },
   {

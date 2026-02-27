@@ -205,6 +205,28 @@ xcrun stapler staple dist/mac-arm64/Muxvo.app
 
 Config: `electron-builder.yml`. Signing credentials: see `1apple-developer-signing.md` (not in repo).
 
+### Release Workflow (发版流程)
+
+**发版只需两步，其余全自动：**
+
+1. 修改 `package.json` 的 `version` 字段
+2. 提交、打 tag、推送：
+
+```bash
+git add package.json
+git commit -m "chore: bump version to X.Y.Z"
+git tag vX.Y.Z
+git push origin main --tags
+```
+
+**CI 自动完成（`.github/workflows/release.yml`）：**
+- 运行测试
+- 构建 + Apple 签名 + 公证
+- 上传到 GitHub Releases（含版本号 DMG + 稳定链接 `Muxvo-arm64.dmg`）
+- 自动部署 DMG 到官网服务器（`https://muxvo.com/download/Muxvo-arm64.dmg` 始终指向最新版）
+
+**所需 GitHub Secrets：** `SERVER_SSH_KEY`, `SERVER_HOST`, `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`
+
 ## Key Documents
 
 - `PRD.md` — Full product requirements (3000+ lines)
