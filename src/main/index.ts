@@ -383,6 +383,9 @@ app.whenReady().then(() => {
     // >>> TEMP DEMO: 模拟原生更新对话框，演示完删除 <<<
     setTimeout(async () => {
       const iconPath = join(__dirname, '../../build/icon.icns');
+      if (process.platform === 'darwin') {
+        app.dock.setIcon(nativeImage.createFromPath(iconPath));
+      }
       const { response } = await dialog.showMessageBox({
         type: 'info',
         icon: nativeImage.createFromPath(iconPath),
