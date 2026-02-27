@@ -21,11 +21,11 @@ type Mode = 'view' | 'edit' | 'add';
 const SCOPE_LABELS: Record<string, { label: string; cls: string }> = {
   global: { label: 'CC', cls: 'mcp-panel__scope--cc' },
   project: { label: 'Project', cls: 'mcp-panel__scope--project' },
-  desktop: { label: 'Desktop', cls: 'mcp-panel__scope--desktop' },
+  desktop: { label: 'CC Desk', cls: 'mcp-panel__scope--cc' },
   codex: { label: 'Codex', cls: 'mcp-panel__scope--codex' },
-  gemini: { label: 'Gemini', cls: 'mcp-panel__scope--gemini' },
+  gemini: { label: 'GM', cls: 'mcp-panel__scope--gm' },
   'codex-project': { label: 'Codex Project', cls: 'mcp-panel__scope--codex' },
-  'gemini-project': { label: 'Gemini Project', cls: 'mcp-panel__scope--gemini' },
+  'gemini-project': { label: 'GM Project', cls: 'mcp-panel__scope--gm' },
 };
 
 const TYPE_OPTIONS: McpServerType[] = ['stdio', 'http', 'sse'];
