@@ -38,7 +38,19 @@ export function TourOverlay({ terminalCount, viewMode, terminalNames }: Props): 
     trackEvent(ANALYTICS_EVENTS.ONBOARDING.COMPLETE, { skipped });
     dispatch({ type: 'COMPLETE_TOUR' });
     window.api.app.savePreferences({ tourCompleted: true }).catch(() => {});
-  }, [dispatch]);
+    // Show congratulations toast (non-skip only)
+    if (!skipped) {
+      const toast = document.createElement('div');
+      toast.className = 'tour-complete-toast';
+      toast.textContent = t('tour.complete' as any);
+      document.body.appendChild(toast);
+      setTimeout(() => toast.classList.add('tour-complete-toast--visible'), 16);
+      setTimeout(() => {
+        toast.classList.remove('tour-complete-toast--visible');
+        setTimeout(() => toast.remove(), 400);
+      }, 3000);
+    }
+  }, [dispatch, t]);
 
   const moveNext = useCallback(() => {
     setTimeout(() => {

@@ -149,6 +149,7 @@ export const zh = {
   'tour.step5.desc': '点击"文件"按钮，打开当前目录的文件浏览器！',
   'tour.noTerminal.title': '请先创建终端',
   'tour.noTerminal.desc': '点击 + 按钮创建一个终端，即可开始完整的功能导览。',
+  'tour.complete': '恭喜！你已完成新手引导，开始享受 Muxvo 吧！',
   // Auth
   'auth.loginButton': '登录',
   'auth.modalTitle': 'Muxvo 登录',

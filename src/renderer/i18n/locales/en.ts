@@ -149,6 +149,7 @@ export const en = {
   'tour.step5.desc': 'Click the "File" button to open the file browser for this directory!',
   'tour.noTerminal.title': 'Create a Terminal First',
   'tour.noTerminal.desc': 'Click the + button to create a terminal and start the full feature tour.',
+  'tour.complete': 'Congrats! You\'ve completed the tour. Enjoy Muxvo!',
   // Auth
   'auth.loginButton': 'Login',
   'auth.modalTitle': 'Login to Muxvo',

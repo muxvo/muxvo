@@ -110,3 +110,30 @@
     box-shadow: 0 0 16px 6px rgba(232, 167, 72, 0.45), 0 0 0 4px rgba(232, 167, 72, 0.7);
   }
 }
+
+/* Tour complete toast */
+.tour-complete-toast {
+  position: fixed;
+  top: 48px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  opacity: 0;
+  z-index: 9999;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(232, 167, 72, 0.4);
+  border-radius: 10px;
+  box-shadow: 0 0 20px 4px rgba(232, 167, 72, 0.15), var(--shadow-elevated);
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  color: var(--accent);
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.tour-complete-toast--visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
