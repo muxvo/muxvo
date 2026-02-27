@@ -428,6 +428,7 @@ app.whenReady().then(() => {
       autoUpdater.on('update-available', (info) => {
         updateDismissCount = 0;
         if (updateReminderTimer) clearTimeout(updateReminderTimer);
+        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_AVAILABLE, { version: info.version, releaseDate: info.releaseDate || '' });
         promptUpdate(info.version);
       });
 
@@ -435,33 +436,31 @@ app.whenReady().then(() => {
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.setProgressBar(progress.percent / 100);
         }
+        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_DOWNLOADING, {
+          percent: progress.percent,
+          bytesPerSecond: progress.bytesPerSecond,
+          transferred: progress.transferred,
+          total: progress.total,
+        });
       });
 
       autoUpdater.on('update-downloaded', (info) => {
         if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.setProgressBar(-1); // 清除进度条
+          mainWindow.setProgressBar(-1);
         }
-        dialog.showMessageBox({
-          type: 'info',
-          title: '下载完成',
-          message: `v${info.version} 已下载完成`,
-          detail: '下次启动 Muxvo 时将自动更新。',
-          buttons: ['好的'],
-        });
+        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_DOWNLOADED, { version: info.version });
       });
 
       autoUpdater.on('error', (err) => {
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.setProgressBar(-1);
         }
-        dialog.showMessageBox({
-          type: 'error',
-          title: '更新下载失败',
-          message: '下载更新时出错',
-          detail: err.message,
-          buttons: ['知道了'],
-        });
+        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_ERROR, { message: err.message });
       });
+
+      // IPC handlers for renderer-initiated update actions
+      ipcMain.handle(IPC_CHANNELS.APP.CHECK_FOR_UPDATE, () => autoUpdater.checkForUpdates());
+      ipcMain.handle(IPC_CHANNELS.APP.DOWNLOAD_UPDATE, () => autoUpdater.downloadUpdate());
 
       autoUpdater.checkForUpdates();
     }

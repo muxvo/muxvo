@@ -106,6 +106,8 @@ const api = {
       return () => ipcRenderer.removeListener(IPC_CHANNELS.APP.UPDATE_ERROR, handler);
     },
     installUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.APP.INSTALL_UPDATE),
+    checkForUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.APP.CHECK_FOR_UPDATE),
+    downloadUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.APP.DOWNLOAD_UPDATE),
   },
 
   // --- FS domain ---

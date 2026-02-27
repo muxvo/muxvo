@@ -8,4 +8,7 @@ declare global {
   interface Window {
     api: MuxvoAPI;
   }
+
+  /** App version injected by Vite define */
+  const __APP_VERSION__: string;
 }

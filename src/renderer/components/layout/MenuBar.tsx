@@ -11,6 +11,7 @@
 import { usePanelContext } from '@/renderer/contexts/PanelContext';
 import { useI18n } from '@/renderer/i18n';
 import { AuthButton } from '@/renderer/components/auth/AuthButton';
+import { UpdateProgress } from './UpdateProgress';
 import { trackEvent } from '@/renderer/hooks/useAnalytics';
 import { ANALYTICS_EVENTS } from '@/shared/constants/analytics-events';
 import './MenuBar.css';
@@ -151,6 +152,7 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0
       </nav>
 
       <div className="menu-bar__right-group">
+        <UpdateProgress />
         <AuthButton />
         <button
           className="menu-bar__icon-btn"

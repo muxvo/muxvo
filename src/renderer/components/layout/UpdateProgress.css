@@ -1,0 +1,142 @@
+.update-progress {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+
+.update-progress:hover {
+  background: var(--bg-hover);
+}
+
+/* Circular progress ring */
+.update-progress__ring {
+  position: absolute;
+  inset: 1px;
+  width: 24px;
+  height: 24px;
+}
+
+.update-progress__ring-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.06);
+  stroke-width: 2;
+}
+
+[data-theme="light"] .update-progress__ring-track {
+  stroke: rgba(0, 0, 0, 0.08);
+}
+
+.update-progress__ring-fill {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 56.55; /* 2 * PI * 9 */
+  transform: rotate(-90deg);
+  transform-origin: center;
+  transition: stroke-dashoffset 0.3s ease;
+}
+
+/* Download arrow icon */
+.update-progress__icon {
+  z-index: 1;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.update-progress__icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Done state */
+.update-progress--done .update-progress__icon {
+  color: #28c840;
+}
+
+.update-progress--done .update-progress__ring-fill {
+  stroke: #28c840;
+}
+
+/* Error state */
+.update-progress--error .update-progress__icon {
+  color: #ff5f57;
+}
+
+.update-progress--error .update-progress__ring-fill {
+  stroke: #ff5f57;
+}
+
+/* Tooltip */
+.update-progress__tooltip {
+  display: none;
+  position: absolute;
+  top: 34px;
+  right: 0;
+  background: var(--bg-elevated, #1a1f2e);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  min-width: 190px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 400;
+  pointer-events: none;
+}
+
+.update-progress:hover .update-progress__tooltip {
+  display: block;
+}
+
+.update-progress__tooltip-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.update-progress__tooltip-bar {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+[data-theme="light"] .update-progress__tooltip-bar {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.update-progress__tooltip-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.update-progress__tooltip-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.update-progress__tooltip-speed {
+  color: var(--accent);
+}
+
+/* Fade out animation */
+.update-progress--fade-out {
+  animation: update-progress-fade 0.5s ease-out forwards;
+  animation-delay: 2s;
+}
+
+@keyframes update-progress-fade {
+  to { opacity: 0; pointer-events: none; }
+}

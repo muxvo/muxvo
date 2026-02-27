@@ -12,6 +12,8 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
   const { state, dispatch } = usePanelContext();
   const { t, locale, setLocale } = useI18n();
   const [startupCount, setStartupCount] = useState(1);
+  const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'up-to-date' | 'error'>('idle');
+  const [newVersion, setNewVersion] = useState('');
 
   // Load startup terminal count from config
   useEffect(() => {
@@ -47,6 +49,32 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
   const handleRestartTour = useCallback(() => {
     dispatch({ type: 'CLOSE_SETTINGS' });
     setTimeout(() => dispatch({ type: 'START_TOUR' }), 100);
+  }, [dispatch]);
+
+  const handleCheckUpdate = useCallback(() => {
+    setUpdateStatus('checking');
+    window.api.app.checkForUpdate().then(() => {
+      // Result comes via onUpdateAvailable or we timeout to "up-to-date"
+      setTimeout(() => {
+        setUpdateStatus((prev) => prev === 'checking' ? 'up-to-date' : prev);
+      }, 8000);
+    }).catch(() => setUpdateStatus('error'));
+  }, []);
+
+  // Listen for update-available event when settings is open
+  useEffect(() => {
+    if (!state.settingsModal.open) return;
+    setUpdateStatus('idle');
+    const unsub = window.api.app.onUpdateAvailable((data) => {
+      setUpdateStatus('available');
+      setNewVersion(data.version);
+    });
+    return () => { unsub(); };
+  }, [state.settingsModal.open]);
+
+  const handleDownloadUpdate = useCallback(() => {
+    window.api.app.downloadUpdate();
+    dispatch({ type: 'CLOSE_SETTINGS' });
   }, [dispatch]);
 
   if (!state.settingsModal.open) return null;
@@ -145,6 +173,35 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
               <button className="settings-modal__tour-btn" onClick={handleRestartTour}>
                 {t('settings.restartTour')}
               </button>
+            </div>
+            <div className="settings-modal__row">
+              <div>
+                <div className="settings-modal__label">{locale === 'zh' ? '检查更新' : 'Check for Updates'}</div>
+                <div className="settings-modal__desc">
+                  {locale === 'zh' ? '当前版本' : 'Current version'} v{__APP_VERSION__}
+                </div>
+              </div>
+              {updateStatus === 'idle' && (
+                <button className="settings-modal__tour-btn" onClick={handleCheckUpdate}>
+                  {locale === 'zh' ? '检查更新' : 'Check'}
+                </button>
+              )}
+              {updateStatus === 'checking' && (
+                <span className="settings-modal__desc">{locale === 'zh' ? '检查中...' : 'Checking...'}</span>
+              )}
+              {updateStatus === 'up-to-date' && (
+                <span className="settings-modal__desc">{locale === 'zh' ? '已是最新版本' : 'Up to date'}</span>
+              )}
+              {updateStatus === 'available' && (
+                <button className="settings-modal__tour-btn" onClick={handleDownloadUpdate}>
+                  {locale === 'zh' ? `下载 v${newVersion}` : `Download v${newVersion}`}
+                </button>
+              )}
+              {updateStatus === 'error' && (
+                <span className="settings-modal__desc" style={{ color: '#ff5f57' }}>
+                  {locale === 'zh' ? '检查失败' : 'Check failed'}
+                </span>
+              )}
             </div>
           </div>
         </div>
