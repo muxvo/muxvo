@@ -2,10 +2,12 @@
  * MarkdownPreview Component
  *
  * Displays rendered Markdown content with syntax highlighting.
+ * Supports Mermaid diagram rendering via post-processing.
  */
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { getMarkdownRenderer } from '@/renderer/features/file-viewer/markdown';
+import { runMermaidInContainer } from '@/renderer/utils/mermaid-init';
 import './MarkdownPreview.css';
 import './MarkdownPreviewHighlight.css';
 
@@ -27,14 +29,23 @@ export function highlightHtml(html: string, query: string, active?: boolean): st
 }
 
 export const MarkdownPreview = React.memo(function MarkdownPreview({ content, searchQuery, isActiveMatch }: MarkdownPreviewProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const renderer = getMarkdownRenderer();
   let html = renderer.render(content);
   if (searchQuery) {
     html = highlightHtml(html, searchQuery, isActiveMatch);
   }
 
+  // Render mermaid diagrams after HTML is injected
+  useEffect(() => {
+    if (containerRef.current) {
+      runMermaidInContainer(containerRef.current);
+    }
+  }, [content]);
+
   return (
     <div
+      ref={containerRef}
       className="markdown-preview"
       dangerouslySetInnerHTML={{ __html: html }}
     />

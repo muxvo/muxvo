@@ -157,3 +157,23 @@
   max-width: 100%;
   border-radius: 8px;
 }
+
+/* Mermaid diagrams */
+.markdown-preview .mermaid,
+.mermaid-block {
+  display: flex;
+  justify-content: center;
+  margin: 1em 0;
+  overflow-x: auto;
+  background: var(--bg-elevated);
+  border-radius: 8px;
+  padding: 1em;
+}
+
+.mermaid-block--error {
+  color: var(--text-secondary);
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  font-size: 0.85em;
+  white-space: pre-wrap;
+  justify-content: flex-start;
+}

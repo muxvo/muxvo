@@ -20,6 +20,10 @@ const md: MarkdownIt = new MarkdownIt({
   linkify: true,
   typographer: true,
   highlight: (str: string, lang: string): string => {
+    // Mermaid code blocks: output a div that mermaid.run() will process client-side
+    if (lang === 'mermaid') {
+      return '<div class="mermaid">' + str + '</div>';
+    }
     if (lang && hljs.getLanguage(lang)) {
       try {
         return '<pre class="hljs"><code>' + hljs.highlight(str, { language: lang }).value + '</code></pre>';

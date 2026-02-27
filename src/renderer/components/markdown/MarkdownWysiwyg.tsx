@@ -3,13 +3,67 @@
  *
  * Uses TipTap (ProseMirror) with markdown extension.
  * Outputs plain markdown text via onChange callback.
+ * Renders Mermaid code blocks as SVG diagrams.
  */
 
 import React, { useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import CodeBlock from '@tiptap/extension-code-block';
 import { Markdown } from '@tiptap/markdown';
+import { renderMermaid } from '@/renderer/utils/mermaid-init';
 import './MarkdownWysiwyg.css';
+
+/**
+ * Custom CodeBlock extension that renders mermaid diagrams as SVG.
+ * Non-mermaid code blocks use the default rendering.
+ */
+const MermaidCodeBlock = CodeBlock.extend({
+  addNodeView() {
+    return ({ node }) => {
+      if (node.attrs.language !== 'mermaid') {
+        // Non-mermaid: default rendering with editable contentDOM
+        const pre = document.createElement('pre');
+        const code = document.createElement('code');
+        if (node.attrs.language) {
+          code.className = `language-${node.attrs.language}`;
+        }
+        pre.appendChild(code);
+        return { dom: pre, contentDOM: code };
+      }
+
+      // Mermaid: render as SVG diagram
+      const wrapper = document.createElement('div');
+      wrapper.className = 'mermaid-block';
+
+      const doRender = (text: string) => {
+        const id = `mermaid-${Math.random().toString(36).slice(2, 8)}`;
+        renderMermaid(id, text).then((svg) => {
+          if (svg) {
+            wrapper.innerHTML = svg;
+          } else {
+            // Render error: show source as fallback
+            wrapper.textContent = text;
+            wrapper.classList.add('mermaid-block--error');
+          }
+        });
+      };
+
+      doRender(node.textContent);
+
+      return {
+        dom: wrapper,
+        update(updatedNode) {
+          if (updatedNode.type.name !== 'codeBlock' || updatedNode.attrs.language !== 'mermaid') {
+            return false;
+          }
+          doRender(updatedNode.textContent);
+          return true;
+        },
+      };
+    };
+  },
+});
 
 interface MarkdownWysiwygProps {
   content: string;
@@ -23,7 +77,11 @@ export function MarkdownWysiwyg({ content, onChange }: MarkdownWysiwygProps) {
   const isInternalRef = useRef(false);
 
   const editor = useEditor({
-    extensions: [StarterKit, Markdown],
+    extensions: [
+      StarterKit.configure({ codeBlock: false }),
+      MermaidCodeBlock,
+      Markdown,
+    ],
     content,
     contentType: 'markdown',
     onCreate: () => {
