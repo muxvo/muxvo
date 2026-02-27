@@ -11,14 +11,20 @@
 
 import { test, expect, _electron as electron } from '@playwright/test';
 import { resolve } from 'path';
+import { pathToFileURL } from 'url';
 
 const PROJECT = resolve(__dirname, '../..');
 
 test('Focused mode sidebar is scrollable with many terminals', async () => {
+  const rendererUrl = pathToFileURL(resolve(PROJECT, 'out/renderer/index.html')).href;
   const app = await electron.launch({
     args: ['.'],
     cwd: PROJECT,
     timeout: 30000,
+    env: {
+      ...process.env,
+      ELECTRON_RENDERER_URL: rendererUrl,
+    },
   });
   const page = await app.firstWindow();
   await page.waitForTimeout(6000); // Wait for React mount
@@ -45,10 +51,10 @@ test('Focused mode sidebar is scrollable with many terminals', async () => {
     expect(totalTiles).toBeGreaterThanOrEqual(5);
 
     // ── Step 3: Double-click first tile to enter focused mode ────
-    console.log('Step 3: Enter focused mode');
-    const firstTile = page.locator('.tile').first();
-    await firstTile.dblclick();
-    await page.waitForTimeout(1000);
+    console.log('Step 3: Enter focused mode via maximize button');
+    const maxBtn = page.locator('.tile-max-btn').first();
+    await maxBtn.click({ force: true });
+    await page.waitForTimeout(1500);
 
     // Verify focused mode: one tile should have tile-focused class
     const focusedTile = page.locator('.tile-focused');
