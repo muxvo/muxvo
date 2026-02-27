@@ -1,20 +1,6 @@
 /* Muxvo Shared Animations */
 /* Extracted from prototype-history-A.html */
 
-/* Background gradient ambient drift */
-@keyframes ambientDrift {
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-  33% {
-    transform: translate(2%, -1%);
-  }
-  66% {
-    transform: translate(-1%, 2%);
-  }
-}
-
 /* Status dot breathing pulse */
 @keyframes statusPulse {
   0%,
