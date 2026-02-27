@@ -81,7 +81,9 @@
   width: 340px;
   min-width: 280px;
   border-right: 1px solid var(--border);
-  overflow-y: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .chat-history-panel__right {

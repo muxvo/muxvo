@@ -180,6 +180,8 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
     return result;
   }, [sessions, searchQuery, searchResults]);
 
+  const sessionResultCount = searchQuery.trim() ? filteredSessions.length : 0;
+
   const handleDismissBanner = useCallback(() => {
     localStorage.setItem('muxvo-archive-notice-dismissed', 'true');
     setBannerDismissed(true);
