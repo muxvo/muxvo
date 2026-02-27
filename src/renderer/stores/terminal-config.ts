@@ -6,7 +6,7 @@
 import type { TerminalConfig } from '@/shared/types/config.types';
 
 const DEFAULT_TERMINAL_CONFIG: TerminalConfig = {
-  themeName: 'light',
+  themeName: 'dark',
   fontFamily: "'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace",
   fontSize: 13,
   cursorStyle: 'block',

@@ -58,22 +58,22 @@ export function App(): JSX.Element {
     processName: '',
   });
   const [initialLocale, setInitialLocale] = useState<Locale>('zh');
-  const [uiTheme, setUiTheme] = useState<'dark' | 'light'>('light');
+  const [uiTheme, setUiTheme] = useState<'dark' | 'light'>('dark');
 
   useEffect(() => {
-    // Apply default light theme immediately
-    document.documentElement.setAttribute('data-theme', 'light');
+    // Apply default dark theme immediately
+    document.documentElement.setAttribute('data-theme', 'dark');
 
     window.api.app.getPreferences().then((result: any) => {
       if (result?.success && result.data?.language) {
         setInitialLocale(result.data.language as Locale);
       }
     }).catch(() => {});
-    // Load theme from config (override default if user previously chose dark)
+    // Load theme from config (override default if user previously chose light)
     window.api.app.getConfig().then((result: any) => {
-      if (result?.data?.theme === 'dark') {
-        setUiTheme('dark');
-        document.documentElement.setAttribute('data-theme', 'dark');
+      if (result?.data?.theme === 'light') {
+        setUiTheme('light');
+        document.documentElement.setAttribute('data-theme', 'light');
       }
     }).catch(() => {});
   }, []);
