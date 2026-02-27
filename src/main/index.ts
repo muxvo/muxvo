@@ -446,11 +446,24 @@ app.whenReady().then(() => {
         });
       });
 
-      autoUpdater.on('update-downloaded', (info) => {
+      autoUpdater.on('update-downloaded', async (info) => {
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.setProgressBar(-1);
         }
         pushToAllWindows(IPC_CHANNELS.APP.UPDATE_DOWNLOADED, { version: info.version });
+
+        const { response } = await dialog.showMessageBox({
+          type: 'info',
+          title: '下载完成',
+          message: `v${info.version} 已下载完成`,
+          detail: '立即重启安装，还是下次启动时自动安装？',
+          buttons: ['立即重启', '下次启动时安装'],
+          defaultId: 0,
+          cancelId: 1,
+        });
+        if (response === 0) {
+          setTimeout(() => autoUpdater.quitAndInstall(false, true), 1000);
+        }
       });
 
       autoUpdater.on('error', (err) => {
