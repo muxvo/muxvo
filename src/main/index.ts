@@ -458,11 +458,15 @@ app.whenReady().then(() => {
         pushToAllWindows(IPC_CHANNELS.APP.UPDATE_ERROR, { message: err.message });
       });
 
-      // IPC handlers for renderer-initiated update actions
+      // IPC handlers for renderer-initiated update actions (production)
       ipcMain.handle(IPC_CHANNELS.APP.CHECK_FOR_UPDATE, () => autoUpdater.checkForUpdates());
       ipcMain.handle(IPC_CHANNELS.APP.DOWNLOAD_UPDATE, () => autoUpdater.downloadUpdate());
 
       autoUpdater.checkForUpdates();
+    } else {
+      // Dev mode: register no-op handlers so renderer doesn't get unhandled errors
+      ipcMain.handle(IPC_CHANNELS.APP.CHECK_FOR_UPDATE, () => null);
+      ipcMain.handle(IPC_CHANNELS.APP.DOWNLOAD_UPDATE, () => null);
     }
 
     // Restore terminals or create a fresh one after renderer is ready
