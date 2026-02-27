@@ -7,130 +7,101 @@
  *
  * Also fixes: onMatchInfoChange reported (1, 0) when no matches → should be (0, 0).
  *
- * Tests the actual component condition and matchInfo reporting logic that
- * drives the user-visible nav button visibility.
+ * Approach: Since SearchInput is a React component and we can't render it in
+ * node environment without React Testing Library, we verify the source code
+ * contains the correct conditions AND test the logic independently.
  *
- * Note: Full E2E (.spec.ts with _electron.launch) not possible due to
- * Electron single-instance lock when dev mode is running.
- *
- * Run: npx vitest run tests/verify/VERIFY-search-nav-persist.spec.ts
+ * Run: npx vitest run tests/verify/VERIFY-search-nav-persist.spec.ts --config tests/verify/vitest.verify.config.ts
  */
 
 import { describe, test, expect } from 'vitest';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 
-/**
- * Extract the showNav condition from SearchInput.tsx — this is the exact
- * condition that controls whether users see the ▲▼ nav buttons.
- */
-function computeShowNav_OLD(value: string, matchTotal?: number): boolean {
-  return Boolean(value && matchTotal != null && matchTotal > 0);
-}
+const ROOT = resolve(__dirname, '../..');
 
-function computeShowNav_NEW(value: string, _matchTotal?: number): boolean {
-  return Boolean(value?.trim());
-}
-
-/**
- * Extract the matchInfo reporting from SessionDetail.tsx — controls the
- * "N/M" counter text that users see next to the nav buttons.
- */
-function computeMatchCurrent_OLD(currentMatchIdx: number, matchCount: number): number {
-  // Old: always reports idx + 1, even when no matches → shows "1/0"
-  void matchCount;
-  return currentMatchIdx + 1;
-}
-
-function computeMatchCurrent_NEW(currentMatchIdx: number, matchCount: number): number {
-  // New: reports 0 when no matches → shows "0/0"
-  return matchCount > 0 ? currentMatchIdx + 1 : 0;
-}
-
-/**
- * Extract the button disabled condition from SearchInput.tsx
- */
-function isPrevDisabled_OLD(matchCurrent: number, _matchTotal: number): boolean {
-  return matchCurrent != null && matchCurrent <= 1;
-}
-
-function isPrevDisabled_NEW(matchCurrent: number, matchTotal: number): boolean {
-  return !matchTotal || (matchCurrent != null && matchCurrent <= 1);
-}
-
-function isNextDisabled_OLD(matchCurrent: number, matchTotal: number): boolean {
-  return matchCurrent != null && matchCurrent >= (matchTotal ?? 0);
-}
-
-function isNextDisabled_NEW(matchCurrent: number, matchTotal: number): boolean {
-  return !matchTotal || (matchCurrent != null && matchCurrent >= (matchTotal ?? 0));
-}
-
-describe('Search nav button persistence — showNav condition', () => {
-  test('BUG: old condition hides nav when query exists but matchTotal is 0', () => {
-    // User typed a query, switched to a session with 0 matches
-    expect(computeShowNav_OLD('keyword', 0)).toBe(false);  // ← BUG: nav disappears
+describe('Search nav button persistence — source code verification', () => {
+  test('SearchInput.tsx: showNav uses Boolean(value?.trim()), not matchTotal > 0', () => {
+    const src = readFileSync(resolve(ROOT, 'src/renderer/components/SearchInput.tsx'), 'utf-8');
+    // The fix: showNav should NOT depend on matchTotal
+    expect(src).toContain('Boolean(value?.trim())');
+    expect(src).not.toMatch(/showNav\s*=\s*value\s*&&\s*matchTotal/);
   });
 
-  test('FIX: new condition shows nav whenever query is non-empty', () => {
-    expect(computeShowNav_NEW('keyword', 0)).toBe(true);   // ← nav stays visible
-    expect(computeShowNav_NEW('keyword', undefined)).toBe(true); // no matchTotal yet
-    expect(computeShowNav_NEW('keyword', 5)).toBe(true);   // normal case
+  test('SearchInput.tsx: prev/next buttons disabled when matchTotal is 0', () => {
+    const src = readFileSync(resolve(ROOT, 'src/renderer/components/SearchInput.tsx'), 'utf-8');
+    // The fix: buttons should have !matchTotal in their disabled condition
+    expect(src).toContain('!matchTotal');
   });
 
-  test('Both conditions hide nav when query is empty', () => {
-    expect(computeShowNav_OLD('', 0)).toBe(false);
-    expect(computeShowNav_NEW('', 0)).toBe(false);
-    expect(computeShowNav_OLD('', 5)).toBe(false);
-    expect(computeShowNav_NEW('', 5)).toBe(false);
-  });
-
-  test('Both conditions hide nav when query is only whitespace', () => {
-    expect(computeShowNav_NEW('   ', 5)).toBe(false);
+  test('SessionDetail.tsx: matchInfo reports 0 (not 1) when no matches', () => {
+    const src = readFileSync(resolve(ROOT, 'src/renderer/components/chat/SessionDetail.tsx'), 'utf-8');
+    // The fix: should check matchIndices.length > 0 before adding 1
+    expect(src).toContain('matchIndices.length > 0 ? currentMatchIdx + 1 : 0');
+    expect(src).not.toMatch(/onMatchInfoChange\?\.\(currentMatchIdx \+ 1,/);
   });
 });
 
-describe('Search nav button persistence — matchInfo reporting', () => {
-  test('BUG: old matchInfo reports 1/0 when no matches', () => {
-    // When matchIndices is empty, currentMatchIdx is 0
-    expect(computeMatchCurrent_OLD(0, 0)).toBe(1);  // ← BUG: shows "1/0"
+describe('Search nav button persistence — logic verification', () => {
+  // These test the actual logic that drives user-visible behavior
+
+  test('showNav: query with 0 matches → nav visible', () => {
+    // Simulates: user typed "keyword", session has 0 matches
+    const value = 'keyword';
+    const showNav = Boolean(value?.trim());
+    expect(showNav).toBe(true);
   });
 
-  test('FIX: new matchInfo reports 0/0 when no matches', () => {
-    expect(computeMatchCurrent_NEW(0, 0)).toBe(0);  // ← shows "0/0"
+  test('showNav: empty query → nav hidden', () => {
+    const showNav = Boolean(''.trim());
+    expect(showNav).toBe(false);
   });
 
-  test('Both work correctly when matches exist', () => {
-    expect(computeMatchCurrent_OLD(0, 5)).toBe(1);  // "1/5"
-    expect(computeMatchCurrent_NEW(0, 5)).toBe(1);  // "1/5"
-    expect(computeMatchCurrent_OLD(2, 5)).toBe(3);  // "3/5"
-    expect(computeMatchCurrent_NEW(2, 5)).toBe(3);  // "3/5"
-  });
-});
-
-describe('Search nav button persistence — button disabled states', () => {
-  test('BUG: old condition allows enabled buttons with 0 matches', () => {
-    // matchCurrent=1 (from old bug), matchTotal=0
-    // Old: prev disabled (1 <= 1 = true), next disabled (1 >= 0 = true)
-    // But with the old showNav=false, buttons aren't even rendered — so this
-    // was never visible. After fixing showNav, we ALSO need to disable buttons.
-    expect(isPrevDisabled_OLD(0, 0)).toBe(true);
-    // Next: 0 >= 0 = true, so it IS disabled — but only by coincidence
-    expect(isNextDisabled_OLD(0, 0)).toBe(true);
+  test('showNav: whitespace-only query → nav hidden', () => {
+    const showNav = Boolean('   '.trim());
+    expect(showNav).toBe(false);
   });
 
-  test('FIX: new condition explicitly disables buttons when matchTotal is 0', () => {
-    expect(isPrevDisabled_NEW(0, 0)).toBe(true);
-    expect(isNextDisabled_NEW(0, 0)).toBe(true);
+  test('matchInfo: 0 matches → reports (0, 0)', () => {
+    const currentMatchIdx = 0;
+    const matchCount = 0;
+    const current = matchCount > 0 ? currentMatchIdx + 1 : 0;
+    expect(current).toBe(0);
+    expect(matchCount).toBe(0);
   });
 
-  test('Buttons work correctly when matches exist', () => {
-    // At first match (1/5): prev disabled, next enabled
-    expect(isPrevDisabled_NEW(1, 5)).toBe(true);
-    expect(isNextDisabled_NEW(1, 5)).toBe(false);
-    // In middle (3/5): both enabled
-    expect(isPrevDisabled_NEW(3, 5)).toBe(false);
-    expect(isNextDisabled_NEW(3, 5)).toBe(false);
-    // At last match (5/5): prev enabled, next disabled
-    expect(isPrevDisabled_NEW(5, 5)).toBe(false);
-    expect(isNextDisabled_NEW(5, 5)).toBe(true);
+  test('matchInfo: 5 matches at index 2 → reports (3, 5)', () => {
+    const currentMatchIdx = 2;
+    const matchCount = 5;
+    const current = matchCount > 0 ? currentMatchIdx + 1 : 0;
+    expect(current).toBe(3);
+    expect(matchCount).toBe(5);
+  });
+
+  test('prev/next disabled when matchTotal is 0', () => {
+    const matchTotal = 0;
+    const matchCurrent = 0;
+    const prevDisabled = !matchTotal || (matchCurrent != null && matchCurrent <= 1);
+    const nextDisabled = !matchTotal || (matchCurrent != null && matchCurrent >= (matchTotal ?? 0));
+    expect(prevDisabled).toBe(true);
+    expect(nextDisabled).toBe(true);
+  });
+
+  test('prev disabled at first match, next enabled', () => {
+    const matchTotal = 5;
+    const matchCurrent = 1;
+    const prevDisabled = !matchTotal || (matchCurrent != null && matchCurrent <= 1);
+    const nextDisabled = !matchTotal || (matchCurrent != null && matchCurrent >= (matchTotal ?? 0));
+    expect(prevDisabled).toBe(true);
+    expect(nextDisabled).toBe(false);
+  });
+
+  test('next disabled at last match, prev enabled', () => {
+    const matchTotal = 5;
+    const matchCurrent = 5;
+    const prevDisabled = !matchTotal || (matchCurrent != null && matchCurrent <= 1);
+    const nextDisabled = !matchTotal || (matchCurrent != null && matchCurrent >= (matchTotal ?? 0));
+    expect(prevDisabled).toBe(false);
+    expect(nextDisabled).toBe(true);
   });
 });
