@@ -114,6 +114,11 @@ export function createBackendClient(options: BackendClientOptions) {
       });
     },
 
+    /** Poll for OAuth completion (for dev mode where deep links don't work) */
+    async pollOAuthResult(state: string): Promise<{ pending: boolean; accessToken?: string; refreshToken?: string }> {
+      return request<{ pending: boolean; accessToken?: string; refreshToken?: string }>(`/auth/poll?state=${encodeURIComponent(state)}`);
+    },
+
     /** Get user profile (requires access token) */
     async getUserProfile(accessToken: string): Promise<BackendUser> {
       return request<BackendUser>('/user/me', {

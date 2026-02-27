@@ -300,6 +300,14 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     // Issue tokens
     const tokens = await issueTokenPair(user.id);
 
+    // Store tokens in Redis for polling (Electron dev mode can't use deep links)
+    await redis.set(
+      `oauth:result:${state}`,
+      JSON.stringify({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken }),
+      'EX',
+      120,
+    );
+
     // Redirect to app via deep link (HTML + JS, not 302)
     return sendDeepLinkRedirect(reply, tokens);
   });
@@ -417,8 +425,39 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     // Issue tokens
     const tokens = await issueTokenPair(user.id);
 
+    // Store tokens in Redis for polling (Electron dev mode can't use deep links)
+    await redis.set(
+      `oauth:result:${state}`,
+      JSON.stringify({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken }),
+      'EX',
+      120,
+    );
+
     // Redirect to app via deep link (HTML + JS, not 302)
     return sendDeepLinkRedirect(reply, tokens);
+  });
+
+  // =========================================================================
+  // OAuth poll endpoint (for Electron dev mode where deep links don't work)
+  // =========================================================================
+
+  app.get<{
+    Querystring: { state: string };
+  }>('/poll', async (request) => {
+    const { state } = request.query;
+    if (!state) {
+      throw new ValidationError('Missing state parameter');
+    }
+
+    const result = await redis.get(`oauth:result:${state}`);
+    if (!result) {
+      return { pending: true };
+    }
+
+    // Delete after reading (one-time use)
+    await redis.del(`oauth:result:${state}`);
+    const tokens = JSON.parse(result) as { accessToken: string; refreshToken: string };
+    return { pending: false, accessToken: tokens.accessToken, refreshToken: tokens.refreshToken };
   });
 
   // =========================================================================

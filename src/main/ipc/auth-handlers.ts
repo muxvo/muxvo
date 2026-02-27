@@ -10,6 +10,7 @@
 import { app, ipcMain, BrowserWindow, shell } from 'electron';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 import { createAuthManager } from '@/main/services/auth/auth-manager';
+import { createBackendClient } from '@/main/services/auth/backend-client';
 
 // Lazy singleton auth manager (created on first use)
 let authManager: ReturnType<typeof createAuthManager> | null = null;
@@ -24,6 +25,57 @@ export function getAuthManager() {
   return authManager;
 }
 
+function pushToAllWindows(channel: string, payload: unknown): void {
+  BrowserWindow.getAllWindows().forEach((win) => {
+    if (!win.isDestroyed()) {
+      win.webContents.send(channel, payload);
+    }
+  });
+}
+
+/**
+ * Poll server for OAuth completion.
+ * After user authorizes in browser, server stores tokens in Redis keyed by state.
+ * We poll every 2s for up to 2 minutes.
+ */
+function startOAuthPolling(
+  state: string,
+  manager: ReturnType<typeof createAuthManager>,
+): void {
+  const isProduction = app?.isPackaged ?? false;
+  const backendUrl = process.env.MUXVO_API_URL
+    || (isProduction ? 'https://api.muxvo.com' : 'http://localhost:3100');
+  const client = createBackendClient({ baseUrl: backendUrl });
+
+  let attempts = 0;
+  const maxAttempts = 60; // 2 minutes at 2s intervals
+  const interval = setInterval(async () => {
+    attempts++;
+    if (attempts > maxAttempts) {
+      clearInterval(interval);
+      return;
+    }
+
+    try {
+      const result = await client.pollOAuthResult(state);
+      if (!result.pending && result.accessToken && result.refreshToken) {
+        clearInterval(interval);
+        // Complete the OAuth flow via auth manager
+        const callbackResult = await manager.handleOAuthCallback(
+          result.accessToken,
+          result.refreshToken,
+        );
+        pushToAllWindows(IPC_CHANNELS.AUTH.STATUS_CHANGE, {
+          success: true,
+          data: { loggedIn: true, user: callbackResult.user },
+        });
+      }
+    } catch {
+      // Silently retry on network errors
+    }
+  }, 2000);
+}
+
 export function createAuthHandlers() {
   return {
     // ─── Original handlers (preserved) ───
@@ -32,6 +84,10 @@ export function createAuthHandlers() {
         const manager = getAuthManager();
         const result = await manager.loginGithub();
         await shell.openExternal(result.authUrl);
+
+        // Poll for OAuth completion (deep links don't work in dev mode)
+        startOAuthPolling(result.state, manager);
+
         return { success: true, data: { authUrl: result.authUrl } };
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
@@ -68,6 +124,10 @@ export function createAuthHandlers() {
         const manager = getAuthManager();
         const result = await manager.loginGoogle();
         await shell.openExternal(result.authUrl);
+
+        // Poll for OAuth completion (deep links don't work in dev mode)
+        startOAuthPolling(result.state, manager);
+
         return { success: true, data: { authUrl: result.authUrl } };
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
