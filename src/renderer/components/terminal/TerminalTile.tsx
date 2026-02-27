@@ -372,7 +372,7 @@ export function TerminalTile({
       )}
 
       {/* Terminal content */}
-      <div className="tile-terminal">
+      <div className="tile-terminal" onClick={compact ? (e) => e.stopPropagation() : undefined}>
         <XTermRenderer terminalId={id} />
       </div>
     </div>
