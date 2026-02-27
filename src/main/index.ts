@@ -380,6 +380,21 @@ app.whenReady().then(() => {
     const config = configManager.loadConfig();
     createWindow(config.window);
 
+    // >>> TEMP DEMO: 模拟原生更新对话框，演示完删除 <<<
+    setTimeout(async () => {
+      const { response } = await dialog.showMessageBox({
+        type: 'info',
+        title: 'Muxvo 有可用更新',
+        message: '发现新版本 v0.3.0',
+        detail: '是否立即下载？下载完成后将在下次启动时自动更新。',
+        buttons: ['立即下载', '暂不更新'],
+        defaultId: 0,
+        cancelId: 1,
+      });
+      console.log('用户选择:', response === 0 ? '立即下载' : '暂不更新');
+    }, 3000);
+    // >>> END TEMP DEMO <<<
+
     // Auto-update (production only)
     // Flow: detect → native dialog asks user → user approves → silent download → auto-install on next quit
     if (!is.dev) {
