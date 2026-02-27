@@ -26,6 +26,7 @@ interface FileTempViewProps {
   onClose: () => void;
   onSelectFile: (filePath: string, ext: string) => void;
   onSelectTerminal: (terminalId: string) => void;
+  onCloseTerminal?: (id: string) => void;
 }
 
 const DEFAULT_LEFT_WIDTH = 280;
@@ -75,6 +76,7 @@ export function FileTempView({
   onClose,
   onSelectFile,
   onSelectTerminal,
+  onCloseTerminal,
 }: FileTempViewProps) {
   const [leftWidth, setLeftWidth] = useState(DEFAULT_LEFT_WIDTH);
   const [rightWidth, setRightWidth] = useState(DEFAULT_RIGHT_WIDTH);
@@ -397,6 +399,7 @@ export function FileTempView({
           <TerminalSidebar
             terminals={sidebarTerminals}
             onSelect={onSelectTerminal}
+            onClose={onCloseTerminal}
             style={{ width: rightWidth, flexShrink: 0, opacity: 0, transition: 'opacity 0.3s ease 0.15s' }}
             className={entered ? 'file-temp-view__sidebar--entered' : ''}
           />
