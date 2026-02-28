@@ -10,7 +10,7 @@ import { existsSync } from 'fs';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 import type { PtyAdapter, PtyProcess } from './pty-adapter';
 import { getForegroundProcessName } from './foreground-detector';
-import { detectWaitingInput, resetInputDetector } from './input-detector';
+import { detectWaitingInput, resetInputDetector, shouldExitWaiting } from './input-detector';
 import type {
   TerminalInfo,
   ForegroundProcessInfo,
@@ -140,11 +140,18 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
 
           // Detect interactive prompts → transition to WaitingInput
           const isRunning = machine.state === 'Running';
+          const isWaiting = machine.state === 'WaitingInput';
           const detected = detectWaitingInput(data, id);
           console.log(`[MUXVO:waitinput] state=${machine.state} detected=${detected} chunkLen=${data.length}`);
           if (isRunning && detected) {
             machine.send('WAIT_INPUT');
             console.log(`[MUXVO:waitinput] >>> TRANSITION to WaitingInput! id=${id}`);
+            pushStateChange(id, machine.state);
+          } else if (isWaiting && !detected && shouldExitWaiting(id)) {
+            // Process moved past the interactive prompt — auto-recover
+            resetInputDetector(id);
+            machine.send('AUTO_RESUME');
+            console.log(`[MUXVO:waitinput] >>> AUTO_RESUME to Running! id=${id}`);
             pushStateChange(id, machine.state);
           }
         });

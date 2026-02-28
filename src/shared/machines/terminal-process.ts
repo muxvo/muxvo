@@ -18,6 +18,7 @@ type TerminalEvent =
   | 'PROCESS_DONE'
   | 'WAIT_INPUT'
   | 'USER_INPUT'
+  | 'AUTO_RESUME'
   | 'CLOSE'
   | 'EXIT_NORMAL'
   | 'EXIT_ABNORMAL'
@@ -35,7 +36,7 @@ const transitions: Record<string, Partial<Record<string, TerminalState>>> = {
     EXIT_ABNORMAL: 'Disconnected',
   },
   Busy: { PROCESS_DONE: 'Running' },
-  WaitingInput: { USER_INPUT: 'Running' },
+  WaitingInput: { USER_INPUT: 'Running', AUTO_RESUME: 'Running' },
   Stopping: { EXIT_NORMAL: 'Stopped', TIMEOUT: 'Disconnected' },
   Stopped: { REMOVE: 'Removed' },
   Disconnected: { RECONNECT: 'Starting', REMOVE: 'Removed' },

@@ -378,6 +378,21 @@ describe('TERM L2 -- 状态机与布局测试', () => {
         machine.send('REMOVE');
         expect(machine.state).toBe('Removed');
       });
+
+      test('TERM_L2_37b_trans_waiting_running_auto: T17 WaitingInput -> Running via AUTO_RESUME', async () => {
+        const { createTerminalMachine } = await import(
+          '@/shared/machines/terminal-process'
+        );
+        const machine = createTerminalMachine();
+        machine.send('SPAWN');
+        machine.send('SPAWN_SUCCESS');
+        machine.send('WAIT_INPUT');
+        expect(machine.state).toBe('WaitingInput');
+
+        // Trigger: process continued outputting, prompt expired
+        machine.send('AUTO_RESUME');
+        expect(machine.state).toBe('Running');
+      });
     });
   });
 
