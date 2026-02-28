@@ -15,7 +15,7 @@ const FEATURES = [
   },
   {
     icon: '◎',
-    title: '聚焦模式，沉浸编码',
+    title: '聚焦模式，沉浸对话',
     desc: '一键放大当前终端，其余缩到侧栏随时切换。大屏看代码，小屏盯进度。',
     screenshot: '/screenshots/dark-focused.jpg',
     alt: 'Muxvo focused mode — one terminal maximized with sidebar',
