@@ -395,7 +395,7 @@ app.whenReady().then(() => {
 
   // Auto-update setup (registered once, outside launchWindowWithTerminals to avoid duplicate registration on macOS activate)
   // Flow: detect → native dialog → user approves → silent download → auto-install on next quit
-  // If user dismisses, remind with increasing intervals: 4h → 1d → 3d → 7d (max 5 prompts per version, persisted across restarts)
+  // Max 3 prompts per version (initial + 4h + 1d). "Don't remind" skips permanently. Persisted across restarts.
   if (!is.dev) {
     autoUpdater.logger = createUpdateLogger();
     autoUpdater.autoDownload = false;
@@ -406,7 +406,7 @@ app.whenReady().then(() => {
     let dismissedVersion = '';
     let updateReminderTimer: ReturnType<typeof setTimeout> | null = null;
     let isPromptingUpdate = false;
-    const REMIND_INTERVALS = [4 * 3600_000, 24 * 3600_000, 3 * 24 * 3600_000, 7 * 24 * 3600_000]; // 4h, 1d, 3d, 7d
+    const REMIND_INTERVALS = [4 * 3600_000, 24 * 3600_000]; // 4h, 1d
 
     // Restore dismiss state from preferences
     getPreferences().then((prefs) => {
@@ -435,7 +435,7 @@ app.whenReady().then(() => {
           title: 'Muxvo 有可用更新',
           message: `发现新版本 v${version}`,
           detail: '是否立即下载？下载完成后将在下次启动时自动更新。',
-          buttons: ['立即下载', '暂不更新'],
+          buttons: ['立即下载', '暂不更新', '不再提醒此版本'],
           defaultId: 0,
           cancelId: 1,
         });
@@ -446,6 +446,11 @@ app.whenReady().then(() => {
             console.error('[MUXVO:update] downloadUpdate failed:', err);
             pushToAllWindows(IPC_CHANNELS.APP.UPDATE_ERROR, { message: String(err) });
           });
+        } else if (response === 2) {
+          // "Don't remind for this version" → permanently skip
+          updateDismissCount = 999;
+          savePreferences({ [DISMISS_PREF_KEY]: { version, count: 999 } });
+          console.log('[MUXVO:update] User chose "don\'t remind" for', version);
         } else {
           updateDismissCount++;
           savePreferences({ [DISMISS_PREF_KEY]: { version, count: updateDismissCount } });
