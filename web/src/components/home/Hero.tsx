@@ -15,7 +15,6 @@ export function Hero() {
           驾驭你的 Agent 军团。
         </h1>
         <p className="mv-hero__sub">
-          在终端里用 CC，切窗口、翻记录、找配置全靠自己。Muxvo 帮你省掉这些时间。
         </p>
         <div className="mv-hero__actions">
           <a href={url} className="btn-amber btn-amber-lg">
