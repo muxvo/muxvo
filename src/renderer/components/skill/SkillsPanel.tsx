@@ -274,19 +274,23 @@ export function SkillsPanel(): JSX.Element {
         onMouseDown={handleResizeStart(setLeftWidth)}
       />
 
-      {/* Middle: file tree */}
-      <div className="skills-panel__middle" style={{ width: middleWidth }}>
-        <SkillFileTree
-          skillPath={selectedSkillPath}
-          selectedFilePath={selectedFilePath}
-          onSelectFile={handleSelectFile}
-        />
-      </div>
+      {/* Middle: file tree (only when a skill is selected) */}
+      {selectedSkillPath && (
+        <>
+          <div className="skills-panel__middle" style={{ width: middleWidth }}>
+            <SkillFileTree
+              skillPath={selectedSkillPath}
+              selectedFilePath={selectedFilePath}
+              onSelectFile={handleSelectFile}
+            />
+          </div>
 
-      <div
-        className="skills-panel__resize-handle"
-        onMouseDown={handleResizeStart(setMiddleWidth)}
-      />
+          <div
+            className="skills-panel__resize-handle"
+            onMouseDown={handleResizeStart(setMiddleWidth)}
+          />
+        </>
+      )}
 
       {/* Right: editor / preview */}
       <div className="skills-panel__right">
@@ -350,7 +354,7 @@ export function SkillsPanel(): JSX.Element {
           </>
         ) : (
           <div className="skills-panel__placeholder">
-            <span>{selectedSkillPath ? 'Select a file' : 'Select a skill'}</span>
+            <span>{selectedSkillPath ? '选择一个文件查看内容' : '选择左侧技能查看详情'}</span>
           </div>
         )}
       </div>
