@@ -240,7 +240,7 @@ export function App(): JSX.Element {
   }, []);
 
   const handleResumeSession = useCallback(async (info: { sessionId: string; cwd: string; source: ChatSource }) => {
-    console.log('[resume-chat] creating terminal:', { cwd: info.cwd, sessionId: info.sessionId });
+    console.log('[resume-chat] creating terminal:', { cwd: info.cwd, sessionId: info.sessionId, source: info.source });
     const result = await window.api.terminal.create(info.cwd);
     if (!result?.success || !result.data) {
       console.error('[resume-chat] terminal creation failed:', result);
@@ -254,7 +254,10 @@ export function App(): JSX.Element {
     setTimeout(() => {
       // Use cd + && to ensure correct cwd before resume, bypassing terminal.create path resolution issues
       const escapedCwd = info.cwd.replace(/([ ()&|;<>$`"'\\])/g, '\\$1');
-      window.api.terminal.write(newId, `cd ${escapedCwd} && claude --resume ${info.sessionId}\n`);
+      const resumeCmd = info.source === 'codex'
+        ? `codex resume ${info.sessionId}`
+        : `claude --resume ${info.sessionId}`;
+      window.api.terminal.write(newId, `cd ${escapedCwd} && ${resumeCmd}\n`);
     }, 500);
   }, []);
 

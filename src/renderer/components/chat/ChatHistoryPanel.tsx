@@ -375,7 +375,8 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
           canResume={(() => {
             const sel = sessions.find(s => s.sessionId === selectedSessionId);
             if (!sel) return false;
-            if ((sel.source || 'claude-code') !== 'claude-code') return false;
+            const source = sel.source || 'claude-code';
+            if (source !== 'claude-code' && source !== 'codex') return false;
             // Need either session-level cwd or loaded messages with cwd
             const hasCwd = sel.cwd || messages.some(m => m.cwd);
             if (!hasCwd && (messages.length === 0 || loading)) return false;
