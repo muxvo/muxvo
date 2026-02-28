@@ -61,11 +61,36 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
   const outputBuffers = new Map<string, string>();
   const ptyAdapter = deps?.pty;
 
+  // Debounce state change pushes to avoid rapid Running↔WaitingInput oscillation
+  // causing excessive React re-renders (e.g. user pressing up/down in yes/no prompt)
+  const pendingStateChanges = new Map<string, { state: string; processName?: string; timer: ReturnType<typeof setTimeout> }>();
+  const STATE_CHANGE_DEBOUNCE_MS = 50;
+
   function pushStateChange(id: string, state: string, processName?: string): void {
-    const win = BrowserWindow.getAllWindows()[0];
-    if (win) {
-      win.webContents.send(IPC_CHANNELS.TERMINAL.STATE_CHANGE, { id, state, processName });
+    // Terminal-ending states must arrive immediately
+    const immediate = ['Stopped', 'Failed', 'Disconnected', 'Removed'].includes(state);
+
+    const existing = pendingStateChanges.get(id);
+    if (existing) clearTimeout(existing.timer);
+
+    if (immediate) {
+      pendingStateChanges.delete(id);
+      const win = BrowserWindow.getAllWindows()[0];
+      if (win && !win.isDestroyed()) {
+        win.webContents.send(IPC_CHANNELS.TERMINAL.STATE_CHANGE, { id, state, processName });
+      }
+      return;
     }
+
+    const timer = setTimeout(() => {
+      pendingStateChanges.delete(id);
+      const win = BrowserWindow.getAllWindows()[0];
+      if (win && !win.isDestroyed()) {
+        win.webContents.send(IPC_CHANNELS.TERMINAL.STATE_CHANGE, { id, state, processName });
+      }
+    }, STATE_CHANGE_DEBOUNCE_MS);
+
+    pendingStateChanges.set(id, { state, processName, timer });
   }
 
   function spawn(options: SpawnOptions): SpawnResult {

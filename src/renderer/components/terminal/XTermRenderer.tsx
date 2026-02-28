@@ -208,7 +208,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       if (!entry || disposed) return;
       const { width, height } = entry.contentRect;
       if (width < 10 || height < 10) return;
-      fitPreservingScroll();
+      fitAddon.fit(); syncScrollDataAttrs(); // RED: intentionally broken — no scroll preservation
     });
     observer.observe(containerRef.current);
 

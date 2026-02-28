@@ -30,6 +30,13 @@ test('Terminal scroll position preserved when creating a new terminal', async ()
     },
   });
   const page = await app.firstWindow();
+
+  // Shrink Electron window to force significant column change when grid splits 1→2
+  // setViewportSize doesn't resize the Electron BrowserWindow — use evaluate instead
+  await app.evaluate(({ BrowserWindow }) => {
+    const win = BrowserWindow.getAllWindows()[0];
+    if (win) win.setSize(900, 600);
+  });
   await page.waitForTimeout(6000);
   await page.waitForLoadState('networkidle');
 
@@ -52,10 +59,16 @@ test('Terminal scroll position preserved when creating a new terminal', async ()
     const firstTermId = termList[0].id;
     console.log(`  Terminal ID: ${firstTermId}`);
 
+    // Generate WIDE lines that will rewrap when terminal columns change.
+    // Each line is 100 chars wide. When cols halve (e.g. 112→55), lines wrap,
+    // doubling baseY and triggering the bug.
     await page.evaluate(async (id: string) => {
-      await (window as any).api.terminal.write(id, 'seq 1 300\n');
+      await (window as any).api.terminal.write(
+        id,
+        'for i in $(seq 1 200); do printf "%0100d\\n" $i; done\n'
+      );
     }, firstTermId);
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(6000);
 
     // ── Step 3: Read xterm scroll state via data attributes ────────
     console.log('Step 3: Check xterm buffer state via data attrs');
@@ -73,7 +86,9 @@ test('Terminal scroll position preserved when creating a new terminal', async ()
 
     const baseY = parseInt(await xtermContainer.getAttribute('data-base-y') ?? '0', 10);
     const viewportY = parseInt(await xtermContainer.getAttribute('data-viewport-y') ?? '0', 10);
-    console.log(`  viewportY: ${viewportY}, baseY: ${baseY}`);
+    // Check terminal cols to verify resize will cause column change
+    const tileWidth = await firstTile.evaluate((el: HTMLElement) => el.clientWidth);
+    console.log(`  viewportY: ${viewportY}, baseY: ${baseY}, tileWidth: ${tileWidth}px`);
 
     if (baseY === 0) {
       console.log('  ⚠️ No scrollback generated');
@@ -143,7 +158,8 @@ test('Terminal scroll position preserved when creating a new terminal', async ()
     await page.waitForTimeout(4000); // Grid layout + resize settle
 
     const afterTiles = await page.locator('.tile').count();
-    console.log(`  Terminals: ${initialTiles} → ${afterTiles}`);
+    const tileWidthAfter = await page.locator('.tile').first().evaluate((el: HTMLElement) => el.clientWidth);
+    console.log(`  Terminals: ${initialTiles} → ${afterTiles}, tileWidth: ${tileWidth}px → ${tileWidthAfter}px`);
     expect(afterTiles).toBe(initialTiles + 1);
 
     // ── Step 6: CORE ASSERTION — viewportY preserved ───────────────
@@ -162,6 +178,13 @@ test('Terminal scroll position preserved when creating a new terminal', async ()
     );
     console.log(`  Before — viewportY: ${viewportYBefore}, baseY: ${baseYBefore}`);
     console.log(`  After  — viewportY: ${viewportYAfter}, baseY: ${baseYAfter}`);
+
+    // Log cols to see if resize actually changed terminal dimensions
+    const colsBefore = await page.evaluate(async (id: string) => {
+      const r = await (window as any).api.terminal.getState(id);
+      return r?.data?.cols ?? r?.cols ?? 'unknown';
+    }, firstTermId);
+    console.log(`  Terminal cols after resize: ${colsBefore}`);
 
     // BUG symptom: viewportY resets to 0 (first line)
     // FIX assertion: viewportY should still be > 0 and NOT at the top

@@ -89,14 +89,15 @@ describe('VERIFY: WaitingInput auto-resume on continued output', () => {
     expect(machine.state).toBe('WaitingInput');
 
     // Step 2: CC auto-approves (accept edits on), continues with thinking
-    // Multiple spinner updates and tool output arrive
+    // Realistic CC output: spinner updates + tool output (>500 bytes total raw)
     const chunks = [
-      '\x1b[2K⠋ Envisioning… (0s)\r',
-      '\x1b[2K⠙ Envisioning… (1s)\r',
+      '\x1b[2K⠋ Envisioning… (0s · thought for 0s)\r',
+      '\x1b[2K⠙ Envisioning… (1s · thought for 1s)\r',
       '\x1b[2K⠹ Envisioning… (2s · thought for 1s)\r',
-      '● Read 1 file (ctrl+o to expand)\n',
-      '● Write(tests/verify/VERIFY-search-flash-fix.test.ts)\n',
-      '  └ Wrote 84 lines to tests/verify/VERIFY-search-flash-fix.test.ts\n',
+      '\x1b[2K⠸ Envisioning… (3s · thought for 2s)\r',
+      '● Read 1 file (ctrl+o to expand)\n● Bash(npx vitest run --config <(cat <<\'EOF\' import { defineConfig } from \'vitest/config\';...)\n  └ ────────Startup Error ────────\n    Error: Build failed with 2 errors:\n    error: Cannot read directory "../.."  … +35 lines (ctrl+o to expand)\n',
+      '● 先把测试移到正式目录运行。\n● Bash(cp tests/verify/VERIFY-search-flash-fix.test.ts tests/l2/search-flash-fix.test.ts && npx vitest run tests/l2/search-flash-fix.test.ts 2>&1 | tail -25)\n',
+      '● 9 个测试全部通过。\n\n  Phase 4.5: Cross-File Consistency Check\n\n● Bash(git diff HEAD --unified=0 | grep "^-" | grep -v "^---")\n',
       '\x1b[2K⠋ Sketching… (1m 35s · thought for 21s)\r',
     ];
 
