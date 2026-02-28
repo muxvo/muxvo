@@ -332,7 +332,8 @@ export const SessionDetail = forwardRef<SessionDetailHandle, SessionDetailProps>
   }, [matchOccurrences, messageKey, searchQuery]);
 
   // DOM-based active highlight switching + scroll positioning
-  // Avoids re-rendering MessageBubble/MarkdownPreview when switching matches
+  // Uses fast path (single scroll) when mark is already in DOM,
+  // falls back to Virtuoso scrollToIndex + rAF polling when not
   useEffect(() => {
     // Clear all old active marks
     document.querySelectorAll('mark.search-highlight--active')
@@ -344,20 +345,30 @@ export const SessionDetail = forwardRef<SessionDetailHandle, SessionDetailProps>
     const match = matchOccurrences[currentMatchIdx];
     const dataIndex = match.msgIdx;
 
-    requestAnimationFrame(() => {
-      virtuosoRef.current?.scrollToIndex({ index: dataIndex, align: 'center', behavior: 'auto' });
-      // After Virtuoso renders the message, locate the exact keyword mark via data-msg-idx
-      setTimeout(() => {
-        const bubble = document.querySelector(`[data-msg-idx="${dataIndex}"]`);
-        if (!bubble) return;
-        const marks = bubble.querySelectorAll('mark.search-highlight');
-        const target = marks[match.nthInMsg];
-        if (target) {
-          target.classList.add('search-highlight--active');
-          target.scrollIntoView({ block: 'center', behavior: 'auto' });
-        }
-      }, 80);
-    });
+    // Helper: find mark, add active class, scroll to it
+    const activateAndScroll = () => {
+      const bubble = document.querySelector(`[data-msg-idx="${dataIndex}"]`);
+      if (!bubble) return false;
+      const marks = bubble.querySelectorAll('mark.search-highlight');
+      const target = marks[match.nthInMsg];
+      if (!target) return false;
+      target.classList.add('search-highlight--active');
+      target.scrollIntoView({ block: 'center', behavior: 'auto' });
+      return true;
+    };
+
+    // Fast path: mark already in DOM — single scroll, no jump
+    if (activateAndScroll()) return;
+
+    // Slow path: message not rendered — ask Virtuoso to scroll & render it,
+    // then poll for the DOM element via requestAnimationFrame
+    virtuosoRef.current?.scrollToIndex({ index: dataIndex, align: 'start', behavior: 'auto' });
+    let retries = 5;
+    const poll = () => {
+      if (activateAndScroll()) return;
+      if (--retries > 0) requestAnimationFrame(poll);
+    };
+    requestAnimationFrame(poll);
   }, [currentMatchIdx, matchOccurrences, searchQuery]);
 
   // Auto-scroll to bottom on real-time updates (new messages appended) — only when NOT searching
