@@ -43,7 +43,7 @@ import { createConfigWatcher } from './services/config-watcher';
 import { createMemoryPushTimer } from './services/perf/memory-push';
 import { createSyncStatusPusher } from './services/chat-sync-push';
 import { initConfigDir, createConfigManager } from './services/app/config';
-import { initPrefsDir } from './services/app/preferences';
+import { initPrefsDir, getPreferences, savePreferences } from './services/app/preferences';
 import { createUpdateLogger } from './services/app/update-logger';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 
@@ -395,16 +395,28 @@ app.whenReady().then(() => {
 
   // Auto-update setup (registered once, outside launchWindowWithTerminals to avoid duplicate registration on macOS activate)
   // Flow: detect → native dialog → user approves → silent download → auto-install on next quit
-  // If user dismisses, remind with increasing intervals: 4h → 1d → 3d → 7d (max 4 reminders per version)
+  // If user dismisses, remind with increasing intervals: 4h → 1d → 3d → 7d (max 5 prompts per version, persisted across restarts)
   if (!is.dev) {
     autoUpdater.logger = createUpdateLogger();
     autoUpdater.autoDownload = false;
     autoUpdater.autoInstallOnAppQuit = true;
 
+    const DISMISS_PREF_KEY = 'updateDismissal';
     let updateDismissCount = 0;
+    let dismissedVersion = '';
     let updateReminderTimer: ReturnType<typeof setTimeout> | null = null;
     let isPromptingUpdate = false;
     const REMIND_INTERVALS = [4 * 3600_000, 24 * 3600_000, 3 * 24 * 3600_000, 7 * 24 * 3600_000]; // 4h, 1d, 3d, 7d
+
+    // Restore dismiss state from preferences
+    getPreferences().then((prefs) => {
+      const saved = prefs.preferences[DISMISS_PREF_KEY] as { version: string; count: number } | undefined;
+      if (saved) {
+        dismissedVersion = saved.version;
+        updateDismissCount = saved.count;
+        console.log('[MUXVO:update] Restored dismiss state:', saved);
+      }
+    }).catch(() => {});
 
     /** Push initial downloading state so UpdateProgress becomes visible immediately */
     function pushDownloadStart(): void {
@@ -434,10 +446,13 @@ app.whenReady().then(() => {
             console.error('[MUXVO:update] downloadUpdate failed:', err);
             pushToAllWindows(IPC_CHANNELS.APP.UPDATE_ERROR, { message: String(err) });
           });
-        } else if (updateDismissCount < REMIND_INTERVALS.length) {
-          const delay = REMIND_INTERVALS[updateDismissCount];
+        } else {
           updateDismissCount++;
-          updateReminderTimer = setTimeout(() => promptUpdate(version), delay);
+          savePreferences({ [DISMISS_PREF_KEY]: { version, count: updateDismissCount } });
+          if (updateDismissCount <= REMIND_INTERVALS.length) {
+            const delay = REMIND_INTERVALS[updateDismissCount - 1];
+            updateReminderTimer = setTimeout(() => promptUpdate(version), delay);
+          }
         }
       } finally {
         isPromptingUpdate = false;
@@ -446,9 +461,22 @@ app.whenReady().then(() => {
 
     autoUpdater.on('update-available', (info) => {
       console.log('[MUXVO:update] update-available:', info.version);
-      updateDismissCount = 0;
       if (updateReminderTimer) clearTimeout(updateReminderTimer);
+
+      if (info.version !== dismissedVersion) {
+        // New version → reset dismiss count
+        updateDismissCount = 0;
+        dismissedVersion = info.version;
+        savePreferences({ [DISMISS_PREF_KEY]: { version: info.version, count: 0 } });
+      }
+
       pushToAllWindows(IPC_CHANNELS.APP.UPDATE_AVAILABLE, { version: info.version, releaseDate: info.releaseDate || '' });
+
+      // Already dismissed enough times → don't prompt again
+      if (updateDismissCount > REMIND_INTERVALS.length) {
+        console.log('[MUXVO:update] Skipping prompt, dismissed', updateDismissCount, 'times for', info.version);
+        return;
+      }
       promptUpdate(info.version);
     });
 
