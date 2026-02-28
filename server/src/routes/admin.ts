@@ -192,22 +192,31 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
   // =========================================================================
 
   app.get<{
-    Querystring: { from?: string; to?: string };
+    Querystring: { from?: string; to?: string; source?: 'web' | 'app' };
   }>('/analytics/dau', async (request) => {
     const {
       from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
       to = new Date().toISOString().slice(0, 10),
+      source,
     } = request.query;
 
-    const result = await query<{ date: string; dau: string; registered_users: string }>(
-      `SELECT date,
+    let sql = `SELECT date,
               COUNT(DISTINCT device_id) AS dau,
               COUNT(DISTINCT user_id) AS registered_users
        FROM analytics_events
-       WHERE date >= $1 AND date <= $2
-       GROUP BY date
-       ORDER BY date`,
-      [from, to],
+       WHERE date >= $1 AND date <= $2`;
+    const params: unknown[] = [from, to];
+
+    if (source === 'web') {
+      sql += ` AND metric LIKE 'web:%'`;
+    } else if (source === 'app') {
+      sql += ` AND metric NOT LIKE 'web:%'`;
+    }
+
+    sql += ` GROUP BY date ORDER BY date`;
+
+    const result = await query<{ date: string; dau: string; registered_users: string }>(
+      sql, params,
     );
 
     return {
@@ -225,12 +234,13 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
   // =========================================================================
 
   app.get<{
-    Querystring: { from?: string; to?: string; metric?: string };
+    Querystring: { from?: string; to?: string; metric?: string; source?: 'web' | 'app' };
   }>('/analytics/events', async (request) => {
     const {
       from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
       to = new Date().toISOString().slice(0, 10),
       metric,
+      source,
     } = request.query;
 
     let sql = `SELECT date, metric, SUM(value) AS total
@@ -238,8 +248,14 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
                WHERE date >= $1 AND date <= $2`;
     const params: unknown[] = [from, to];
 
+    if (source === 'web') {
+      sql += ` AND metric LIKE 'web:%'`;
+    } else if (source === 'app') {
+      sql += ` AND metric NOT LIKE 'web:%'`;
+    }
+
     if (metric) {
-      sql += ` AND metric = $3`;
+      sql += ` AND metric = $${params.length + 1}`;
       params.push(metric);
     }
 
