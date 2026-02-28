@@ -171,6 +171,7 @@ jobs:
       - name: Upload to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
+          draft: false
           files: |
             dist-arm64/*.dmg
             dist-arm64/*.zip
