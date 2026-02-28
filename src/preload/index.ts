@@ -10,7 +10,7 @@
  * Each domain will be wired to real IPC handlers in subsequent tasks (A2, D1, G1, etc.)
  */
 
-import { contextBridge, ipcRenderer, webUtils } from 'electron';
+import { contextBridge, ipcRenderer, webUtils, webFrame } from 'electron';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 
 /** Type-safe API exposed to renderer process */
@@ -108,6 +108,13 @@ const api = {
     installUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.APP.INSTALL_UPDATE),
     checkForUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.APP.CHECK_FOR_UPDATE),
     downloadUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.APP.DOWNLOAD_UPDATE),
+    onZoom: (callback: (direction: string) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, direction: string) => callback(direction);
+      ipcRenderer.on(IPC_CHANNELS.APP.ZOOM, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.APP.ZOOM, handler);
+    },
+    setZoomFactor: (factor: number) => webFrame.setZoomFactor(factor),
+    getZoomFactor: () => webFrame.getZoomFactor(),
   },
 
   // --- FS domain ---

@@ -14,19 +14,6 @@ import { shellEscapePaths } from '../../utils/shell-escape';
 import { stripPromptEolMark } from '@/shared/utils/strip-prompt-eol-mark';
 import '@xterm/xterm/css/xterm.css';
 
-// Debounced font size persistence to avoid rapid disk writes during zoom
-let zoomSaveTimer: ReturnType<typeof setTimeout> | null = null;
-function saveTerminalFontSize(size: number): void {
-  if (zoomSaveTimer) clearTimeout(zoomSaveTimer);
-  zoomSaveTimer = setTimeout(() => {
-    window.api.app.getConfig().then((result) => {
-      const config = result?.data ?? {};
-      const terminal = { ...config.terminal, fontSize: size };
-      window.api.app.saveConfig({ ...config, terminal });
-    });
-  }, 500);
-}
-
 interface Props {
   terminalId: string;
   suppressResize?: boolean;
@@ -114,17 +101,17 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
         setSearchVisible((prev) => !prev);
         return false;
       }
-      // Cmd/Ctrl +/- zoom terminal font size
+      // Cmd/Ctrl +/- global zoom (delegated to useGlobalZoom via custom event)
       if (isMod && (e.key === '=' || e.key === '+') && e.type === 'keydown') {
-        window.dispatchEvent(new CustomEvent('muxvo:terminal-zoom', { detail: 'in' }));
+        window.dispatchEvent(new CustomEvent('muxvo:global-zoom-request', { detail: 'in' }));
         return false;
       }
       if (isMod && e.key === '-' && e.type === 'keydown') {
-        window.dispatchEvent(new CustomEvent('muxvo:terminal-zoom', { detail: 'out' }));
+        window.dispatchEvent(new CustomEvent('muxvo:global-zoom-request', { detail: 'out' }));
         return false;
       }
       if (isMod && e.key === '0' && e.type === 'keydown') {
-        window.dispatchEvent(new CustomEvent('muxvo:terminal-zoom', { detail: 'reset' }));
+        window.dispatchEvent(new CustomEvent('muxvo:global-zoom-request', { detail: 'reset' }));
         return false;
       }
       return true;
@@ -227,20 +214,11 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     };
     window.addEventListener('muxvo:theme-change', onThemeChange);
 
-    // Terminal font zoom handler (from xterm key interception or Electron Menu IPC)
-    const handleZoom = (direction: string) => {
-      const current = term.options.fontSize ?? DEFAULT_TERMINAL_CONFIG.fontSize;
-      let next: number;
-      if (direction === 'in') next = Math.min(current + 1, 32);
-      else if (direction === 'out') next = Math.max(current - 1, 8);
-      else next = DEFAULT_TERMINAL_CONFIG.fontSize;
-      term.options.fontSize = next;
-      requestAnimationFrame(() => fitPreservingScroll());
-      saveTerminalFontSize(next);
+    // Refit after global zoom changes (webFrame.setZoomFactor alters viewport dimensions)
+    const onGlobalZoom = () => {
+      requestAnimationFrame(() => { if (!disposed) fitPreservingScroll(); });
     };
-    const onZoomEvent = (e: Event) => handleZoom((e as CustomEvent).detail);
-    window.addEventListener('muxvo:terminal-zoom', onZoomEvent);
-    const unsubZoom = window.api.terminal.onZoom((direction: string) => handleZoom(direction));
+    window.addEventListener('muxvo:global-zoom', onGlobalZoom);
 
     // Listen for force-refit requests (e.g. after FileTempView overlay closes)
     const onRefit = () => {
@@ -257,9 +235,8 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       unsubOutput();
       observer.disconnect();
       window.removeEventListener('muxvo:theme-change', onThemeChange);
-      window.removeEventListener('muxvo:terminal-zoom', onZoomEvent);
+      window.removeEventListener('muxvo:global-zoom', onGlobalZoom);
       window.removeEventListener('muxvo:terminal-refit', onRefit);
-      unsubZoom();
       addonManager.disposeAll();
       term.dispose();
     };

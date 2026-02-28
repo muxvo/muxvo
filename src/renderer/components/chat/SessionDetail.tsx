@@ -36,14 +36,14 @@ function escapeRegex(s: string): string {
 }
 
 /** Highlight matching query text with <mark> */
-function HighlightText({ text, query, active }: { text: string; query: string; active?: boolean }) {
+function HighlightText({ text, query }: { text: string; query: string }) {
   if (!query) return <>{text}</>;
   const parts = text.split(new RegExp(`(${escapeRegex(query)})`, 'gi'));
   return (
     <>
       {parts.map((part, i) =>
         part.toLowerCase() === query.toLowerCase()
-          ? <mark key={i} className={`search-highlight${active ? ' search-highlight--active' : ''}`}>{part}</mark>
+          ? <mark key={i} className="search-highlight">{part}</mark>
           : part
       )}
     </>
@@ -131,10 +131,10 @@ function ImageBlock({ source }: { source: AssistantContentBlock['source'] }) {
   );
 }
 
-function renderContentBlock(block: AssistantContentBlock, index: number, searchQuery?: string, isActiveMatch?: boolean) {
+function renderContentBlock(block: AssistantContentBlock, index: number, searchQuery?: string) {
   switch (block.type) {
     case 'text':
-      return <MarkdownPreview key={index} content={block.text || ''} searchQuery={searchQuery} isActiveMatch={isActiveMatch} />;
+      return <MarkdownPreview key={index} content={block.text || ''} searchQuery={searchQuery} />;
     case 'image':
       return <ImageBlock key={index} source={block.source} />;
     case 'tool_use':
@@ -148,7 +148,7 @@ function renderContentBlock(block: AssistantContentBlock, index: number, searchQ
 
 interface MessageBubbleProps {
   message: SessionMessage;
-  isActiveMatch?: boolean;
+  msgIdx?: number;
 }
 
 /** Extract plain text from message content for clipboard copy */
@@ -172,7 +172,7 @@ const TEAMMATE_COLORS: Record<string, string> = {
   red: '#f87171',
 };
 
-const MessageBubble = React.memo(function MessageBubble({ message, searchQuery, isActiveMatch }: MessageBubbleProps & { searchQuery?: string }) {
+const MessageBubble = React.memo(function MessageBubble({ message, searchQuery, msgIdx }: MessageBubbleProps & { searchQuery?: string }) {
   const { t } = useI18n();
   const isUser = message.type === 'user';
   const isSystem = message.type === 'system';
@@ -210,7 +210,7 @@ const MessageBubble = React.memo(function MessageBubble({ message, searchQuery, 
   }, []);
 
   return (
-    <div className={`message-bubble ${bubbleClass}`} onContextMenu={handleContextMenu}>
+    <div className={`message-bubble ${bubbleClass}`} data-msg-idx={msgIdx} onContextMenu={handleContextMenu}>
       <div className="message-bubble__label" style={teammateInfo?.color ? { color: TEAMMATE_COLORS[teammateInfo.color] || undefined } : undefined}>
         {isUser ? t('chat.you') : teammateInfo?.label || (isSystem ? t('chat.system') : message.uuid.startsWith('codex-') ? 'CODEX' : message.uuid.startsWith('gemini-') ? 'GEMINI' : t('chat.claude'))}
       </div>

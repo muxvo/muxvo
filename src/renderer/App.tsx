@@ -27,6 +27,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { I18nProvider, useI18n, type Locale } from './i18n';
 import { mapExtToFileType, toLocalFileUrl } from './utils/file-tree';
 import { trackEvent, trackError } from './hooks/useAnalytics';
+import { useGlobalZoom } from './hooks/useGlobalZoom';
 import { ANALYTICS_EVENTS } from '@/shared/constants/analytics-events';
 import type { ChatSource } from '@/shared/types/chat.types';
 import './App.css';
@@ -59,6 +60,7 @@ export function App(): JSX.Element {
   });
   const [initialLocale, setInitialLocale] = useState<Locale>('zh');
   const [uiTheme, setUiTheme] = useState<'dark' | 'light'>('dark');
+  useGlobalZoom();
 
   useEffect(() => {
     // Apply default dark theme immediately

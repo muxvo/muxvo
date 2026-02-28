@@ -266,21 +266,21 @@ app.whenReady().then(() => {
           label: 'Zoom In',
           accelerator: 'CommandOrControl+=',
           click: () => {
-            BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.TERMINAL.ZOOM, 'in');
+            BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.APP.ZOOM, 'in');
           },
         },
         {
           label: 'Zoom Out',
           accelerator: 'CommandOrControl+-',
           click: () => {
-            BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.TERMINAL.ZOOM, 'out');
+            BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.APP.ZOOM, 'out');
           },
         },
         {
           label: 'Reset Zoom',
           accelerator: 'CommandOrControl+0',
           click: () => {
-            BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.TERMINAL.ZOOM, 'reset');
+            BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.APP.ZOOM, 'reset');
           },
         },
       ],

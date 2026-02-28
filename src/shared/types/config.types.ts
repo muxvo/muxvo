@@ -105,6 +105,8 @@ export interface MuxvoConfig {
   startupTerminalCount?: number;
   /** Custom session titles: sessionId -> displayName (from terminal rename) */
   sessionCustomTitles?: Record<string, string>;
+  /** 全局缩放级别（0=100%，每±1步=10%缩放，范围 -5~+10） */
+  zoomLevel?: number;
 }
 
 /** app:get-preferences 返回的用户偏好 */
