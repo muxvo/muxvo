@@ -175,10 +175,18 @@ async function main() {
     // Screenshot 3: Focused mode (double-click first terminal tile)
     // ════════════════════════════════════════════════════════════
     console.log('📸 Screenshot 3: dark-focused.jpg');
-    const firstTile = page.locator('.terminal-tile').first();
-    const tileVisible = await firstTile.isVisible({ timeout: 3000 }).catch(() => false);
-    if (tileVisible) {
-      await firstTile.dblclick();
+    // Click the maximize button (.tile-max-btn) on the first tile
+    const maxBtn = page.locator('.tile-max-btn').first();
+    const maxBtnVisible = await maxBtn.isVisible({ timeout: 3000 }).catch(() => false);
+    if (maxBtnVisible) {
+      await maxBtn.click();
+      await page.waitForTimeout(1500);
+      await forceXtermDarkTheme(page);
+      await page.waitForTimeout(500);
+    } else {
+      console.log('  ⚠️ Max button not found, trying double-click on tile header');
+      const tileHeader = page.locator('.terminal-tile__header').first();
+      await tileHeader.dblclick();
       await page.waitForTimeout(1500);
       await forceXtermDarkTheme(page);
       await page.waitForTimeout(500);
