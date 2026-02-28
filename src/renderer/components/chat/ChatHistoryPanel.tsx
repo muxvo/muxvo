@@ -134,14 +134,20 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
     return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
   }, [searchQuery]);
 
+  // Filter search results by current project (no-op for "all projects")
+  const projectFilteredResults = useMemo(() => {
+    if (!selectedProjectHash) return searchResults;
+    return searchResults.filter(r => r.projectHash === selectedProjectHash);
+  }, [searchResults, selectedProjectHash]);
+
   // Filter sessions: title match (client) + full-text match (backend results)
   const searchSnippets = useMemo(() => {
     const map = new Map<string, string>();
-    for (const r of searchResults) {
+    for (const r of projectFilteredResults) {
       map.set(r.sessionId, r.snippet);
     }
     return map;
-  }, [searchResults]);
+  }, [projectFilteredResults]);
 
   const filteredSessions = useMemo(() => {
     if (!searchQuery.trim()) return sessions;
@@ -162,7 +168,7 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
     }
 
     // 2) Full-text results NOT in loaded sessions → create placeholder summaries
-    for (const r of searchResults) {
+    for (const r of projectFilteredResults) {
       if (seen.has(r.sessionId) || loadedIds.has(r.sessionId)) continue;
       const cleanSnippet = r.snippet.replace(/\s+/g, ' ').trim();
       result.push({
@@ -178,7 +184,7 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
     }
 
     return result;
-  }, [sessions, searchQuery, searchResults]);
+  }, [sessions, searchQuery, projectFilteredResults]);
 
   const sessionResultCount = searchQuery.trim()
     ? (searching ? undefined : filteredSessions.length)
