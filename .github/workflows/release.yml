@@ -168,17 +168,23 @@ jobs:
           console.log(merged);
           "
 
+      - name: Get version
+        id: version
+        run: echo "v=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
       - name: Upload to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
           draft: false
           files: |
-            dist-arm64/*.dmg
-            dist-arm64/*.zip
-            dist-arm64/*.blockmap
-            dist-x64/*.dmg
-            dist-x64/*.zip
-            dist-x64/*.blockmap
+            dist-arm64/Muxvo-${{ steps.version.outputs.v }}-arm64.dmg
+            dist-arm64/Muxvo-${{ steps.version.outputs.v }}-arm64.dmg.blockmap
+            dist-arm64/Muxvo-${{ steps.version.outputs.v }}-arm64.zip
+            dist-arm64/Muxvo-${{ steps.version.outputs.v }}-arm64.zip.blockmap
+            dist-x64/Muxvo-${{ steps.version.outputs.v }}-x64.dmg
+            dist-x64/Muxvo-${{ steps.version.outputs.v }}-x64.dmg.blockmap
+            dist-x64/Muxvo-${{ steps.version.outputs.v }}-x64.zip
+            dist-x64/Muxvo-${{ steps.version.outputs.v }}-x64.zip.blockmap
             latest-mac.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
