@@ -10,57 +10,58 @@
 import { _electron as electron } from 'playwright';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { spawn, type ChildProcess } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const PROJECT = resolve(__dirname, '../..');
 const OUTPUT = resolve(__dirname, '../public/screenshots');
+const RENDERER_DIR = resolve(PROJECT, 'out/renderer');
 
-async function main() {
-  console.log('Launching Muxvo...');
-
-  // Start Vite dev server first
-  const { spawn } = await import('child_process');
-  const vite = spawn('npx', ['electron-vite', 'dev'], {
+async function startStaticServer(): Promise<ChildProcess> {
+  // Serve the built renderer files on port 5173
+  const server = spawn('npx', ['serve', RENDERER_DIR, '-l', '5173', '--no-clipboard'], {
     cwd: PROJECT,
     stdio: 'pipe',
-    detached: true,
-    env: { ...process.env },
   });
 
-  // Wait for Vite to be ready
-  console.log('Waiting for Vite dev server...');
+  // Wait for server to be ready
   await new Promise<void>((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error('Vite startup timeout')), 30000);
+    const timeout = setTimeout(() => reject(new Error('Server startup timeout')), 15000);
     const check = setInterval(async () => {
       try {
         const res = await fetch('http://localhost:5173');
-        if (res.ok) {
+        if (res.ok || res.status === 200 || res.status === 304) {
           clearInterval(check);
           clearTimeout(timeout);
           resolve();
         }
       } catch { /* not ready yet */ }
-    }, 500);
+    }, 300);
   });
-  console.log('Vite dev server ready');
 
-  // Wait a bit more for electron-vite to start Electron
-  await new Promise(r => setTimeout(r, 8000));
+  return server;
+}
 
-  // Kill the electron-vite spawned Electron and vite, then launch our own
-  try { process.kill(-vite.pid!, 'SIGTERM'); } catch {}
-  await new Promise(r => setTimeout(r, 2000));
+async function main() {
+  // Start a static file server for the built renderer
+  console.log('Starting static server for renderer...');
+  const server = await startStaticServer();
+  console.log('Static server ready on :5173');
 
+  console.log('Launching Muxvo...');
   const app = await electron.launch({
     args: ['.'],
     cwd: PROJECT,
     timeout: 30000,
-    env: { ...process.env, ELECTRON_RENDERER_URL: 'http://localhost:5173' },
+    env: {
+      ...process.env,
+      ELECTRON_RENDERER_URL: 'http://localhost:5173',
+    },
   });
   const page = await app.firstWindow();
   await page.waitForLoadState('domcontentloaded');
-  await page.waitForTimeout(4000); // Wait for React mount + config load
+  await page.waitForTimeout(5000); // Wait for React mount + data load
 
   // Force dark theme
   await page.evaluate(() => {
@@ -76,7 +77,7 @@ async function main() {
     // ── Screenshot 1: Terminals (default view) ──────────────────
     console.log('📸 Screenshot 1: dark-terminals.jpg');
     const termTab = page.locator('.menu-bar__tab').first();
-    await termTab.click();
+    await termTab.click({ timeout: 15000 });
     await page.waitForTimeout(1000);
 
     await page.screenshot({
@@ -144,6 +145,7 @@ async function main() {
     console.log('\n✅ All 4 screenshots saved to web/public/screenshots/');
   } finally {
     await app.close();
+    server.kill();
   }
 }
 

@@ -29,6 +29,46 @@ jobs:
             -e "ssh -i ~/.ssh/deploy_key" \
             ./ root@${{ secrets.SERVER_HOST }}:/opt/muxvo-server/
 
+      - name: Ensure server .env
+        run: |
+          cat << EOF | ssh -i ~/.ssh/deploy_key root@${{ secrets.SERVER_HOST }} "cat > /opt/muxvo-server/server/.env"
+          NODE_ENV=production
+          PORT=3000
+          HOST=0.0.0.0
+          JWT_PRIVATE_KEY_PATH=/app/data/jwt-private.pem
+          JWT_PUBLIC_KEY_PATH=/app/data/jwt-public.pem
+          JWT_KEY_ID=muxvo-auth-key-v1
+          GITHUB_CLIENT_ID=${{ secrets.OAUTH_GH_CLIENT_ID }}
+          GITHUB_CLIENT_SECRET=${{ secrets.OAUTH_GH_CLIENT_SECRET }}
+          GITHUB_CALLBACK_URL=https://api.muxvo.com/auth/github/callback
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_CALLBACK_URL=https://api.muxvo.com/auth/google/callback
+          APP_SCHEME=muxvo
+          RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM=noreply@muxvo.com
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          EOF
+
+      - name: Ensure docker-compose .env
+        run: |
+          cat << EOF | ssh -i ~/.ssh/deploy_key root@${{ secrets.SERVER_HOST }} "cat > /opt/muxvo-server/.env"
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          EOF
+
+      - name: Validate env vars
+        run: |
+          ssh -i ~/.ssh/deploy_key root@${{ secrets.SERVER_HOST }} 'bash -s' << 'SCRIPT'
+          for key in GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET DB_PASSWORD; do
+            val=$(grep "^${key}=" /opt/muxvo-server/server/.env | cut -d= -f2-)
+            if [ -z "$val" ]; then
+              echo "FATAL: ${key} is empty in server/.env"
+              exit 1
+            fi
+          done
+          echo "All critical env vars verified."
+          SCRIPT
+
       - name: Build and restart containers
         run: |
           ssh -i ~/.ssh/deploy_key root@${{ secrets.SERVER_HOST }} \

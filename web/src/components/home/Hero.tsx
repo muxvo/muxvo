@@ -30,7 +30,7 @@ export function Hero() {
         </div>
       </div>
 
-      {/* App mockup — the hero's hero */}
+      {/* Real product screenshot */}
       <div className="mv-hero__mock fade-up">
         <div className="mv-mock">
           {/* Title bar */}
@@ -46,132 +46,18 @@ export function Hero() {
             </div>
           </div>
 
-          {/* Body: terminals + sidebar */}
-          <div className="mv-mock__body">
-            {/* Terminal panes: CC main + Dev Server auxiliary */}
-            <div className="mv-mock__terminals">
-              <Terminal
-                name="CLAUDE CODE"
-                path="~/acme-api"
-                active
-                main
-                lines={[
-                  { prompt: true, text: 'claude "fix auth middleware"' },
-                  { dim: true, text: 'Reading src/middleware/auth.ts...' },
-                  { dim: true, text: 'Found 2 issues in validateToken()' },
-                  { dim: true, text: 'Applying fix...' },
-                  { success: true, text: '✓ Fixed 2 issues, 1 file changed' },
-                ]}
-              />
-              <Terminal
-                name="CLAUDE CODE"
-                path="~/acme-web"
-                active
-                lines={[
-                  { prompt: true, text: 'claude "add dark mode toggle"' },
-                  { dim: true, text: 'Scanning theme configuration...' },
-                  { success: true, text: '✓ Added toggle, 3 files changed' },
-                ]}
-              />
-              <Terminal
-                name="DEV SERVER"
-                path="~/acme-api"
-                lines={[
-                  { prompt: true, text: 'npm run dev' },
-                  { success: true, text: 'Listening on :3000' },
-                  { dim: true, text: 'GET /api/users 200 12ms' },
-                ]}
-              />
-            </div>
-
-            {/* Sidebar */}
-            <div className="mv-mock__sidebar">
-              {/* Chat History */}
-              <div className="mv-mock__sb-section">
-                <div className="mv-mock__sb-head">
-                  <span className="mv-mock__sb-icon">💬</span>
-                  Chat History
-                </div>
-                <div className="mv-mock__sb-meta">14 sessions · 3 projects</div>
-                <SbItem label="Fix auth middleware" tag="CC" time="just now" />
-                <SbItem label="Add dark mode" tag="CC" time="2h ago" />
-                <SbItem label="Refactor DB layer" tag="CC" time="yesterday" />
-                <div className="mv-mock__sb-more">+ 11 more sessions</div>
-              </div>
-
-              {/* Config */}
-              <div className="mv-mock__sb-section">
-                <div className="mv-mock__sb-head">
-                  <span className="mv-mock__sb-icon">⚙️</span>
-                  Config
-                </div>
-                <div className="mv-mock__sb-meta">8 skills · 3 MCP servers</div>
-                <SbItem label="commit-msg" tag="Skill" />
-                <SbItem label="code-review" tag="Skill" />
-                <SbItem label="filesystem" tag="MCP" />
-                <SbItem label="github" tag="MCP" />
-              </div>
-            </div>
+          {/* Screenshot */}
+          <div className="mv-mock__screenshot">
+            <img
+              src="/screenshots/dark-terminals.jpg"
+              alt="Muxvo terminal grid — multiple AI CLI sessions at a glance"
+              loading="eager"
+              width="2764"
+              height="1876"
+            />
           </div>
         </div>
       </div>
     </section>
-  );
-}
-
-/* ---- sub-components ---- */
-
-function Terminal({
-  name,
-  path,
-  active,
-  main,
-  lines,
-}: {
-  name: string;
-  path: string;
-  active?: boolean;
-  main?: boolean;
-  lines: { prompt?: boolean; dim?: boolean; success?: boolean; text: string }[];
-}) {
-  return (
-    <div className={`mv-term${main ? ' mv-term--main' : ''}`}>
-      <div className="mv-term__head">
-        <span
-          className={`mv-term__status ${active ? 'mv-term__status--on' : 'mv-term__status--idle'}`}
-        />
-        <span className="mv-term__name">{name}</span>
-        <span className="mv-term__path">{path}</span>
-      </div>
-      <div className="mv-term__body">
-        {lines.map((l, i) => (
-          <div
-            key={i}
-            className={`mv-term__line${l.dim ? ' mv-term__line--dim' : ''}${l.success ? ' mv-term__line--ok' : ''}`}
-          >
-            {l.prompt && <span className="mv-term__prompt">$ </span>}
-            {l.text}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function SbItem({
-  label,
-  tag,
-  time,
-}: {
-  label: string;
-  tag: string;
-  time?: string;
-}) {
-  return (
-    <div className="mv-mock__sb-item">
-      <span className="mv-mock__sb-tag">{tag}</span>
-      <span className="mv-mock__sb-label">{label}</span>
-      {time && <span className="mv-mock__sb-time">{time}</span>}
-    </div>
   );
 }
