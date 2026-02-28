@@ -55,6 +55,7 @@
   color: var(--text-after);
   max-width: 720px;
   margin: 0 auto;
+  white-space: nowrap;
 }
 
 .mv-hero__sub {
