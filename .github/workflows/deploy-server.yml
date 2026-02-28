@@ -35,6 +35,8 @@ jobs:
           NODE_ENV=production
           PORT=3000
           HOST=0.0.0.0
+          DATABASE_URL=postgresql://muxvo:${{ secrets.DB_PASSWORD }}@postgres:5432/muxvo
+          REDIS_URL=redis://redis:6379
           JWT_PRIVATE_KEY_PATH=/app/data/jwt-private.pem
           JWT_PUBLIC_KEY_PATH=/app/data/jwt-public.pem
           JWT_KEY_ID=muxvo-auth-key-v1
