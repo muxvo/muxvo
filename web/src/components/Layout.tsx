@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { useDownloadUrl } from '../hooks/useDownloadUrl';
 
 function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const { url } = useDownloadUrl();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
@@ -80,7 +82,7 @@ function Nav() {
           >
             GitHub
           </a>
-          <a href="https://muxvo.com/download/Muxvo-arm64.dmg" className="btn-amber">下载</a>
+          <a href={url} className="btn-amber">下载</a>
         </div>
       </div>
     </nav>

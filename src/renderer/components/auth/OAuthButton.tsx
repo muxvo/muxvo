@@ -3,7 +3,7 @@
  */
 
 interface Props {
-  provider: 'github' | 'google';
+  provider: 'github' | 'google' | 'email';
   label: string;
   onClick: () => void;
   disabled?: boolean;

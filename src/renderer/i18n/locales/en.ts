@@ -175,6 +175,8 @@ export const en = {
   'auth.resetSuccess': 'Password reset successful. Please log in again.',
   'auth.passwordTooShort': 'Password must be at least 8 characters',
   'auth.orPassword': 'or log in with email',
+  'auth.emailPassword': 'Email & Password',
+  'auth.back': 'Back',
   // Settings
   'settings.title': 'Settings',
   'settings.general': 'General',

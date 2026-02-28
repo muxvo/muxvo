@@ -11,18 +11,18 @@ import { RegisterForm } from './RegisterForm';
 import { ForgotPasswordForm } from './ForgotPasswordForm';
 import './LoginModal.css';
 
-type Mode = 'login' | 'register' | 'forgot-password';
+type Mode = 'buttons' | 'login' | 'register' | 'forgot-password';
 
 export function LoginModal(): JSX.Element | null {
   const { state, dispatch, loginGithub, loginGoogle, sendEmailCode, loginPassword, register, resetPassword } = useAuth();
   const { t } = useI18n();
-  const [mode, setMode] = useState<Mode>('login');
+  const [mode, setMode] = useState<Mode>('buttons');
 
   const isLoading = state.status === 'loading';
 
   // Reset mode when modal opens
   useEffect(() => {
-    if (state.loginModalOpen) setMode('login');
+    if (state.loginModalOpen) setMode('buttons');
   }, [state.loginModalOpen]);
 
   // Close on Escape key
@@ -50,7 +50,8 @@ export function LoginModal(): JSX.Element | null {
   const title =
     mode === 'register' ? t('auth.createAccount')
       : mode === 'forgot-password' ? t('auth.resetPassword')
-        : t('auth.modalTitle');
+        : mode === 'login' ? t('auth.login')
+          : t('auth.modalTitle');
 
   return (
     <div className="login-modal__backdrop" onClick={() => dispatch({ type: 'CLOSE_LOGIN_MODAL' })}>
@@ -81,7 +82,7 @@ export function LoginModal(): JSX.Element | null {
         )}
 
         <div className="login-modal__body">
-          {mode === 'login' && (
+          {mode === 'buttons' && (
             <>
               <OAuthButton
                 provider="github"
@@ -95,11 +96,17 @@ export function LoginModal(): JSX.Element | null {
                 onClick={loginGoogle}
                 disabled={isLoading}
               />
+              <OAuthButton
+                provider="email"
+                label={t('auth.emailPassword')}
+                onClick={() => setMode('login')}
+                disabled={isLoading}
+              />
+            </>
+          )}
 
-              <div className="login-modal__divider">
-                <span>{t('auth.orPassword')}</span>
-              </div>
-
+          {mode === 'login' && (
+            <>
               <PasswordLoginForm
                 onLogin={loginPassword}
                 disabled={isLoading}
@@ -111,6 +118,11 @@ export function LoginModal(): JSX.Element | null {
                 </button>
                 <button className="login-modal__link" onClick={() => setMode('forgot-password')}>
                   {t('auth.forgotPassword')}
+                </button>
+              </div>
+              <div className="login-modal__links" style={{ justifyContent: 'center', marginTop: '4px' }}>
+                <button className="login-modal__link" onClick={() => setMode('buttons')}>
+                  {t('auth.back')}
                 </button>
               </div>
             </>
@@ -127,6 +139,9 @@ export function LoginModal(): JSX.Element | null {
               <div className="login-modal__links">
                 <button className="login-modal__link" onClick={() => setMode('login')}>
                   {t('auth.alreadyHaveAccount')}
+                </button>
+                <button className="login-modal__link" onClick={() => setMode('buttons')}>
+                  {t('auth.back')}
                 </button>
               </div>
             </>

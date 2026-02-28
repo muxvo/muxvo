@@ -175,6 +175,8 @@ export const zh = {
   'auth.resetSuccess': '密码重置成功，请重新登录',
   'auth.passwordTooShort': '密码至少 8 个字符',
   'auth.orPassword': '或使用邮箱登录',
+  'auth.emailPassword': '账号密码登录',
+  'auth.back': '返回',
   // Settings
   'settings.title': '设置',
   'settings.general': '通用',

@@ -197,11 +197,16 @@ chat-handlers.ts → chat-multi-source.ts (aggregator)
 # Dev build + package (arm64 Mac)
 npx electron-vite build && npx electron-builder --mac --arm64
 
+# Dev build + package (Intel Mac)
+npx electron-vite build && npx electron-builder --mac --x64
+
 # Apple notarization (requires keychain profile)
 ditto -c -k --keepParent dist/mac-arm64/Muxvo.app /tmp/Muxvo.zip
 xcrun notarytool submit /tmp/Muxvo.zip --keychain-profile "muxvo-notary" --wait
 xcrun stapler staple dist/mac-arm64/Muxvo.app
 ```
+
+**Note**: node-pty 交叉编译不可靠。arm64 必须在 Apple Silicon 上构建，x64 必须在 Intel Mac（或 CI 的 macos-13 runner）上构建。
 
 Config: `electron-builder.yml`. Signing credentials: see `1apple-developer-signing.md` (not in repo).
 
@@ -221,9 +226,14 @@ git push origin main --tags
 
 **CI 自动完成（`.github/workflows/release.yml`）：**
 - 运行测试
-- 构建 + Apple 签名 + 公证
-- 上传到 GitHub Releases（含版本号 DMG + 稳定链接 `Muxvo-arm64.dmg`）
-- 自动部署 DMG 到官网服务器（`https://muxvo.com/download/Muxvo-arm64.dmg` 始终指向最新版）
+- **并行构建 arm64 (macos-14) + x64 (macos-13) 两个架构**
+- Apple 签名 + 公证（两个架构各自签名）
+- 合并 `latest-mac.yml`（electron-updater 自动更新用）
+- 上传到 GitHub Releases（含两个架构的 DMG + ZIP + 稳定链接）
+- 自动部署两个 DMG 到官网服务器：
+  - `https://muxvo.com/download/Muxvo-arm64.dmg` 始终指向最新 arm64 版
+  - `https://muxvo.com/download/Muxvo-x64.dmg` 始终指向最新 Intel 版
+- 官网自动检测用户 Mac 架构（WebGL renderer），提供对应下载链接
 
 **所需 GitHub Secrets：** `SERVER_SSH_KEY`, `SERVER_HOST`, `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`
 
