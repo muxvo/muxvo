@@ -17,12 +17,16 @@ export function LoginModal(): JSX.Element | null {
   const { state, dispatch, loginGithub, loginGoogle, sendEmailCode, loginPassword, register, resetPassword } = useAuth();
   const { t } = useI18n();
   const [mode, setMode] = useState<Mode>('buttons');
+  const [agreed, setAgreed] = useState(false);
 
   const isLoading = state.status === 'loading';
 
-  // Reset mode when modal opens
+  // Reset mode and agreement when modal opens
   useEffect(() => {
-    if (state.loginModalOpen) setMode('buttons');
+    if (state.loginModalOpen) {
+      setMode('buttons');
+      setAgreed(false);
+    }
   }, [state.loginModalOpen]);
 
   // Close on Escape key
@@ -100,19 +104,19 @@ export function LoginModal(): JSX.Element | null {
                 provider="github"
                 label={t('auth.loginGithub')}
                 onClick={loginGithub}
-                disabled={isLoading}
+                disabled={isLoading || !agreed}
               />
               <OAuthButton
                 provider="google"
                 label={t('auth.loginGoogle')}
                 onClick={loginGoogle}
-                disabled={isLoading}
+                disabled={isLoading || !agreed}
               />
               <OAuthButton
                 provider="email"
                 label={t('auth.emailPassword')}
                 onClick={() => setMode('login')}
-                disabled={isLoading}
+                disabled={isLoading || !agreed}
               />
             </>
           )}
@@ -121,7 +125,7 @@ export function LoginModal(): JSX.Element | null {
             <>
               <PasswordLoginForm
                 onLogin={loginPassword}
-                disabled={isLoading}
+                disabled={isLoading || !agreed}
               />
 
               <div className="login-modal__links">
@@ -140,7 +144,7 @@ export function LoginModal(): JSX.Element | null {
               <RegisterForm
                 onSendCode={sendEmailCode}
                 onRegister={register}
-                disabled={isLoading}
+                disabled={isLoading || !agreed}
               />
 
               <div className="login-modal__links">
@@ -162,16 +166,24 @@ export function LoginModal(): JSX.Element | null {
         </div>
 
         <div className="login-modal__footer">
-          <span className="login-modal__terms">
-            {t('auth.termsPrefix')}
-            <a href="https://muxvo.com/terms" target="_blank" rel="noopener noreferrer" className="login-modal__terms-link">
-              {t('auth.termsOfService')}
-            </a>
-            {t('auth.termsAnd')}
-            <a href="https://muxvo.com/privacy" target="_blank" rel="noopener noreferrer" className="login-modal__terms-link">
-              {t('auth.privacyPolicy')}
-            </a>
-          </span>
+          <label className="login-modal__agree">
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="login-modal__agree-checkbox"
+            />
+            <span className="login-modal__terms">
+              {t('auth.agreePrefix')}
+              <a href="https://muxvo.com/terms" target="_blank" rel="noopener noreferrer" className="login-modal__terms-link">
+                {t('auth.termsOfService')}
+              </a>
+              {t('auth.termsAnd')}
+              <a href="https://muxvo.com/privacy" target="_blank" rel="noopener noreferrer" className="login-modal__terms-link">
+                {t('auth.privacyPolicy')}
+              </a>
+            </span>
+          </label>
         </div>
 
         {isLoading && (

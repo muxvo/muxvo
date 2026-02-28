@@ -165,6 +165,7 @@ export const zh = {
   'auth.logout': '登出',
   'auth.termsNotice': '登录即表示同意服务条款和隐私政策',
   'auth.termsPrefix': '登录即表示同意',
+  'auth.agreePrefix': '我已阅读并同意',
   'auth.termsOfService': '服务条款',
   'auth.termsAnd': '和',
   'auth.privacyPolicy': '隐私政策',

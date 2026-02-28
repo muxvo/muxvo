@@ -165,6 +165,7 @@ export const en = {
   'auth.logout': 'Logout',
   'auth.termsNotice': 'By logging in you agree to the Terms of Service and Privacy Policy',
   'auth.termsPrefix': 'By logging in you agree to the ',
+  'auth.agreePrefix': 'I have read and agree to the ',
   'auth.termsOfService': 'Terms of Service',
   'auth.termsAnd': ' and ',
   'auth.privacyPolicy': 'Privacy Policy',

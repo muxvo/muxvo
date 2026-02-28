@@ -295,6 +295,20 @@
   color: var(--text-primary);
 }
 
+.login-modal__agree {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.login-modal__agree-checkbox {
+  margin-top: 2px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
 /* Loading overlay */
 .login-modal__loading {
   position: absolute;
