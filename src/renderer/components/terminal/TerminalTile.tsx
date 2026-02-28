@@ -13,7 +13,7 @@ import { XTermRenderer } from './XTermRenderer';
 import { getTerminalProcessUI } from '@/renderer/stores/terminal-process-ui-map';
 import { createNamingMachine } from '@/shared/machines/terminal-naming';
 import { CwdPicker } from './CwdPicker';
-import { usePanelContext } from '@/renderer/contexts/PanelContext';
+import { usePanelDispatch } from '@/renderer/contexts/PanelContext';
 import './TileEffects.css';
 
 interface Props {
@@ -84,7 +84,7 @@ function TerminalTileInner({
   const { t } = useI18n();
   const ui = getTerminalProcessUI(state);
   const tileRef = useRef<HTMLDivElement>(null);
-  const { dispatch: panelDispatch } = usePanelContext();
+  const panelDispatch = usePanelDispatch();
 
   // Mouse tracking for gloss effect
   const handleMouseMove = (e: React.MouseEvent) => {

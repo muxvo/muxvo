@@ -3,7 +3,7 @@
  * Decouples panel open/close logic from App.tsx
  */
 
-import { createContext, useContext, useReducer, type ReactNode } from 'react';
+import { createContext, useContext, useReducer, type Dispatch, type ReactNode } from 'react';
 
 // ── State Shape ──
 
@@ -165,15 +165,23 @@ interface PanelContextValue {
 
 const PanelContext = createContext<PanelContextValue | null>(null);
 
+// Separate context for dispatch only — dispatch reference from useReducer is
+// guaranteed stable, so components subscribing to this context will never
+// re-render due to state changes. This prevents React.memo bypass when a
+// component only needs dispatch (e.g. TerminalTile).
+const PanelDispatchContext = createContext<Dispatch<PanelAction> | null>(null);
+
 // ── Provider ──
 
 export function PanelProvider({ children }: { children: ReactNode }): JSX.Element {
   const [state, dispatch] = useReducer(panelReducer, initialState);
 
   return (
-    <PanelContext.Provider value={{ state, dispatch }}>
-      {children}
-    </PanelContext.Provider>
+    <PanelDispatchContext.Provider value={dispatch}>
+      <PanelContext.Provider value={{ state, dispatch }}>
+        {children}
+      </PanelContext.Provider>
+    </PanelDispatchContext.Provider>
   );
 }
 
@@ -185,4 +193,13 @@ export function usePanelContext(): PanelContextValue {
     throw new Error('usePanelContext must be used within a PanelProvider');
   }
   return ctx;
+}
+
+/** Use only dispatch without subscribing to state — avoids re-renders on state changes */
+export function usePanelDispatch(): Dispatch<PanelAction> {
+  const dispatch = useContext(PanelDispatchContext);
+  if (!dispatch) {
+    throw new Error('usePanelDispatch must be used within a PanelProvider');
+  }
+  return dispatch;
 }

@@ -253,7 +253,6 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
     padding: '0',
     width: '100%',
     height: '100%',
-    perspective: '1200px',
     position: 'relative',
     cursor: isFocusedMode ? 'default' : resizeManager.cursor,
   };
@@ -329,22 +328,22 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
         );
       })}
 
-      {/* Sidebar scroll container (focused mode only) */}
-      {isFocusedMode && sidebarTerminals.length > 0 && (
-        <TerminalSidebar
-          terminals={sidebarTerminals}
-          onSelect={onSidebarClick}
-          onClose={onClose}
-          style={{
-            position: 'absolute',
-            right: 0,
-            top: 0,
-            width: '25%',
-            height: '100%',
-            zIndex: 11,
-          }}
-        />
-      )}
+      {/* Sidebar scroll container — always rendered to avoid mount/unmount flicker
+          on focus mode switch. Hidden via CSS display:none when not needed. */}
+      <TerminalSidebar
+        terminals={sidebarTerminals}
+        onSelect={onSidebarClick}
+        onClose={onClose}
+        style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          width: '25%',
+          height: '100%',
+          zIndex: 11,
+          display: isFocusedMode && sidebarTerminals.length > 0 ? undefined : 'none',
+        }}
+      />
 
       {/* Column resize handles (tiling mode only) */}
       {!isFocusedMode && cols > 1 && colHandlePositions.map((pct, idx) => (

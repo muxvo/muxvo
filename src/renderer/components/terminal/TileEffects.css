@@ -117,6 +117,10 @@
   animation: borderGlow 2.5s ease-in-out infinite;
   border: 2px solid rgba(239, 68, 68, 0.7);
   outline-color: rgba(239, 68, 68, 0.2);
+  /* Override transition: exclude border-color and outline-color to avoid
+     conflict with borderGlow animation (animation + transition on same
+     property causes flash when .tile--waiting is added/removed) */
+  transition: box-shadow 0.3s ease, filter 0.3s ease;
 }
 
 .tile--waiting .tile-header {
