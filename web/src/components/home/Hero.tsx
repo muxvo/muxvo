@@ -12,9 +12,10 @@ export function Hero() {
       <div className="mv-hero__text">
         <p className="mv-hero__eyebrow">为 Claude Code 重度用户打造</p>
         <h1 className="mv-hero__title">
-          驾驭你的 Agent 军团。
+          驾驭你的 Agent 军团
         </h1>
         <p className="mv-hero__sub">
+          Claude Code、Codex、Gemini CLI，开多少个都不乱。
         </p>
         <div className="mv-hero__actions">
           <a href={url} className="btn-amber btn-amber-lg">
