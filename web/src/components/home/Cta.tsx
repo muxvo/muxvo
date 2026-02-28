@@ -1,7 +1,8 @@
 import { useDownloadUrl } from '../../hooks/useDownloadUrl';
+import { track } from '../../lib/analytics';
 
 export function Cta() {
-  const { url } = useDownloadUrl();
+  const { url, arch } = useDownloadUrl();
 
   return (
     <section className="mv-cta" id="download">
@@ -9,7 +10,7 @@ export function Cta() {
       <div className="mv-cta__inner fade-up">
         <h2 className="mv-cta__title">试试 Muxvo</h2>
         <div className="mv-cta__buttons">
-          <a href={url} className="btn-amber btn-amber-lg">
+          <a href={url} className="btn-amber btn-amber-lg" onClick={() => track('web:download_click', { arch, position: 'cta' })}>
             下载 macOS 版
           </a>
         </div>

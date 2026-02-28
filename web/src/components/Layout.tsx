@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useDownloadUrl } from '../hooks/useDownloadUrl';
+import { track } from '../lib/analytics';
 
 function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
-  const { url } = useDownloadUrl();
+  const { url, arch } = useDownloadUrl();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
@@ -79,10 +80,11 @@ function Nav() {
             rel="noopener noreferrer"
             className="text-sm transition-colors duration-150 hover:!text-[var(--amber)]"
             style={{ color: 'var(--text-after-sec)' }}
+            onClick={() => track('web:github_click', { position: 'nav' })}
           >
             GitHub
           </a>
-          <a href={url} className="btn-amber">下载</a>
+          <a href={url} className="btn-amber" onClick={() => track('web:download_click', { arch, position: 'nav' })}>下载</a>
         </div>
       </div>
     </nav>
@@ -126,6 +128,7 @@ function Footer() {
               rel="noopener noreferrer"
               className={linkCls}
               style={linkStyle}
+              onClick={() => track('web:github_click', { position: 'footer' })}
             >
               GitHub
             </a>

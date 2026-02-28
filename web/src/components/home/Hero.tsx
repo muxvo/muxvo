@@ -1,7 +1,8 @@
 import { useDownloadUrl } from '../../hooks/useDownloadUrl';
+import { track } from '../../lib/analytics';
 
 export function Hero() {
-  const { url } = useDownloadUrl();
+  const { url, arch } = useDownloadUrl();
 
   return (
     <section className="mv-hero">
@@ -18,7 +19,7 @@ export function Hero() {
           Claude Code、Codex、Gemini CLI，开多少个都不乱。
         </p>
         <div className="mv-hero__actions">
-          <a href={url} className="btn-amber btn-amber-lg">
+          <a href={url} className="btn-amber btn-amber-lg" onClick={() => track('web:download_click', { arch, position: 'hero' })}>
             下载 macOS 版
           </a>
         </div>
