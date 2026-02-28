@@ -229,6 +229,71 @@ async function main() {
     console.log('  ✅ dark-focused.jpg saved');
 
     // ════════════════════════════════════════════════════════════
+    // Screenshot 3.5: File View (FileTempView three-column layout)
+    // ════════════════════════════════════════════════════════════
+    console.log('📸 Screenshot 3.5: dark-file-view.jpg');
+
+    // Exit focused mode — click maximize button again (toggles back to tiling)
+    const exitMaxBtn = page.locator('.tile-max-btn').first();
+    const exitMaxVisible = await exitMaxBtn.isVisible({ timeout: 3000 }).catch(() => false);
+    if (exitMaxVisible) {
+      await exitMaxBtn.click();
+      await page.waitForTimeout(1500);
+    } else {
+      // Fallback: press Escape
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(1500);
+    }
+    await forceXtermDarkTheme(page);
+
+    // Click the file button on the first terminal tile
+    const fileBtn = page.locator('.tile-file-btn').first();
+    const fileBtnVisible = await fileBtn.isVisible({ timeout: 5000 }).catch(() => false);
+    if (fileBtnVisible) {
+      await fileBtn.click();
+      await page.waitForTimeout(1000); // Wait for FilePanel slide-in
+
+      // Click a non-folder file item to open FileTempView
+      const fileItem = page.locator('.file-item:not(.file-item--folder)').first();
+      const hasFile = await fileItem.isVisible({ timeout: 3000 }).catch(() => false);
+      if (hasFile) {
+        await fileItem.click();
+        await page.waitForTimeout(2000); // Wait for FileTempView entrance animation
+      }
+
+      await forceXtermDarkTheme(page);
+      await page.waitForTimeout(500);
+
+      // Blur file content for privacy (sensitive file paths/content may appear)
+      await page.evaluate(() => {
+        const style = document.createElement('style');
+        style.id = 'file-privacy-blur';
+        style.textContent = `
+          .file-temp-view__content-body { filter: blur(6px) !important; }
+          .file-item__name { filter: blur(3px) !important; }
+        `;
+        document.head.appendChild(style);
+      });
+      await page.waitForTimeout(300);
+
+      await page.screenshot({
+        path: resolve(OUTPUT, 'dark-file-view.jpg'),
+        type: 'jpeg',
+        quality: 90,
+      });
+      console.log('  ✅ dark-file-view.jpg saved');
+
+      // Remove blur
+      await page.evaluate(() => document.getElementById('file-privacy-blur')?.remove());
+
+      // Close FileTempView
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(500);
+    } else {
+      console.log('  ⚠️ File button not visible, skipping file view screenshot');
+    }
+
+    // ════════════════════════════════════════════════════════════
     // Screenshot 4: Skills Panel
     // ════════════════════════════════════════════════════════════
     console.log('📸 Screenshot 4: dark-skills.jpg');

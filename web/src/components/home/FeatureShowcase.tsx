@@ -21,6 +21,13 @@ const FEATURES = [
     alt: 'Muxvo focused mode — one terminal maximized with sidebar',
   },
   {
+    icon: '⊡',
+    title: '文件按钮，看完就改',
+    desc: '终端旁边按一下，项目文件树滑出来。点开文件直接编辑，Markdown 所见即所得，代码高亮显示，不用切出去。',
+    screenshot: '/screenshots/dark-file-view.jpg',
+    alt: 'Muxvo file viewer — browse and edit project files inline',
+  },
+  {
     icon: '⚙',
     title: '自动扫描，Skill 和 MCP 一目了然',
     desc: '打开就能看到本地所有 Skill 和 MCP 服务器，装了什么、在哪里，不用翻目录。',

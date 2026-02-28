@@ -43,32 +43,36 @@ test.describe('官网截图展示验证', () => {
     }
   });
 
-  test('4 个 Feature Showcase 区段各含截图和标题', async () => {
+  test('6 个 Feature Showcase 区段各含截图和标题', async () => {
     const browser = await chromium.launch();
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 
     try {
       await page.goto(WEB_URL, { waitUntil: 'networkidle' });
 
-      // 4 个 showcase 区段
+      // 6 个 showcase 区段
       const showcases = page.locator('.mv-showcase');
-      await expect(showcases).toHaveCount(4);
+      await expect(showcases).toHaveCount(6);
 
       // 每个区段都有图片和标题
       const expectedScreenshots = [
-        'dark-chat-history',
-        'dark-terminals',
+        'dark-resume-chat',
+        'dark-4terminals',
+        'dark-focused',
+        'dark-file-view',
         'dark-skills',
         'dark-multi-tool',
       ];
       const expectedTitles = [
         '永久存档，找到就续聊',
         '一屏排开，告别切窗口',
+        '聚焦模式，沉浸对话',
+        '文件按钮，看完就改',
         '自动扫描，Skill 和 MCP 一目了然',
         '统一入口，Codex 和 Gemini CLI 也能管',
       ];
 
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 6; i++) {
         const showcase = showcases.nth(i);
 
         // 标题文字
@@ -101,14 +105,14 @@ test.describe('官网截图展示验证', () => {
 
       const showcases = page.locator('.mv-showcase');
 
-      // 索引 0, 2 不含 reverse
-      for (const idx of [0, 2]) {
+      // 索引 0, 2, 4 不含 reverse
+      for (const idx of [0, 2, 4]) {
         const cls = await showcases.nth(idx).getAttribute('class');
         expect(cls).not.toContain('mv-showcase--reverse');
       }
 
-      // 索引 1, 3 含 reverse
-      for (const idx of [1, 3]) {
+      // 索引 1, 3, 5 含 reverse
+      for (const idx of [1, 3, 5]) {
         const cls = await showcases.nth(idx).getAttribute('class');
         expect(cls).toContain('mv-showcase--reverse');
       }
