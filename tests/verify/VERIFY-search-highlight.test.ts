@@ -27,11 +27,11 @@ describe('highlightHtml — search highlighting in markdown content', () => {
     expect(result).toBe('<a href="hello-link">click <mark class="search-highlight">hello</mark></a>');
   });
 
-  test('active match adds search-highlight--active class', () => {
+  test('active class is not baked into HTML (applied via DOM manipulation)', () => {
     const html = '<p>test word</p>';
-    const result = highlightHtml(html, 'test', true);
-    expect(result).toContain('search-highlight search-highlight--active');
-    expect(result).toBe('<p><mark class="search-highlight search-highlight--active">test</mark> word</p>');
+    const result = highlightHtml(html, 'test');
+    expect(result).toBe('<p><mark class="search-highlight">test</mark> word</p>');
+    expect(result).not.toContain('search-highlight--active');
   });
 
   test('case-insensitive matching', () => {

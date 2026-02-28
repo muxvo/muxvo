@@ -151,5 +151,7 @@ describe('Fix 3: keyword-level scroll — source code verification', () => {
     expect(src).toContain('scrollToIndex({ index: dataIndex');
     expect(src).toContain('setTimeout(');
     expect(src).toContain('scrollIntoView');
+    // Active highlight is applied via DOM manipulation, not React props
+    expect(src).toContain('data-msg-idx');
   });
 });

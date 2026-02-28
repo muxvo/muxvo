@@ -217,16 +217,16 @@ const MessageBubble = React.memo(function MessageBubble({ message, searchQuery, 
 
       <div className="message-bubble__content">
         {Array.isArray(message.content)
-          ? (message.content as AssistantContentBlock[]).map((block, i) => renderContentBlock(block, i, searchQuery, isActiveMatch))
+          ? (message.content as AssistantContentBlock[]).map((block, i) => renderContentBlock(block, i, searchQuery))
           : isTeammate
             ? <MarkdownPreview content={
                 (message.content as string)
                   .replace(/<teammate-message[^>]*>\n?/g, '')
                   .replace(/<\/teammate-message>\s*/g, '')
-              } searchQuery={searchQuery} isActiveMatch={isActiveMatch} />
+              } searchQuery={searchQuery} />
             : isUser || isSystem
-              ? <div className="message-bubble__text">{searchQuery ? <HighlightText text={message.content as string} query={searchQuery} active={isActiveMatch} /> : message.content as string}</div>
-              : <MarkdownPreview content={String(message.content)} searchQuery={searchQuery} isActiveMatch={isActiveMatch} />
+              ? <div className="message-bubble__text">{searchQuery ? <HighlightText text={message.content as string} query={searchQuery} /> : message.content as string}</div>
+              : <MarkdownPreview content={String(message.content)} searchQuery={searchQuery} />
         }
       </div>
 
@@ -331,21 +331,29 @@ export const SessionDetail = forwardRef<SessionDetailHandle, SessionDetailProps>
     }
   }, [matchOccurrences, messageKey, searchQuery]);
 
-  // Unified scroll effect: two-step positioning
-  // Step 1: scrollToIndex brings the message into Virtuoso's rendered DOM
-  // Step 2: scrollIntoView on the specific <mark> element for keyword-level precision
+  // DOM-based active highlight switching + scroll positioning
+  // Avoids re-rendering MessageBubble/MarkdownPreview when switching matches
   useEffect(() => {
+    // Clear all old active marks
+    document.querySelectorAll('mark.search-highlight--active')
+      .forEach(el => el.classList.remove('search-highlight--active'));
+
     if (!searchQuery?.trim() || matchOccurrences.length === 0) return;
     if (currentMatchIdx < 0 || currentMatchIdx >= matchOccurrences.length) return;
+
     const match = matchOccurrences[currentMatchIdx];
     const dataIndex = match.msgIdx;
+
     requestAnimationFrame(() => {
       virtuosoRef.current?.scrollToIndex({ index: dataIndex, align: 'center', behavior: 'auto' });
-      // After Virtuoso renders the message, locate the exact keyword mark
+      // After Virtuoso renders the message, locate the exact keyword mark via data-msg-idx
       setTimeout(() => {
-        const marks = document.querySelectorAll('mark.search-highlight--active');
+        const bubble = document.querySelector(`[data-msg-idx="${dataIndex}"]`);
+        if (!bubble) return;
+        const marks = bubble.querySelectorAll('mark.search-highlight');
         const target = marks[match.nthInMsg];
         if (target) {
+          target.classList.add('search-highlight--active');
           target.scrollIntoView({ block: 'center', behavior: 'auto' });
         }
       }, 80);
@@ -460,8 +468,7 @@ export const SessionDetail = forwardRef<SessionDetailHandle, SessionDetailProps>
         components={{ Header }}
         itemContent={(index, message) => {
           const msgIdx = index - firstItemIndex;
-          const isActiveMatch = searchQuery && matchOccurrences[currentMatchIdx]?.msgIdx === msgIdx;
-          return <MessageBubble key={message.uuid} message={message} searchQuery={searchQuery} isActiveMatch={!!isActiveMatch} />;
+          return <MessageBubble key={message.uuid} message={message} searchQuery={searchQuery} msgIdx={msgIdx} />;
         }}
         followOutput={isSearching ? undefined : 'auto'}
         style={{ height: '100%' }}
