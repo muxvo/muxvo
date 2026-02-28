@@ -10,7 +10,7 @@ const FEATURES = [
     icon: '⊞',
     title: '一屏排开，告别切窗口',
     desc: '多终端平铺管理，所有窗口一目了然。省下的是每天几十次 ⌘Tab。',
-    screenshot: '/screenshots/dark-4terminals.jpg',
+    screenshot: '/screenshots/dark-tiling.jpg',
     alt: 'Muxvo terminal grid — all sessions tiled on one screen',
   },
   {
