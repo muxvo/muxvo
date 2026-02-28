@@ -331,7 +331,7 @@ describe('L3 -- 模块完整流程', () => {
       username: 'testuser',
     });
     expect(machine.state).toBe('LoggedIn');
-    expect(machine.context.tokenStorage).toBe('safeStorage');
+    expect(machine.context.tokenStorage).toBe('plaintext');
     expect(machine.context.username).toBe('testuser');
   });
 
@@ -362,7 +362,7 @@ describe('L3 -- 模块完整流程', () => {
     expect(machine.context.refreshToken).toBe('jwt_refresh_token');
     expect(machine.context.userId).toBe('usr_456');
     expect(machine.context.email).toBe('user@example.com');
-    expect(machine.context.tokenStorage).toBe('safeStorage');
+    expect(machine.context.tokenStorage).toBe('plaintext');
   });
 
   // MODULE_L3_10: 启动时自动恢复登录态

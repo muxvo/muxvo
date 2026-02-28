@@ -109,7 +109,7 @@ export function createAuthMachine() {
           if (payload?.avatarUrl) {
             context.avatarUrl = payload.avatarUrl as string;
           }
-          context.tokenStorage = 'safeStorage';
+          context.tokenStorage = 'plaintext';
         } else if (event === 'AUTH_FAILED') {
           state = 'LoggedOut';
           context.error = (payload?.error as string) || '授权失败';
@@ -156,7 +156,7 @@ export function createAuthMachine() {
           if (payload?.avatarUrl) {
             context.avatarUrl = payload.avatarUrl as string;
           }
-          context.tokenStorage = 'safeStorage';
+          context.tokenStorage = 'plaintext';
         } else if (event === 'AUTH_FAILED') {
           state = 'LoggedOut';
           context.error = (payload?.error as string) || '验证失败';

@@ -753,7 +753,7 @@
       "direction": "R→M",
       "paramType": "void",
       "returnType": "{ username: string, loggedIn: boolean }",
-      "description": "GitHub OAuth PKCE 登录（token 仅在 Main 进程通过 safeStorage 管理，Renderer 不接触 token）",
+      "description": "GitHub OAuth PKCE 登录（token 仅在 Main 进程通过 plaintext JSON 管理，Renderer 不接触 token）",
       "phase": "V2-P2",
       "sourceLocation": {
         "file": "DEV-PLAN.md",

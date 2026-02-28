@@ -171,7 +171,7 @@ describe('AUTH L2 -- 规则层测试', () => {
       machine.send('AUTH_CALLBACK', { authCode: 'mock-code' });
       machine.send('TOKEN_RECEIVED', { accessToken: 'ghp_test', username: 'testuser' });
       expect(machine.state).toBe('LoggedIn');
-      expect(machine.context.tokenStorage).toBe('safeStorage');
+      expect(machine.context.tokenStorage).toBe('plaintext');
     });
 
     // AUTH_L2_02: 授权取消/失败 (Authorizing -> LoggedOut)
@@ -229,8 +229,8 @@ describe('AUTH L2 -- 规则层测试', () => {
       await storeToken('ghp_test_token');
       const storageType = getTokenStorageType();
 
-      // Should use Electron safeStorage (macOS Keychain)
-      expect(storageType).toBe('safeStorage');
+      // Uses plaintext JSON with file permissions (no Keychain)
+      expect(storageType).toBe('plaintext');
     });
   });
 
@@ -349,7 +349,7 @@ describe('AUTH L2 -- 规则层测试', () => {
 
       await storeToken('single_token');
       expect(await getToken()).toBe('single_token');
-      expect(getTokenStorageType()).toBe('safeStorage');
+      expect(getTokenStorageType()).toBe('plaintext');
 
       await clearToken();
       expect(await getToken()).toBeUndefined();

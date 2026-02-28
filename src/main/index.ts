@@ -517,6 +517,12 @@ app.whenReady().then(() => {
     });
 
     autoUpdater.checkForUpdates();
+
+    // Periodic update check every 4 hours
+    setInterval(() => {
+      console.log('[MUXVO:update] Periodic update check');
+      autoUpdater.checkForUpdates().catch(() => {});
+    }, 4 * 60 * 60 * 1000);
   } else {
     // Dev mode: register no-op handlers so renderer doesn't get unhandled errors
     ipcMain.handle(IPC_CHANNELS.APP.CHECK_FOR_UPDATE, () => null);
