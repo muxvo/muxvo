@@ -37,6 +37,13 @@ const today = formatDate(new Date());
 const defaultFrom = daysAgo(30);
 
 type Preset = 7 | 30 | 90;
+type Source = 'all' | 'web' | 'app';
+
+const SOURCE_TABS: { value: Source; label: string }[] = [
+  { value: 'all', label: '全部 All' },
+  { value: 'web', label: '官网 Website' },
+  { value: 'app', label: '软件 App' },
+];
 
 export function Analytics() {
   const [dauData, setDauData] = useState<DauItem[]>([]);
@@ -46,12 +53,14 @@ export function Analytics() {
   const [from, setFrom] = useState(defaultFrom);
   const [to, setTo] = useState(today);
   const [activePreset, setActivePreset] = useState<Preset | null>(30);
+  const [source, setSource] = useState<Source>('all');
 
   useEffect(() => {
     setLoading(true);
+    const sourceParam = source !== 'all' ? `&source=${source}` : '';
     Promise.all([
-      apiFetch<DauResponse>(`/admin/analytics/dau?from=${from}&to=${to}`),
-      apiFetch<EventsResponse>(`/admin/analytics/events?from=${from}&to=${to}`),
+      apiFetch<DauResponse>(`/admin/analytics/dau?from=${from}&to=${to}${sourceParam}`),
+      apiFetch<EventsResponse>(`/admin/analytics/events?from=${from}&to=${to}${sourceParam}`),
     ])
       .then(([dau, events]) => {
         setDauData(dau.data);
@@ -59,7 +68,7 @@ export function Analytics() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [from, to]);
+  }, [from, to, source]);
 
   function applyPreset(days: Preset) {
     setActivePreset(days);
@@ -83,8 +92,7 @@ export function Analytics() {
       ? Math.round(dauData.reduce((sum, d) => sum + d.dau, 0) / dauData.length)
       : 0;
 
-  const totalPageViews = eventsData.filter(d => !d.metric.includes('download')).reduce((sum, d) => sum + d.total, 0);
-  const totalDownloads = eventsData.filter(d => d.metric.includes('download')).reduce((sum, d) => sum + d.total, 0);
+  const totalEvents = eventsData.reduce((sum, d) => sum + d.total, 0);
 
   const totalDau = dauData.reduce((sum, d) => sum + d.dau, 0);
   const totalRegistered = dauData.reduce((sum, d) => sum + d.registered_users, 0);
@@ -99,9 +107,6 @@ export function Analytics() {
   const eventRows = Object.entries(eventsByMetric)
     .map(([metric, total]) => ({ metric, total, avgPerDay: total / days }))
     .sort((a, b) => b.total - a.total);
-
-  const siteEvents = eventRows.filter(r => !r.metric.includes('download'));
-  const downloadEvents = eventRows.filter(r => r.metric.includes('download'));
 
   if (loading) {
     return (
@@ -135,7 +140,24 @@ export function Analytics() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold mb-8">Analytics</h1>
+      <h1 className="text-2xl font-bold mb-8">Analytics 分析</h1>
+
+      {/* Source tabs */}
+      <div className="flex gap-2 mb-6">
+        {SOURCE_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => setSource(tab.value)}
+            className={
+              source === tab.value
+                ? 'px-4 py-2 rounded-lg bg-amber-400/10 border border-amber-400/30 text-amber-400 text-sm font-medium'
+                : 'px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 text-sm hover:border-gray-600 transition-colors'
+            }
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       {/* Date range selector */}
       <div className="flex items-center gap-3 mb-8 flex-wrap">
@@ -166,12 +188,12 @@ export function Analytics() {
           <p className="text-3xl font-bold text-amber-400">{avgDau.toLocaleString()}</p>
         </div>
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <p className="text-sm text-gray-500 mb-1">Page Views 页面访问</p>
-          <p className="text-3xl font-bold text-amber-400">{totalPageViews.toLocaleString()}</p>
+          <p className="text-sm text-gray-500 mb-1">Total Events 总事件</p>
+          <p className="text-3xl font-bold text-amber-400">{totalEvents.toLocaleString()}</p>
         </div>
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <p className="text-sm text-gray-500 mb-1">Downloads 下载次数</p>
-          <p className="text-3xl font-bold text-amber-400">{totalDownloads.toLocaleString()}</p>
+          <p className="text-sm text-gray-500 mb-1">Total DAU 总日活</p>
+          <p className="text-3xl font-bold text-amber-400">{totalDau.toLocaleString()}</p>
         </div>
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
           <p className="text-sm text-gray-500 mb-1">Registered % 注册率</p>
@@ -189,27 +211,14 @@ export function Analytics() {
         )}
       </div>
 
-      {/* Two-column event tables */}
-      <div className="grid grid-cols-2 gap-5">
-        {/* Website traffic */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Website Traffic 官网访问</h2>
-          {siteEvents.length === 0 ? (
-            <p className="text-gray-500 text-sm">No data yet.</p>
-          ) : (
-            <EventTable rows={siteEvents} />
-          )}
-        </div>
-
-        {/* Downloads */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Downloads 下载统计</h2>
-          {downloadEvents.length === 0 ? (
-            <p className="text-gray-500 text-sm">No data yet.</p>
-          ) : (
-            <EventTable rows={downloadEvents} />
-          )}
-        </div>
+      {/* Event distribution table */}
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+        <h2 className="text-lg font-semibold mb-4">Event Distribution 事件分布</h2>
+        {eventRows.length === 0 ? (
+          <p className="text-gray-500 text-sm">No event data yet.</p>
+        ) : (
+          <EventTable rows={eventRows} />
+        )}
       </div>
     </div>
   );
