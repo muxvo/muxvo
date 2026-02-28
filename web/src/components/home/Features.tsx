@@ -26,9 +26,8 @@ export function Features() {
     <section className="mv-features" id="features">
       <div className="mv-features__inner">
         <div className="mv-features__header fade-up">
-          <p className="mv-features__eyebrow">核心功能</p>
           <h2 className="mv-features__title">
-            省下来的时间，都是你的
+            核心功能
           </h2>
         </div>
         <div className="mv-features__grid">

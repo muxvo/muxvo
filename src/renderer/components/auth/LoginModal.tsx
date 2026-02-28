@@ -57,6 +57,18 @@ export function LoginModal(): JSX.Element | null {
     <div className="login-modal__backdrop" onClick={() => dispatch({ type: 'CLOSE_LOGIN_MODAL' })}>
       <div className="login-modal" onClick={(e) => e.stopPropagation()}>
         <div className="login-modal__header">
+          {mode !== 'buttons' ? (
+            <button
+              className="login-modal__back-btn"
+              onClick={() => setMode(mode === 'forgot-password' ? 'login' : 'buttons')}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+          ) : (
+            <span />
+          )}
           <span className="login-modal__title">{title}</span>
           <button
             className="login-modal__close-btn"
@@ -118,11 +130,6 @@ export function LoginModal(): JSX.Element | null {
                 </button>
                 <button className="login-modal__link" onClick={() => setMode('forgot-password')}>
                   {t('auth.forgotPassword')}
-                </button>
-              </div>
-              <div className="login-modal__links" style={{ justifyContent: 'center', marginTop: '4px' }}>
-                <button className="login-modal__link" onClick={() => setMode('buttons')}>
-                  {t('auth.back')}
                 </button>
               </div>
             </>

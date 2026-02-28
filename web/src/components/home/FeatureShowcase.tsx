@@ -40,9 +40,8 @@ export function FeatureShowcase() {
   return (
     <section className="mv-showcase-section" id="features">
       <div className="mv-showcase-section__header fade-up">
-        <p className="mv-showcase-section__eyebrow">核心功能</p>
         <h2 className="mv-showcase-section__title">
-          省下来的时间，都是你的
+          核心功能
         </h2>
       </div>
 
