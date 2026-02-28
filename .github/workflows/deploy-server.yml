@@ -61,7 +61,7 @@ jobs:
       - name: Validate env vars
         run: |
           ssh -i ~/.ssh/deploy_key root@${{ secrets.SERVER_HOST }} 'bash -s' << 'SCRIPT'
-          for key in GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET DB_PASSWORD; do
+          for key in GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET DB_PASSWORD RESEND_API_KEY; do
             val=$(grep "^${key}=" /opt/muxvo-server/server/.env | cut -d= -f2-)
             if [ -z "$val" ]; then
               echo "FATAL: ${key} is empty in server/.env"

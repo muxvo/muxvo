@@ -1,5 +1,9 @@
 import { Resend } from 'resend';
 
+if (process.env.NODE_ENV === 'production' && !process.env.RESEND_API_KEY) {
+  console.warn('[WARN] RESEND_API_KEY not set — emails will NOT be sent!');
+}
+
 const FROM_ADDRESS = process.env.EMAIL_FROM ?? 'noreply@muxvo.com';
 
 let resend: Resend | null = null;
@@ -32,17 +36,22 @@ export async function sendVerificationEmail(
     return;
   }
 
-  await client.emails.send({
-    from: FROM_ADDRESS,
-    to,
-    subject: labels.subject,
-    html: `
-      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
-        <h2 style="margin-bottom: 16px;">${labels.heading}</h2>
-        <p style="font-size: 16px; color: #333;">Your verification code is:</p>
-        <p style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #111; margin: 24px 0;">${code}</p>
-        <p style="font-size: 14px; color: #666;">Valid for 5 minutes. If you did not request this code, please ignore this email.</p>
-      </div>
-    `,
-  });
+  try {
+    await client.emails.send({
+      from: FROM_ADDRESS,
+      to,
+      subject: labels.subject,
+      html: `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
+          <h2 style="margin-bottom: 16px;">${labels.heading}</h2>
+          <p style="font-size: 16px; color: #333;">Your verification code is:</p>
+          <p style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #111; margin: 24px 0;">${code}</p>
+          <p style="font-size: 14px; color: #666;">Valid for 5 minutes. If you did not request this code, please ignore this email.</p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error(`[email] Failed to send to ${to} (${purpose}):`, err);
+    throw err;
+  }
 }
