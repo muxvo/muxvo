@@ -7,8 +7,6 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "migrate:up": "node-pg-migrate up",
-    "migrate:down": "node-pg-migrate down",
     "test": "vitest run"
   },
   "dependencies": {
@@ -20,7 +18,6 @@
     "fastify-plugin": "^5.0.0",
     "ioredis": "^5.4.0",
     "jose": "^6.0.0",
-    "node-pg-migrate": "^7.0.0",
     "pg": "^8.13.0",
     "resend": "^4.0.0",
     "undici": "^7.22.0"

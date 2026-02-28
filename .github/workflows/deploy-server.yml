@@ -76,11 +76,6 @@ jobs:
           ssh -i ~/.ssh/deploy_key root@${{ secrets.SERVER_HOST }} \
             "cd /opt/muxvo-server && docker compose -f docker/docker-compose.yml build && docker compose -f docker/docker-compose.yml up -d"
 
-      - name: Run database migrations
-        run: |
-          ssh -i ~/.ssh/deploy_key root@${{ secrets.SERVER_HOST }} \
-            "cd /opt/muxvo-server && docker compose -f docker/docker-compose.yml exec -T api npm run migrate:up"
-
       - name: Health check
         run: |
           sleep 5
