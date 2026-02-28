@@ -483,14 +483,10 @@ app.whenReady().then(() => {
       });
       console.log('[MUXVO:update] install dialog response:', response);
       if (response === 0) {
-        setTimeout(() => {
-          try {
-            console.log('[MUXVO:update] calling quitAndInstall(false, true)');
-            autoUpdater.quitAndInstall(false, true);
-          } catch (err) {
-            console.error('[MUXVO:update] quitAndInstall threw:', err);
-          }
-        }, 1000);
+        // Use app.quit() instead of quitAndInstall() to avoid double-quit SIGABRT.
+        // autoInstallOnAppQuit=true ensures electron-updater installs during quit.
+        console.log('[MUXVO:update] User chose restart, quitting for auto-install');
+        app.quit();
       }
     });
 
