@@ -7,7 +7,7 @@
  * Aligned with prototype-history-A.html tile design.
  */
 
-import { useState, useRef, useEffect, memo } from 'react';
+import { useState, useRef, useEffect, memo, useCallback } from 'react';
 import { useI18n } from '@/renderer/i18n';
 import { XTermRenderer } from './XTermRenderer';
 import { getTerminalProcessUI } from '@/renderer/stores/terminal-process-ui-map';
@@ -85,6 +85,15 @@ function TerminalTileInner({
   const ui = getTerminalProcessUI(state);
   const tileRef = useRef<HTMLDivElement>(null);
   const panelDispatch = usePanelDispatch();
+
+  // Remove tile-enter class after entrance animation completes.
+  // tile-enter's animation (tileEnter 0.6s + stagger delay) permanently overrides
+  // tile--waiting's borderGlow animation due to CSS cascade order (same specificity,
+  // tile-enter appears later in stylesheet). Removing it allows borderGlow to work.
+  const [entered, setEntered] = useState(compact ?? false);
+  const handleAnimationEnd = useCallback((e: React.AnimationEvent) => {
+    if (e.animationName === 'tileEnter') setEntered(true);
+  }, []);
 
   // Mouse tracking for gloss effect
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -172,7 +181,7 @@ function TerminalTileInner({
 
   const classNames = [
     'tile',
-    !compact ? 'tile-enter' : '',
+    !compact && !entered ? 'tile-enter' : '',
     focused ? 'tile-focused' : '',
     selected ? 'tile-selected' : '',
     state === 'WaitingInput' ? 'tile--waiting' : '',
@@ -257,6 +266,7 @@ function TerminalTileInner({
       } as React.CSSProperties}
       onDoubleClick={onDoubleClick}
       onMouseDown={onClick}
+      onAnimationEnd={handleAnimationEnd}
       onMouseMove={handleMouseMove}
       onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}

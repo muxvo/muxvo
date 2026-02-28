@@ -104,9 +104,11 @@ export function App(): JSX.Element {
 
     // Listen for state changes to update terminal state
     const unsubState = window.api.terminal.onStateChange((event) => {
-      setTerminals((prev) =>
-        prev.map((t) => (t.id === event.id ? { ...t, state: event.state } : t))
-      );
+      setTerminals((prev) => {
+        const target = prev.find((t) => t.id === event.id);
+        if (target && target.state === event.state) return prev; // Same state — skip re-render
+        return prev.map((t) => (t.id === event.id ? { ...t, state: event.state } : t));
+      });
     });
 
     // Listen for restored terminal list (after app restart)
