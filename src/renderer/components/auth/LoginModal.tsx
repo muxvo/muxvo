@@ -2,7 +2,7 @@
  * LoginModal — Modal dialog with login, register, and forgot-password modes
  */
 
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { useAuth } from '@/renderer/contexts/AuthContext';
 import { useI18n } from '@/renderer/i18n';
 import { OAuthButton } from './OAuthButton';
@@ -18,6 +18,8 @@ export function LoginModal(): JSX.Element | null {
   const { t } = useI18n();
   const [mode, setMode] = useState<Mode>('buttons');
   const [agreed, setAgreed] = useState(false);
+  const [showTermsConfirm, setShowTermsConfirm] = useState(false);
+  const pendingActionRef = useRef<(() => void) | null>(null);
 
   const isLoading = state.status === 'loading';
 
@@ -26,8 +28,32 @@ export function LoginModal(): JSX.Element | null {
     if (state.loginModalOpen) {
       setMode('buttons');
       setAgreed(false);
+      setShowTermsConfirm(false);
+      pendingActionRef.current = null;
     }
   }, [state.loginModalOpen]);
+
+  // Guard action: if not agreed, show terms confirm; otherwise execute immediately
+  const guardAction = useCallback((action: () => void) => {
+    if (agreed) {
+      action();
+    } else {
+      pendingActionRef.current = action;
+      setShowTermsConfirm(true);
+    }
+  }, [agreed]);
+
+  const handleConfirmTerms = useCallback(() => {
+    setAgreed(true);
+    setShowTermsConfirm(false);
+    pendingActionRef.current?.();
+    pendingActionRef.current = null;
+  }, []);
+
+  const handleCancelTerms = useCallback(() => {
+    setShowTermsConfirm(false);
+    pendingActionRef.current = null;
+  }, []);
 
   // Close on Escape key
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -103,20 +129,20 @@ export function LoginModal(): JSX.Element | null {
               <OAuthButton
                 provider="github"
                 label={t('auth.loginGithub')}
-                onClick={loginGithub}
-                disabled={isLoading || !agreed}
+                onClick={() => guardAction(loginGithub)}
+                disabled={isLoading}
               />
               <OAuthButton
                 provider="google"
                 label={t('auth.loginGoogle')}
-                onClick={loginGoogle}
-                disabled={isLoading || !agreed}
+                onClick={() => guardAction(loginGoogle)}
+                disabled={isLoading}
               />
               <OAuthButton
                 provider="email"
                 label={t('auth.emailPassword')}
-                onClick={() => setMode('login')}
-                disabled={isLoading || !agreed}
+                onClick={() => guardAction(() => setMode('login'))}
+                disabled={isLoading}
               />
             </>
           )}
@@ -125,7 +151,7 @@ export function LoginModal(): JSX.Element | null {
             <>
               <PasswordLoginForm
                 onLogin={loginPassword}
-                disabled={isLoading || !agreed}
+                disabled={isLoading}
               />
 
               <div className="login-modal__links">
@@ -144,7 +170,7 @@ export function LoginModal(): JSX.Element | null {
               <RegisterForm
                 onSendCode={sendEmailCode}
                 onRegister={register}
-                disabled={isLoading || !agreed}
+                disabled={isLoading}
               />
 
               <div className="login-modal__links">
@@ -165,26 +191,31 @@ export function LoginModal(): JSX.Element | null {
           )}
         </div>
 
-        <div className="login-modal__footer">
-          <label className="login-modal__agree">
-            <input
-              type="checkbox"
-              checked={agreed}
-              onChange={(e) => setAgreed(e.target.checked)}
-              className="login-modal__agree-checkbox"
-            />
-            <span className="login-modal__terms">
-              {t('auth.agreePrefix')}
-              <a href="https://muxvo.com/terms" target="_blank" rel="noopener noreferrer" className="login-modal__terms-link">
-                {t('auth.termsOfService')}
-              </a>
-              {t('auth.termsAnd')}
-              <a href="https://muxvo.com/privacy" target="_blank" rel="noopener noreferrer" className="login-modal__terms-link">
-                {t('auth.privacyPolicy')}
-              </a>
-            </span>
-          </label>
-        </div>
+        {showTermsConfirm && (
+          <div className="login-modal__terms-confirm-backdrop">
+            <div className="login-modal__terms-confirm">
+              <p className="login-modal__terms-confirm-title">{t('auth.termsConfirmTitle')}</p>
+              <p className="login-modal__terms-confirm-desc">
+                {t('auth.termsConfirmBefore')}
+                <a href="https://muxvo.com/terms" target="_blank" rel="noopener noreferrer" className="login-modal__terms-link">
+                  {t('auth.termsOfService')}
+                </a>
+                {t('auth.termsAnd')}
+                <a href="https://muxvo.com/privacy" target="_blank" rel="noopener noreferrer" className="login-modal__terms-link">
+                  {t('auth.privacyPolicy')}
+                </a>
+              </p>
+              <div className="login-modal__terms-confirm-actions">
+                <button className="login-modal__terms-confirm-cancel" onClick={handleCancelTerms}>
+                  {t('auth.cancel')}
+                </button>
+                <button className="login-modal__terms-confirm-agree" onClick={handleConfirmTerms}>
+                  {t('auth.agreeAndContinue')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {isLoading && (
           <div className="login-modal__loading">
