@@ -4,11 +4,12 @@
  */
 
 import type { TerminalConfig } from '@/shared/types/config.types';
+import { TERMINAL_FONT_FAMILY } from '@/shared/constants/fonts';
 
 const DEFAULT_TERMINAL_CONFIG: TerminalConfig = {
   themeName: 'dark',
-  fontFamily: "'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace",
-  fontSize: 13,
+  fontFamily: TERMINAL_FONT_FAMILY,
+  fontSize: 14,
   cursorStyle: 'block',
   cursorBlink: true,
 };

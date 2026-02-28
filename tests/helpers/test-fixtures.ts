@@ -144,7 +144,7 @@ export const defaultConfig = {
   },
   terminal: {
     themeName: 'dark' as const,
-    fontSize: 13,
+    fontSize: 14,
     cursorStyle: 'block' as const,
     cursorBlink: true,
   },

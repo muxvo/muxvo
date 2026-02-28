@@ -43,7 +43,7 @@
 .markdown-viewer-path {
   font-size: 11px;
   color: var(--text-muted);
-  font-family: monospace;
+  font-family: var(--font-mono);
 }
 
 /* 未保存修改提示遮罩 */

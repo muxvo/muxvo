@@ -182,10 +182,10 @@
     },
     {
       "id": "TERM_L1_17",
-      "description": "默认终端字体大小 -- 首次启动 terminal.fontSize=13",
+      "description": "默认终端字体大小 -- 首次启动 terminal.fontSize=14",
       "type": "default-value",
       "target": "terminal.fontSize",
-      "expectedValue": 13,
+      "expectedValue": 14,
       "priority": "P1"
     },
     {

@@ -8,6 +8,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { MuxvoConfig } from '@/shared/types/config.types';
+import { TERMINAL_FONT_FAMILY } from '@/shared/constants/fonts';
 
 /** Default config returned when no persisted config exists or parse fails */
 const DEFAULT_CONFIG: MuxvoConfig = {
@@ -18,8 +19,8 @@ const DEFAULT_CONFIG: MuxvoConfig = {
   fontSize: 14,
   terminal: {
     themeName: 'light',
-    fontFamily: "'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace",
-    fontSize: 13,
+    fontFamily: TERMINAL_FONT_FAMILY,
+    fontSize: 14,
     cursorStyle: 'block',
     cursorBlink: true,
   },

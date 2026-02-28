@@ -74,7 +74,7 @@
 .markdown-preview code {
   background: var(--code-bg, rgba(248, 165, 194, 0.15));
   color: var(--code-fg, #f8a5c2);
-  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  font-family: var(--font-mono);
   font-size: 0.9em;
   padding: 2px 6px;
   border-radius: 4px;
@@ -172,7 +172,7 @@
 
 .mermaid-block--error {
   color: var(--text-secondary);
-  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  font-family: var(--font-mono);
   font-size: 0.85em;
   white-space: pre-wrap;
   justify-content: flex-start;

@@ -1,3 +1,5 @@
+import { TERMINAL_FONT_FAMILY } from '@/shared/constants/fonts';
+
 export function getDefaultConfig() {
   return {
     window: { width: 1400, height: 900 },
@@ -9,8 +11,8 @@ export function getDefaultConfig() {
     },
     terminal: {
       themeName: 'dark' as const,
-      fontFamily: "'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace",
-      fontSize: 13,
+      fontFamily: TERMINAL_FONT_FAMILY,
+      fontSize: 14,
       cursorStyle: 'block' as const,
       cursorBlink: true,
     },
