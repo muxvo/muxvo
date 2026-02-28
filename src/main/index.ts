@@ -225,6 +225,19 @@ function createWindow(windowConfig?: WindowConfig): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
   }
+
+  // Dev mode: retry on load failure (Vite server may not be ready yet)
+  if (is.dev) {
+    mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
+      console.warn(`[MUXVO] Page load failed (${errorCode}: ${errorDescription}), retrying in 1s...`);
+      setTimeout(() => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          const url = process.env['ELECTRON_RENDERER_URL'] || 'http://localhost:5173';
+          mainWindow.loadURL(url);
+        }
+      }, 1000);
+    });
+  }
 }
 
 let terminalManager: ReturnType<typeof createTerminalManager> | null = null;

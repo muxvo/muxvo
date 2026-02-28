@@ -15,6 +15,8 @@ nohup npx electron-vite dev > /dev/null 2>&1 &
 disown
 ```
 
+**白屏问题**: `electron-vite dev` 并行启动 Vite 服务器和 Electron，存在竞态条件。如果 Electron 在 Vite 就绪前加载 `localhost:5173` 会白屏。已在 `src/main/index.ts` 中添加 `did-fail-load` 自动重试机制（仅 dev 模式）。如仍遇白屏，杀进程后等 2 秒再启动：`pkill -f "electron-vite"; pkill -f "Electron"; sleep 2; nohup npx electron-vite dev > /dev/null 2>&1 & disown`
+
 ## Commands
 
 ```bash
