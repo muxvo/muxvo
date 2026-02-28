@@ -82,3 +82,42 @@ describe('Search flash fix — active highlight via DOM manipulation', () => {
     expect(itemContentMatch![0]).not.toContain('currentMatchIdx');
   });
 });
+
+describe('Search scroll jump fix — fast path eliminates double scroll', () => {
+  const src = readFileSync(resolve(ROOT, 'src/renderer/components/chat/SessionDetail.tsx'), 'utf-8');
+
+  // 6. Fast path: try DOM-direct scroll first, before scrollToIndex
+  test('scroll effect has activateAndScroll fast path before scrollToIndex', () => {
+    const effectMatch = src.match(/useEffect\(\(\) => \{[\s\S]*?activateAndScroll[\s\S]*?scrollToIndex[\s\S]*?\}, \[currentMatchIdx/);
+    expect(effectMatch).not.toBeNull();
+  });
+
+  test('fast path returns early if mark already in DOM', () => {
+    expect(src).toContain('if (activateAndScroll()) return;');
+  });
+
+  // 7. Slow path: uses rAF polling instead of fixed setTimeout
+  test('slow path uses requestAnimationFrame polling, not setTimeout', () => {
+    // The scroll effect should use rAF polling
+    expect(src).toContain('requestAnimationFrame(poll)');
+    // Should NOT use setTimeout for scroll positioning
+    // (extract just the scroll effect to check)
+    const scrollEffect = src.match(/\/\/ DOM-based active highlight[\s\S]*?\}, \[currentMatchIdx, matchOccurrences, searchQuery\]\)/);
+    expect(scrollEffect).not.toBeNull();
+    expect(scrollEffect![0]).not.toContain('setTimeout');
+  });
+
+  // 8. Slow path uses align:'start' to reduce jump
+  test('slow path scrollToIndex uses align start instead of center', () => {
+    expect(src).toContain("scrollToIndex({ index: dataIndex, align: 'start'");
+  });
+
+  // 9. Only one scrollIntoView call in the helper (not two separate calls)
+  test('scrollIntoView is called only through activateAndScroll helper', () => {
+    const scrollEffect = src.match(/\/\/ DOM-based active highlight[\s\S]*?\}, \[currentMatchIdx, matchOccurrences, searchQuery\]\)/);
+    expect(scrollEffect).not.toBeNull();
+    // Count scrollIntoView occurrences — should be exactly 1 (in the helper)
+    const scrollIntoViewCount = (scrollEffect![0].match(/scrollIntoView/g) || []).length;
+    expect(scrollIntoViewCount).toBe(1);
+  });
+});

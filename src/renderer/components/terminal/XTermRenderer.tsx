@@ -76,6 +76,18 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     searchAddonRef.current = addonManager.getSearchAddon();
     const fitAddon = addonManager.getFitAddon();
 
+    // Expose xterm scroll state on the container div for E2E testability.
+    // xterm.js v6 manages scroll internally — DOM scrollTop is always 0.
+    function syncScrollDataAttrs(): void {
+      if (containerRef.current) {
+        containerRef.current.dataset.viewportY = String(term.buffer.active.viewportY);
+        containerRef.current.dataset.baseY = String(term.buffer.active.baseY);
+      }
+    }
+    const scrollDisposable = term.onScroll(() => syncScrollDataAttrs());
+    // Also sync after any write (covers initial buffer replay)
+    const writeDisposable = term.onWriteParsed(() => syncScrollDataAttrs());
+
     // Helper: fit terminal while preserving scroll position.
     // Saves distance-from-bottom before fit, restores after.
     // Prevents viewport jumping to top when columns change and buffer rewraps.
@@ -92,6 +104,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
         const newTarget = term.buffer.active.baseY - offsetFromBottom;
         term.scrollToLine(Math.max(0, newTarget));
       }
+      syncScrollDataAttrs();
     }
 
     // Cmd/Ctrl+F toggles terminal search bar
@@ -237,6 +250,8 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       window.removeEventListener('muxvo:theme-change', onThemeChange);
       window.removeEventListener('muxvo:global-zoom', onGlobalZoom);
       window.removeEventListener('muxvo:terminal-refit', onRefit);
+      scrollDisposable.dispose();
+      writeDisposable.dispose();
       addonManager.disposeAll();
       term.dispose();
     };
