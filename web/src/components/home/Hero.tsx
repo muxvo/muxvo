@@ -1,7 +1,7 @@
 import { useDownloadUrl } from '../../hooks/useDownloadUrl';
 
 export function Hero() {
-  const { url, arch, archLabel, altUrl, altLabel } = useDownloadUrl();
+  const { url } = useDownloadUrl();
 
   return (
     <section className="mv-hero">
@@ -19,22 +19,7 @@ export function Hero() {
         </p>
         <div className="mv-hero__actions">
           <a href={url} className="btn-amber btn-amber-lg">
-            下载 macOS 版{arch !== 'unknown' && <span style={{ fontSize: '0.75em', opacity: 0.7, marginLeft: '0.4em' }}>({archLabel})</span>}
-          </a>
-          <a
-            href={altUrl}
-            className="text-xs transition-colors duration-150 hover:underline"
-            style={{ color: 'var(--text-after-sec)' }}
-          >
-            {altLabel} 版下载
-          </a>
-          <a
-            href="https://github.com/muxvo/muxvo"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-ghost"
-          >
-            GitHub 源码
+            下载 macOS 版
           </a>
         </div>
       </div>
