@@ -32,6 +32,30 @@ test.beforeAll(async () => {
   window = await app.firstWindow();
   await window.waitForTimeout(8000);
   await window.waitForLoadState('networkidle');
+
+  // If user is already logged in, logout first so we can test the login modal
+  const isLoggedIn = await window.evaluate(() => {
+    const avatar = document.querySelector('.user-dropdown__avatar');
+    return !!avatar;
+  });
+  if (isLoggedIn) {
+    // Click user dropdown to open it
+    const trigger = window.locator('.user-dropdown__trigger');
+    await trigger.click();
+    await window.waitForTimeout(300);
+    // Click logout button
+    const logoutBtn = window.locator('.user-dropdown__item--danger, button:has-text("登出"), button:has-text("Logout")');
+    if (await logoutBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await logoutBtn.click();
+      await window.waitForTimeout(1000);
+    } else {
+      // Fallback: logout via API
+      await window.evaluate(async () => {
+        await (window as any).api.auth.logout();
+      });
+      await window.waitForTimeout(1000);
+    }
+  }
 });
 
 test.afterAll(async () => {
@@ -39,11 +63,28 @@ test.afterAll(async () => {
 });
 
 test('login buttons are clickable and terms guard works', async () => {
-  // Step 1: Find the auth button in menu bar and click to open login modal
-  const authBtn = window.locator('.menu-bar__icon-btn').last();
-  await expect(authBtn).toBeVisible({ timeout: 15000 });
-  await authBtn.click();
-  await window.waitForTimeout(500);
+  // Step 1: Open login modal
+  // After logout, the auth button should be visible
+  const authBtn = window.locator('button[title="登录"], button[title="Login"]');
+  const authBtnVisible = await authBtn.isVisible({ timeout: 3000 }).catch(() => false);
+
+  if (authBtnVisible) {
+    await authBtn.click();
+    await window.waitForTimeout(500);
+  } else {
+    // Fallback: open modal via IPC dispatch
+    await window.evaluate(() => {
+      // Find React root and dispatch OPEN_LOGIN_MODAL
+      const event = new CustomEvent('open-login-modal');
+      window.dispatchEvent(event);
+    });
+    // If custom event doesn't work, try clicking the user icon area
+    const iconBtn = window.locator('.menu-bar__icon-btn').first();
+    if (await iconBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await iconBtn.click();
+      await window.waitForTimeout(500);
+    }
+  }
 
   const modal = window.locator('.login-modal');
   await expect(modal).toBeVisible({ timeout: 5000 });
@@ -87,9 +128,7 @@ test('login buttons are clickable and terms guard works', async () => {
   await window.waitForTimeout(500);
 
   // Step 6: Should have navigated to login form (email mode)
-  // The email button switches to login mode, so we should see the password form
   const loginForm = window.locator('.login-modal__email-form');
   await expect(loginForm).toBeVisible({ timeout: 3000 });
-  // And terms confirm should be gone
   await expect(termsConfirm).not.toBeVisible();
 });

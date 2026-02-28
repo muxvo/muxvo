@@ -272,11 +272,6 @@
   color: var(--error);
 }
 
-/* Footer */
-.login-modal__footer {
-  padding: 0 20px 16px;
-}
-
 .login-modal__terms {
   font-size: 11px;
   color: var(--text-muted);
@@ -293,20 +288,6 @@
 
 .login-modal__terms-link:hover {
   color: var(--text-primary);
-}
-
-.login-modal__agree {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  cursor: pointer;
-}
-
-.login-modal__agree-checkbox {
-  margin-top: 2px;
-  accent-color: var(--accent);
-  cursor: pointer;
-  flex-shrink: 0;
 }
 
 /* Terms confirm overlay */
