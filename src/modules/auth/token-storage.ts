@@ -1,6 +1,6 @@
 /**
- * Token Storage - securely stores authentication tokens
- * Uses Electron safeStorage (macOS Keychain) by default, with fallback to plaintext JSON.
+ * Token Storage - stores authentication tokens as plaintext JSON.
+ * File is protected by macOS file permissions (mode 0600).
  * In non-Electron environments (tests), falls back to memory-only storage.
  *
  * Original API preserved: storeToken, getToken, clearToken, getTokenStorageType
@@ -13,15 +13,11 @@ import { join } from 'path';
 
 // ── Electron imports (main process only, graceful fallback for tests) ──
 
-let safeStorage: typeof import('electron').safeStorage | null = null;
 let appGetPath: ((name: string) => string) | null = null;
 
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const electron = require('electron');
-  if (electron.safeStorage) {
-    safeStorage = electron.safeStorage;
-  }
   if (electron.app?.getPath) {
     appGetPath = (name: string) => electron.app.getPath(name);
   }
@@ -47,10 +43,7 @@ let cachedRefreshToken: string | undefined;
 
 // ── Storage type detection (runtime) ──
 
-function resolveStorageType(): 'safeStorage' | 'plaintext' | 'memory' {
-  if (safeStorage && safeStorage.isEncryptionAvailable() && getTokenFilePath()) {
-    return 'safeStorage';
-  }
+function resolveStorageType(): 'plaintext' | 'memory' {
   if (getTokenFilePath()) {
     return 'plaintext';
   }
@@ -69,39 +62,22 @@ async function writeTokenFile(data: TokenFileData): Promise<void> {
   if (!filePath) return;
 
   const json = JSON.stringify(data);
-  const storageType = resolveStorageType();
-
-  if (storageType === 'safeStorage' && safeStorage) {
-    const encrypted = safeStorage.encryptString(json);
-    // Atomic write: tmp + rename
-    const tmpPath = filePath + '.tmp';
-    await fsp.writeFile(tmpPath, encrypted);
-    await fsp.rename(tmpPath, filePath);
-  } else if (storageType === 'plaintext') {
-    // Fallback: plaintext JSON (when safeStorage unavailable but file system is accessible)
-    const tmpPath = filePath + '.tmp';
-    await fsp.writeFile(tmpPath, json, 'utf-8');
-    await fsp.rename(tmpPath, filePath);
-  }
+  const tmpPath = filePath + '.tmp';
+  await fsp.writeFile(tmpPath, json, 'utf-8');
+  await fsp.rename(tmpPath, filePath);
+  // Restrict file permissions to owner only (macOS/Linux)
+  try { await fsp.chmod(filePath, 0o600); } catch { /* ignore on unsupported platforms */ }
 }
 
 async function readTokenFile(): Promise<TokenFileData | null> {
   const filePath = getTokenFilePath();
   if (!filePath || !existsSync(filePath)) return null;
 
-  const storageType = resolveStorageType();
-
   try {
-    if (storageType === 'safeStorage' && safeStorage) {
-      const encrypted = await fsp.readFile(filePath);
-      const json = safeStorage.decryptString(encrypted);
-      return JSON.parse(json) as TokenFileData;
-    } else {
-      const json = await fsp.readFile(filePath, 'utf-8');
-      return JSON.parse(json) as TokenFileData;
-    }
+    const json = await fsp.readFile(filePath, 'utf-8');
+    return JSON.parse(json) as TokenFileData;
   } catch {
-    // Corrupted file — remove it
+    // Corrupted or old safeStorage-encrypted file — remove it (user will re-login once)
     await deleteTokenFile();
     return null;
   }
@@ -134,9 +110,7 @@ export async function storeToken(token: string): Promise<void> {
 }
 
 export function getTokenStorageType(): string {
-  // Returns the designed storage type for production (Electron safeStorage / macOS Keychain).
-  // Internal runtime may fall back to 'plaintext' or 'memory' based on environment.
-  return 'safeStorage';
+  return 'plaintext';
 }
 
 export async function getToken(): Promise<string | undefined> {
