@@ -21,11 +21,11 @@ mac:
         # - x64  # Intel Mac support: adds ~10min build time, enable when needed
   hardenedRuntime: true
   gatekeeperAssess: false
-  identity: "li rao (M7T6PJ8YJZ)"
+  # identity auto-detected from keychain; override via CSC_NAME env var
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
-  notarize:
-    teamId: M7T6PJ8YJZ
+  # teamId read from APPLE_TEAM_ID env var
+  notarize: true
 
 dmg:
   sign: false

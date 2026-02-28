@@ -4,7 +4,7 @@
 
 ### 步骤
 1. 打开 **钥匙串访问** (Keychain Access)
-2. 在"我的证书"中找到 `Apple Development: li rao (M7T6PJ8YJZ)` 或 `Developer ID Application: li rao (M7T6PJ8YJZ)`
+2. 在"我的证书"中找到 `Apple Development: <DEVELOPER_NAME> (<TEAM_ID>)` 或 `Developer ID Application: <DEVELOPER_NAME> (<TEAM_ID>)`
 3. 右键 → 导出 → 保存为 `.p12` 文件，设置一个强密码
 4. 转换为 base64：
    ```bash
@@ -29,7 +29,7 @@
 | `APPLE_CERTIFICATE_PASSWORD` | 导出 .p12 时设置的密码 | 步骤 1 设置 |
 | `APPLE_ID` | Apple Developer 账号邮箱 | developer.apple.com |
 | `APPLE_APP_SPECIFIC_PASSWORD` | App 专用密码 | 步骤 2 生成 |
-| `APPLE_TEAM_ID` | `M7T6PJ8YJZ` | developer.apple.com → 成员资格 |
+| `APPLE_TEAM_ID` | 你的 Team ID | developer.apple.com → 成员资格 |
 | `SERVER_SSH_KEY` | Phase 1 已配置 | — |
 | `SERVER_HOST` | Phase 1 已配置 | — |
 

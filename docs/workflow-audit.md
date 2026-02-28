@@ -86,7 +86,7 @@ Date: 2026-02-25
 
 - **Line 23: `notarize: false`** -- See release.yml section above. Intentional but undocumented.
 - **Line 26: `dmg.sign: false`** -- DMG is unsigned. Acceptable for notarization but could trigger macOS warnings in some scenarios.
-- **Line 20: Hardcoded identity** -- `identity: "li rao (M7T6PJ8YJZ)"` is hardcoded. This is the developer's personal signing identity. For an open-source project, contributors cannot sign with this identity. Consider documenting that only maintainers with the certificate can produce signed builds.
+- **Line 20: Hardcoded identity** -- `identity: "<DEVELOPER_NAME> (<TEAM_ID>)"` is hardcoded. This is the developer's personal signing identity. For an open-source project, contributors cannot sign with this identity. Consider documenting that only maintainers with the certificate can produce signed builds.
 - **Lines 36-39: File inclusion** -- Only `out/**/*` and two specific node_modules are included. This is correct and minimal. No issues found.
 
 ### Recommendations

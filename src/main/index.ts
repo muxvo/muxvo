@@ -44,6 +44,7 @@ import { createMemoryPushTimer } from './services/perf/memory-push';
 import { createSyncStatusPusher } from './services/chat-sync-push';
 import { initConfigDir, createConfigManager } from './services/app/config';
 import { initPrefsDir } from './services/app/preferences';
+import { createUpdateLogger } from './services/app/update-logger';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 
 // Prevent EPIPE crash when stdout/stderr pipe is broken (e.g. launched via .app double-click)
@@ -400,7 +401,7 @@ app.whenReady().then(() => {
     // Flow: detect → native dialog → user approves → silent download → auto-install on next quit
     // If user dismisses, remind with increasing intervals: 4h → 1d → 3d → 7d (max 4 reminders per version)
     if (!is.dev) {
-      autoUpdater.logger = null;
+      autoUpdater.logger = createUpdateLogger();
       autoUpdater.autoDownload = false;
       autoUpdater.autoInstallOnAppQuit = true;
 
@@ -408,7 +409,15 @@ app.whenReady().then(() => {
       let updateReminderTimer: ReturnType<typeof setTimeout> | null = null;
       const REMIND_INTERVALS = [4 * 3600_000, 24 * 3600_000, 3 * 24 * 3600_000, 7 * 24 * 3600_000]; // 4h, 1d, 3d, 7d
 
+      /** Push initial downloading state so UpdateProgress becomes visible immediately */
+      function pushDownloadStart(): void {
+        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_DOWNLOADING, {
+          percent: 0, bytesPerSecond: 0, transferred: 0, total: 0,
+        });
+      }
+
       async function promptUpdate(version: string): Promise<void> {
+        console.log('[MUXVO:update] promptUpdate dialog shown for', version);
         const { response } = await dialog.showMessageBox({
           type: 'info',
           title: 'Muxvo 有可用更新',
@@ -418,8 +427,13 @@ app.whenReady().then(() => {
           defaultId: 0,
           cancelId: 1,
         });
+        console.log('[MUXVO:update] promptUpdate response:', response);
         if (response === 0) {
-          autoUpdater.downloadUpdate();
+          pushDownloadStart();
+          autoUpdater.downloadUpdate().catch((err) => {
+            console.error('[MUXVO:update] downloadUpdate failed:', err);
+            pushToAllWindows(IPC_CHANNELS.APP.UPDATE_ERROR, { message: String(err) });
+          });
         } else if (updateDismissCount < REMIND_INTERVALS.length) {
           const delay = REMIND_INTERVALS[updateDismissCount];
           updateDismissCount++;
@@ -428,6 +442,7 @@ app.whenReady().then(() => {
       }
 
       autoUpdater.on('update-available', (info) => {
+        console.log('[MUXVO:update] update-available:', info.version);
         updateDismissCount = 0;
         if (updateReminderTimer) clearTimeout(updateReminderTimer);
         pushToAllWindows(IPC_CHANNELS.APP.UPDATE_AVAILABLE, { version: info.version, releaseDate: info.releaseDate || '' });
@@ -447,6 +462,7 @@ app.whenReady().then(() => {
       });
 
       autoUpdater.on('update-downloaded', async (info) => {
+        console.log('[MUXVO:update] update-downloaded:', info.version, 'file:', (info as any).downloadedFile || 'unknown');
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.setProgressBar(-1);
         }
@@ -461,12 +477,21 @@ app.whenReady().then(() => {
           defaultId: 0,
           cancelId: 1,
         });
+        console.log('[MUXVO:update] install dialog response:', response);
         if (response === 0) {
-          setTimeout(() => autoUpdater.quitAndInstall(false, true), 1000);
+          setTimeout(() => {
+            try {
+              console.log('[MUXVO:update] calling quitAndInstall(false, true)');
+              autoUpdater.quitAndInstall(false, true);
+            } catch (err) {
+              console.error('[MUXVO:update] quitAndInstall threw:', err);
+            }
+          }, 1000);
         }
       });
 
       autoUpdater.on('error', (err) => {
+        console.error('[MUXVO:update] error:', err.message);
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.setProgressBar(-1);
         }
@@ -475,7 +500,17 @@ app.whenReady().then(() => {
 
       // IPC handlers for renderer-initiated update actions (production)
       ipcMain.handle(IPC_CHANNELS.APP.CHECK_FOR_UPDATE, () => autoUpdater.checkForUpdates());
-      ipcMain.handle(IPC_CHANNELS.APP.DOWNLOAD_UPDATE, () => autoUpdater.downloadUpdate());
+      ipcMain.handle(IPC_CHANNELS.APP.DOWNLOAD_UPDATE, () => {
+        pushDownloadStart();
+        return autoUpdater.downloadUpdate().catch((err) => {
+          console.error('[MUXVO:update] downloadUpdate failed:', err);
+          pushToAllWindows(IPC_CHANNELS.APP.UPDATE_ERROR, { message: String(err) });
+        });
+      });
+
+      app.on('before-quit', () => {
+        console.log('[MUXVO:update] before-quit, autoInstallOnAppQuit =', autoUpdater.autoInstallOnAppQuit);
+      });
 
       autoUpdater.checkForUpdates();
     } else {

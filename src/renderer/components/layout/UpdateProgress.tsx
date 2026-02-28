@@ -37,13 +37,13 @@ export function UpdateProgress(): JSX.Element | null {
     const unsubDownloaded = window.api.app.onUpdateDownloaded((data) => {
       setState('done');
       setVersion(data.version);
-      // Hide after 3 seconds
+      setVisible(true); // Ensure visible even if download-progress never fired
       setTimeout(() => setVisible(false), 3000);
     });
 
     const unsubError = window.api.app.onUpdateError(() => {
       setState('error');
-      // Hide after 3 seconds
+      setVisible(true); // Show error even if download-progress never fired
       setTimeout(() => setVisible(false), 3000);
     });
 
