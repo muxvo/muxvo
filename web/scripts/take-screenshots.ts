@@ -142,26 +142,14 @@ async function main() {
     await page.waitForTimeout(1500);
 
     // Check current terminal count and FAB button
-    const existingTiles = await page.locator('.terminal-tile').count();
+    const existingTiles = await page.locator('.tile').count();
     console.log(`  Existing terminal tiles: ${existingTiles}`);
     const fabBtn = page.locator('.terminal-grid__fab');
     const fabVisible = await fabBtn.isVisible({ timeout: 5000 }).catch(() => false);
     console.log(`  FAB button visible: ${fabVisible}`);
 
-    // If FAB not found, try alternate selectors
-    if (!fabVisible) {
-      const allButtons = await page.locator('button').count();
-      console.log(`  Total buttons on page: ${allButtons}`);
-      // List all button texts for debugging
-      for (let i = 0; i < Math.min(allButtons, 15); i++) {
-        const text = await page.locator('button').nth(i).textContent().catch(() => '');
-        const cls = await page.locator('button').nth(i).getAttribute('class').catch(() => '');
-        console.log(`    button[${i}]: "${text?.trim()}" class="${cls}"`);
-      }
-    }
-
     // Click FAB to add terminals (need total 4)
-    const needed = 4 - existingTiles;
+    const needed = Math.max(0, 4 - existingTiles);
     for (let i = 0; i < needed; i++) {
       const vis = await fabBtn.isVisible({ timeout: 3000 }).catch(() => false);
       if (vis) {
@@ -179,25 +167,14 @@ async function main() {
     await page.waitForTimeout(500);
 
     // Wait for terminal tiles to render
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2000);
     await forceXtermDarkTheme(page);
 
-    // Debug: take a snapshot to see current state
-    await page.screenshot({ path: resolve(OUTPUT, '_debug-terminals.jpg'), type: 'jpeg', quality: 80 });
+    const tiles = page.locator('.tile');
+    const tileCount = await tiles.count();
+    console.log(`  Terminal tiles after creation: ${tileCount}`);
 
-    // Try multiple selectors for terminal tiles
-    const tiles = page.locator('.terminal-tile');
-    let tileCount = await tiles.count();
-    console.log(`  Terminal tiles (.terminal-tile): ${tileCount}`);
-
-    // If no tiles, check what's on screen
-    if (tileCount === 0) {
-      const anyXterm = await page.locator('.xterm').count();
-      const anyGrid = await page.locator('[class*="terminal-grid"], [class*="tiling"]').count();
-      console.log(`  xterm instances: ${anyXterm}, grid elements: ${anyGrid}`);
-    }
-
-    // Clear each terminal
+    // Clear each terminal to remove messy "Restored session" text
     console.log(`  Clearing ${tileCount} terminals...`);
     for (let i = 0; i < tileCount; i++) {
       await tiles.nth(i).click();
