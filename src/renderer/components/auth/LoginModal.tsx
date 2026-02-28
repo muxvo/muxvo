@@ -147,9 +147,6 @@ export function LoginModal(): JSX.Element | null {
                 <button className="login-modal__link" onClick={() => setMode('login')}>
                   {t('auth.alreadyHaveAccount')}
                 </button>
-                <button className="login-modal__link" onClick={() => setMode('buttons')}>
-                  {t('auth.back')}
-                </button>
               </div>
             </>
           )}

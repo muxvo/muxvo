@@ -143,13 +143,13 @@ function Footer() {
             </a>
           </div>
 
-          {/* Right: feedback email */}
+          {/* Right: contact */}
           <a
             href="mailto:drl330330@gmail.com"
             className={linkCls}
             style={linkStyle}
           >
-            drl330330@gmail.com
+            联系我们
           </a>
         </div>
 

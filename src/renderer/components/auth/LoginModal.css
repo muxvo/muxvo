@@ -49,6 +49,25 @@
   font-family: var(--font-sans);
 }
 
+.login-modal__back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.login-modal__back-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
 .login-modal__close-btn {
   display: flex;
   align-items: center;

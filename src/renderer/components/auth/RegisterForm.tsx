@@ -87,6 +87,23 @@ export function RegisterForm({ onSendCode, onRegister, disabled }: Props): JSX.E
         </button>
       </div>
 
+      <div className="login-modal__field">
+        <input
+          type="password"
+          className="login-modal__input"
+          placeholder={t('auth.passwordPlaceholder')}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          disabled={disabled}
+          autoComplete="new-password"
+        />
+      </div>
+      {password.length > 0 && !passwordValid && (
+        <div className="login-modal__hint login-modal__hint--error">
+          {t('auth.passwordTooShort')}
+        </div>
+      )}
+
       {codeSent && (
         <>
           <div className="login-modal__field">
@@ -101,22 +118,6 @@ export function RegisterForm({ onSendCode, onRegister, disabled }: Props): JSX.E
               maxLength={6}
             />
           </div>
-          <div className="login-modal__field">
-            <input
-              type="password"
-              className="login-modal__input"
-              placeholder={t('auth.passwordPlaceholder')}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={disabled}
-              autoComplete="new-password"
-            />
-          </div>
-          {password.length > 0 && !passwordValid && (
-            <div className="login-modal__hint login-modal__hint--error">
-              {t('auth.passwordTooShort')}
-            </div>
-          )}
           <button
             className="login-modal__login-btn"
             onClick={handleRegister}
