@@ -88,105 +88,80 @@ function Nav() {
 }
 
 function Footer() {
+  const linkCls =
+    'text-[13px] transition-colors duration-150 hover:!text-[var(--amber)]';
+  const linkStyle = { color: 'var(--text-after-sec)' };
+
   return (
-    <footer style={{ background: 'var(--bg-after)' }} className="px-6 pb-12">
+    <footer style={{ background: 'var(--bg-after)' }} className="px-6 pb-10">
       {/* Divider */}
       <div
-        className="h-px mb-12"
+        className="h-px mb-10"
         style={{
           background: 'linear-gradient(to right, transparent, var(--amber), transparent)',
         }}
       />
 
-      {/* Grid */}
-      <div className="max-w-[1200px] mx-auto grid grid-cols-2 md:grid-cols-3 gap-8">
-        <div>
-          <h5
-            className="text-[13px] font-semibold tracking-wide mb-3"
-            style={{ color: 'var(--text-after)' }}
-          >
-            产品
-          </h5>
-          <FooterLink href="/#features">功能</FooterLink>
-          <FooterLink href="/discover">发现</FooterLink>
-          <FooterLink href="/#download">下载</FooterLink>
-        </div>
-        <div>
-          <h5
-            className="text-[13px] font-semibold tracking-wide mb-3"
-            style={{ color: 'var(--text-after)' }}
-          >
-            资源
-          </h5>
-          <FooterLink href="https://github.com/muxvo/muxvo" external>
-            GitHub
-          </FooterLink>
-        </div>
-        <div>
-          <h5
-            className="text-[13px] font-semibold tracking-wide mb-3"
-            style={{ color: 'var(--text-after)' }}
-          >
-            法律
-          </h5>
-          <FooterLink href="https://github.com/muxvo/muxvo/blob/main/LICENSE" external>
-            MIT 开源协议
-          </FooterLink>
-        </div>
-      </div>
+      <div className="max-w-[1200px] mx-auto flex flex-col gap-6">
+        {/* Main row */}
+        <div className="flex items-center justify-between flex-wrap gap-4 md:flex-row flex-col text-center md:text-left">
+          {/* Left: brand */}
+          <span className="font-bold text-base" style={{ color: 'var(--amber)' }}>
+            Muxvo
+          </span>
 
-      {/* Bottom */}
-      <div
-        className="max-w-[1200px] mx-auto mt-8 pt-6 flex items-center justify-between flex-wrap gap-3 md:flex-row flex-col text-center md:text-left"
-        style={{ borderTop: '1px solid var(--border-after)' }}
-      >
-        <span className="font-bold text-base" style={{ color: 'var(--amber)' }}>
-          Muxvo
-        </span>
-        <span className="text-[13px]" style={{ color: 'var(--text-after-sec)' }}>
-          &copy; 2026 Muxvo. MIT License.
-        </span>
+          {/* Center: links */}
+          <div className="flex items-center gap-5 flex-wrap justify-center">
+            <Link to="/#features" className={linkCls} style={linkStyle}>
+              功能
+            </Link>
+            <Link to="/discover" className={linkCls} style={linkStyle}>
+              发现
+            </Link>
+            <a
+              href="https://github.com/muxvo/muxvo"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={linkCls}
+              style={linkStyle}
+            >
+              GitHub
+            </a>
+            <a
+              href="https://github.com/muxvo/muxvo/blob/main/LICENSE"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={linkCls}
+              style={linkStyle}
+            >
+              MIT License
+            </a>
+          </div>
+
+          {/* Right: feedback email */}
+          <a
+            href="mailto:drl330330@gmail.com"
+            className={linkCls}
+            style={linkStyle}
+          >
+            drl330330@gmail.com
+          </a>
+        </div>
+
+        {/* Copyright */}
+        <div
+          className="pt-4 text-center"
+          style={{ borderTop: '1px solid var(--border-after)' }}
+        >
+          <span className="text-[12px]" style={{ color: 'var(--text-after-sec)', opacity: 0.6 }}>
+            &copy; 2026 Muxvo
+          </span>
+        </div>
       </div>
     </footer>
   );
 }
 
-function FooterLink({
-  href,
-  external,
-  children,
-}: {
-  href: string;
-  external?: boolean;
-  children: React.ReactNode;
-}) {
-  const className =
-    'block text-[13px] py-1 transition-colors duration-150 hover:!text-[var(--amber)]';
-  const style = { color: 'var(--text-after-sec)' };
-
-  if (external) {
-    return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={className} style={style}>
-        {children}
-      </a>
-    );
-  }
-
-  // Internal links that include hash
-  if (href.startsWith('/') && !href.startsWith('//')) {
-    return (
-      <Link to={href} className={className} style={style}>
-        {children}
-      </Link>
-    );
-  }
-
-  return (
-    <a href={href} className={className} style={style}>
-      {children}
-    </a>
-  );
-}
 
 export function Layout() {
   return (
