@@ -39,6 +39,15 @@ export interface BackendClientOptions {
   timeout?: number;
 }
 
+const ERROR_MESSAGE_MAP: Record<string, string> = {
+  'Invalid email or password': '邮箱或密码错误',
+  'Invalid verification code': '验证码无效或已过期',
+  'Email already registered': '该邮箱已注册',
+  'Invalid or expired OAuth state': '登录已过期，请重试',
+  'Invalid refresh token': '登录已过期，请重新登录',
+  'Refresh token expired': '登录已过期，请重新登录',
+};
+
 export function createBackendClient(options: BackendClientOptions) {
   const { baseUrl, timeout = 15000 } = options;
 
@@ -62,7 +71,8 @@ export function createBackendClient(options: BackendClientOptions) {
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
         const msg = (body as Record<string, string>).message || response.statusText;
-        throw new Error(`API error ${response.status}: ${msg}`);
+        const friendly = ERROR_MESSAGE_MAP[msg];
+        throw new Error(friendly || `API error ${response.status}: ${msg}`);
       }
 
       return (await response.json()) as T;
