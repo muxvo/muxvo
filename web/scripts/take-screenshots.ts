@@ -68,7 +68,7 @@ async function main() {
   try {
     // ── Screenshot 1: Chat History with Resume Bar ──────────────
     console.log('📸 Screenshot 1: dark-resume-chat.jpg');
-    const chatTab = page.locator('.menu-bar__tab', { hasText: /Chat/ });
+    const chatTab = page.locator('.menu-bar__tab', { hasText: /历史聊天|Chat/ });
     await chatTab.click();
     await page.waitForTimeout(2000);
 
