@@ -33,27 +33,13 @@ export function Hero() {
       {/* Real product screenshot */}
       <div className="mv-hero__mock fade-up">
         <div className="mv-mock">
-          {/* Title bar */}
-          <div className="mv-mock__bar">
-            <span className="mv-mock__dot mv-mock__dot--r" />
-            <span className="mv-mock__dot mv-mock__dot--y" />
-            <span className="mv-mock__dot mv-mock__dot--g" />
-            <span className="mv-mock__bar-title">Muxvo</span>
-            <div className="mv-mock__bar-tabs">
-              <span className="mv-mock__bar-tab mv-mock__bar-tab--active">Terminals</span>
-              <span className="mv-mock__bar-tab">Chat</span>
-              <span className="mv-mock__bar-tab">Config</span>
-            </div>
-          </div>
-
-          {/* Screenshot */}
           <div className="mv-mock__screenshot">
             <img
               src="/screenshots/dark-4terminals.jpg"
               alt="Muxvo terminal grid — multiple AI CLI sessions at a glance"
               loading="eager"
-              width="2764"
-              height="1876"
+              width="2410"
+              height="1608"
             />
           </div>
         </div>
