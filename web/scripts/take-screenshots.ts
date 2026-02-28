@@ -174,14 +174,15 @@ async function main() {
     const tileCount = await tiles.count();
     console.log(`  Terminal tiles after creation: ${tileCount}`);
 
-    // Clear each terminal to remove messy "Restored session" text
-    console.log(`  Clearing ${tileCount} terminals...`);
+    // Clean each terminal: set minimal prompt + clear
+    console.log(`  Cleaning ${tileCount} terminals...`);
     for (let i = 0; i < tileCount; i++) {
       await tiles.nth(i).click();
       await page.waitForTimeout(300);
-      await page.keyboard.type('clear');
+      // Set a clean, minimal prompt and clear screen
+      await page.keyboard.type('export PS1="\\$ " && clear');
       await page.keyboard.press('Enter');
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(800);
     }
     await forceXtermDarkTheme(page);
     await page.waitForTimeout(500);
@@ -213,7 +214,7 @@ async function main() {
       await tileHeader.dblclick();
       await page.waitForTimeout(1500);
     }
-    // Clear main terminal in focused mode
+    // Clear main terminal in focused mode (already has minimal PS1)
     await page.keyboard.type('clear');
     await page.keyboard.press('Enter');
     await page.waitForTimeout(500);
