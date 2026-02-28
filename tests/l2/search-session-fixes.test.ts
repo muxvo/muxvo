@@ -145,11 +145,13 @@ describe('Fix 3: keyword-level scroll — source code verification', () => {
     expect(src).toContain("scrollIntoView({ block: 'center', behavior: 'auto' })");
   });
 
-  test('SessionDetail.tsx: two-step positioning with setTimeout after scrollToIndex', () => {
+  test('SessionDetail.tsx: fast path + slow path scroll positioning with rAF polling', () => {
     const src = readFileSync(resolve(ROOT, 'src/renderer/components/chat/SessionDetail.tsx'), 'utf-8');
-    // scrollToIndex followed by setTimeout for second-step positioning
+    // Fast path: direct scrollIntoView when mark is already in DOM
+    expect(src).toContain('activateAndScroll()');
+    // Slow path: scrollToIndex + rAF polling
     expect(src).toContain('scrollToIndex({ index: dataIndex');
-    expect(src).toContain('setTimeout(');
+    expect(src).toContain('requestAnimationFrame(poll)');
     expect(src).toContain('scrollIntoView');
     // Active highlight is applied via DOM manipulation, not React props
     expect(src).toContain('data-msg-idx');
