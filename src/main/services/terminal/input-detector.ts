@@ -130,3 +130,26 @@ export function resetInputDetector(terminalId?: string): void {
     buffers.clear();
   }
 }
+
+/**
+ * Detect standalone BEL character in raw PTY data.
+ * BEL (\x07) is used by CC to signal that the terminal needs attention
+ * (permission prompt, idle prompt). Must exclude BEL used as OSC terminator.
+ */
+export function detectBellSignal(data: string): boolean {
+  // Remove OSC sequences (they use \x07 as terminator, not a real bell)
+  const withoutOsc = data.replace(/\x1b\][^\x07\x1b]*\x07/g, '');
+  return withoutOsc.includes('\x07');
+}
+
+/**
+ * Parse OSC 9 (iTerm2) or OSC 777 (rxvt-unicode/VSCode) notification sequences.
+ * CC uses these to send structured notifications when user attention is needed.
+ */
+export function detectOscNotification(data: string): { type: number; message: string } | null {
+  const osc9 = data.match(/\x1b\]9;([^\x07]*)\x07/);
+  if (osc9) return { type: 9, message: osc9[1] };
+  const osc777 = data.match(/\x1b\]777;notify;([^;]*);([^\x07]*)\x07/);
+  if (osc777) return { type: 777, message: `${osc777[1]}: ${osc777[2]}` };
+  return null;
+}

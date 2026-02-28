@@ -116,6 +116,19 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       });
     }
 
+    // Bell / OSC notification signals → notify Main to trigger WaitingInput
+    const bellDisposable = term.onBell(() => {
+      window.api.terminal.notifyBell(terminalId);
+    });
+    const osc9Disposable = term.parser.registerOscHandler(9, (data: string) => {
+      window.api.terminal.notifyBell(terminalId, `osc9:${data}`);
+      return false; // Don't consume — let xterm handle normally
+    });
+    const osc777Disposable = term.parser.registerOscHandler(777, (data: string) => {
+      window.api.terminal.notifyBell(terminalId, `osc777:${data}`);
+      return false;
+    });
+
     // Cmd/Ctrl+F toggles terminal search bar
     term.attachCustomKeyEventHandler((e: KeyboardEvent) => {
       const isMod = navigator.platform.includes('Mac') ? e.metaKey : e.ctrlKey;
@@ -268,6 +281,9 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       window.removeEventListener('muxvo:terminal-refit', onRefit);
       scrollDisposable.dispose();
       writeDisposable.dispose();
+      bellDisposable.dispose();
+      osc9Disposable.dispose();
+      osc777Disposable.dispose();
       addonManager.disposeAll();
       term.dispose();
     };

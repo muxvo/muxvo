@@ -10,7 +10,7 @@ import { existsSync } from 'fs';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 import type { PtyAdapter, PtyProcess } from './pty-adapter';
 import { getForegroundProcessName } from './foreground-detector';
-import { detectWaitingInput, resetInputDetector, shouldExitWaiting } from './input-detector';
+import { detectWaitingInput, resetInputDetector, shouldExitWaiting, detectBellSignal, detectOscNotification } from './input-detector';
 import type {
   TerminalInfo,
   ForegroundProcessInfo,
@@ -162,18 +162,27 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
             }
           }
 
-          // Detect interactive prompts → transition to WaitingInput
-          const isRunning = machine.state === 'Running';
-          const isWaiting = machine.state === 'WaitingInput';
-          const detected = detectWaitingInput(data, id);
-          if (isRunning && detected) {
+          // 1. Signal detection (high priority): BEL / OSC 9 / OSC 777
+          const hasBell = detectBellSignal(data);
+          const oscNotif = detectOscNotification(data);
+          if ((hasBell || oscNotif) && machine.state === 'Running') {
+            resetInputDetector(id);
             machine.send('WAIT_INPUT');
             pushStateChange(id, machine.state);
-          } else if (isWaiting && !detected && shouldExitWaiting(id)) {
-            // Process moved past the interactive prompt — auto-recover
-            resetInputDetector(id);
-            machine.send('AUTO_RESUME');
-            pushStateChange(id, machine.state);
+          } else {
+            // 2. Text pattern matching (fallback for non-CC tools)
+            const isRunning = machine.state === 'Running';
+            const isWaiting = machine.state === 'WaitingInput';
+            const detected = detectWaitingInput(data, id);
+            if (isRunning && detected) {
+              machine.send('WAIT_INPUT');
+              pushStateChange(id, machine.state);
+            } else if (isWaiting && !detected && shouldExitWaiting(id)) {
+              // Process moved past the interactive prompt — auto-recover
+              resetInputDetector(id);
+              machine.send('AUTO_RESUME');
+              pushStateChange(id, machine.state);
+            }
           }
         });
 
@@ -317,7 +326,18 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
     return true;
   }
 
-  return { spawn, write, resize, close, list, getState, getForegroundProcess, closeAll, getBuffer, updateCwd };
+  /** Handle bell notification from renderer (xterm.js onBell / OSC handler) */
+  function handleBell(id: string, _detail?: string): void {
+    const terminal = terminals.get(id);
+    if (!terminal) return;
+    if (terminal.machine.state === 'Running') {
+      resetInputDetector(id);
+      terminal.machine.send('WAIT_INPUT');
+      pushStateChange(id, terminal.machine.state);
+    }
+  }
+
+  return { spawn, write, resize, close, list, getState, getForegroundProcess, closeAll, getBuffer, updateCwd, handleBell };
 }
 
 function isValidCwd(cwd: string): boolean {

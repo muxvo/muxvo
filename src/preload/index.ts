@@ -65,6 +65,8 @@ const api = {
       ipcRenderer.on(IPC_CHANNELS.TERMINAL.ZOOM, handler);
       return () => ipcRenderer.removeListener(IPC_CHANNELS.TERMINAL.ZOOM, handler);
     },
+    notifyBell: (id: string, detail?: string) =>
+      ipcRenderer.send(IPC_CHANNELS.TERMINAL.BELL, { id, detail }),
   },
 
   // --- App domain ---

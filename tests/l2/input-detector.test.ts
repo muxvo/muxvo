@@ -9,7 +9,7 @@
  * and exclusion rules.
  */
 import { describe, test, expect, beforeEach } from 'vitest';
-import { detectWaitingInput, resetInputDetector, shouldExitWaiting } from '@/main/services/terminal/input-detector';
+import { detectWaitingInput, resetInputDetector, shouldExitWaiting, detectBellSignal, detectOscNotification } from '@/main/services/terminal/input-detector';
 
 describe('Input Detector L2', () => {
   beforeEach(() => {
@@ -257,6 +257,73 @@ describe('Input Detector L2', () => {
       // Reset clears buffer
       resetInputDetector('term-1');
       expect(shouldExitWaiting('term-1')).toBe(false);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // detectBellSignal (terminal bell detection)
+  // ---------------------------------------------------------------------------
+  describe('detectBellSignal', () => {
+    test('standalone BEL character → true', () => {
+      expect(detectBellSignal('\x07')).toBe(true);
+    });
+
+    test('BEL within normal text → true', () => {
+      expect(detectBellSignal('some output\x07more output')).toBe(true);
+    });
+
+    test('BEL as OSC terminator (OSC 7 cwd) → false', () => {
+      // OSC 7: \x1b]7;file://host/path\x07
+      expect(detectBellSignal('\x1b]7;file://localhost/Users/test\x07')).toBe(false);
+    });
+
+    test('BEL as OSC 0 title terminator → false', () => {
+      expect(detectBellSignal('\x1b]0;terminal title\x07')).toBe(false);
+    });
+
+    test('OSC terminated BEL + standalone BEL → true', () => {
+      // Has both an OSC sequence (BEL as terminator) and a standalone BEL
+      expect(detectBellSignal('\x1b]0;title\x07\x07')).toBe(true);
+    });
+
+    test('no BEL at all → false', () => {
+      expect(detectBellSignal('normal output without bell')).toBe(false);
+    });
+
+    test('ANSI escape sequences without BEL → false', () => {
+      expect(detectBellSignal('\x1b[32mgreen text\x1b[0m')).toBe(false);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // detectOscNotification (OSC 9 / OSC 777 parsing)
+  // ---------------------------------------------------------------------------
+  describe('detectOscNotification', () => {
+    test('OSC 9 notification → parsed correctly', () => {
+      const result = detectOscNotification('\x1b]9;Task completed\x07');
+      expect(result).toEqual({ type: 9, message: 'Task completed' });
+    });
+
+    test('OSC 777 notification → parsed correctly', () => {
+      const result = detectOscNotification('\x1b]777;notify;Claude Code;Permission needed\x07');
+      expect(result).toEqual({ type: 777, message: 'Claude Code: Permission needed' });
+    });
+
+    test('no OSC notification → null', () => {
+      expect(detectOscNotification('regular terminal output')).toBeNull();
+    });
+
+    test('OSC 7 (cwd change) is NOT a notification → null', () => {
+      expect(detectOscNotification('\x1b]7;file://localhost/path\x07')).toBeNull();
+    });
+
+    test('OSC 0 (title) is NOT a notification → null', () => {
+      expect(detectOscNotification('\x1b]0;window title\x07')).toBeNull();
+    });
+
+    test('OSC 9 embedded in other output → parsed', () => {
+      const result = detectOscNotification('prefix\x1b]9;bell message\x07suffix');
+      expect(result).toEqual({ type: 9, message: 'bell message' });
     });
   });
 });
