@@ -511,10 +511,11 @@ app.whenReady().then(() => {
       });
       console.log('[MUXVO:update] install dialog response:', response);
       if (response === 0) {
-        // Use app.quit() instead of quitAndInstall() to avoid double-quit SIGABRT.
-        // autoInstallOnAppQuit=true ensures electron-updater installs during quit.
-        console.log('[MUXVO:update] User chose restart, quitting for auto-install');
-        app.quit();
+        console.log('[MUXVO:update] User chose restart, calling quitAndInstall');
+        // setImmediate avoids SIGABRT from calling quit inside dialog callback stack
+        setImmediate(() => {
+          autoUpdater.quitAndInstall(false, true);
+        });
       }
     });
 
@@ -716,16 +717,6 @@ app.on('window-all-closed', () => {
 
   if (process.platform !== 'darwin') {
     // Non-macOS: full cleanup and quit
-    chatWatcher?.stop();
-    chatArchive?.stop();
-    configWatcher?.stop();
-    memoryPush?.stop();
-    tracker?.flush();
-    tracker?.dispose();
-    app.quit();
-  } else if (updateDownloaded) {
-    // macOS + pending update: must quit so Squirrel.Mac's ShipIt can replace the app bundle
-    console.log('[MUXVO:update] Pending update detected, quitting for ShipIt install');
     chatWatcher?.stop();
     chatArchive?.stop();
     configWatcher?.stop();
