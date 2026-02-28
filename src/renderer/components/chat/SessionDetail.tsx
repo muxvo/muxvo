@@ -331,14 +331,24 @@ export const SessionDetail = forwardRef<SessionDetailHandle, SessionDetailProps>
     }
   }, [matchOccurrences, messageKey, searchQuery]);
 
-  // Unified scroll effect: fires AFTER React commit so Virtuoso is ready
-  // Note: Virtuoso's scrollToIndex uses DATA index (0-based), not absolute index
+  // Unified scroll effect: two-step positioning
+  // Step 1: scrollToIndex brings the message into Virtuoso's rendered DOM
+  // Step 2: scrollIntoView on the specific <mark> element for keyword-level precision
   useEffect(() => {
     if (!searchQuery?.trim() || matchOccurrences.length === 0) return;
     if (currentMatchIdx < 0 || currentMatchIdx >= matchOccurrences.length) return;
-    const dataIndex = matchOccurrences[currentMatchIdx].msgIdx;
+    const match = matchOccurrences[currentMatchIdx];
+    const dataIndex = match.msgIdx;
     requestAnimationFrame(() => {
       virtuosoRef.current?.scrollToIndex({ index: dataIndex, align: 'center', behavior: 'auto' });
+      // After Virtuoso renders the message, locate the exact keyword mark
+      setTimeout(() => {
+        const marks = document.querySelectorAll('mark.search-highlight--active');
+        const target = marks[match.nthInMsg];
+        if (target) {
+          target.scrollIntoView({ block: 'center', behavior: 'auto' });
+        }
+      }, 80);
     });
   }, [currentMatchIdx, matchOccurrences, searchQuery]);
 

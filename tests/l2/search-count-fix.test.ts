@@ -78,8 +78,8 @@ describe('Bug 2: occurrence-level counting — source code verification', () => 
 
   test('SessionDetail.tsx: scrolls to occurrence msgIdx', () => {
     const src = readFileSync(resolve(ROOT, 'src/renderer/components/chat/SessionDetail.tsx'), 'utf-8');
-    // Scroll target should use .msgIdx property
-    expect(src).toContain('matchOccurrences[currentMatchIdx].msgIdx');
+    // Scroll target should use .msgIdx property (may be destructured to a variable)
+    expect(src).toContain('match.msgIdx');
   });
 });
 
