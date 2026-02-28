@@ -223,3 +223,95 @@ describe('Source code fix verification', () => {
     expect(quitBlock![0]).toContain('catch');
   });
 });
+
+// ── Test 4: v0.2.8 fixes — ipcMain.handle outside launchWindowWithTerminals ──
+
+describe('v0.2.8 regression fixes', () => {
+  test('index.ts: ipcMain.handle(CHECK_FOR_UPDATE) is NOT inside launchWindowWithTerminals', () => {
+    const src = fs.readFileSync(
+      path.resolve(__dirname, '../../src/main/index.ts'),
+      'utf-8',
+    );
+
+    // Find launchWindowWithTerminals function body
+    const funcMatch = src.match(/function launchWindowWithTerminals\(\): void \{[\s\S]*?^  \}/m);
+    expect(funcMatch).not.toBeNull();
+    const funcBody = funcMatch![0];
+
+    // IPC handlers must NOT be inside launchWindowWithTerminals
+    expect(funcBody).not.toContain('ipcMain.handle');
+    expect(funcBody).not.toContain('CHECK_FOR_UPDATE');
+    expect(funcBody).not.toContain('DOWNLOAD_UPDATE');
+  });
+
+  test('index.ts: autoUpdater.on() is NOT inside launchWindowWithTerminals', () => {
+    const src = fs.readFileSync(
+      path.resolve(__dirname, '../../src/main/index.ts'),
+      'utf-8',
+    );
+
+    const funcMatch = src.match(/function launchWindowWithTerminals\(\): void \{[\s\S]*?^  \}/m);
+    expect(funcMatch).not.toBeNull();
+    const funcBody = funcMatch![0];
+
+    // autoUpdater event listeners must NOT be inside launchWindowWithTerminals
+    expect(funcBody).not.toContain('autoUpdater.on(');
+    expect(funcBody).not.toContain('autoUpdater.checkForUpdates');
+  });
+
+  test('index.ts: promptUpdate has re-entrancy guard', () => {
+    const src = fs.readFileSync(
+      path.resolve(__dirname, '../../src/main/index.ts'),
+      'utf-8',
+    );
+
+    // promptUpdate must check isPromptingUpdate before showing dialog
+    const promptBlock = src.match(/async function promptUpdate[\s\S]*?finally\s*\{[\s\S]*?\}/);
+    expect(promptBlock).not.toBeNull();
+    expect(promptBlock![0]).toContain('isPromptingUpdate');
+    expect(promptBlock![0]).toContain('if (isPromptingUpdate) return');
+  });
+
+  test('index.ts: updateDownloaded flag set in update-downloaded handler', () => {
+    const src = fs.readFileSync(
+      path.resolve(__dirname, '../../src/main/index.ts'),
+      'utf-8',
+    );
+
+    // updateDownloaded must be set to true in the update-downloaded handler
+    expect(src).toContain('updateDownloaded = true');
+  });
+
+  test('index.ts: window-all-closed quits on macOS when update is downloaded', () => {
+    const src = fs.readFileSync(
+      path.resolve(__dirname, '../../src/main/index.ts'),
+      'utf-8',
+    );
+
+    // Find window-all-closed handler
+    const handler = src.match(/app\.on\('window-all-closed'[\s\S]*?^\}\);/m);
+    expect(handler).not.toBeNull();
+    const body = handler![0];
+
+    // Must check updateDownloaded and call app.quit() on macOS
+    expect(body).toContain('updateDownloaded');
+    expect(body).toContain("app.quit()");
+  });
+
+  test('index.ts: activate handler restarts services', () => {
+    const src = fs.readFileSync(
+      path.resolve(__dirname, '../../src/main/index.ts'),
+      'utf-8',
+    );
+
+    // Find activate handler
+    const handler = src.match(/app\.on\('activate'[\s\S]*?\}\);/);
+    expect(handler).not.toBeNull();
+    const body = handler![0];
+
+    // Must restart lightweight services
+    expect(body).toContain('chatWatcher?.start()');
+    expect(body).toContain('configWatcher?.start()');
+    expect(body).toContain('memoryPush?.start()');
+  });
+});

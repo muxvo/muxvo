@@ -60,7 +60,7 @@ export function createChatHandlers() {
     async getSessions(params: { projectHash: string }) {
       let sessions;
       if (params.projectHash === '__all__') {
-        sessions = await reader.getAllRecentSessions(200);
+        sessions = await reader.getAllRecentSessions(500);
       } else {
         sessions = await reader.getSessionsForProject(params.projectHash, 500);
       }

@@ -58,6 +58,7 @@ for (const stream of [process.stdout, process.stderr]) {
 let mainWindow: BrowserWindow | null = null;
 let lastBounds: Electron.Rectangle | null = null;
 let pendingDeepLinkUrl: string | null = null;
+let updateDownloaded = false;
 const sessionStartTime = Date.now();
 
 interface WindowConfig {
@@ -392,31 +393,30 @@ app.whenReady().then(() => {
 
   // INSTALL_UPDATE handler removed — update installs automatically on next quit
 
-  // Create window and restore terminals from config
-  function launchWindowWithTerminals(): void {
-    const config = configManager.loadConfig();
-    createWindow(config.window);
+  // Auto-update setup (registered once, outside launchWindowWithTerminals to avoid duplicate registration on macOS activate)
+  // Flow: detect → native dialog → user approves → silent download → auto-install on next quit
+  // If user dismisses, remind with increasing intervals: 4h → 1d → 3d → 7d (max 4 reminders per version)
+  if (!is.dev) {
+    autoUpdater.logger = createUpdateLogger();
+    autoUpdater.autoDownload = false;
+    autoUpdater.autoInstallOnAppQuit = true;
 
-    // Auto-update (production only)
-    // Flow: detect → native dialog → user approves → silent download → auto-install on next quit
-    // If user dismisses, remind with increasing intervals: 4h → 1d → 3d → 7d (max 4 reminders per version)
-    if (!is.dev) {
-      autoUpdater.logger = createUpdateLogger();
-      autoUpdater.autoDownload = false;
-      autoUpdater.autoInstallOnAppQuit = true;
+    let updateDismissCount = 0;
+    let updateReminderTimer: ReturnType<typeof setTimeout> | null = null;
+    let isPromptingUpdate = false;
+    const REMIND_INTERVALS = [4 * 3600_000, 24 * 3600_000, 3 * 24 * 3600_000, 7 * 24 * 3600_000]; // 4h, 1d, 3d, 7d
 
-      let updateDismissCount = 0;
-      let updateReminderTimer: ReturnType<typeof setTimeout> | null = null;
-      const REMIND_INTERVALS = [4 * 3600_000, 24 * 3600_000, 3 * 24 * 3600_000, 7 * 24 * 3600_000]; // 4h, 1d, 3d, 7d
+    /** Push initial downloading state so UpdateProgress becomes visible immediately */
+    function pushDownloadStart(): void {
+      pushToAllWindows(IPC_CHANNELS.APP.UPDATE_DOWNLOADING, {
+        percent: 0, bytesPerSecond: 0, transferred: 0, total: 0,
+      });
+    }
 
-      /** Push initial downloading state so UpdateProgress becomes visible immediately */
-      function pushDownloadStart(): void {
-        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_DOWNLOADING, {
-          percent: 0, bytesPerSecond: 0, transferred: 0, total: 0,
-        });
-      }
-
-      async function promptUpdate(version: string): Promise<void> {
+    async function promptUpdate(version: string): Promise<void> {
+      if (isPromptingUpdate) return;
+      isPromptingUpdate = true;
+      try {
         console.log('[MUXVO:update] promptUpdate dialog shown for', version);
         const { response } = await dialog.showMessageBox({
           type: 'info',
@@ -439,85 +439,94 @@ app.whenReady().then(() => {
           updateDismissCount++;
           updateReminderTimer = setTimeout(() => promptUpdate(version), delay);
         }
+      } finally {
+        isPromptingUpdate = false;
       }
-
-      autoUpdater.on('update-available', (info) => {
-        console.log('[MUXVO:update] update-available:', info.version);
-        updateDismissCount = 0;
-        if (updateReminderTimer) clearTimeout(updateReminderTimer);
-        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_AVAILABLE, { version: info.version, releaseDate: info.releaseDate || '' });
-        promptUpdate(info.version);
-      });
-
-      autoUpdater.on('download-progress', (progress) => {
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.setProgressBar(progress.percent / 100);
-        }
-        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_DOWNLOADING, {
-          percent: progress.percent,
-          bytesPerSecond: progress.bytesPerSecond,
-          transferred: progress.transferred,
-          total: progress.total,
-        });
-      });
-
-      autoUpdater.on('update-downloaded', async (info) => {
-        console.log('[MUXVO:update] update-downloaded:', info.version, 'file:', (info as any).downloadedFile || 'unknown');
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.setProgressBar(-1);
-        }
-        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_DOWNLOADED, { version: info.version });
-
-        const { response } = await dialog.showMessageBox({
-          type: 'info',
-          title: '下载完成',
-          message: `v${info.version} 已下载完成`,
-          detail: '立即重启安装，还是下次启动时自动安装？',
-          buttons: ['立即重启', '下次启动时安装'],
-          defaultId: 0,
-          cancelId: 1,
-        });
-        console.log('[MUXVO:update] install dialog response:', response);
-        if (response === 0) {
-          setTimeout(() => {
-            try {
-              console.log('[MUXVO:update] calling quitAndInstall(false, true)');
-              autoUpdater.quitAndInstall(false, true);
-            } catch (err) {
-              console.error('[MUXVO:update] quitAndInstall threw:', err);
-            }
-          }, 1000);
-        }
-      });
-
-      autoUpdater.on('error', (err) => {
-        console.error('[MUXVO:update] error:', err.message);
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.setProgressBar(-1);
-        }
-        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_ERROR, { message: err.message });
-      });
-
-      // IPC handlers for renderer-initiated update actions (production)
-      ipcMain.handle(IPC_CHANNELS.APP.CHECK_FOR_UPDATE, () => autoUpdater.checkForUpdates());
-      ipcMain.handle(IPC_CHANNELS.APP.DOWNLOAD_UPDATE, () => {
-        pushDownloadStart();
-        return autoUpdater.downloadUpdate().catch((err) => {
-          console.error('[MUXVO:update] downloadUpdate failed:', err);
-          pushToAllWindows(IPC_CHANNELS.APP.UPDATE_ERROR, { message: String(err) });
-        });
-      });
-
-      app.on('before-quit', () => {
-        console.log('[MUXVO:update] before-quit, autoInstallOnAppQuit =', autoUpdater.autoInstallOnAppQuit);
-      });
-
-      autoUpdater.checkForUpdates();
-    } else {
-      // Dev mode: register no-op handlers so renderer doesn't get unhandled errors
-      ipcMain.handle(IPC_CHANNELS.APP.CHECK_FOR_UPDATE, () => null);
-      ipcMain.handle(IPC_CHANNELS.APP.DOWNLOAD_UPDATE, () => null);
     }
+
+    autoUpdater.on('update-available', (info) => {
+      console.log('[MUXVO:update] update-available:', info.version);
+      updateDismissCount = 0;
+      if (updateReminderTimer) clearTimeout(updateReminderTimer);
+      pushToAllWindows(IPC_CHANNELS.APP.UPDATE_AVAILABLE, { version: info.version, releaseDate: info.releaseDate || '' });
+      promptUpdate(info.version);
+    });
+
+    autoUpdater.on('download-progress', (progress) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.setProgressBar(progress.percent / 100);
+      }
+      pushToAllWindows(IPC_CHANNELS.APP.UPDATE_DOWNLOADING, {
+        percent: progress.percent,
+        bytesPerSecond: progress.bytesPerSecond,
+        transferred: progress.transferred,
+        total: progress.total,
+      });
+    });
+
+    autoUpdater.on('update-downloaded', async (info) => {
+      console.log('[MUXVO:update] update-downloaded:', info.version, 'file:', (info as any).downloadedFile || 'unknown');
+      updateDownloaded = true;
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.setProgressBar(-1);
+      }
+      pushToAllWindows(IPC_CHANNELS.APP.UPDATE_DOWNLOADED, { version: info.version });
+
+      const { response } = await dialog.showMessageBox({
+        type: 'info',
+        title: '下载完成',
+        message: `v${info.version} 已下载完成`,
+        detail: '立即重启安装，还是下次启动时自动安装？',
+        buttons: ['立即重启', '下次启动时安装'],
+        defaultId: 0,
+        cancelId: 1,
+      });
+      console.log('[MUXVO:update] install dialog response:', response);
+      if (response === 0) {
+        setTimeout(() => {
+          try {
+            console.log('[MUXVO:update] calling quitAndInstall(false, true)');
+            autoUpdater.quitAndInstall(false, true);
+          } catch (err) {
+            console.error('[MUXVO:update] quitAndInstall threw:', err);
+          }
+        }, 1000);
+      }
+    });
+
+    autoUpdater.on('error', (err) => {
+      console.error('[MUXVO:update] error:', err.message);
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.setProgressBar(-1);
+      }
+      pushToAllWindows(IPC_CHANNELS.APP.UPDATE_ERROR, { message: err.message });
+    });
+
+    // IPC handlers for renderer-initiated update actions (production)
+    ipcMain.handle(IPC_CHANNELS.APP.CHECK_FOR_UPDATE, () => autoUpdater.checkForUpdates());
+    ipcMain.handle(IPC_CHANNELS.APP.DOWNLOAD_UPDATE, () => {
+      pushDownloadStart();
+      return autoUpdater.downloadUpdate().catch((err) => {
+        console.error('[MUXVO:update] downloadUpdate failed:', err);
+        pushToAllWindows(IPC_CHANNELS.APP.UPDATE_ERROR, { message: String(err) });
+      });
+    });
+
+    app.on('before-quit', () => {
+      console.log('[MUXVO:update] before-quit, autoInstallOnAppQuit =', autoUpdater.autoInstallOnAppQuit);
+    });
+
+    autoUpdater.checkForUpdates();
+  } else {
+    // Dev mode: register no-op handlers so renderer doesn't get unhandled errors
+    ipcMain.handle(IPC_CHANNELS.APP.CHECK_FOR_UPDATE, () => null);
+    ipcMain.handle(IPC_CHANNELS.APP.DOWNLOAD_UPDATE, () => null);
+  }
+
+  // Create window and restore terminals from config
+  function launchWindowWithTerminals(): void {
+    const config = configManager.loadConfig();
+    createWindow(config.window);
 
     // Restore terminals or create a fresh one after renderer is ready
     if (mainWindow) {
@@ -616,6 +625,10 @@ app.whenReady().then(() => {
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
+      // Restart lightweight services stopped by window-all-closed
+      chatWatcher?.start();
+      configWatcher?.start();
+      memoryPush?.start();
       launchWindowWithTerminals();
     }
   });
@@ -666,29 +679,34 @@ app.on('window-all-closed', () => {
   });
 
   // Config already saved in mainWindow 'close' event
-  // Clean up all terminal processes
+  // Clean up all terminal processes (prevent pty leaks)
   if (terminalManager) {
     terminalManager.closeAll();
   }
-  if (chatWatcher) {
-    chatWatcher.stop();
-  }
-  if (chatArchive) {
-    chatArchive.stop();
-  }
-  if (configWatcher) {
-    configWatcher.stop();
-  }
-  if (memoryPush) {
-    memoryPush.stop();
-  }
-  // Flush pending analytics before quit and stop upload timer
-  if (tracker) {
-    tracker.flush();
-    tracker.dispose();
-  }
 
   if (process.platform !== 'darwin') {
+    // Non-macOS: full cleanup and quit
+    chatWatcher?.stop();
+    chatArchive?.stop();
+    configWatcher?.stop();
+    memoryPush?.stop();
+    tracker?.flush();
+    tracker?.dispose();
     app.quit();
+  } else if (updateDownloaded) {
+    // macOS + pending update: must quit so Squirrel.Mac's ShipIt can replace the app bundle
+    console.log('[MUXVO:update] Pending update detected, quitting for ShipIt install');
+    chatWatcher?.stop();
+    chatArchive?.stop();
+    configWatcher?.stop();
+    memoryPush?.stop();
+    tracker?.flush();
+    tracker?.dispose();
+    app.quit();
+  } else {
+    // macOS no update: stop lightweight services (restarted on activate), keep app running
+    chatWatcher?.stop();
+    configWatcher?.stop();
+    memoryPush?.stop();
   }
 });

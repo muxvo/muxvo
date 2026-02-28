@@ -362,6 +362,58 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
     }
   }
 
+  /** File entry shared by both getSessionsForProject and getAllRecentSessions */
+  interface FileEntry {
+    projectHash: string;
+    fileName: string;
+    filePath: string;
+    mtime: number;
+    archiveOnly?: boolean;
+  }
+
+  /**
+   * Shared pipeline: merge archive → sort by mtime → take top N → extract summaries (cached).
+   * Used by both getSessionsForProject and getAllRecentSessions.
+   */
+  async function collectAndExtractSessions(
+    ccFiles: FileEntry[],
+    archiveFiles: FileEntry[],
+    limit: number,
+  ): Promise<SessionSummary[]> {
+    // Merge: CC takes priority for same projectHash/fileName
+    const ccKeySet = new Set(ccFiles.map(f => f.projectHash + '/' + f.fileName));
+    const merged: FileEntry[] = [...ccFiles];
+    for (const af of archiveFiles) {
+      if (!ccKeySet.has(af.projectHash + '/' + af.fileName)) {
+        merged.push({ ...af, archiveOnly: true });
+      }
+    }
+
+    // Sort by mtime descending, take top N
+    merged.sort((a, b) => b.mtime - a.mtime);
+    const topFiles = merged.slice(0, limit);
+
+    // Extract summaries in parallel (use cache where possible)
+    const results = await Promise.all(
+      topFiles.map(async (file) => {
+        const cacheKey = file.projectHash + '/' + file.fileName;
+        const cached = summaryCache.get(cacheKey);
+        if (cached && Date.now() < cached.expiry) {
+          return cached.data.title ? cached.data : null;
+        }
+        try {
+          const summary = await extractSessionSummary(file.projectHash, file.filePath, file.fileName);
+          if (file.archiveOnly) summary.archiveOnly = true;
+          summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
+          return summary.title ? summary : null;
+        } catch {
+          return null;
+        }
+      })
+    );
+    return results.filter((s): s is SessionSummary => s !== null);
+  }
+
   /**
    * Scan sessions (file stats) from a single project directory.
    */
@@ -434,113 +486,67 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
     async getSessionsForProject(projectHash: string, limit = 50): Promise<SessionSummary[]> {
       const ccProjectPath = join(projectsDir, projectHash);
 
-      // Scan CC source
+      // Collect CC file entries
       const ccStats = await scanSessionFilesFromDir(ccProjectPath);
-      const ccFileNames = new Set(ccStats.map(s => s.fileName));
+      const ccFiles: FileEntry[] = ccStats.map(s => ({
+        projectHash,
+        fileName: s.fileName,
+        filePath: join(ccProjectPath, s.fileName),
+        mtime: s.mtime,
+      }));
 
-      // Scan archive source, add files not already in CC
-      let allStats = [...ccStats];
+      // Collect archive file entries
+      let archiveFiles: FileEntry[] = [];
       if (archiveProjectsDir) {
         const archiveProjectPath = join(archiveProjectsDir, projectHash);
         const archiveStats = await scanSessionFilesFromDir(archiveProjectPath);
-        for (const archiveStat of archiveStats) {
-          if (!ccFileNames.has(archiveStat.fileName)) {
-            allStats.push(archiveStat);
-          }
-        }
+        archiveFiles = archiveStats.map(s => ({
+          projectHash,
+          fileName: s.fileName,
+          filePath: join(archiveProjectPath, s.fileName),
+          mtime: s.mtime,
+        }));
       }
 
-      // Sort by mtime descending, take top N for summary extraction
-      allStats.sort((a, b) => b.mtime - a.mtime);
-      const topFiles = allStats.slice(0, limit);
-
-      // Extract summaries for top N in parallel (use cache where possible)
-      const results = await Promise.all(
-        topFiles.map(async (file) => {
-          const cacheKey = projectHash + '/' + file.fileName;
-          const cached = summaryCache.get(cacheKey);
-          if (cached && Date.now() < cached.expiry) {
-            return cached.data.title ? cached.data : null;
-          }
-
-          const isFromCC = ccFileNames.has(file.fileName);
-          const filePath = isFromCC
-            ? join(ccProjectPath, file.fileName)
-            : join(archiveProjectsDir!, projectHash, file.fileName);
-
-          try {
-            const summary = await extractSessionSummary(projectHash, filePath, file.fileName);
-            if (!isFromCC) summary.archiveOnly = true;
-            summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
-            return summary.title ? summary : null;
-          } catch {
-            return null;
-          }
-        })
-      );
-
-      // Already sorted by mtime (order preserved from topFiles)
-      return results.filter((s): s is SessionSummary => s !== null);
+      return collectAndExtractSessions(ccFiles, archiveFiles, limit);
     },
 
     /**
      * Get recent sessions across all projects.
-     * Scans both CC and archive sources, merging results.
+     * Scans ALL project directories for file stats (lightweight metadata ops),
+     * then extracts summaries only for the top N most recent sessions.
      */
     async getAllRecentSessions(limit: number): Promise<SessionSummary[]> {
       /**
        * Collect file entries from a base directory (CC or archive).
+       * Scans all project directories (no project-count cap) using batched concurrency.
        */
-      async function collectFilesFromBase(baseDir: string): Promise<{ projectHash: string; fileName: string; filePath: string; mtime: number; archiveOnly?: boolean }[]> {
-        const collected: { projectHash: string; fileName: string; filePath: string; mtime: number; archiveOnly?: boolean }[] = [];
+      async function collectFilesFromBase(baseDir: string): Promise<FileEntry[]> {
+        const collected: FileEntry[] = [];
         try {
           const dirs = await fsp.readdir(baseDir, { withFileTypes: true });
           const projectDirs = dirs.filter(d => d.isDirectory());
 
-          const dirStats = await Promise.all(
-            projectDirs.map(async (dir) => {
-              try {
+          // Batch scan projects to avoid opening too many file handles
+          const BATCH_SIZE = 50;
+          for (let i = 0; i < projectDirs.length; i += BATCH_SIZE) {
+            const batch = projectDirs.slice(i, i + BATCH_SIZE);
+            const batchResults = await Promise.all(
+              batch.map(async (dir) => {
                 const projectPath = join(baseDir, dir.name);
-                const stat = await fsp.stat(projectPath);
-                return { projectHash: dir.name, projectPath, mtime: stat.mtimeMs };
-              } catch {
-                return null;
-              }
-            })
-          );
-
-          const validDirs = dirStats.filter((d): d is { projectHash: string; projectPath: string; mtime: number } => d !== null);
-          validDirs.sort((a, b) => b.mtime - a.mtime);
-
-          const maxProjectsToScan = Math.min(validDirs.length, Math.max(10, Math.ceil(limit / 5)));
-          const topProjects = validDirs.slice(0, maxProjectsToScan);
-
-          await Promise.all(
-            topProjects.map(async (proj) => {
-              try {
-                const files = await fsp.readdir(proj.projectPath);
-                const jsonlFiles = files.filter((f) => f.endsWith('.jsonl'));
-
-                const fileStats = await Promise.all(
-                  jsonlFiles.map(async (f) => {
-                    try {
-                      const filePath = join(proj.projectPath, f);
-                      const stat = await fsp.stat(filePath);
-                      return { projectHash: proj.projectHash, fileName: f, filePath, mtime: stat.mtimeMs };
-                    } catch {
-                      return null;
-                    }
-                  })
-                );
-
-                for (const fs of fileStats) {
-                  if (fs) collected.push(fs);
-                }
-              } catch {
-                // skip unreadable dir
-              }
-            })
-          );
+                const stats = await scanSessionFilesFromDir(projectPath);
+                return stats.map(s => ({
+                  projectHash: dir.name,
+                  fileName: s.fileName,
+                  filePath: join(projectPath, s.fileName),
+                  mtime: s.mtime,
+                }));
+              })
+            );
+            for (const files of batchResults) {
+              for (const f of files) collected.push(f);
+            }
+          }
         } catch {
           // base dir doesn't exist
         }
@@ -548,43 +554,12 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
       }
 
       const ccFiles = await collectFilesFromBase(projectsDir);
-
-      // Merge archive files (CC takes priority for same projectHash+fileName)
+      let archiveFiles: FileEntry[] = [];
       if (archiveProjectsDir) {
-        const archiveFiles = await collectFilesFromBase(archiveProjectsDir);
-        const ccKeySet = new Set(ccFiles.map(f => f.projectHash + '/' + f.fileName));
-        for (const af of archiveFiles) {
-          if (!ccKeySet.has(af.projectHash + '/' + af.fileName)) {
-            ccFiles.push({ ...af, archiveOnly: true });
-          }
-        }
+        archiveFiles = await collectFilesFromBase(archiveProjectsDir);
       }
 
-      // Sort by mtime descending, take top N
-      ccFiles.sort((a, b) => b.mtime - a.mtime);
-      const topFiles = ccFiles.slice(0, limit);
-
-      // Extract summaries in parallel (use cache where possible)
-      const results = await Promise.all(
-        topFiles.map(async (file) => {
-          const cacheKey = file.projectHash + '/' + file.fileName;
-          const cached = summaryCache.get(cacheKey);
-          if (cached && Date.now() < cached.expiry) {
-            return cached.data.title ? cached.data : null;
-          }
-
-          try {
-            const summary = await extractSessionSummary(file.projectHash, file.filePath, file.fileName);
-            if (file.archiveOnly) summary.archiveOnly = true;
-            summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
-            return summary.title ? summary : null;
-          } catch {
-            return null;
-          }
-        })
-      );
-
-      return results.filter((s): s is SessionSummary => s !== null);
+      return collectAndExtractSessions(ccFiles, archiveFiles, limit);
     },
 
     /**
