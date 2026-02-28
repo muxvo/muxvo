@@ -83,7 +83,8 @@ export function Analytics() {
       ? Math.round(dauData.reduce((sum, d) => sum + d.dau, 0) / dauData.length)
       : 0;
 
-  const totalEvents = eventsData.reduce((sum, d) => sum + d.total, 0);
+  const totalPageViews = eventsData.filter(d => !d.metric.includes('download')).reduce((sum, d) => sum + d.total, 0);
+  const totalDownloads = eventsData.filter(d => d.metric.includes('download')).reduce((sum, d) => sum + d.total, 0);
 
   const totalDau = dauData.reduce((sum, d) => sum + d.dau, 0);
   const totalRegistered = dauData.reduce((sum, d) => sum + d.registered_users, 0);
@@ -98,6 +99,9 @@ export function Analytics() {
   const eventRows = Object.entries(eventsByMetric)
     .map(([metric, total]) => ({ metric, total, avgPerDay: total / days }))
     .sort((a, b) => b.total - a.total);
+
+  const siteEvents = eventRows.filter(r => !r.metric.includes('download'));
+  const downloadEvents = eventRows.filter(r => r.metric.includes('download'));
 
   if (loading) {
     return (
@@ -156,17 +160,21 @@ export function Analytics() {
       </div>
 
       {/* Overview cards */}
-      <div className="grid grid-cols-3 gap-5 mb-10">
+      <div className="grid grid-cols-4 gap-5 mb-10">
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <p className="text-sm text-gray-500 mb-1">Avg. DAU</p>
+          <p className="text-sm text-gray-500 mb-1">Avg. DAU 日活</p>
           <p className="text-3xl font-bold text-amber-400">{avgDau.toLocaleString()}</p>
         </div>
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <p className="text-sm text-gray-500 mb-1">Total Events</p>
-          <p className="text-3xl font-bold text-amber-400">{totalEvents.toLocaleString()}</p>
+          <p className="text-sm text-gray-500 mb-1">Page Views 页面访问</p>
+          <p className="text-3xl font-bold text-amber-400">{totalPageViews.toLocaleString()}</p>
         </div>
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <p className="text-sm text-gray-500 mb-1">Registered User %</p>
+          <p className="text-sm text-gray-500 mb-1">Downloads 下载次数</p>
+          <p className="text-3xl font-bold text-amber-400">{totalDownloads.toLocaleString()}</p>
+        </div>
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+          <p className="text-sm text-gray-500 mb-1">Registered % 注册率</p>
           <p className="text-3xl font-bold text-amber-400">{registeredPct}%</p>
         </div>
       </div>
@@ -181,37 +189,56 @@ export function Analytics() {
         )}
       </div>
 
-      {/* Event distribution table */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-        <h2 className="text-lg font-semibold mb-4">Event Distribution</h2>
-        {eventRows.length === 0 ? (
-          <p className="text-gray-500 text-sm">No event data yet.</p>
-        ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-800">
-                <th className="text-left text-gray-500 text-xs uppercase py-2 pr-4">Event</th>
-                <th className="text-right text-gray-500 text-xs uppercase py-2 px-4">Total</th>
-                <th className="text-right text-gray-500 text-xs uppercase py-2 pl-4">Avg/Day</th>
-              </tr>
-            </thead>
-            <tbody>
-              {eventRows.map((row) => (
-                <tr key={row.metric} className="border-b border-gray-800 last:border-0">
-                  <td className="py-2 pr-4 text-sm">{row.metric}</td>
-                  <td className="py-2 px-4 text-sm text-right text-gray-300">
-                    {row.total.toLocaleString()}
-                  </td>
-                  <td className="py-2 pl-4 text-sm text-right text-gray-400">
-                    {row.avgPerDay.toFixed(1)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      {/* Two-column event tables */}
+      <div className="grid grid-cols-2 gap-5">
+        {/* Website traffic */}
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <h2 className="text-lg font-semibold mb-4">Website Traffic 官网访问</h2>
+          {siteEvents.length === 0 ? (
+            <p className="text-gray-500 text-sm">No data yet.</p>
+          ) : (
+            <EventTable rows={siteEvents} />
+          )}
+        </div>
+
+        {/* Downloads */}
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <h2 className="text-lg font-semibold mb-4">Downloads 下载统计</h2>
+          {downloadEvents.length === 0 ? (
+            <p className="text-gray-500 text-sm">No data yet.</p>
+          ) : (
+            <EventTable rows={downloadEvents} />
+          )}
+        </div>
       </div>
     </div>
+  );
+}
+
+function EventTable({ rows }: { rows: { metric: string; total: number; avgPerDay: number }[] }) {
+  return (
+    <table className="w-full">
+      <thead>
+        <tr className="border-b border-gray-800">
+          <th className="text-left text-gray-500 text-xs uppercase py-2 pr-4">Event</th>
+          <th className="text-right text-gray-500 text-xs uppercase py-2 px-4">Total</th>
+          <th className="text-right text-gray-500 text-xs uppercase py-2 pl-4">Avg/Day</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
+          <tr key={row.metric} className="border-b border-gray-800 last:border-0">
+            <td className="py-2 pr-4 text-sm">{row.metric}</td>
+            <td className="py-2 px-4 text-sm text-right text-gray-300">
+              {row.total.toLocaleString()}
+            </td>
+            <td className="py-2 pl-4 text-sm text-right text-gray-400">
+              {row.avgPerDay.toFixed(1)}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
