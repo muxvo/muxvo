@@ -69,8 +69,11 @@ interface AuthContextValue {
   dispatch: React.Dispatch<AuthAction>;
   loginGithub: () => Promise<void>;
   loginGoogle: () => Promise<void>;
-  sendEmailCode: (email: string) => Promise<boolean>;
+  sendEmailCode: (email: string, purpose?: string) => Promise<boolean>;
   loginEmail: (email: string, code: string) => Promise<void>;
+  loginPassword: (email: string, password: string) => Promise<void>;
+  register: (email: string, code: string, password: string) => Promise<void>;
+  resetPassword: (email: string, code: string, newPassword: string) => Promise<boolean>;
   logout: () => Promise<void>;
 }
 
@@ -192,9 +195,9 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
     }
   }, []);
 
-  const sendEmailCode = useCallback(async (email: string): Promise<boolean> => {
+  const sendEmailCode = useCallback(async (email: string, purpose?: string): Promise<boolean> => {
     try {
-      const result = await window.api.auth.sendEmailCode(email);
+      const result = await window.api.auth.sendEmailCode(email, purpose);
       if (!result?.success) {
         dispatch({ type: 'LOGIN_FAILED', error: result?.error?.message || '发送失败' });
         return false;
@@ -229,6 +232,64 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
     }
   }, []);
 
+  const loginPassword = useCallback(async (email: string, password: string) => {
+    dispatch({ type: 'LOGIN_START' });
+    try {
+      const result = await window.api.auth.loginPassword(email, password);
+      if (result?.success && result.data?.user) {
+        const u = result.data.user;
+        dispatch({
+          type: 'LOGIN_SUCCESS',
+          user: {
+            username: u.displayName || u.email || email,
+            email: u.email || email,
+            avatarUrl: u.avatarUrl || '',
+            provider: 'email',
+          },
+        });
+      } else {
+        dispatch({ type: 'LOGIN_FAILED', error: result?.data?.error || result?.error?.message || '登录失败' });
+      }
+    } catch {
+      dispatch({ type: 'LOGIN_FAILED', error: '登录失败' });
+    }
+  }, []);
+
+  const register = useCallback(async (email: string, code: string, password: string) => {
+    dispatch({ type: 'LOGIN_START' });
+    try {
+      const result = await window.api.auth.register(email, code, password);
+      if (result?.success && result.data?.user) {
+        const u = result.data.user;
+        dispatch({
+          type: 'LOGIN_SUCCESS',
+          user: {
+            username: u.displayName || u.email || email,
+            email: u.email || email,
+            avatarUrl: u.avatarUrl || '',
+            provider: 'email',
+          },
+        });
+      } else {
+        dispatch({ type: 'LOGIN_FAILED', error: result?.data?.error || result?.error?.message || '注册失败' });
+      }
+    } catch {
+      dispatch({ type: 'LOGIN_FAILED', error: '注册失败' });
+    }
+  }, []);
+
+  const resetPassword = useCallback(async (email: string, code: string, newPassword: string): Promise<boolean> => {
+    try {
+      const result = await window.api.auth.resetPassword(email, code, newPassword);
+      if (result?.success) return true;
+      dispatch({ type: 'LOGIN_FAILED', error: result?.data?.error || result?.error?.message || '密码重置失败' });
+      return false;
+    } catch {
+      dispatch({ type: 'LOGIN_FAILED', error: '密码重置失败' });
+      return false;
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await window.api.auth.logout();
@@ -239,7 +300,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
   }, []);
 
   return (
-    <AuthContext.Provider value={{ state, dispatch, loginGithub, loginGoogle, sendEmailCode, loginEmail, logout }}>
+    <AuthContext.Provider value={{ state, dispatch, loginGithub, loginGoogle, sendEmailCode, loginEmail, loginPassword, register, resetPassword, logout }}>
       {children}
     </AuthContext.Provider>
   );

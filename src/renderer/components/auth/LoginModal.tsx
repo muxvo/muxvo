@@ -1,19 +1,29 @@
 /**
- * LoginModal — Modal dialog with three login methods (GitHub, Google, Email)
+ * LoginModal — Modal dialog with login, register, and forgot-password modes
  */
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useAuth } from '@/renderer/contexts/AuthContext';
 import { useI18n } from '@/renderer/i18n';
 import { OAuthButton } from './OAuthButton';
-import { EmailLoginForm } from './EmailLoginForm';
+import { PasswordLoginForm } from './PasswordLoginForm';
+import { RegisterForm } from './RegisterForm';
+import { ForgotPasswordForm } from './ForgotPasswordForm';
 import './LoginModal.css';
 
+type Mode = 'login' | 'register' | 'forgot-password';
+
 export function LoginModal(): JSX.Element | null {
-  const { state, dispatch, loginGithub, loginGoogle, sendEmailCode, loginEmail } = useAuth();
+  const { state, dispatch, loginGithub, loginGoogle, sendEmailCode, loginPassword, register, resetPassword } = useAuth();
   const { t } = useI18n();
+  const [mode, setMode] = useState<Mode>('login');
 
   const isLoading = state.status === 'loading';
+
+  // Reset mode when modal opens
+  useEffect(() => {
+    if (state.loginModalOpen) setMode('login');
+  }, [state.loginModalOpen]);
 
   // Close on Escape key
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -28,7 +38,7 @@ export function LoginModal(): JSX.Element | null {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [state.loginModalOpen, handleKeyDown]);
 
-  // Auto-clear error after 5s
+  // Auto-clear error after 3s
   useEffect(() => {
     if (!state.error) return;
     const timer = setTimeout(() => dispatch({ type: 'CLEAR_ERROR' }), 3000);
@@ -37,11 +47,16 @@ export function LoginModal(): JSX.Element | null {
 
   if (!state.loginModalOpen) return null;
 
+  const title =
+    mode === 'register' ? t('auth.createAccount')
+      : mode === 'forgot-password' ? t('auth.resetPassword')
+        : t('auth.modalTitle');
+
   return (
     <div className="login-modal__backdrop" onClick={() => dispatch({ type: 'CLOSE_LOGIN_MODAL' })}>
       <div className="login-modal" onClick={(e) => e.stopPropagation()}>
         <div className="login-modal__header">
-          <span className="login-modal__title">{t('auth.modalTitle')}</span>
+          <span className="login-modal__title">{title}</span>
           <button
             className="login-modal__close-btn"
             onClick={() => dispatch({ type: 'CLOSE_LOGIN_MODAL' })}
@@ -66,29 +81,65 @@ export function LoginModal(): JSX.Element | null {
         )}
 
         <div className="login-modal__body">
-          <OAuthButton
-            provider="github"
-            label={t('auth.loginGithub')}
-            onClick={loginGithub}
-            disabled={isLoading}
-          />
-          <OAuthButton
-            provider="google"
-            label={t('auth.loginGoogle')}
-            onClick={loginGoogle}
-            disabled={isLoading}
-          />
+          {mode === 'login' && (
+            <>
+              <OAuthButton
+                provider="github"
+                label={t('auth.loginGithub')}
+                onClick={loginGithub}
+                disabled={isLoading}
+              />
+              <OAuthButton
+                provider="google"
+                label={t('auth.loginGoogle')}
+                onClick={loginGoogle}
+                disabled={isLoading}
+              />
 
-          <div className="login-modal__divider">
-            <span>{t('auth.orEmail')}</span>
-          </div>
+              <div className="login-modal__divider">
+                <span>{t('auth.orPassword')}</span>
+              </div>
 
-          <EmailLoginForm
-            onSendCode={sendEmailCode}
-            onLogin={loginEmail}
-            disabled={isLoading}
-            error={null}
-          />
+              <PasswordLoginForm
+                onLogin={loginPassword}
+                disabled={isLoading}
+              />
+
+              <div className="login-modal__links">
+                <button className="login-modal__link" onClick={() => setMode('register')}>
+                  {t('auth.createAccount')}
+                </button>
+                <button className="login-modal__link" onClick={() => setMode('forgot-password')}>
+                  {t('auth.forgotPassword')}
+                </button>
+              </div>
+            </>
+          )}
+
+          {mode === 'register' && (
+            <>
+              <RegisterForm
+                onSendCode={sendEmailCode}
+                onRegister={register}
+                disabled={isLoading}
+              />
+
+              <div className="login-modal__links">
+                <button className="login-modal__link" onClick={() => setMode('login')}>
+                  {t('auth.alreadyHaveAccount')}
+                </button>
+              </div>
+            </>
+          )}
+
+          {mode === 'forgot-password' && (
+            <ForgotPasswordForm
+              onSendCode={sendEmailCode}
+              onReset={resetPassword}
+              onBackToLogin={() => setMode('login')}
+              disabled={isLoading}
+            />
+          )}
         </div>
 
         <div className="login-modal__footer">
