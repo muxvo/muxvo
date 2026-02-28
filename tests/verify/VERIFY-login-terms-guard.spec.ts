@@ -76,7 +76,7 @@ test('login buttons are clickable and terms guard works', async () => {
     await window.evaluate(() => {
       // Find React root and dispatch OPEN_LOGIN_MODAL
       const event = new CustomEvent('open-login-modal');
-      window.dispatchEvent(event);
+      globalThis.dispatchEvent(event);
     });
     // If custom event doesn't work, try clicking the user icon area
     const iconBtn = window.locator('.menu-bar__icon-btn').first();
