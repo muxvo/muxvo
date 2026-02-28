@@ -5,21 +5,32 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Download](https://img.shields.io/badge/Download-macOS_arm64-blue.svg)](https://muxvo.com/download/Muxvo-arm64.dmg)
 
-A desktop workbench for AI CLI tools — Claude Code, Codex, and Gemini CLI.
+Desktop workbench for AI CLI tools — Claude Code, Codex, and Gemini CLI.
 
-Manage terminal sessions, browse chat histories, edit configurations, and discover skills — all in one interface.
+Using AI CLI tools in the terminal means constant window switching, lost chat history, and scattered configs. Muxvo puts everything in one place so you can focus on building.
 
 **[muxvo.com](https://muxvo.com)**
 
 ![Muxvo Screenshot](screenshot.jpg)
 
+## Why Muxvo?
+
+**Chat history disappears** — Claude Code auto-deletes conversations after 30 days. Muxvo saves them locally forever. Find any past conversation and resume it with one click.
+
+**Too many windows** — Running multiple CC sessions means endless ⌘Tab. Muxvo tiles all terminals on one screen — see everything at a glance.
+
+**Focused mode** — Maximize one terminal while the rest stay in a sidebar. Big screen for code, small screen for progress.
+
+**Configs are scattered** — Skills, MCP servers, CLAUDE.md files are spread across directories. Muxvo auto-scans and shows them all in one panel.
+
+**Not just Claude Code** — Codex and Gemini CLI sessions, skills, and chat histories all managed in the same interface.
+
 ## Features
 
-- **Terminal Management** — Create, resize, and tile multiple AI CLI sessions side by side
-- **Chat History** — Browse and search conversations across Claude Code and Codex with multi-source aggregation
+- **Multi-Terminal Tiling** — Create, resize, and tile multiple AI CLI sessions side by side
+- **Permanent Chat History** — Browse and search conversations across Claude Code and Codex, saved locally forever
 - **Focused Mode** — Maximize one terminal with sidebar thumbnails for quick switching
-- **Config Editor** — Edit settings and CLAUDE.md files with atomic write protection
-- **Skill Marketplace** — Discover, install, and manage skills with AI-powered scoring
+- **Skill & MCP Viewer** — Auto-scan and browse all locally installed Skills and MCP servers
 - **Multi-Tool Support** — Unified interface for Claude Code, Codex, and Gemini CLI
 
 ## Download
