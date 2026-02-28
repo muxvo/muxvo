@@ -3,7 +3,7 @@
   "layer": "L1",
   "source": "tests/l1/auth.test.ts",
   "docSource": "docs/Muxvo_测试_v2/02_modules/test_AUTH.md",
-  "totalCases": 3,
+  "totalCases": 6,
   "cases": [
     {
       "id": "AUTH_L1_01",
@@ -47,6 +47,61 @@
           "avatarUrl": "string"
         },
         "tokenExpiry": "string"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "AUTH_L1_04",
+      "description": "auth:register IPC 格式 -- 返回 { success, data?: { user } }",
+      "type": "ipc",
+      "channel": "auth:register",
+      "direction": "invoke",
+      "input": {
+        "email": "test@example.com",
+        "code": "123456",
+        "password": "password123"
+      },
+      "expectedResponse": {
+        "success": "boolean",
+        "user": {
+          "id": "string",
+          "displayName": "string"
+        }
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "AUTH_L1_05",
+      "description": "auth:login-password IPC 格式 -- 返回 { success, data?: { user } }",
+      "type": "ipc",
+      "channel": "auth:login-password",
+      "direction": "invoke",
+      "input": {
+        "email": "test@example.com",
+        "password": "password123"
+      },
+      "expectedResponse": {
+        "success": "boolean",
+        "user": {
+          "id": "string",
+          "displayName": "string"
+        }
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "AUTH_L1_06",
+      "description": "auth:reset-password IPC 格式 -- 返回 { success }",
+      "type": "ipc",
+      "channel": "auth:reset-password",
+      "direction": "invoke",
+      "input": {
+        "email": "test@example.com",
+        "code": "123456",
+        "newPassword": "newpass123"
+      },
+      "expectedResponse": {
+        "success": "boolean"
       },
       "priority": "P0"
     }

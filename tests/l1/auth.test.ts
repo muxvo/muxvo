@@ -1,7 +1,7 @@
 /**
  * AUTH L1 -- 契约层测试
  * Source: tests/specs/l1/auth.spec.json
- * Total: 3 L1 cases (AUTH_L1_01 ~ AUTH_L1_03)
+ * Total: 6 L1 cases (AUTH_L1_01 ~ AUTH_L1_06)
  *
  * 验证 auth IPC channel 的消息格式合约：
  * - auth:login-github → { success, data?: { user } }
@@ -80,6 +80,24 @@ describe('AUTH L1 -- 契约层测试', () => {
       if (result.success && result.data) {
         expect(result.data).toHaveProperty('loggedIn');
       }
+    });
+
+    test('AUTH_L1_04_real: register handler exists', async () => {
+      const { createAuthHandlers } = await import('@/main/ipc/auth-handlers');
+      const handlers = createAuthHandlers();
+      expect(handlers.register).toBeTypeOf('function');
+    });
+
+    test('AUTH_L1_05_real: loginPassword handler exists', async () => {
+      const { createAuthHandlers } = await import('@/main/ipc/auth-handlers');
+      const handlers = createAuthHandlers();
+      expect(handlers.loginPassword).toBeTypeOf('function');
+    });
+
+    test('AUTH_L1_06_real: resetPassword handler exists', async () => {
+      const { createAuthHandlers } = await import('@/main/ipc/auth-handlers');
+      const handlers = createAuthHandlers();
+      expect(handlers.resetPassword).toBeTypeOf('function');
     });
   });
 });
