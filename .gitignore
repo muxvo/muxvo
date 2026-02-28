@@ -41,3 +41,16 @@ coverage/
 # Verify tool outputs (if any)
 verify/report/output/
 verify/node_modules/
+
+# Internal documents (not for public repo)
+PRD.md
+DEV-PLAN.md
+docs/
+icon-designs/
+landing-designs-v2/discussion/
+landing-designs-v2/specs/
+landing-designs-v2/review-report.md
+prototype-*.html
+
+# Pre-push blocklist (personal sensitive patterns)
+.commit-blocklist

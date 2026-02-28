@@ -1,0 +1,8 @@
+# Forbidden patterns for pre-push hook
+# Copy this file to .commit-blocklist and add your sensitive patterns.
+# Lines starting with # are comments, blank lines are ignored.
+# The pre-push hook will block any push containing these patterns.
+
+# Example: Apple Developer identity
+# YOUR_TEAM_ID
+# your real name
