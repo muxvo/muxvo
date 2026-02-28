@@ -38,9 +38,10 @@ describe('Fix 1: projectFilteredResults — source code verification', () => {
     expect(src).toContain('}, [projectFilteredResults]);');
   });
 
-  test('ChatHistoryPanel.tsx: filteredSessions depends on projectFilteredResults', () => {
+  test('ChatHistoryPanel.tsx: contentMatchedSessions depends on projectFilteredResults', () => {
     const src = readFileSync(resolve(ROOT, 'src/renderer/components/chat/ChatHistoryPanel.tsx'), 'utf-8');
-    expect(src).toContain('}, [sessions, searchQuery, projectFilteredResults]);');
+    // Project filtering flows through contentMatchedSessions (which uses projectFilteredResults)
+    expect(src).toContain('}, [searchQuery, titleMatchedSessions, sessions, projectFilteredResults]);');
   });
 });
 

@@ -140,7 +140,7 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
     return searchResults.filter(r => r.projectHash === selectedProjectHash);
   }, [searchResults, selectedProjectHash]);
 
-  // Filter sessions: title match (client) + full-text match (backend results)
+  // Snippet lookup: sessionId → snippet text
   const searchSnippets = useMemo(() => {
     const map = new Map<string, string>();
     for (const r of projectFilteredResults) {
@@ -149,42 +149,52 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
     return map;
   }, [projectFilteredResults]);
 
-  const filteredSessions = useMemo(() => {
-    if (!searchQuery.trim()) return sessions;
+  // Title matches: instant client-side filtering (independent of backend results)
+  const titleMatchedSessions = useMemo(() => {
+    if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
-    const loadedIds = new Set(sessions.map(s => s.sessionId));
-    const seen = new Set<string>();
-    const result: SessionSummary[] = [];
+    return sessions.filter(s =>
+      s.title.toLowerCase().includes(q)
+      || (s.customTitle && s.customTitle.toLowerCase().includes(q))
+    );
+  }, [sessions, searchQuery]);
 
-    // 1) Title-matched sessions from loaded list
-    for (const s of sessions) {
-      const titleMatch = s.title.toLowerCase().includes(q)
-        || (s.customTitle && s.customTitle.toLowerCase().includes(q));
-      const fullTextMatch = searchSnippets.has(s.sessionId);
-      if (titleMatch || fullTextMatch) {
-        result.push(s);
-        seen.add(s.sessionId);
+  // Content matches: from backend searchResults, excluding sessions already in title matches
+  const contentMatchedSessions = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const titleIds = new Set(titleMatchedSessions.map(s => s.sessionId));
+    const result: SessionSummary[] = [];
+    const seen = new Set<string>();
+
+    for (const r of projectFilteredResults) {
+      if (titleIds.has(r.sessionId) || seen.has(r.sessionId)) continue;
+      seen.add(r.sessionId);
+      // Use loaded session data if available, otherwise create placeholder
+      const loaded = sessions.find(s => s.sessionId === r.sessionId);
+      if (loaded) {
+        result.push(loaded);
+      } else {
+        const cleanSnippet = r.snippet.replace(/\s+/g, ' ').trim();
+        result.push({
+          sessionId: r.sessionId,
+          projectHash: r.projectHash,
+          title: cleanSnippet.slice(0, 60) || r.sessionId.slice(0, 8),
+          startedAt: r.timestamp,
+          lastModified: r.timestamp ? new Date(r.timestamp).getTime() : 0,
+          fileSize: -1,
+          source: 'claude-code',
+        });
       }
     }
 
-    // 2) Full-text results NOT in loaded sessions → create placeholder summaries
-    for (const r of projectFilteredResults) {
-      if (seen.has(r.sessionId) || loadedIds.has(r.sessionId)) continue;
-      const cleanSnippet = r.snippet.replace(/\s+/g, ' ').trim();
-      result.push({
-        sessionId: r.sessionId,
-        projectHash: r.projectHash,
-        title: cleanSnippet.slice(0, 60) || r.sessionId.slice(0, 8),
-        startedAt: r.timestamp,
-        lastModified: r.timestamp ? new Date(r.timestamp).getTime() : 0,
-        fileSize: -1,
-        source: 'claude-code',
-      });
-      seen.add(r.sessionId);
-    }
-
     return result;
-  }, [sessions, searchQuery, projectFilteredResults]);
+  }, [searchQuery, titleMatchedSessions, sessions, projectFilteredResults]);
+
+  // Combined for backward compat (e.g. sessionResultCount)
+  const filteredSessions = useMemo(() => {
+    if (!searchQuery.trim()) return sessions;
+    return [...titleMatchedSessions, ...contentMatchedSessions];
+  }, [searchQuery, sessions, titleMatchedSessions, contentMatchedSessions]);
 
   const sessionResultCount = searchQuery.trim()
     ? (searching ? undefined : filteredSessions.length)
@@ -335,6 +345,8 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
         ) : (
           <SessionList
             sessions={filteredSessions}
+            titleMatchedSessions={titleMatchedSessions}
+            contentMatchedSessions={contentMatchedSessions}
             selectedId={selectedSessionId}
             onSelect={setSelectedSessionId}
             onSessionContextMenu={handleSessionContextMenu}

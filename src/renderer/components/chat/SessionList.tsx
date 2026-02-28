@@ -18,6 +18,8 @@ const PAGE_SIZE = 50;
 
 interface SessionListProps {
   sessions: SessionSummary[];
+  titleMatchedSessions?: SessionSummary[];
+  contentMatchedSessions?: SessionSummary[];
   selectedId: string | null;
   onSelect: (sessionId: string) => void;
   onSessionContextMenu?: (session: SessionSummary, x: number, y: number) => void;
@@ -116,7 +118,7 @@ function LoadMoreSentinel({ onVisible }: { onVisible: () => void }) {
   return <div ref={ref} style={{ height: 1 }} />;
 }
 
-export function SessionList({ sessions, selectedId, onSelect, onSessionContextMenu, projects, showProjectName, searchQuery = '', onSearchChange, searching, searchSnippets, matchCurrent, matchTotal, onPrevMatch, onNextMatch, sessionResultCount }: SessionListProps) {
+export function SessionList({ sessions, titleMatchedSessions, contentMatchedSessions, selectedId, onSelect, onSessionContextMenu, projects, showProjectName, searchQuery = '', onSearchChange, searching, searchSnippets, matchCurrent, matchTotal, onPrevMatch, onNextMatch, sessionResultCount }: SessionListProps) {
   const { t } = useI18n();
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
@@ -142,29 +144,168 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
   const visibleSessions = sortedSessions.slice(0, visibleCount);
   const hasMore = sortedSessions.length > visibleCount;
 
+  const isSearchMode = !!searchQuery.trim();
+
+  // Search-mode sorted arrays (always computed to satisfy hooks rules)
+  const titleSorted = useMemo(() => {
+    return [...(titleMatchedSessions || [])].sort((a, b) => b.lastModified - a.lastModified);
+  }, [titleMatchedSessions]);
+  const contentSorted = useMemo(() => {
+    return [...(contentMatchedSessions || [])].sort((a, b) => b.lastModified - a.lastModified);
+  }, [contentMatchedSessions]);
+
+  /** Render a single session card */
+  const renderCard = (session: SessionSummary) => {
+    const displayTitle = session.customTitle || session.title;
+    const title = displayTitle.slice(0, 50);
+    const snippet = searchSnippets?.get(session.sessionId);
+    const rawPreview = session.title.slice(0, 100);
+    const preview = searchQuery && snippet && !rawPreview.toLowerCase().includes(searchQuery.toLowerCase())
+      ? snippet.slice(0, 100)
+      : rawPreview;
+    const time = formatTime(session.lastModified);
+    const tags = extractTags(session.title);
+    const isSelected = session.sessionId === selectedId;
+
+    return (
+      <div
+        key={session.sessionId}
+        className={`session-card ${isSelected ? 'session-card--selected' : ''}`}
+        onClick={() => onSelect(session.sessionId)}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          onSessionContextMenu?.(session, e.clientX, e.clientY);
+        }}
+      >
+        <div className="session-card__header">
+          <span className="session-card__title" title={session.title}>
+            {searchQuery ? <HighlightText text={title} query={searchQuery} /> : title}
+          </span>
+          <span className="session-card__time">{time}</span>
+        </div>
+
+        <div className="session-card__preview">
+          {searchQuery ? <HighlightText text={preview} query={searchQuery} /> : preview}
+        </div>
+
+        <div className="session-card__footer">
+          <div className="session-card__tags">
+            {session.source === 'codex' && (
+              <span className="source-badge source-badge--cx">CX</span>
+            )}
+            {session.source === 'claude-code' && (
+              <span className="source-badge source-badge--cc">CC</span>
+            )}
+            {session.source === 'gemini' && (
+              <span className="source-badge source-badge--gm">GM</span>
+            )}
+            {projectNameMap && session.projectHash && (
+              <span className="session-card__project-badge">
+                {projectNameMap.get(session.projectHash) || ''}
+              </span>
+            )}
+            {tags.map((tag) => (
+              <span
+                key={tag.label}
+                className="session-card__tag"
+                style={{ background: tag.color }}
+              >
+                {tag.label}
+              </span>
+            ))}
+          </div>
+          <span className="session-card__count">{session.fileSize > 0 ? formatFileSize(session.fileSize) : ''}</span>
+        </div>
+      </div>
+    );
+  };
+
+  // Search input shared between all render paths
+  const searchInputEl = onSearchChange && (
+    <SearchInput
+      value={searchQuery}
+      onChange={onSearchChange}
+      placeholder="搜索会话..."
+      {...(selectedId
+        ? { matchCurrent, matchTotal, onPrevMatch, onNextMatch }
+        : { resultCount: sessionResultCount }
+      )}
+    />
+  );
+
+  // ── Search mode: split into title matches + content matches ──
+  if (isSearchMode) {
+    const totalCount = titleSorted.length + contentSorted.length;
+    const noResults = !searching && totalCount === 0;
+
+    return (
+      <div className="session-list">
+        <div className="session-list__header">
+          <span>
+            {searching
+              ? t('chat.sessions')
+              : t('chat.sessionsCount', { count: totalCount })}
+          </span>
+        </div>
+
+        {searchInputEl}
+
+        <div className="session-list__cards">
+          {/* Title matches section — instant, hide when empty */}
+          {titleSorted.length > 0 && (
+            <>
+              <div className="session-list__section-header">
+                标题匹配 ({titleSorted.length})
+              </div>
+              {titleSorted.map(renderCard)}
+            </>
+          )}
+
+          {/* Content matches section — skeleton while searching, cards when done */}
+          {searching && (
+            <>
+              <div className="session-list__section-header session-list__section-header--loading">
+                <span>搜索会话内容...</span>
+                <span className="session-list__searching-indicator" />
+              </div>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={`skel-${i}`} className="session-list__skeleton-card">
+                  <div className="session-list__skeleton-title" />
+                  <div className="session-list__skeleton-preview" />
+                  <div className="session-list__skeleton-footer" />
+                </div>
+              ))}
+            </>
+          )}
+
+          {!searching && contentSorted.length > 0 && (
+            <>
+              <div className="session-list__section-header">
+                内容匹配 ({contentSorted.length})
+              </div>
+              {contentSorted.map(renderCard)}
+            </>
+          )}
+
+          {/* No results at all */}
+          {noResults && (
+            <div className="session-list__empty">无匹配会话</div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Normal mode (no search) ──
   if (sortedSessions.length === 0) {
     return (
       <div className="session-list">
         <div className="session-list__header">
           <span>{t('chat.sessions')}</span>
         </div>
-        {onSearchChange && (
-          <SearchInput
-            value={searchQuery}
-            onChange={onSearchChange}
-            placeholder="搜索会话..."
-            {...(selectedId
-              ? { matchCurrent, matchTotal, onPrevMatch, onNextMatch }
-              : { resultCount: sessionResultCount }
-            )}
-          />
-        )}
+        {searchInputEl}
         <div className="session-list__cards">
-          <div className="session-list__empty">
-            {searchQuery
-              ? (searching ? '搜索中...' : '无匹配会话')
-              : t('chat.noSessions')}
-          </div>
+          <div className="session-list__empty">{t('chat.noSessions')}</div>
         </div>
       </div>
     );
@@ -174,87 +315,12 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
     <div className="session-list">
       <div className="session-list__header">
         <span>{t('chat.sessionsCount', { count: sortedSessions.length })}</span>
-        {searching && <span className="session-list__searching-indicator" />}
       </div>
 
-      {onSearchChange && (
-        <SearchInput
-          value={searchQuery}
-          onChange={onSearchChange}
-          placeholder="搜索会话..."
-          {...(selectedId
-            ? { matchCurrent, matchTotal, onPrevMatch, onNextMatch }
-            : { resultCount: sessionResultCount }
-          )}
-        />
-      )}
+      {searchInputEl}
 
       <div className="session-list__cards">
-      {visibleSessions.map((session) => {
-        const displayTitle = session.customTitle || session.title;
-        const title = displayTitle.slice(0, 50);
-        const snippet = searchSnippets?.get(session.sessionId);
-        // Use snippet as preview when title/preview don't contain the keyword (full-text match only)
-        const rawPreview = session.title.slice(0, 100);
-        const preview = searchQuery && snippet && !rawPreview.toLowerCase().includes(searchQuery.toLowerCase())
-          ? snippet.slice(0, 100)
-          : rawPreview;
-        const time = formatTime(session.lastModified);
-        const tags = extractTags(session.title);
-        const isSelected = session.sessionId === selectedId;
-
-        return (
-          <div
-            key={session.sessionId}
-            className={`session-card ${isSelected ? 'session-card--selected' : ''}`}
-            onClick={() => onSelect(session.sessionId)}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              onSessionContextMenu?.(session, e.clientX, e.clientY);
-            }}
-          >
-            <div className="session-card__header">
-              <span className="session-card__title" title={session.title}>
-                {searchQuery ? <HighlightText text={title} query={searchQuery} /> : title}
-              </span>
-              <span className="session-card__time">{time}</span>
-            </div>
-
-            <div className="session-card__preview">
-              {searchQuery ? <HighlightText text={preview} query={searchQuery} /> : preview}
-            </div>
-
-            <div className="session-card__footer">
-              <div className="session-card__tags">
-                {session.source === 'codex' && (
-                  <span className="source-badge source-badge--cx">CX</span>
-                )}
-                {session.source === 'claude-code' && (
-                  <span className="source-badge source-badge--cc">CC</span>
-                )}
-                {session.source === 'gemini' && (
-                  <span className="source-badge source-badge--gm">GM</span>
-                )}
-                {projectNameMap && session.projectHash && (
-                  <span className="session-card__project-badge">
-                    {projectNameMap.get(session.projectHash) || ''}
-                  </span>
-                )}
-                {tags.map((tag) => (
-                  <span
-                    key={tag.label}
-                    className="session-card__tag"
-                    style={{ background: tag.color }}
-                  >
-                    {tag.label}
-                  </span>
-                ))}
-              </div>
-              <span className="session-card__count">{session.fileSize > 0 ? formatFileSize(session.fileSize) : ''}</span>
-            </div>
-          </div>
-        );
-      })}
+      {visibleSessions.map(renderCard)}
 
       {hasMore && (
         <LoadMoreSentinel onVisible={() => setVisibleCount(prev => prev + PAGE_SIZE)} />
