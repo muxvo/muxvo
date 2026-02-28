@@ -45,7 +45,7 @@ export function FileItem({
   filePath,
 }: FileItemProps) {
   const { t } = useI18n();
-  const isDraggable = type === 'file' && !!filePath;
+  const isDraggable = !!filePath;
 
   const handleDragStart = (e: React.DragEvent) => {
     if (!filePath) return;

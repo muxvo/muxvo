@@ -89,6 +89,24 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     searchAddonRef.current = addonManager.getSearchAddon();
     const fitAddon = addonManager.getFitAddon();
 
+    // Helper: fit terminal while preserving scroll position.
+    // Saves distance-from-bottom before fit, restores after.
+    // Prevents viewport jumping to top when columns change and buffer rewraps.
+    function fitPreservingScroll(): void {
+      const buf = term.buffer.active;
+      const wasAtBottom = buf.viewportY >= buf.baseY;
+      const offsetFromBottom = buf.baseY - buf.viewportY;
+
+      fitAddon.fit();
+
+      if (wasAtBottom) {
+        term.scrollToBottom();
+      } else {
+        const newTarget = term.buffer.active.baseY - offsetFromBottom;
+        term.scrollToLine(Math.max(0, newTarget));
+      }
+    }
+
     // Cmd/Ctrl+F toggles terminal search bar
     term.attachCustomKeyEventHandler((e: KeyboardEvent) => {
       const isMod = navigator.platform.includes('Mac') ? e.metaKey : e.ctrlKey;
@@ -129,7 +147,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
         term.options.fontFamily = cfg.fontFamily;
         term.options.cursorStyle = cfg.cursorStyle;
         term.options.cursorBlink = cfg.cursorBlink;
-        requestAnimationFrame(() => { if (!disposed) fitAddon.fit(); });
+        requestAnimationFrame(() => { if (!disposed) fitPreservingScroll(); });
       }
     }).catch(() => { /* use defaults on error */ });
 
@@ -190,7 +208,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       if (!entry || disposed) return;
       const { width, height } = entry.contentRect;
       if (width < 10 || height < 10) return;
-      fitAddon.fit();
+      fitPreservingScroll();
     });
     observer.observe(containerRef.current);
 
@@ -217,7 +235,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       else if (direction === 'out') next = Math.max(current - 1, 8);
       else next = DEFAULT_TERMINAL_CONFIG.fontSize;
       term.options.fontSize = next;
-      requestAnimationFrame(() => fitAddon.fit());
+      requestAnimationFrame(() => fitPreservingScroll());
       saveTerminalFontSize(next);
     };
     const onZoomEvent = (e: Event) => handleZoom((e as CustomEvent).detail);
@@ -227,7 +245,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     // Listen for force-refit requests (e.g. after FileTempView overlay closes)
     const onRefit = () => {
       if (!disposed && !suppressResize) {
-        fitAddon.fit();
+        fitPreservingScroll();
         // Force re-send dimensions even if cols/rows unchanged (another instance may have altered PTY size)
         window.api.terminal.resize(terminalId, term.cols, term.rows);
       }
