@@ -29,7 +29,14 @@ jobs:
 
   build-mac:
     needs: test
-    runs-on: macos-14
+    strategy:
+      matrix:
+        include:
+          - arch: arm64
+            runner: macos-14
+          - arch: x64
+            runner: macos-13
+    runs-on: ${{ matrix.runner }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -70,28 +77,112 @@ jobs:
           security list-keychain -d user -s $KEYCHAIN_PATH
 
       - name: Build and notarize app
-        run: npx electron-vite build && npx electron-builder --mac --arm64 --publish never
+        run: npx electron-vite build && npx electron-builder --mac --${{ matrix.arch }} --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
-      - name: Create stable download link
-        run: cp dist/*.dmg dist/Muxvo-arm64.dmg
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-${{ matrix.arch }}
+          path: dist/
+
+  release:
+    needs: build-mac
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download arm64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: mac-arm64
+          path: dist-arm64
+
+      - name: Download x64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: mac-x64
+          path: dist-x64
+
+      - name: Merge latest-mac.yml
+        run: |
+          node -e "
+          const fs = require('fs');
+
+          const arm64 = fs.readFileSync('dist-arm64/latest-mac.yml', 'utf8');
+          const x64 = fs.readFileSync('dist-x64/latest-mac.yml', 'utf8');
+
+          // Parse files entries from yml content
+          function parseFiles(content) {
+            const files = [];
+            let current = null;
+            for (const line of content.split('\n')) {
+              if (line.startsWith('  - url:')) {
+                if (current) files.push(current);
+                current = { url: line.replace('  - url: ', '').trim() };
+              } else if (current && line.startsWith('    sha512:')) {
+                current.sha512 = line.replace('    sha512: ', '').trim();
+              } else if (current && line.startsWith('    size:')) {
+                current.size = line.replace('    size: ', '').trim();
+              }
+            }
+            if (current) files.push(current);
+            return files;
+          }
+
+          function getField(content, field) {
+            const m = content.match(new RegExp('^' + field + ': (.+)$', 'm'));
+            return m ? m[1].trim() : '';
+          }
+
+          const version = getField(arm64, 'version');
+          const releaseDate = getField(arm64, 'releaseDate');
+          const path = getField(arm64, 'path');
+          const sha512 = getField(arm64, 'sha512');
+
+          const allFiles = [...parseFiles(arm64), ...parseFiles(x64)];
+
+          let merged = 'version: ' + version + '\n';
+          merged += 'files:\n';
+          for (const f of allFiles) {
+            merged += '  - url: ' + f.url + '\n';
+            merged += '    sha512: ' + f.sha512 + '\n';
+            merged += '    size: ' + f.size + '\n';
+          }
+          merged += 'path: ' + path + '\n';
+          merged += 'sha512: ' + sha512 + '\n';
+          merged += 'releaseDate: ' + releaseDate + '\n';
+
+          fs.writeFileSync('latest-mac.yml', merged);
+          console.log('Merged latest-mac.yml:');
+          console.log(merged);
+          "
 
       - name: Upload to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/*.dmg
-            dist/*.zip
-            dist/*.blockmap
-            dist/latest-mac.yml
+            dist-arm64/*.dmg
+            dist-arm64/*.zip
+            dist-arm64/*.blockmap
+            dist-x64/*.dmg
+            dist-x64/*.zip
+            dist-x64/*.blockmap
+            latest-mac.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Deploy DMG to website server
+      - name: Deploy DMGs to website server
         env:
           SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
@@ -103,6 +194,12 @@ jobs:
 
           VERSION=$(node -p "require('./package.json').version")
 
-          scp -i ~/.ssh/deploy_key "dist/Muxvo-${VERSION}-arm64.dmg" "root@${SERVER_HOST}:/var/www/muxvo-downloads/"
+          # Upload both architectures
+          scp -i ~/.ssh/deploy_key \
+            "dist-arm64/Muxvo-${VERSION}-arm64.dmg" \
+            "dist-x64/Muxvo-${VERSION}-x64.dmg" \
+            "root@${SERVER_HOST}:/var/www/muxvo-downloads/"
+
+          # Create stable symlinks
           ssh -i ~/.ssh/deploy_key "root@${SERVER_HOST}" \
-            "cd /var/www/muxvo-downloads && ln -sf Muxvo-${VERSION}-arm64.dmg Muxvo-arm64.dmg"
+            "cd /var/www/muxvo-downloads && ln -sf Muxvo-${VERSION}-arm64.dmg Muxvo-arm64.dmg && ln -sf Muxvo-${VERSION}-x64.dmg Muxvo-x64.dmg"
