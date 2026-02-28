@@ -162,7 +162,16 @@ export function LoginModal(): JSX.Element | null {
         </div>
 
         <div className="login-modal__footer">
-          <span className="login-modal__terms">{t('auth.termsNotice')}</span>
+          <span className="login-modal__terms">
+            {t('auth.termsPrefix')}
+            <a href="https://muxvo.com/terms" target="_blank" rel="noopener noreferrer" className="login-modal__terms-link">
+              {t('auth.termsOfService')}
+            </a>
+            {t('auth.termsAnd')}
+            <a href="https://muxvo.com/privacy" target="_blank" rel="noopener noreferrer" className="login-modal__terms-link">
+              {t('auth.privacyPolicy')}
+            </a>
+          </span>
         </div>
 
         {isLoading && (

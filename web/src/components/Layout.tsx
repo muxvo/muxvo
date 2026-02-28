@@ -141,6 +141,12 @@ function Footer() {
             >
               MIT License
             </a>
+            <Link to="/terms" className={linkCls} style={linkStyle}>
+              服务条款
+            </Link>
+            <Link to="/privacy" className={linkCls} style={linkStyle}>
+              隐私政策
+            </Link>
           </div>
 
           {/* Right: contact */}

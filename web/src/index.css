@@ -109,6 +109,67 @@ a {
 }
 
 /* ============================================================
+   Legal Pages
+   ============================================================ */
+.legal-article h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-after);
+  margin-bottom: 8px;
+}
+
+.legal-article .legal-date {
+  font-size: 13px;
+  color: var(--text-after-sec);
+  margin-bottom: 32px;
+}
+
+.legal-article h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-after);
+  margin-top: 36px;
+  margin-bottom: 12px;
+}
+
+.legal-article h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-after);
+  margin-top: 20px;
+  margin-bottom: 8px;
+}
+
+.legal-article p {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-after-sec);
+  margin-bottom: 12px;
+}
+
+.legal-article ul {
+  padding-left: 20px;
+  margin-bottom: 12px;
+}
+
+.legal-article li {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-after-sec);
+  margin-bottom: 4px;
+}
+
+.legal-article a {
+  color: var(--amber);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.legal-article a:hover {
+  opacity: 0.8;
+}
+
+/* ============================================================
    Reduced Motion
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {
