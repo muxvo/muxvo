@@ -141,16 +141,36 @@ async function main() {
     await termTab.click();
     await page.waitForTimeout(1500);
 
-    // Click the FAB "+" button to add terminals (need 3 more for total 4)
+    // Check current terminal count and FAB button
+    const existingTiles = await page.locator('.terminal-tile').count();
+    console.log(`  Existing terminal tiles: ${existingTiles}`);
     const fabBtn = page.locator('.terminal-grid__fab');
-    for (let i = 0; i < 3; i++) {
-      const visible = await fabBtn.isVisible({ timeout: 3000 }).catch(() => false);
-      if (visible) {
+    const fabVisible = await fabBtn.isVisible({ timeout: 5000 }).catch(() => false);
+    console.log(`  FAB button visible: ${fabVisible}`);
+
+    // If FAB not found, try alternate selectors
+    if (!fabVisible) {
+      const allButtons = await page.locator('button').count();
+      console.log(`  Total buttons on page: ${allButtons}`);
+      // List all button texts for debugging
+      for (let i = 0; i < Math.min(allButtons, 15); i++) {
+        const text = await page.locator('button').nth(i).textContent().catch(() => '');
+        const cls = await page.locator('button').nth(i).getAttribute('class').catch(() => '');
+        console.log(`    button[${i}]: "${text?.trim()}" class="${cls}"`);
+      }
+    }
+
+    // Click FAB to add terminals (need total 4)
+    const needed = 4 - existingTiles;
+    for (let i = 0; i < needed; i++) {
+      const vis = await fabBtn.isVisible({ timeout: 3000 }).catch(() => false);
+      if (vis) {
         await fabBtn.click();
         await page.waitForTimeout(2000);
         await forceXtermDarkTheme(page);
+        console.log(`  Created terminal ${existingTiles + i + 1}`);
       } else {
-        console.log(`  FAB button not visible at iteration ${i}`);
+        console.log(`  FAB not visible at iteration ${i}`);
         break;
       }
     }
@@ -158,10 +178,26 @@ async function main() {
     await forceXtermDarkTheme(page);
     await page.waitForTimeout(500);
 
-    // Clear all terminals to fix messy "Restored session" text
-    // Click each tile then type "clear" + Enter
+    // Wait for terminal tiles to render
+    await page.waitForTimeout(3000);
+    await forceXtermDarkTheme(page);
+
+    // Debug: take a snapshot to see current state
+    await page.screenshot({ path: resolve(OUTPUT, '_debug-terminals.jpg'), type: 'jpeg', quality: 80 });
+
+    // Try multiple selectors for terminal tiles
     const tiles = page.locator('.terminal-tile');
-    const tileCount = await tiles.count();
+    let tileCount = await tiles.count();
+    console.log(`  Terminal tiles (.terminal-tile): ${tileCount}`);
+
+    // If no tiles, check what's on screen
+    if (tileCount === 0) {
+      const anyXterm = await page.locator('.xterm').count();
+      const anyGrid = await page.locator('[class*="terminal-grid"], [class*="tiling"]').count();
+      console.log(`  xterm instances: ${anyXterm}, grid elements: ${anyGrid}`);
+    }
+
+    // Clear each terminal
     console.log(`  Clearing ${tileCount} terminals...`);
     for (let i = 0; i < tileCount; i++) {
       await tiles.nth(i).click();
