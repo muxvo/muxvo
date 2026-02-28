@@ -12,7 +12,7 @@ export function Hero() {
       <div className="mv-hero__text">
         <p className="mv-hero__eyebrow">为 Claude Code 重度用户打造</p>
         <h1 className="mv-hero__title">
-          Claude Code，效率拉满。
+          驾驭你的 Agent 军团。
         </h1>
         <p className="mv-hero__sub">
           在终端里用 CC，切窗口、翻记录、找配置全靠自己。Muxvo 帮你省掉这些时间。
