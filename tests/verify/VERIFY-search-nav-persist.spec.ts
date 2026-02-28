@@ -36,9 +36,17 @@ describe('Search nav button persistence — source code verification', () => {
 
   test('SessionDetail.tsx: matchInfo reports 0 (not 1) when no matches', () => {
     const src = readFileSync(resolve(ROOT, 'src/renderer/components/chat/SessionDetail.tsx'), 'utf-8');
-    // The fix: should check matchIndices.length > 0 before adding 1
-    expect(src).toContain('matchIndices.length > 0 ? currentMatchIdx + 1 : 0');
+    // The fix: should check matchOccurrences.length > 0 before adding 1
+    expect(src).toContain('matchOccurrences.length > 0 ? currentMatchIdx + 1 : 0');
     expect(src).not.toMatch(/onMatchInfoChange\?\.\(currentMatchIdx \+ 1,/);
+  });
+
+  test('SessionDetail.tsx: uses occurrence-level counting (not message-level)', () => {
+    const src = readFileSync(resolve(ROOT, 'src/renderer/components/chat/SessionDetail.tsx'), 'utf-8');
+    // Should use matchOccurrences with indexOf loop, not matchIndices with includes check
+    expect(src).toContain('matchOccurrences');
+    expect(src).toContain('lower.indexOf(q, pos)');
+    expect(src).not.toMatch(/const matchIndices/);
   });
 });
 

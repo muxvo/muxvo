@@ -291,11 +291,12 @@ export const SessionDetail = forwardRef<SessionDetailHandle, SessionDetailProps>
   const visibleMessages = messages.slice(startIndex);
   const hasEarlier = startIndex > 0;
 
-  // Compute match indices: which visibleMessages contain the search query (user + assistant)
-  const matchIndices = useMemo(() => {
+  // Compute match occurrences: each keyword occurrence across all visibleMessages
+  interface MatchOccurrence { msgIdx: number; nthInMsg: number; }
+  const matchOccurrences = useMemo((): MatchOccurrence[] => {
     if (!searchQuery?.trim()) return [];
     const q = searchQuery.toLowerCase();
-    const indices: number[] = [];
+    const results: MatchOccurrence[] = [];
     for (let i = 0; i < visibleMessages.length; i++) {
       const msg = visibleMessages[i];
       let text = '';
@@ -307,11 +308,16 @@ export const SessionDetail = forwardRef<SessionDetailHandle, SessionDetailProps>
           .map(b => b.text!)
           .join('\n');
       }
-      if (text.toLowerCase().includes(q)) {
-        indices.push(i);
+      const lower = text.toLowerCase();
+      let pos = 0;
+      let nth = 0;
+      while ((pos = lower.indexOf(q, pos)) !== -1) {
+        results.push({ msgIdx: i, nthInMsg: nth });
+        nth++;
+        pos += q.length;
       }
     }
-    return indices;
+    return results;
   }, [visibleMessages, searchQuery]);
 
   // Reset currentMatchIdx when search query or session changes
@@ -320,21 +326,21 @@ export const SessionDetail = forwardRef<SessionDetailHandle, SessionDetailProps>
     const matchKey = `${messageKey}:${searchQuery}`;
     if (matchKey === prevMatchKey.current) return;
     prevMatchKey.current = matchKey;
-    if (matchIndices.length > 0) {
+    if (matchOccurrences.length > 0) {
       setCurrentMatchIdx(0);
     }
-  }, [matchIndices, messageKey, searchQuery]);
+  }, [matchOccurrences, messageKey, searchQuery]);
 
   // Unified scroll effect: fires AFTER React commit so Virtuoso is ready
   // Note: Virtuoso's scrollToIndex uses DATA index (0-based), not absolute index
   useEffect(() => {
-    if (!searchQuery?.trim() || matchIndices.length === 0) return;
-    if (currentMatchIdx < 0 || currentMatchIdx >= matchIndices.length) return;
-    const dataIndex = matchIndices[currentMatchIdx];
+    if (!searchQuery?.trim() || matchOccurrences.length === 0) return;
+    if (currentMatchIdx < 0 || currentMatchIdx >= matchOccurrences.length) return;
+    const dataIndex = matchOccurrences[currentMatchIdx].msgIdx;
     requestAnimationFrame(() => {
       virtuosoRef.current?.scrollToIndex({ index: dataIndex, align: 'center', behavior: 'auto' });
     });
-  }, [currentMatchIdx, matchIndices, searchQuery]);
+  }, [currentMatchIdx, matchOccurrences, searchQuery]);
 
   // Auto-scroll to bottom on real-time updates (new messages appended) — only when NOT searching
   const prevMsgCount = useRef(messages.length);
@@ -352,9 +358,9 @@ export const SessionDetail = forwardRef<SessionDetailHandle, SessionDetailProps>
 
   const goToNextMatch = useCallback(() => {
     setCurrentMatchIdx(prev =>
-      prev < matchIndices.length - 1 ? prev + 1 : prev
+      prev < matchOccurrences.length - 1 ? prev + 1 : prev
     );
-  }, [matchIndices.length]);
+  }, [matchOccurrences.length]);
 
   // Expose nav actions to parent via ref
   useImperativeHandle(ref, () => ({
@@ -364,8 +370,8 @@ export const SessionDetail = forwardRef<SessionDetailHandle, SessionDetailProps>
 
   // Report match info to parent
   useEffect(() => {
-    onMatchInfoChange?.(matchIndices.length > 0 ? currentMatchIdx + 1 : 0, matchIndices.length);
-  }, [currentMatchIdx, matchIndices.length, onMatchInfoChange]);
+    onMatchInfoChange?.(matchOccurrences.length > 0 ? currentMatchIdx + 1 : 0, matchOccurrences.length);
+  }, [currentMatchIdx, matchOccurrences.length, onMatchInfoChange]);
 
   const handleStartReached = useCallback(() => {
     if (!hasEarlier || loadingOlder) return;
@@ -440,11 +446,11 @@ export const SessionDetail = forwardRef<SessionDetailHandle, SessionDetailProps>
         data={visibleMessages}
         firstItemIndex={firstItemIndex}
         startReached={handleStartReached}
-        initialTopMostItemIndex={isSearching && matchIndices.length > 0 ? matchIndices[0] : visibleMessages.length - 1}
+        initialTopMostItemIndex={isSearching && matchOccurrences.length > 0 ? matchOccurrences[0].msgIdx : visibleMessages.length - 1}
         components={{ Header }}
         itemContent={(index, message) => {
           const msgIdx = index - firstItemIndex;
-          const isActiveMatch = searchQuery && matchIndices[currentMatchIdx] === msgIdx;
+          const isActiveMatch = searchQuery && matchOccurrences[currentMatchIdx]?.msgIdx === msgIdx;
           return <MessageBubble key={message.uuid} message={message} searchQuery={searchQuery} isActiveMatch={!!isActiveMatch} />;
         }}
         followOutput={isSearching ? undefined : 'auto'}

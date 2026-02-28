@@ -43,7 +43,7 @@ interface SearchInputProps {
 export function SearchInput({ value, onChange, placeholder = 'Search...', resultCount, matchCurrent, matchTotal, onPrevMatch, onNextMatch }: SearchInputProps) {
   const hasQuery = Boolean(value?.trim());
   const showResultCount = hasQuery && resultCount != null && resultCount >= 0 && matchTotal == null;
-  const showNav = hasQuery && matchTotal != null && matchTotal > 0;
+  const showNav = hasQuery && matchTotal != null;
   return (
     <div className="search-input-wrap">
       <input
