@@ -9,7 +9,7 @@ import {
   revokeRefreshToken,
   revokeAllUserTokens,
 } from '../services/token.js';
-import { AppError, AuthError, ValidationError } from '../lib/errors.js';
+import { AppError, AuthError, NotFoundError, ValidationError } from '../lib/errors.js';
 import { sendVerificationEmail } from '../services/email.js';
 
 // ---------------------------------------------------------------------------
@@ -102,6 +102,7 @@ const emailSendSchema = {
     required: ['email'] as const,
     properties: {
       email: { type: 'string' as const, format: 'email' },
+      purpose: { type: 'string' as const, enum: ['login', 'register', 'reset-password'] },
     },
   },
 };
@@ -144,6 +145,41 @@ const adminLoginSchema = {
     properties: {
       email: { type: 'string' as const, format: 'email' },
       password: { type: 'string' as const, minLength: 1 },
+    },
+  },
+};
+
+const passwordRegisterSchema = {
+  body: {
+    type: 'object' as const,
+    required: ['email', 'code', 'password'] as const,
+    properties: {
+      email: { type: 'string' as const, format: 'email' },
+      code: { type: 'string' as const, pattern: '^[0-9]{6}$' },
+      password: { type: 'string' as const, minLength: 8, maxLength: 128 },
+    },
+  },
+};
+
+const passwordLoginSchema = {
+  body: {
+    type: 'object' as const,
+    required: ['email', 'password'] as const,
+    properties: {
+      email: { type: 'string' as const, format: 'email' },
+      password: { type: 'string' as const, minLength: 1 },
+    },
+  },
+};
+
+const passwordResetSchema = {
+  body: {
+    type: 'object' as const,
+    required: ['email', 'code', 'newPassword'] as const,
+    properties: {
+      email: { type: 'string' as const, format: 'email' },
+      code: { type: 'string' as const, pattern: '^[0-9]{6}$' },
+      newPassword: { type: 'string' as const, minLength: 8, maxLength: 128 },
     },
   },
 };
@@ -474,9 +510,10 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
   // =========================================================================
 
   app.post<{
-    Body: { email: string };
+    Body: { email: string; purpose?: string };
   }>('/email/send', { schema: emailSendSchema }, async (request) => {
     const { email } = request.body;
+    const purpose = (request.body.purpose || 'login') as 'login' | 'register' | 'reset-password';
 
     // Rate limit: 1 per minute per email
     const minuteKey = `rate:email:${email}`;
@@ -500,12 +537,12 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       throw new ValidationError('Daily email verification limit exceeded');
     }
 
-    // Invalidate previous codes for same email
+    // Invalidate previous codes for same email and purpose
     await query(
       `UPDATE email_verifications
        SET verified_at = NOW()
-       WHERE email = $1 AND verified_at IS NULL`,
-      [email],
+       WHERE email = $1 AND purpose = $2 AND verified_at IS NULL`,
+      [email, purpose],
     );
 
     // Generate 6-digit code
@@ -514,13 +551,13 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     // Insert verification record (expires in 5 minutes)
     await query(
       `INSERT INTO email_verifications (email, code, purpose, expires_at)
-       VALUES ($1, $2, 'login', NOW() + INTERVAL '5 minutes')`,
-      [email, code],
+       VALUES ($1, $2, $3, NOW() + INTERVAL '5 minutes')`,
+      [email, code, purpose],
     );
 
     // Send verification email (falls back to console.log if RESEND_API_KEY not set)
-    await sendVerificationEmail(email, code);
-    request.log.info({ email }, '[auth] Email verification code sent');
+    await sendVerificationEmail(email, code, purpose);
+    request.log.info({ email, purpose }, '[auth] Email verification code sent');
 
     return { success: true, expiresIn: 300 };
   });
@@ -662,6 +699,258 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     const tokenHash = hashRefreshToken(refreshToken);
 
     await revokeRefreshToken(tokenHash);
+
+    return { success: true };
+  });
+
+  // =========================================================================
+  // Password Register (email + code + password)
+  // =========================================================================
+
+  app.post<{
+    Body: { email: string; code: string; password: string };
+  }>('/password/register', { schema: passwordRegisterSchema }, async (request) => {
+    const { email, code, password } = request.body;
+
+    // Verify code for 'register' purpose
+    const result = await query<{
+      id: string;
+      code: string;
+      attempts: number;
+    }>(
+      `SELECT id, code, attempts
+       FROM email_verifications
+       WHERE email = $1
+         AND purpose = 'register'
+         AND verified_at IS NULL
+         AND expires_at > NOW()
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [email],
+    );
+
+    if (result.rows.length === 0) {
+      throw new AuthError('No valid verification code found');
+    }
+
+    const record = result.rows[0];
+
+    if (record.attempts >= 5) {
+      throw new AuthError('Too many verification attempts');
+    }
+
+    if (record.code !== code) {
+      await query(
+        `UPDATE email_verifications SET attempts = attempts + 1 WHERE id = $1`,
+        [record.id],
+      );
+      throw new AuthError('Invalid verification code');
+    }
+
+    // Mark as verified
+    await query(
+      `UPDATE email_verifications SET verified_at = NOW() WHERE id = $1`,
+      [record.id],
+    );
+
+    // Check if user already exists
+    const existingUser = await query<{
+      id: string;
+      password_hash: string | null;
+    }>(
+      `SELECT id, password_hash FROM users WHERE email = $1`,
+      [email],
+    );
+
+    let userId: string;
+
+    if (existingUser.rows.length > 0) {
+      const existing = existingUser.rows[0];
+      if (existing.password_hash) {
+        throw new AppError('Email already registered', 409, 'CONFLICT');
+      }
+      // User exists (e.g. from OAuth) but no password yet — set password
+      const hashed = hashPassword(password);
+      await query(
+        `UPDATE users SET password_hash = $1 WHERE id = $2`,
+        [hashed, existing.id],
+      );
+      userId = existing.id;
+    } else {
+      // Create new user
+      const user = await findOrCreateUser({
+        provider: 'email',
+        providerId: email,
+        email,
+        displayName: null,
+        avatarUrl: null,
+      });
+      const hashed = hashPassword(password);
+      await query(
+        `UPDATE users SET password_hash = $1 WHERE id = $2`,
+        [hashed, user.id],
+      );
+      userId = user.id;
+    }
+
+    // Fetch user for response
+    const userResult = await query<{
+      id: string;
+      email: string;
+      display_name: string | null;
+      avatar_url: string | null;
+      role: string;
+    }>(
+      `SELECT id, email, display_name, avatar_url, role FROM users WHERE id = $1`,
+      [userId],
+    );
+    const user = userResult.rows[0];
+
+    const tokens = await issueTokenPair(userId);
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: {
+        id: user.id,
+        displayName: user.display_name,
+        email: user.email,
+        avatarUrl: user.avatar_url,
+        role: user.role,
+      },
+    };
+  });
+
+  // =========================================================================
+  // Password Login (email + password)
+  // =========================================================================
+
+  app.post<{
+    Body: { email: string; password: string };
+  }>('/password/login', { schema: passwordLoginSchema }, async (request) => {
+    const { email, password } = request.body;
+
+    // Rate limit: 10 attempts per 15 minutes per email
+    const rateLimitKey = `rate:pwd-login:${email}`;
+    const attempts = await redis.incr(rateLimitKey);
+    if (attempts === 1) {
+      await redis.expire(rateLimitKey, 900);
+    }
+    if (attempts > 10) {
+      throw new ValidationError('Too many login attempts');
+    }
+
+    // Find active user
+    const result = await query<{
+      id: string;
+      email: string;
+      display_name: string | null;
+      avatar_url: string | null;
+      role: string;
+      status: string;
+      password_hash: string | null;
+    }>(
+      `SELECT id, email, display_name, avatar_url, role, status, password_hash
+       FROM users
+       WHERE email = $1 AND status = 'active'`,
+      [email],
+    );
+
+    if (result.rows.length === 0 || !result.rows[0].password_hash || !verifyPassword(password, result.rows[0].password_hash)) {
+      throw new AuthError('Invalid email or password');
+    }
+
+    const user = result.rows[0];
+
+    // Clear rate limit on success
+    await redis.del(rateLimitKey);
+
+    const tokens = await issueTokenPair(user.id);
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: {
+        id: user.id,
+        displayName: user.display_name,
+        email: user.email,
+        avatarUrl: user.avatar_url,
+        role: user.role,
+      },
+    };
+  });
+
+  // =========================================================================
+  // Password Reset (email + code + newPassword)
+  // =========================================================================
+
+  app.post<{
+    Body: { email: string; code: string; newPassword: string };
+  }>('/password/reset', { schema: passwordResetSchema }, async (request) => {
+    const { email, code, newPassword } = request.body;
+
+    // Verify code for 'reset-password' purpose
+    const result = await query<{
+      id: string;
+      code: string;
+      attempts: number;
+    }>(
+      `SELECT id, code, attempts
+       FROM email_verifications
+       WHERE email = $1
+         AND purpose = 'reset-password'
+         AND verified_at IS NULL
+         AND expires_at > NOW()
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [email],
+    );
+
+    if (result.rows.length === 0) {
+      throw new AuthError('No valid verification code found');
+    }
+
+    const record = result.rows[0];
+
+    if (record.attempts >= 5) {
+      throw new AuthError('Too many verification attempts');
+    }
+
+    if (record.code !== code) {
+      await query(
+        `UPDATE email_verifications SET attempts = attempts + 1 WHERE id = $1`,
+        [record.id],
+      );
+      throw new AuthError('Invalid verification code');
+    }
+
+    // Mark as verified
+    await query(
+      `UPDATE email_verifications SET verified_at = NOW() WHERE id = $1`,
+      [record.id],
+    );
+
+    // Find user
+    const userResult = await query<{ id: string }>(
+      `SELECT id FROM users WHERE email = $1`,
+      [email],
+    );
+
+    if (userResult.rows.length === 0) {
+      throw new NotFoundError('No account found');
+    }
+
+    const userId = userResult.rows[0].id;
+
+    // Update password
+    const hashed = hashPassword(newPassword);
+    await query(
+      `UPDATE users SET password_hash = $1 WHERE id = $2`,
+      [hashed, userId],
+    );
+
+    // Revoke all existing tokens
+    await revokeAllUserTokens(userId);
 
     return { success: true };
   });

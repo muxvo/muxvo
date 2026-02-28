@@ -188,10 +188,16 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.AUTH.GET_STATUS),
     loginGoogle: () =>
       ipcRenderer.invoke(IPC_CHANNELS.AUTH.LOGIN_GOOGLE),
-    sendEmailCode: (email: string) =>
-      ipcRenderer.invoke(IPC_CHANNELS.AUTH.SEND_EMAIL_CODE, { email }),
+    sendEmailCode: (email: string, purpose?: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH.SEND_EMAIL_CODE, { email, ...(purpose ? { purpose } : {}) }),
     verifyEmailCode: (email: string, code: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.AUTH.VERIFY_EMAIL_CODE, { email, code }),
+    register: (email: string, code: string, password: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH.REGISTER, { email, code, password }),
+    loginPassword: (email: string, password: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH.LOGIN_PASSWORD, { email, password }),
+    resetPassword: (email: string, code: string, newPassword: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH.RESET_PASSWORD, { email, code, newPassword }),
     oauthCallback: (accessToken: string, refreshToken: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.AUTH.OAUTH_CALLBACK, { accessToken, refreshToken }),
     refreshToken: () =>

@@ -141,10 +141,10 @@ export function createAuthHandlers() {
       }
     },
 
-    async sendEmailCode(params: { email: string }): Promise<Record<string, unknown>> {
+    async sendEmailCode(params: { email: string; purpose?: string }): Promise<Record<string, unknown>> {
       try {
         const manager = getAuthManager();
-        const result = await manager.sendEmailCode(params.email);
+        const result = await manager.sendEmailCode(params.email, params.purpose);
         return { success: true, data: result };
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
@@ -178,6 +178,39 @@ export function createAuthHandlers() {
       try {
         const manager = getAuthManager();
         const result = await manager.refreshToken();
+        return { success: true, data: result };
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: 'AUTH_ERROR', message } };
+      }
+    },
+
+    async register(params: { email: string; code: string; password: string }): Promise<Record<string, unknown>> {
+      try {
+        const manager = getAuthManager();
+        const result = await manager.register(params.email, params.code, params.password);
+        return { success: true, data: result };
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: 'AUTH_ERROR', message } };
+      }
+    },
+
+    async loginPassword(params: { email: string; password: string }): Promise<Record<string, unknown>> {
+      try {
+        const manager = getAuthManager();
+        const result = await manager.loginPassword(params.email, params.password);
+        return { success: true, data: result };
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { success: false, error: { code: 'AUTH_ERROR', message } };
+      }
+    },
+
+    async resetPassword(params: { email: string; code: string; newPassword: string }): Promise<Record<string, unknown>> {
+      try {
+        const manager = getAuthManager();
+        const result = await manager.resetPassword(params.email, params.code, params.newPassword);
         return { success: true, data: result };
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
@@ -238,6 +271,10 @@ export function registerAuthHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.AUTH.GET_PROFILE, async () => {
     return handlers.getProfile();
   });
+
+  ipcMain.handle(IPC_CHANNELS.AUTH.REGISTER, (_e, p) => handlers.register(p));
+  ipcMain.handle(IPC_CHANNELS.AUTH.LOGIN_PASSWORD, (_e, p) => handlers.loginPassword(p));
+  ipcMain.handle(IPC_CHANNELS.AUTH.RESET_PASSWORD, (_e, p) => handlers.resetPassword(p));
 }
 
 /** Push session expired event to all windows */

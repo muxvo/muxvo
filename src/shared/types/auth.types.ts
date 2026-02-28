@@ -70,3 +70,31 @@ export interface OAuthInitResponse {
   authUrl: string;
   state: string;
 }
+
+/** Purpose for sending email verification code */
+export type EmailCodePurpose = 'login' | 'register' | 'reset-password';
+
+/** auth:register request */
+export interface RegisterRequest {
+  email: string;
+  code: string;
+  password: string;
+}
+
+/** auth:login-password request */
+export interface PasswordLoginRequest {
+  email: string;
+  password: string;
+}
+
+/** auth:reset-password request */
+export interface ResetPasswordRequest {
+  email: string;
+  code: string;
+  newPassword: string;
+}
+
+/** auth:reset-password response */
+export interface ResetPasswordResponse {
+  success: boolean;
+}

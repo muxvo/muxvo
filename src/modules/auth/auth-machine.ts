@@ -42,7 +42,7 @@ export function createAuthMachine() {
   const context: AuthContext = {
     codeVerifier: '',
     codeChallenge: '',
-    tokenStorage: 'safeStorage',
+    tokenStorage: 'plaintext',
   };
 
   function resetOAuthContext() {

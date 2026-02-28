@@ -79,9 +79,9 @@ export function createAuthManager(options: AuthManagerOptions) {
     },
 
     /** Send email verification code */
-    async sendEmailCode(email: string): Promise<{ success: boolean; expiresIn: number }> {
+    async sendEmailCode(email: string, purpose?: string): Promise<{ success: boolean; expiresIn: number }> {
       machine.send('SEND_EMAIL_CODE', { email });
-      return client.sendEmailCode(email);
+      return client.sendEmailCode(email, purpose);
     },
 
     /** Verify email code and complete login */
@@ -107,6 +107,60 @@ export function createAuthManager(options: AuthManagerOptions) {
         });
         return { success: false, error: err instanceof Error ? err.message : '验证码验证失败' };
       }
+    },
+
+    /** Register with email + code + password */
+    async register(email: string, code: string, password: string) {
+      try {
+        const result = await client.register(email, code, password);
+        await storeTokenPair(result.accessToken, result.refreshToken);
+        machine.send('TOKEN_RECEIVED', {
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+          username: result.user.displayName || email,
+          userId: result.user.id,
+          email: result.user.email || email,
+          avatarUrl: result.user.avatarUrl || '',
+        });
+        startRefreshTimer();
+        options.onLoginSuccess?.();
+        return { success: true, user: result.user };
+      } catch (err) {
+        machine.send('AUTH_FAILED', {
+          error: err instanceof Error ? err.message : '注册失败',
+        });
+        return { success: false, error: err instanceof Error ? err.message : '注册失败' };
+      }
+    },
+
+    /** Login with email + password */
+    async loginPassword(email: string, password: string) {
+      machine.send('LOGIN', { authMethod: 'email' as AuthMethod });
+      try {
+        const result = await client.loginPassword(email, password);
+        await storeTokenPair(result.accessToken, result.refreshToken);
+        machine.send('TOKEN_RECEIVED', {
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+          username: result.user.displayName || email,
+          userId: result.user.id,
+          email: result.user.email || email,
+          avatarUrl: result.user.avatarUrl || '',
+        });
+        startRefreshTimer();
+        options.onLoginSuccess?.();
+        return { success: true, user: result.user };
+      } catch (err) {
+        machine.send('AUTH_FAILED', {
+          error: err instanceof Error ? err.message : '密码登录失败',
+        });
+        return { success: false, error: err instanceof Error ? err.message : '密码登录失败' };
+      }
+    },
+
+    /** Reset password with email + code + newPassword */
+    async resetPassword(email: string, code: string, newPassword: string) {
+      return client.resetPassword(email, code, newPassword);
     },
 
     /** Handle OAuth callback (deep link with tokens from server redirect) */

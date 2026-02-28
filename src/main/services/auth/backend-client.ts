@@ -83,10 +83,10 @@ export function createBackendClient(options: BackendClientOptions) {
     },
 
     /** Send email verification code */
-    async sendEmailCode(email: string): Promise<EmailSendResponse> {
+    async sendEmailCode(email: string, purpose?: string): Promise<EmailSendResponse> {
       return request<EmailSendResponse>('/auth/email/send', {
         method: 'POST',
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, ...(purpose ? { purpose } : {}) }),
       });
     },
 
@@ -95,6 +95,30 @@ export function createBackendClient(options: BackendClientOptions) {
       return request<EmailVerifyResponse>('/auth/email/verify', {
         method: 'POST',
         body: JSON.stringify({ email, code }),
+      });
+    },
+
+    /** Register with email + code + password */
+    async register(email: string, code: string, password: string): Promise<EmailVerifyResponse> {
+      return request<EmailVerifyResponse>('/auth/password/register', {
+        method: 'POST',
+        body: JSON.stringify({ email, code, password }),
+      });
+    },
+
+    /** Login with email + password */
+    async loginPassword(email: string, password: string): Promise<EmailVerifyResponse> {
+      return request<EmailVerifyResponse>('/auth/password/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      });
+    },
+
+    /** Reset password with email + code + newPassword */
+    async resetPassword(email: string, code: string, newPassword: string): Promise<{ success: boolean }> {
+      return request<{ success: boolean }>('/auth/password/reset', {
+        method: 'POST',
+        body: JSON.stringify({ email, code, newPassword }),
       });
     },
 
