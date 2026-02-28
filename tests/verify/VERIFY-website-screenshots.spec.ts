@@ -57,7 +57,7 @@ test.describe('官网截图展示验证', () => {
       // 每个区段都有图片和标题
       const expectedScreenshots = [
         'dark-resume-chat',
-        'dark-4terminals',
+        'dark-tiling',
         'dark-focused',
         'dark-file-view',
         'dark-skills',
