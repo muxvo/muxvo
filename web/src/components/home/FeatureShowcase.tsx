@@ -30,7 +30,7 @@ const FEATURES = [
   {
     icon: '⇄',
     title: '统一入口，Codex 和 Gemini CLI 也能管',
-    desc: '不只是 Claude Code。Codex、Gemini CLI 的聊天记录、Skill 配置，都能在同一个界面管理。',
+    desc: 'Codex、Gemini CLI 的对话、Skill 配置、聊天记录，都能在同一个界面管理。',
     screenshot: '/screenshots/dark-multi-tool.jpg',
     alt: 'Muxvo multi-tool support — manage Claude Code, Codex, and Gemini CLI',
   },

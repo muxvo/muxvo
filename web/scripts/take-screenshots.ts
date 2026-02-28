@@ -71,7 +71,7 @@ async function main() {
   });
   const page = await app.firstWindow();
   await page.waitForLoadState('domcontentloaded');
-  await page.waitForTimeout(6000); // Wait for React mount + data load
+  await page.waitForTimeout(10000); // Wait for React mount + data load (needs extra time for chat scan)
 
   // Force dark theme on the whole app
   await page.evaluate(() => {
@@ -148,7 +148,6 @@ async function main() {
       if (visible) {
         await fabBtn.click();
         await page.waitForTimeout(2000);
-        // Re-apply dark xterm theme for each new terminal
         await forceXtermDarkTheme(page);
       } else {
         console.log(`  FAB button not visible at iteration ${i}`);
@@ -156,7 +155,21 @@ async function main() {
       }
     }
     await page.waitForTimeout(1000);
-    // Force dark theme again for all terminals
+    await forceXtermDarkTheme(page);
+    await page.waitForTimeout(500);
+
+    // Clear all terminals to fix messy "Restored session" text
+    // Click each tile then type "clear" + Enter
+    const tiles = page.locator('.terminal-tile');
+    const tileCount = await tiles.count();
+    console.log(`  Clearing ${tileCount} terminals...`);
+    for (let i = 0; i < tileCount; i++) {
+      await tiles.nth(i).click();
+      await page.waitForTimeout(300);
+      await page.keyboard.type('clear');
+      await page.keyboard.press('Enter');
+      await page.waitForTimeout(500);
+    }
     await forceXtermDarkTheme(page);
     await page.waitForTimeout(500);
 
@@ -181,16 +194,18 @@ async function main() {
     if (maxBtnVisible) {
       await maxBtn.click();
       await page.waitForTimeout(1500);
-      await forceXtermDarkTheme(page);
-      await page.waitForTimeout(500);
     } else {
       console.log('  ⚠️ Max button not found, trying double-click on tile header');
       const tileHeader = page.locator('.terminal-tile__header').first();
       await tileHeader.dblclick();
       await page.waitForTimeout(1500);
-      await forceXtermDarkTheme(page);
-      await page.waitForTimeout(500);
     }
+    // Clear main terminal in focused mode
+    await page.keyboard.type('clear');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(500);
+    await forceXtermDarkTheme(page);
+    await page.waitForTimeout(500);
 
     await page.screenshot({
       path: resolve(OUTPUT, 'dark-focused.jpg'),

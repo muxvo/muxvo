@@ -284,7 +284,7 @@ export const SessionDetail = forwardRef<SessionDetailHandle, SessionDetailProps>
       setFirstItemIndex(prev => prev - needed);
       setVisibleCount(messages.length);
     }
-  }, [isSearching, messages.length]);
+  }, [isSearching, messages.length, visibleCount]);
 
   // Show the LAST N messages (most recent), with "load earlier" at top
   const startIndex = Math.max(0, messages.length - visibleCount);
