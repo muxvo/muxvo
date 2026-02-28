@@ -11,7 +11,7 @@
 }
 
 .markdown-wysiwyg .tiptap {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-sans);
   font-size: 15px;
   line-height: 1.8;
   color: var(--text-primary);
@@ -80,7 +80,7 @@
 .markdown-wysiwyg .tiptap code {
   background: var(--code-bg, rgba(248, 165, 194, 0.15));
   color: var(--code-fg, #f8a5c2);
-  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  font-family: var(--font-mono);
   font-size: 0.9em;
   padding: 2px 6px;
   border-radius: 4px;
