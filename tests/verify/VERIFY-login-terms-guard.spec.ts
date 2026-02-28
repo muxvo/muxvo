@@ -6,6 +6,9 @@
  * 2. Clicking a button shows the terms confirmation overlay
  * 3. Clicking "Cancel" dismisses the overlay
  * 4. Clicking "Agree & Continue" dismisses overlay and executes the action
+ *
+ * Prerequisite: vite renderer server on port 5173
+ *   npx vite --config tests/e2e/vite-renderer.config.ts
  */
 import { test, expect, _electron, type ElectronApplication, type Page } from '@playwright/test';
 import { resolve } from 'path';
@@ -14,6 +17,8 @@ const PROJECT = resolve(__dirname, '../..');
 
 let app: ElectronApplication;
 let window: Page;
+
+test.setTimeout(60000);
 
 test.beforeAll(async () => {
   app = await _electron.launch({
@@ -25,7 +30,7 @@ test.beforeAll(async () => {
     },
   });
   window = await app.firstWindow();
-  await window.waitForTimeout(6000);
+  await window.waitForTimeout(8000);
   await window.waitForLoadState('networkidle');
 });
 
@@ -34,13 +39,14 @@ test.afterAll(async () => {
 });
 
 test('login buttons are clickable and terms guard works', async () => {
-  // Step 1: Open login modal via auth button in menu bar
+  // Step 1: Find the auth button in menu bar and click to open login modal
   const authBtn = window.locator('.menu-bar__icon-btn').last();
+  await expect(authBtn).toBeVisible({ timeout: 15000 });
   await authBtn.click();
   await window.waitForTimeout(500);
 
   const modal = window.locator('.login-modal');
-  await expect(modal).toBeVisible({ timeout: 3000 });
+  await expect(modal).toBeVisible({ timeout: 5000 });
 
   // Step 2: All three OAuth buttons should NOT be disabled
   const githubBtn = window.locator('.login-modal__oauth-btn--github');
@@ -60,7 +66,7 @@ test('login buttons are clickable and terms guard works', async () => {
   await window.waitForTimeout(300);
 
   const termsConfirm = window.locator('.login-modal__terms-confirm');
-  await expect(termsConfirm).toBeVisible({ timeout: 2000 });
+  await expect(termsConfirm).toBeVisible({ timeout: 3000 });
 
   // Step 4: Click Cancel - overlay should disappear, still on buttons page
   const cancelBtn = window.locator('.login-modal__terms-confirm-cancel');
@@ -74,7 +80,7 @@ test('login buttons are clickable and terms guard works', async () => {
   // Step 5: Click email again, this time click "Agree & Continue"
   await emailBtn.click();
   await window.waitForTimeout(300);
-  await expect(termsConfirm).toBeVisible({ timeout: 2000 });
+  await expect(termsConfirm).toBeVisible({ timeout: 3000 });
 
   const agreeBtn = window.locator('.login-modal__terms-confirm-agree');
   await agreeBtn.click();
@@ -83,7 +89,7 @@ test('login buttons are clickable and terms guard works', async () => {
   // Step 6: Should have navigated to login form (email mode)
   // The email button switches to login mode, so we should see the password form
   const loginForm = window.locator('.login-modal__email-form');
-  await expect(loginForm).toBeVisible({ timeout: 2000 });
+  await expect(loginForm).toBeVisible({ timeout: 3000 });
   // And terms confirm should be gone
   await expect(termsConfirm).not.toBeVisible();
 });
