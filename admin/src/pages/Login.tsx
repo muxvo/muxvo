@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { setToken, hasToken } from '../lib/api';
+import { setToken, setRefreshToken, hasToken } from '../lib/api';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://api.muxvo.com';
 
@@ -36,6 +36,7 @@ export function Login() {
 
       const data = await res.json();
       setToken(data.accessToken);
+      setRefreshToken(data.refreshToken);
       navigate('/', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');

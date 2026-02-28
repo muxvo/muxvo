@@ -91,30 +91,9 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     // Helper: fit terminal while preserving scroll position.
     // Saves distance-from-bottom before fit, restores after.
     // Prevents viewport jumping to top when columns change and buffer rewraps.
+    // Scroll restoration is deferred to next frame because xterm.js v6
+    // processes buffer rewrap asynchronously after fit().
     function fitPreservingScroll(): void {
-      const buf = term.buffer.active;
-      const wasAtBottom = buf.viewportY >= buf.baseY;
-      const offsetFromBottom = buf.baseY - buf.viewportY;
-
-      fitAddon.fit();
-
-      if (wasAtBottom) {
-        term.scrollToBottom();
-      } else {
-        // scrollToBottom() first to reach a known reliable state,
-        // then scrollLines() back by the saved offset.
-        // scrollToLine() can be unreliable after buffer rewrap.
-        term.scrollToBottom();
-        if (offsetFromBottom > 0) {
-          term.scrollLines(-offsetFromBottom);
-        }
-      }
-      syncScrollDataAttrs();
-    }
-
-    // Deferred version: xterm.js v6 may process buffer rewrap asynchronously
-    // after fit(), so scroll restoration needs to run in the next frame.
-    function fitPreservingScrollDeferred(): void {
       const buf = term.buffer.active;
       const wasAtBottom = buf.viewportY >= buf.baseY;
       const offsetFromBottom = buf.baseY - buf.viewportY;
@@ -177,7 +156,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
         term.options.fontFamily = cfg.fontFamily;
         term.options.cursorStyle = cfg.cursorStyle;
         term.options.cursorBlink = cfg.cursorBlink;
-        requestAnimationFrame(() => { if (!disposed) fitPreservingScrollDeferred(); });
+        requestAnimationFrame(() => { if (!disposed) fitPreservingScroll(); });
       }
     }).catch(() => { /* use defaults on error */ });
 
@@ -243,7 +222,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       if (resizeRafId !== null) cancelAnimationFrame(resizeRafId);
       resizeRafId = requestAnimationFrame(() => {
         resizeRafId = null;
-        if (!disposed) fitPreservingScrollDeferred();
+        if (!disposed) fitPreservingScroll();
       });
     });
     observer.observe(containerRef.current);
@@ -265,14 +244,14 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
 
     // Refit after global zoom changes (webFrame.setZoomFactor alters viewport dimensions)
     const onGlobalZoom = () => {
-      requestAnimationFrame(() => { if (!disposed) fitPreservingScrollDeferred(); });
+      requestAnimationFrame(() => { if (!disposed) fitPreservingScroll(); });
     };
     window.addEventListener('muxvo:global-zoom', onGlobalZoom);
 
     // Listen for force-refit requests (e.g. after FileTempView overlay closes)
     const onRefit = () => {
       if (!disposed && !suppressResize) {
-        fitPreservingScrollDeferred();
+        fitPreservingScroll();
         // Force re-send dimensions even if cols/rows unchanged (another instance may have altered PTY size)
         window.api.terminal.resize(terminalId, term.cols, term.rows);
       }
