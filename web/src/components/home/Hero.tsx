@@ -49,7 +49,7 @@ export function Hero() {
           {/* Screenshot */}
           <div className="mv-mock__screenshot">
             <img
-              src="/screenshots/dark-terminals.jpg"
+              src="/screenshots/dark-4terminals.jpg"
               alt="Muxvo terminal grid — multiple AI CLI sessions at a glance"
               loading="eager"
               width="2764"

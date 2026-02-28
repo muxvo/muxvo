@@ -2,16 +2,23 @@ const FEATURES = [
   {
     icon: '∞',
     title: '永久存档，找到就续聊',
-    desc: 'Claude Code 30 天自动删除对话。Muxvo 帮你永久保存，找到任何历史对话，一键接着聊。',
-    screenshot: '/screenshots/dark-chat-history.jpg',
+    desc: 'Claude Code 30 天自动删除对话。Muxvo 帮你永久保存到本地，找到任何历史对话，一键接着聊。',
+    screenshot: '/screenshots/dark-resume-chat.jpg',
     alt: 'Muxvo chat history — browse and resume any past conversation',
   },
   {
     icon: '⊞',
     title: '一屏排开，告别切窗口',
     desc: '多终端平铺管理，所有窗口一目了然。省下的是每天几十次 ⌘Tab。',
-    screenshot: '/screenshots/dark-terminals.jpg',
+    screenshot: '/screenshots/dark-4terminals.jpg',
     alt: 'Muxvo terminal grid — all sessions tiled on one screen',
+  },
+  {
+    icon: '◎',
+    title: '聚焦模式，沉浸编码',
+    desc: '一键放大当前终端，其余缩到侧栏随时切换。大屏看代码，小屏盯进度。',
+    screenshot: '/screenshots/dark-focused.jpg',
+    alt: 'Muxvo focused mode — one terminal maximized with sidebar',
   },
   {
     icon: '⚙',
@@ -23,7 +30,7 @@ const FEATURES = [
   {
     icon: '⇄',
     title: '统一入口，Codex 和 Gemini CLI 也能管',
-    desc: '不只是 Claude Code。Codex、Gemini CLI 也能在同一个界面管理和切换。',
+    desc: '不只是 Claude Code。Codex、Gemini CLI 的聊天记录、Skill 配置，都能在同一个界面管理。',
     screenshot: '/screenshots/dark-multi-tool.jpg',
     alt: 'Muxvo multi-tool support — manage Claude Code, Codex, and Gemini CLI',
   },
