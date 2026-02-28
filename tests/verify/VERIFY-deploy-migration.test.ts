@@ -1,3 +1,5 @@
+import { describe, test, expect } from 'vitest';
+
 /**
  * VERIFY: Deploy Server migration 双跑冲突修复
  *
