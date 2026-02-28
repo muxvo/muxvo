@@ -7,7 +7,7 @@
  * Aligned with prototype-history-A.html tile design.
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import { useI18n } from '@/renderer/i18n';
 import { XTermRenderer } from './XTermRenderer';
 import { getTerminalProcessUI } from '@/renderer/stores/terminal-process-ui-map';
@@ -60,7 +60,7 @@ function MaximizeIcon() {
   );
 }
 
-export function TerminalTile({
+function TerminalTileInner({
   id,
   state,
   cwd,
@@ -387,3 +387,18 @@ export function TerminalTile({
     </div>
   );
 }
+
+export const TerminalTile = memo(TerminalTileInner, (prev, next) => {
+  return (
+    prev.id === next.id &&
+    prev.state === next.state &&
+    prev.cwd === next.cwd &&
+    prev.compact === next.compact &&
+    prev.focused === next.focused &&
+    prev.selected === next.selected &&
+    prev.staggerIndex === next.staggerIndex &&
+    prev.draggable === next.draggable &&
+    prev.dragState === next.dragState &&
+    prev.customName === next.customName
+  );
+});

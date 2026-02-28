@@ -101,8 +101,13 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       if (wasAtBottom) {
         term.scrollToBottom();
       } else {
-        const newTarget = term.buffer.active.baseY - offsetFromBottom;
-        term.scrollToLine(Math.max(0, newTarget));
+        // scrollToBottom() first to reach a known reliable state,
+        // then scrollLines() back by the saved offset.
+        // scrollToLine() can be unreliable after buffer rewrap.
+        term.scrollToBottom();
+        if (offsetFromBottom > 0) {
+          term.scrollLines(-offsetFromBottom);
+        }
       }
       syncScrollDataAttrs();
     }
@@ -203,12 +208,18 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     });
 
     // Resize observer -> fit terminal (skip when container is too small, e.g. during layout transition)
+    // Debounced via rAF to coalesce multiple resize events within the same frame
+    let resizeRafId: number | null = null;
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (!entry || disposed) return;
       const { width, height } = entry.contentRect;
       if (width < 10 || height < 10) return;
-      fitAddon.fit(); syncScrollDataAttrs(); // RED: intentionally broken — no scroll preservation
+      if (resizeRafId !== null) cancelAnimationFrame(resizeRafId);
+      resizeRafId = requestAnimationFrame(() => {
+        resizeRafId = null;
+        if (!disposed) fitPreservingScroll();
+      });
     });
     observer.observe(containerRef.current);
 
@@ -246,6 +257,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     return () => {
       disposed = true;
       unsubOutput();
+      if (resizeRafId !== null) cancelAnimationFrame(resizeRafId);
       observer.disconnect();
       window.removeEventListener('muxvo:theme-change', onThemeChange);
       window.removeEventListener('muxvo:global-zoom', onGlobalZoom);

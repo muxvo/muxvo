@@ -272,19 +272,27 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
           t.id === draggingId ? 'dragging' :
           t.id === dragOverId ? 'drag-over' : 'none';
 
-        // In focused mode: non-focused terminals rendered in sidebar container below
-        if (isFocusedMode && !isFocused) return null;
-
+        // In focused mode: hide non-focused terminals via CSS instead of unmounting
+        // to preserve XTermRenderer instances and avoid buffer replay flash on mode switch
         const cellStyle: React.CSSProperties = isFocusedMode
-          ? {
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: sidebarTerminals.length > 0 ? '25%' : 0,
-              bottom: 0,
-              zIndex: 10,
-              overflow: 'hidden',
-            }
+          ? isFocused
+            ? {
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: sidebarTerminals.length > 0 ? '25%' : 0,
+                bottom: 0,
+                zIndex: 10,
+                overflow: 'hidden',
+              }
+            : {
+                position: 'absolute',
+                width: 0,
+                height: 0,
+                overflow: 'hidden',
+                opacity: 0,
+                pointerEvents: 'none',
+              }
           : {
               gridRow: placement?.gridRow,
               gridColumn: placement?.gridColumn,

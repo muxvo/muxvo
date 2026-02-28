@@ -142,7 +142,6 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
           const existing = outputBuffers.get(id) ?? '';
           const updated = existing + data;
           outputBuffers.set(id, updated.length > OUTPUT_BUFFER_MAX_BYTES ? updated.slice(updated.length - OUTPUT_BUFFER_MAX_BYTES) : updated);
-          console.log(`[MUXVO:restore] buffer append id=${id} bytes=${data.length} total=${outputBuffers.get(id)!.length}`);
 
           const win = BrowserWindow.getAllWindows()[0];
           if (win) {
@@ -167,16 +166,13 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
           const isRunning = machine.state === 'Running';
           const isWaiting = machine.state === 'WaitingInput';
           const detected = detectWaitingInput(data, id);
-          console.log(`[MUXVO:waitinput] state=${machine.state} detected=${detected} chunkLen=${data.length}`);
           if (isRunning && detected) {
             machine.send('WAIT_INPUT');
-            console.log(`[MUXVO:waitinput] >>> TRANSITION to WaitingInput! id=${id}`);
             pushStateChange(id, machine.state);
           } else if (isWaiting && !detected && shouldExitWaiting(id)) {
             // Process moved past the interactive prompt — auto-recover
             resetInputDetector(id);
             machine.send('AUTO_RESUME');
-            console.log(`[MUXVO:waitinput] >>> AUTO_RESUME to Running! id=${id}`);
             pushStateChange(id, machine.state);
           }
         });

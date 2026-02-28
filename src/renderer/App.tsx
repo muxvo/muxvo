@@ -6,7 +6,7 @@
  * DEV-PLAN B1/B2: Focus mode with Esc exit + sidebar switching
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { MenuBar } from './components/layout/MenuBar';
 import { FloatingControls } from './components/layout/FloatingControls';
 import { TerminalGrid } from './components/terminal/TerminalGrid';
@@ -287,13 +287,15 @@ export function App(): JSX.Element {
 
   const maxReached = terminals.length >= MAX_TERMINALS;
 
-  // Sort terminals by terminalOrder
-  const orderedTerminals = (terminalOrder.length > 0
-    ? terminalOrder
-        .map((id) => terminals.find((t) => t.id === id))
-        .filter((t): t is TerminalEntry => t !== undefined)
-    : terminals
-  ).map((t) => ({ ...t, customName: terminalNames[t.id] }));
+  // Sort terminals by terminalOrder (memoized to avoid creating new array references on every render)
+  const orderedTerminals = useMemo(() => {
+    return (terminalOrder.length > 0
+      ? terminalOrder
+          .map((id) => terminals.find((t) => t.id === id))
+          .filter((t): t is TerminalEntry => t !== undefined)
+      : terminals
+    ).map((t) => ({ ...t, customName: terminalNames[t.id] }));
+  }, [terminals, terminalOrder, terminalNames]);
 
   return (
     <I18nProvider initialLocale={initialLocale}>
