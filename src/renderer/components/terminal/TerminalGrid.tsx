@@ -250,7 +250,7 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
     gridTemplateColumns,
     gridTemplateRows,
     gap: '6px',
-    padding: '6px',
+    padding: '0',
     width: '100%',
     height: '100%',
     perspective: '1200px',
