@@ -154,7 +154,7 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
     for (const s of sessions) {
       const titleMatch = s.title.toLowerCase().includes(q)
         || (s.customTitle && s.customTitle.toLowerCase().includes(q));
-      const fullTextMatch = searchResults.some(r => r.sessionId === s.sessionId);
+      const fullTextMatch = searchSnippets.has(s.sessionId);
       if (titleMatch || fullTextMatch) {
         result.push(s);
         seen.add(s.sessionId);
@@ -180,7 +180,9 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
     return result;
   }, [sessions, searchQuery, searchResults]);
 
-  const sessionResultCount = searchQuery.trim() ? filteredSessions.length : 0;
+  const sessionResultCount = searchQuery.trim()
+    ? (searching ? undefined : filteredSessions.length)
+    : 0;
 
   const handleDismissBanner = useCallback(() => {
     localStorage.setItem('muxvo-archive-notice-dismissed', 'true');

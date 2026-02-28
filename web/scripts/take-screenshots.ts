@@ -4,25 +4,63 @@
  * Automatically takes dark-theme screenshots of Muxvo for the website.
  *
  * Prerequisites: npx electron-vite build
- * Run: npx playwright test web/scripts/take-screenshots.ts --config=playwright.config.ts
+ * Run: npx tsx web/scripts/take-screenshots.ts
  */
 
-import { test, _electron as electron } from '@playwright/test';
-import { resolve } from 'path';
+import { _electron as electron } from 'playwright';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const PROJECT = resolve(__dirname, '../..');
 const OUTPUT = resolve(__dirname, '../public/screenshots');
 
-test('Take dark-theme screenshots for website', async () => {
-  // Launch Electron
+async function main() {
+  console.log('Launching Muxvo...');
+
+  // Start Vite dev server first
+  const { spawn } = await import('child_process');
+  const vite = spawn('npx', ['electron-vite', 'dev'], {
+    cwd: PROJECT,
+    stdio: 'pipe',
+    detached: true,
+    env: { ...process.env },
+  });
+
+  // Wait for Vite to be ready
+  console.log('Waiting for Vite dev server...');
+  await new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('Vite startup timeout')), 30000);
+    const check = setInterval(async () => {
+      try {
+        const res = await fetch('http://localhost:5173');
+        if (res.ok) {
+          clearInterval(check);
+          clearTimeout(timeout);
+          resolve();
+        }
+      } catch { /* not ready yet */ }
+    }, 500);
+  });
+  console.log('Vite dev server ready');
+
+  // Wait a bit more for electron-vite to start Electron
+  await new Promise(r => setTimeout(r, 8000));
+
+  // Kill the electron-vite spawned Electron and vite, then launch our own
+  try { process.kill(-vite.pid!, 'SIGTERM'); } catch {}
+  await new Promise(r => setTimeout(r, 2000));
+
   const app = await electron.launch({
     args: ['.'],
     cwd: PROJECT,
     timeout: 30000,
+    env: { ...process.env, ELECTRON_RENDERER_URL: 'http://localhost:5173' },
   });
   const page = await app.firstWindow();
   await page.waitForLoadState('domcontentloaded');
-  await page.waitForTimeout(3000); // Wait for React mount + config load
+  await page.waitForTimeout(4000); // Wait for React mount + config load
 
   // Force dark theme
   await page.evaluate(() => {
@@ -37,7 +75,6 @@ test('Take dark-theme screenshots for website', async () => {
   try {
     // ── Screenshot 1: Terminals (default view) ──────────────────
     console.log('📸 Screenshot 1: dark-terminals.jpg');
-    // Click Terminals tab to ensure we're on the grid view
     const termTab = page.locator('.menu-bar__tab').first();
     await termTab.click();
     await page.waitForTimeout(1000);
@@ -55,7 +92,7 @@ test('Take dark-theme screenshots for website', async () => {
     await chatTab.click();
     await page.waitForTimeout(2000);
 
-    // Wait for chat panel and try to click a session for richer content
+    // Try to click a session for richer content
     const sessionCard = page.locator('.session-card').first();
     const hasSession = await sessionCard.isVisible({ timeout: 5000 }).catch(() => false);
     if (hasSession) {
@@ -76,8 +113,8 @@ test('Take dark-theme screenshots for website', async () => {
     await skillsTab.click();
     await page.waitForTimeout(2000);
 
-    // Try to click the first skill for richer content
-    const skillItem = page.locator('.skills-panel .skill-item, .skills-list .skill-item, [class*="skill"]').first();
+    // Try to click a skill for richer content
+    const skillItem = page.locator('[class*="skill-item"], [class*="skill-list"] [class*="item"]').first();
     const hasSkill = await skillItem.isVisible({ timeout: 3000 }).catch(() => false);
     if (hasSkill) {
       await skillItem.click();
@@ -91,15 +128,12 @@ test('Take dark-theme screenshots for website', async () => {
     });
     console.log('  ✅ dark-skills.jpg saved');
 
-    // ── Screenshot 4: Multi-tool / Terminal with nav bar visible ─
+    // ── Screenshot 4: Terminal with full nav bar visible ─────────
     console.log('📸 Screenshot 4: dark-multi-tool.jpg');
-    // Go back to terminals to show the full app with nav bar
     const termTab2 = page.locator('.menu-bar__tab').first();
     await termTab2.click();
     await page.waitForTimeout(1000);
 
-    // This screenshot shows the terminal grid with the full menu bar visible
-    // (Terminals, Skills, MCP, Hooks, Plugins, 历史聊天)
     await page.screenshot({
       path: resolve(OUTPUT, 'dark-multi-tool.jpg'),
       type: 'jpeg',
@@ -111,4 +145,9 @@ test('Take dark-theme screenshots for website', async () => {
   } finally {
     await app.close();
   }
+}
+
+main().catch((err) => {
+  console.error('❌ Screenshot failed:', err);
+  process.exit(1);
 });

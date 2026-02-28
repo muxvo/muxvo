@@ -161,7 +161,9 @@ export function SessionList({ sessions, selectedId, onSelect, onSessionContextMe
         )}
         <div className="session-list__cards">
           <div className="session-list__empty">
-            {searchQuery ? '无匹配会话' : t('chat.noSessions')}
+            {searchQuery
+              ? (searching ? '搜索中...' : '无匹配会话')
+              : t('chat.noSessions')}
           </div>
         </div>
       </div>
