@@ -1,5 +1,6 @@
 # Muxvo
 
+[![Website](https://img.shields.io/badge/Website-muxvo.com-orange.svg)](https://muxvo.com)
 [![CI](https://github.com/muxvo/muxvo/actions/workflows/ci.yml/badge.svg)](https://github.com/muxvo/muxvo/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Download](https://img.shields.io/badge/Download-macOS_arm64-blue.svg)](https://muxvo.com/download/Muxvo-arm64.dmg)
