@@ -285,7 +285,7 @@ export function FileTempView({
   }, []);
 
   const fileName = getDisplayName(filePath);
-  const sidebarTerminals = terminals.filter(t => t.id !== sourceTerminalId);
+  const sidebarTerminals = terminals.filter(t => t.id === sourceTerminalId);
   const displayContent = isDirty ? editContent : content;
 
   return (
