@@ -32,6 +32,7 @@ export const IPC_CHANNELS = {
     SELECT_DIRECTORY: 'fs:select-directory',
     WRITE_TEMP_IMAGE: 'fs:write-temp-image',
     WRITE_CLIPBOARD_IMAGE: 'fs:write-clipboard-image',
+    SHOW_FILE_MENU: 'fs:show-file-menu',
   },
   CHAT: {
     GET_PROJECTS: 'chat:get-projects',

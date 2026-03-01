@@ -29,7 +29,7 @@ interface FileTempViewProps {
   onCloseTerminal?: (id: string) => void;
 }
 
-const DEFAULT_LEFT_WIDTH = 280;
+const DEFAULT_LEFT_WIDTH = 200;
 const DEFAULT_RIGHT_WIDTH = 280;
 const MIN_WIDTH = 150;
 const MAX_WIDTH = 500;
@@ -83,6 +83,14 @@ export function FileTempView({
   const draggingRef = useRef<'left' | 'right' | null>(null);
   const startXRef = useRef(0);
   const startWidthRef = useRef(0);
+
+  // Load persisted widths from config
+  useEffect(() => {
+    window.api.app.getConfig().then((result: any) => {
+      if (result?.data?.ftvLeftWidth) setLeftWidth(result.data.ftvLeftWidth);
+      if (result?.data?.ftvRightWidth) setRightWidth(result.data.ftvRightWidth);
+    }).catch(() => {});
+  }, []);
 
   // Entrance animation state
   const [entered, setEntered] = useState(false);
@@ -182,6 +190,7 @@ export function FileTempView({
   }, [handleSave, handleCloseRequest, showUnsavedPrompt, fileType]);
 
   // Resize handle logic
+  const latestWidthRef = useRef(0);
   const handleMouseDown = useCallback(
     (side: 'left' | 'right', e: React.MouseEvent) => {
       e.preventDefault();
@@ -197,6 +206,7 @@ export function FileTempView({
             ? startWidthRef.current + delta
             : startWidthRef.current - delta;
         const clamped = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, newWidth));
+        latestWidthRef.current = clamped;
         if (draggingRef.current === 'left') {
           setLeftWidth(clamped);
         } else {
@@ -205,9 +215,15 @@ export function FileTempView({
       }
 
       function handleMouseUp() {
+        const finalSide = draggingRef.current;
         draggingRef.current = null;
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
+        // Persist width to config
+        if (finalSide) {
+          const key = finalSide === 'left' ? 'ftvLeftWidth' : 'ftvRightWidth';
+          window.api.app.saveConfig({ [key]: latestWidthRef.current }).catch(() => {});
+        }
       }
 
       window.addEventListener('mousemove', handleMouseMove);
