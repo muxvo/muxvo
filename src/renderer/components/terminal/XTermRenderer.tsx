@@ -237,18 +237,15 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     });
 
     // Resize observer -> fit terminal (skip when container is too small, e.g. during layout transition)
-    // Debounced via rAF to coalesce multiple resize events within the same frame
-    let resizeRafId: number | null = null;
+    // Called synchronously (no rAF) so fitAddon.fit() runs before paint —
+    // eliminates 1-frame gap where container is resized but canvas hasn't been fitted yet.
+    // ResizeObserver already batches observations per frame, so no extra debouncing needed.
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (!entry || disposed) return;
       const { width, height } = entry.contentRect;
       if (width < 10 || height < 10) return;
-      if (resizeRafId !== null) cancelAnimationFrame(resizeRafId);
-      resizeRafId = requestAnimationFrame(() => {
-        resizeRafId = null;
-        if (!disposed && !suppressResizeRef.current) fitPreservingScroll();
-      });
+      if (!suppressResizeRef.current) fitPreservingScroll();
     });
     observer.observe(containerRef.current);
 
@@ -286,7 +283,6 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     return () => {
       disposed = true;
       unsubOutput();
-      if (resizeRafId !== null) cancelAnimationFrame(resizeRafId);
       observer.disconnect();
       window.removeEventListener('muxvo:theme-change', onThemeChange);
       window.removeEventListener('muxvo:global-zoom', onGlobalZoom);

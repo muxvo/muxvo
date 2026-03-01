@@ -66,7 +66,7 @@ test('Sidebar terminal xterm-screen width unchanged after mode switch (no fit â†
     await expect(secondTile.locator('.xterm-screen')).toBeVisible({ timeout: 10000 });
 
     const widthBefore = await secondTile.locator('.xterm-screen').first().evaluate(
-      (el) => el.offsetWidth
+      (el) => (el as HTMLElement).offsetWidth
     );
     console.log(`  2nd terminal .xterm-screen offsetWidth (tiling): ${widthBefore}px`);
     expect(widthBefore).toBeGreaterThan(100); // Sanity: must be a real terminal
@@ -88,7 +88,7 @@ test('Sidebar terminal xterm-screen width unchanged after mode switch (no fit â†
     console.log('Step 5: Measure xterm-screen in sidebar (after mode switch)');
 
     const widthAfter = await secondTile.locator('.xterm-screen').first().evaluate(
-      (el) => el.offsetWidth
+      (el) => (el as HTMLElement).offsetWidth
     );
     console.log(`  2nd terminal .xterm-screen offsetWidth (sidebar): ${widthAfter}px`);
 
