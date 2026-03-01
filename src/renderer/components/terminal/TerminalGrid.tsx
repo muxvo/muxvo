@@ -7,8 +7,11 @@
  * - Tiling mode with dynamic grid layout (rowPattern/spanRow for centering)
  * - Resize handles between columns/rows via grid-resize manager
  * - Drag & drop reordering via TerminalTile drag props
- * - Focused mode with sidebar (unchanged)
+ * - Focused mode with sidebar (max 3 visible, scrollable)
  */
+
+/** Sidebar shows at most this many terminals per screen; extras are scrollable */
+const MAX_SIDEBAR_VISIBLE = 3;
 
 import { useState, useRef, useCallback, useMemo } from 'react';
 import { useI18n } from '@/renderer/i18n';
@@ -251,20 +254,13 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
       onMouseMove={isFocusedMode ? undefined : handleMouseMove}
       onMouseUp={isFocusedMode ? undefined : handleMouseUp}
     >
-      {terminals.map((t, i) => {
-        const isFocused = focusedId === t.id;
-        const placement = placements[i];
-        const ds: 'none' | 'dragging' | 'drag-over' =
-          t.id === draggingId ? 'dragging' :
-          t.id === dragOverId ? 'drag-over' : 'none';
-
-        // In focused mode: focused terminal fills left 75%, non-focused terminals
-        // are positioned absolutely in the right 25% sidebar area, vertically split.
-        // Each terminal keeps its single xterm instance — no double-instance problem.
-        let cellStyle: React.CSSProperties;
-        if (isFocusedMode) {
-          if (isFocused) {
-            cellStyle = {
+      {/* === Focused mode: split into main + sidebar === */}
+      {isFocusedMode && terminals.map((t, i) => {
+        if (t.id !== focusedId) return null;
+        return (
+          <div
+            key={t.id}
+            style={{
               position: 'absolute',
               top: 0,
               left: 0,
@@ -272,39 +268,7 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
               bottom: 0,
               zIndex: 10,
               overflow: 'hidden',
-            };
-          } else {
-            const sidebarIndex = nonFocusedTerminals.findIndex((s) => s.id === t.id);
-            const sidebarCount = nonFocusedTerminals.length;
-            cellStyle = {
-              position: 'absolute',
-              right: 0,
-              width: '25%',
-              top: `${sidebarIndex * (100 / sidebarCount)}%`,
-              height: `${100 / sidebarCount}%`,
-              zIndex: 11,
-              overflow: 'hidden',
-              borderLeft: '1px solid var(--border)',
-            };
-          }
-        } else {
-          cellStyle = {
-            gridRow: placement?.gridRow,
-            gridColumn: placement?.gridColumn,
-            minWidth: 0,
-            minHeight: 0,
-            height: '100%',
-            overflow: 'hidden',
-          };
-        }
-
-        const isCompact = isFocusedMode && !isFocused;
-
-        return (
-          <div
-            key={t.id}
-            style={cellStyle}
-            onClick={isCompact ? () => onSidebarClick?.(t.id) : undefined}
+            }}
           >
             <TerminalTile
               id={t.id}
@@ -312,17 +276,97 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
               cwd={t.cwd}
               customName={t.customName}
               onRename={onRename}
-              selected={!isFocusedMode && t.id === selectedId}
-              focused={isFocused && isFocusedMode}
-              compact={isCompact}
+              selected={false}
+              focused
+              compact={false}
               staggerIndex={i}
-              draggable={!isFocusedMode}
-              onDragStart={!isFocusedMode ? handleDragStart : undefined}
-              onDragEnd={!isFocusedMode ? handleDragEnd : undefined}
-              onDragOver={!isFocusedMode ? handleDragOver : undefined}
-              onDrop={!isFocusedMode ? handleDrop : undefined}
-              onDragLeave={!isFocusedMode ? handleDragLeave : undefined}
-              dragState={!isFocusedMode ? ds : 'none'}
+              onDoubleClick={() => onDoubleClick?.(t.id)}
+              onClick={() => onClick?.(t.id)}
+              onClose={onClose}
+            />
+          </div>
+        );
+      })}
+
+      {/* Sidebar container: scrollable, max 3 visible at a time */}
+      {isFocusedMode && nonFocusedTerminals.length > 0 && (
+        <div style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: '25%',
+          display: 'flex',
+          flexDirection: 'column',
+          overflowY: 'auto',
+          zIndex: 11,
+          borderLeft: '1px solid var(--border)',
+        }}>
+          {nonFocusedTerminals.map((t) => (
+            <div
+              key={t.id}
+              style={{
+                height: `${100 / Math.min(nonFocusedTerminals.length, MAX_SIDEBAR_VISIBLE)}%`,
+                minHeight: '150px',
+                flexShrink: 0,
+              }}
+              onClick={() => onSidebarClick?.(t.id)}
+            >
+              <TerminalTile
+                id={t.id}
+                state={t.state}
+                cwd={t.cwd}
+                customName={t.customName}
+                onRename={onRename}
+                selected={false}
+                focused={false}
+                compact
+                staggerIndex={0}
+                onDoubleClick={() => onDoubleClick?.(t.id)}
+                onClick={() => onClick?.(t.id)}
+                onClose={onClose}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* === Tiling mode: normal grid layout === */}
+      {!isFocusedMode && terminals.map((t, i) => {
+        const placement = placements[i];
+        const ds: 'none' | 'dragging' | 'drag-over' =
+          t.id === draggingId ? 'dragging' :
+          t.id === dragOverId ? 'drag-over' : 'none';
+
+        return (
+          <div
+            key={t.id}
+            style={{
+              gridRow: placement?.gridRow,
+              gridColumn: placement?.gridColumn,
+              minWidth: 0,
+              minHeight: 0,
+              height: '100%',
+              overflow: 'hidden',
+            }}
+          >
+            <TerminalTile
+              id={t.id}
+              state={t.state}
+              cwd={t.cwd}
+              customName={t.customName}
+              onRename={onRename}
+              selected={t.id === selectedId}
+              focused={false}
+              compact={false}
+              staggerIndex={i}
+              draggable
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              onDragLeave={handleDragLeave}
+              dragState={ds}
               onDoubleClick={() => onDoubleClick?.(t.id)}
               onClick={() => onClick?.(t.id)}
               onClose={onClose}
