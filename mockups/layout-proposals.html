@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muxvo 文件视图布局方案对比</title>
+<style>
+  :root {
+    --bg-deep: #0d1117;
+    --bg-surface: #161b22;
+    --bg-elevated: #1c2128;
+    --bg-hover: #272d36;
+    --border: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #6e7681;
+    --accent: #58a6ff;
+    --accent-glow: rgba(88, 166, 255, 0.15);
+    --green: #3fb950;
+    --orange: #d29922;
+    --font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    padding: 40px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 40px;
+    color: var(--text-primary);
+  }
+
+  .proposal-container {
+    max-width: 1200px;
+    margin: 0 auto 60px;
+  }
+
+  .proposal-label {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .proposal-label .badge {
+    background: var(--accent);
+    color: #000;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 12px;
+  }
+
+  .proposal-desc {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  /* === 模拟窗口 === */
+  .window {
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  .titlebar {
+    height: 36px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .titlebar .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+  .titlebar .dot.red { background: #ff5f56; }
+  .titlebar .dot.yellow { background: #ffbd2e; }
+  .titlebar .dot.green { background: #27c93f; }
+
+  .titlebar .title {
+    flex: 1;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  /* === 三列布局 === */
+  .layout {
+    display: flex;
+    height: 520px;
+  }
+
+  .divider {
+    width: 1px;
+    background: var(--border);
+    cursor: col-resize;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -2px;
+    width: 5px;
+    height: 40px;
+    transform: translateY(-50%);
+    border-radius: 3px;
+    background: var(--text-muted);
+    opacity: 0.3;
+  }
+
+  /* 列面板 */
+  .panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    height: 40px;
+    min-height: 40px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  .panel-header .icon {
+    font-size: 14px;
+    opacity: 0.7;
+  }
+
+  .panel-header .label {
+    flex: 1;
+  }
+
+  .panel-header .badge-sm {
+    font-size: 11px;
+    background: var(--bg-hover);
+    padding: 1px 6px;
+    border-radius: 8px;
+    color: var(--text-muted);
+  }
+
+  .panel-body {
+    flex: 1;
+    overflow-y: auto;
+    background: var(--bg-deep);
+  }
+
+  /* === 终端面板 === */
+  .terminal-panel .panel-body {
+    padding: 12px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+
+  .terminal-panel .panel-header {
+    background: var(--bg-elevated);
+  }
+
+  .prompt {
+    color: var(--green);
+  }
+
+  .cmd {
+    color: var(--text-primary);
+  }
+
+  .output {
+    color: var(--text-secondary);
+  }
+
+  .cursor-block {
+    display: inline-block;
+    width: 8px;
+    height: 16px;
+    background: var(--accent);
+    animation: blink 1s infinite;
+    vertical-align: text-bottom;
+    margin-left: 2px;
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  /* === 文件树 === */
+  .file-tree {
+    padding: 6px 0;
+  }
+
+  .file-tree-item {
+    display: flex;
+    align-items: center;
+    padding: 5px 14px;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+
+  .file-tree-item:hover {
+    background: var(--bg-hover);
+  }
+
+  .file-tree-item.active {
+    background: var(--accent-glow);
+    color: var(--accent);
+  }
+
+  .file-tree-item.folder {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .file-tree-item .indent {
+    display: inline-block;
+  }
+
+  .file-tree-item .icon-file {
+    font-size: 14px;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .file-tree-item .name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .file-tree-item .size {
+    font-size: 11px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  /* === 文件内容 === */
+  .file-content {
+    padding: 0;
+  }
+
+  .code-view {
+    display: flex;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .line-numbers {
+    padding: 12px 0;
+    text-align: right;
+    color: var(--text-muted);
+    user-select: none;
+    min-width: 44px;
+    padding-right: 12px;
+    padding-left: 12px;
+    border-right: 1px solid var(--border);
+    background: var(--bg-surface);
+  }
+
+  .line-numbers div {
+    padding-right: 4px;
+  }
+
+  .code-lines {
+    padding: 12px 16px;
+    flex: 1;
+    overflow-x: auto;
+  }
+
+  .code-lines div {
+    white-space: pre;
+  }
+
+  /* syntax colors */
+  .kw { color: #ff7b72; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: var(--text-muted); }
+  .ty { color: #79c0ff; }
+  .num { color: #79c0ff; }
+  .op { color: var(--text-secondary); }
+
+  /* === 底部标签 === */
+  .column-label {
+    text-align: center;
+    padding: 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    background: var(--bg-surface);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* 优缺点 */
+  .pros-cons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .pros, .cons {
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .pros {
+    background: rgba(63, 185, 80, 0.08);
+    border: 1px solid rgba(63, 185, 80, 0.2);
+  }
+
+  .cons {
+    background: rgba(210, 153, 34, 0.08);
+    border: 1px solid rgba(210, 153, 34, 0.2);
+  }
+
+  .pros strong, .cons strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+
+  .pros strong { color: var(--green); }
+  .cons strong { color: var(--orange); }
+
+  .pros li, .cons li {
+    list-style: none;
+    padding-left: 16px;
+    position: relative;
+    color: var(--text-secondary);
+  }
+  .pros li::before {
+    content: '+';
+    position: absolute;
+    left: 0;
+    color: var(--green);
+    font-weight: 700;
+  }
+  .cons li::before {
+    content: '−';
+    position: absolute;
+    left: 0;
+    color: var(--orange);
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+<h1>Muxvo 文件视图布局方案</h1>
+
+<!-- ===== 方案 A ===== -->
+<div class="proposal-container">
+  <div class="proposal-label">
+    <span class="badge">A</span>
+    终端 | 文件列表 | 文档
+  </div>
+  <p class="proposal-desc">左侧保留终端上下文，中间浏览文件目录，右侧阅读/编辑文件内容。适合边看终端输出边查找文件的场景。</p>
+
+  <div class="window">
+    <div class="titlebar">
+      <div class="dot red"></div>
+      <div class="dot yellow"></div>
+      <div class="dot green"></div>
+      <div class="title">Muxvo — ~/projects/muxvo</div>
+    </div>
+    <div class="layout">
+      <!-- 左: 终端 -->
+      <div class="panel terminal-panel" style="width: 300px;">
+        <div class="panel-header">
+          <span class="icon">⬛</span>
+          <span class="label">Terminal</span>
+          <span class="badge-sm">zsh</span>
+        </div>
+        <div class="panel-body">
+          <div><span class="prompt">~/muxvo $</span> <span class="cmd">npm run build</span></div>
+          <div class="output"></div>
+          <div class="output">> muxvo@0.2.19 build</div>
+          <div class="output">> electron-vite build</div>
+          <div class="output"></div>
+          <div class="output">vite v5.4.2 building for production...</div>
+          <div class="output">✓ 186 modules transformed.</div>
+          <div class="output">dist/main/index.js      42.8 kB</div>
+          <div class="output">dist/preload/index.js   3.2 kB</div>
+          <div class="output">dist/renderer/index.html  0.5 kB</div>
+          <div class="output">dist/renderer/assets/</div>
+          <div class="output">  index-Dk3f8.css      28.4 kB</div>
+          <div class="output">  index-Ba2x1.js      312.6 kB</div>
+          <div class="output"></div>
+          <div class="output" style="color: var(--green);">✓ built in 4.32s</div>
+          <div class="output"></div>
+          <div><span class="prompt">~/muxvo $</span> <span class="cursor-block"></span></div>
+        </div>
+        <div class="column-label">终端</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- 中: 文件列表 -->
+      <div class="panel" style="width: 260px;">
+        <div class="panel-header">
+          <span class="icon">📁</span>
+          <span class="label">muxvo</span>
+          <span class="badge-sm">42 项</span>
+        </div>
+        <div class="panel-body">
+          <div class="file-tree">
+            <div class="file-tree-item folder">
+              <span class="icon-file">▾</span>
+              <span class="name">src</span>
+            </div>
+            <div class="file-tree-item folder" style="padding-left: 28px;">
+              <span class="icon-file">▾</span>
+              <span class="name">main</span>
+            </div>
+            <div class="file-tree-item" style="padding-left: 42px;">
+              <span class="icon-file" style="color: #79c0ff;">⬡</span>
+              <span class="name">index.ts</span>
+              <span class="size">8.2K</span>
+            </div>
+            <div class="file-tree-item folder" style="padding-left: 42px;">
+              <span class="icon-file">▸</span>
+              <span class="name">ipc</span>
+            </div>
+            <div class="file-tree-item folder" style="padding-left: 42px;">
+              <span class="icon-file">▸</span>
+              <span class="name">services</span>
+            </div>
+            <div class="file-tree-item folder" style="padding-left: 28px;">
+              <span class="icon-file">▾</span>
+              <span class="name">renderer</span>
+            </div>
+            <div class="file-tree-item active" style="padding-left: 42px;">
+              <span class="icon-file" style="color: var(--accent);">⬡</span>
+              <span class="name">App.tsx</span>
+              <span class="size">4.1K</span>
+            </div>
+            <div class="file-tree-item folder" style="padding-left: 42px;">
+              <span class="icon-file">▸</span>
+              <span class="name">components</span>
+            </div>
+            <div class="file-tree-item folder" style="padding-left: 42px;">
+              <span class="icon-file">▸</span>
+              <span class="name">contexts</span>
+            </div>
+            <div class="file-tree-item folder" style="padding-left: 42px;">
+              <span class="icon-file">▸</span>
+              <span class="name">features</span>
+            </div>
+            <div class="file-tree-item folder" style="padding-left: 42px;">
+              <span class="icon-file">▸</span>
+              <span class="name">hooks</span>
+            </div>
+            <div class="file-tree-item folder" style="padding-left: 28px;">
+              <span class="icon-file">▸</span>
+              <span class="name">shared</span>
+            </div>
+            <div class="file-tree-item" style="padding-left: 14px;">
+              <span class="icon-file" style="color: var(--green);">⬡</span>
+              <span class="name">package.json</span>
+              <span class="size">2.8K</span>
+            </div>
+            <div class="file-tree-item" style="padding-left: 14px;">
+              <span class="icon-file" style="color: var(--text-muted);">⬡</span>
+              <span class="name">tsconfig.json</span>
+              <span class="size">1.1K</span>
+            </div>
+            <div class="file-tree-item" style="padding-left: 14px;">
+              <span class="icon-file" style="color: var(--text-muted);">⬡</span>
+              <span class="name">vitest.config.ts</span>
+              <span class="size">0.8K</span>
+            </div>
+            <div class="file-tree-item" style="padding-left: 14px;">
+              <span class="icon-file" style="color: var(--text-muted);">⬡</span>
+              <span class="name">electron-builder.yml</span>
+              <span class="size">0.6K</span>
+            </div>
+          </div>
+        </div>
+        <div class="column-label">文件列表</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- 右: 文档内容 -->
+      <div class="panel" style="flex: 1;">
+        <div class="panel-header">
+          <span class="icon" style="color: var(--accent);">⬡</span>
+          <span class="label">App.tsx</span>
+          <span class="badge-sm">只读</span>
+        </div>
+        <div class="panel-body file-content">
+          <div class="code-view">
+            <div class="line-numbers">
+              <div>1</div><div>2</div><div>3</div><div>4</div><div>5</div>
+              <div>6</div><div>7</div><div>8</div><div>9</div><div>10</div>
+              <div>11</div><div>12</div><div>13</div><div>14</div><div>15</div>
+              <div>16</div><div>17</div><div>18</div><div>19</div><div>20</div>
+              <div>21</div><div>22</div><div>23</div>
+            </div>
+            <div class="code-lines">
+<div><span class="kw">import</span> { useState, useEffect } <span class="kw">from</span> <span class="str">'react'</span></div>
+<div><span class="kw">import</span> { TerminalGrid } <span class="kw">from</span> <span class="str">'./components/terminal'</span></div>
+<div><span class="kw">import</span> { PanelProvider } <span class="kw">from</span> <span class="str">'./contexts/PanelContext'</span></div>
+<div><span class="kw">import</span> { MenuBar } <span class="kw">from</span> <span class="str">'./components/menu'</span></div>
+<div></div>
+<div><span class="kw">export default function</span> <span class="fn">App</span>() {</div>
+<div>  <span class="kw">const</span> [activeView, setActiveView] = <span class="fn">useState</span>(<span class="str">'terminal'</span>)</div>
+<div>  <span class="kw">const</span> [terminals, setTerminals] = <span class="fn">useState</span>([])</div>
+<div></div>
+<div>  <span class="fn">useEffect</span>(() => {</div>
+<div>    <span class="cm">// Initialize terminal manager</span></div>
+<div>    <span class="kw">const</span> init = <span class="kw">async</span> () => {</div>
+<div>      <span class="kw">const</span> list = <span class="kw">await</span> window.api.terminal.<span class="fn">list</span>()</div>
+<div>      <span class="fn">setTerminals</span>(list)</div>
+<div>    }</div>
+<div>    <span class="fn">init</span>()</div>
+<div>  }, [])</div>
+<div></div>
+<div>  <span class="kw">return</span> (</div>
+<div>    &lt;<span class="ty">PanelProvider</span>&gt;</div>
+<div>      &lt;<span class="ty">MenuBar</span> /&gt;</div>
+<div>      &lt;<span class="ty">TerminalGrid</span> terminals={terminals} /&gt;</div>
+<div>    &lt;/<span class="ty">PanelProvider</span>&gt;</div>
+            </div>
+          </div>
+        </div>
+        <div class="column-label">文档内容</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pros-cons">
+    <div class="pros">
+      <strong>优势</strong>
+      <ul>
+        <li>终端输出始终可见，方便参考构建日志/错误信息</li>
+        <li>从终端错误定位文件 → 中间选文件 → 右侧看代码，流程自然</li>
+        <li>视线从左到右：上下文 → 导航 → 内容，符合阅读习惯</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <strong>考虑</strong>
+      <ul>
+        <li>终端占据了左侧黄金位置，文件树被挤到中间</li>
+        <li>如果终端不需要时，左侧空间浪费</li>
+        <li>与 VS Code 等主流编辑器的布局习惯不同</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 方案 B ===== -->
+<div class="proposal-container">
+  <div class="proposal-label">
+    <span class="badge">B</span>
+    文件列表 | 文档 | 终端
+  </div>
+  <p class="proposal-desc">左侧文件导航，中间查看/编辑文件，右侧终端辅助。与主流编辑器布局一致，文件操作是核心焦点。</p>
+
+  <div class="window">
+    <div class="titlebar">
+      <div class="dot red"></div>
+      <div class="dot yellow"></div>
+      <div class="dot green"></div>
+      <div class="title">Muxvo — ~/projects/muxvo</div>
+    </div>
+    <div class="layout">
+      <!-- 左: 文件列表 -->
+      <div class="panel" style="width: 260px;">
+        <div class="panel-header">
+          <span class="icon">📁</span>
+          <span class="label">muxvo</span>
+          <span class="badge-sm">42 项</span>
+        </div>
+        <div class="panel-body">
+          <div class="file-tree">
+            <div class="file-tree-item folder">
+              <span class="icon-file">▾</span>
+              <span class="name">src</span>
+            </div>
+            <div class="file-tree-item folder" style="padding-left: 28px;">
+              <span class="icon-file">▾</span>
+              <span class="name">main</span>
+            </div>
+            <div class="file-tree-item" style="padding-left: 42px;">
+              <span class="icon-file" style="color: #79c0ff;">⬡</span>
+              <span class="name">index.ts</span>
+              <span class="size">8.2K</span>
+            </div>
+            <div class="file-tree-item folder" style="padding-left: 42px;">
+              <span class="icon-file">▸</span>
+              <span class="name">ipc</span>
+            </div>
+            <div class="file-tree-item folder" style="padding-left: 42px;">
+              <span class="icon-file">▸</span>
+              <span class="name">services</span>
+            </div>
+            <div class="file-tree-item folder" style="padding-left: 28px;">
+              <span class="icon-file">▾</span>
+              <span class="name">renderer</span>
+            </div>
+            <div class="file-tree-item active" style="padding-left: 42px;">
+              <span class="icon-file" style="color: var(--accent);">⬡</span>
+              <span class="name">App.tsx</span>
+              <span class="size">4.1K</span>
+            </div>
+            <div class="file-tree-item folder" style="padding-left: 42px;">
+              <span class="icon-file">▸</span>
+              <span class="name">components</span>
+            </div>
+            <div class="file-tree-item folder" style="padding-left: 42px;">
+              <span class="icon-file">▸</span>
+              <span class="name">contexts</span>
+            </div>
+            <div class="file-tree-item folder" style="padding-left: 42px;">
+              <span class="icon-file">▸</span>
+              <span class="name">features</span>
+            </div>
+            <div class="file-tree-item folder" style="padding-left: 42px;">
+              <span class="icon-file">▸</span>
+              <span class="name">hooks</span>
+            </div>
+            <div class="file-tree-item folder" style="padding-left: 28px;">
+              <span class="icon-file">▸</span>
+              <span class="name">shared</span>
+            </div>
+            <div class="file-tree-item" style="padding-left: 14px;">
+              <span class="icon-file" style="color: var(--green);">⬡</span>
+              <span class="name">package.json</span>
+              <span class="size">2.8K</span>
+            </div>
+            <div class="file-tree-item" style="padding-left: 14px;">
+              <span class="icon-file" style="color: var(--text-muted);">⬡</span>
+              <span class="name">tsconfig.json</span>
+              <span class="size">1.1K</span>
+            </div>
+            <div class="file-tree-item" style="padding-left: 14px;">
+              <span class="icon-file" style="color: var(--text-muted);">⬡</span>
+              <span class="name">vitest.config.ts</span>
+              <span class="size">0.8K</span>
+            </div>
+            <div class="file-tree-item" style="padding-left: 14px;">
+              <span class="icon-file" style="color: var(--text-muted);">⬡</span>
+              <span class="name">electron-builder.yml</span>
+              <span class="size">0.6K</span>
+            </div>
+          </div>
+        </div>
+        <div class="column-label">文件列表</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- 中: 文档内容 -->
+      <div class="panel" style="flex: 1;">
+        <div class="panel-header">
+          <span class="icon" style="color: var(--accent);">⬡</span>
+          <span class="label">App.tsx</span>
+          <span class="badge-sm">只读</span>
+        </div>
+        <div class="panel-body file-content">
+          <div class="code-view">
+            <div class="line-numbers">
+              <div>1</div><div>2</div><div>3</div><div>4</div><div>5</div>
+              <div>6</div><div>7</div><div>8</div><div>9</div><div>10</div>
+              <div>11</div><div>12</div><div>13</div><div>14</div><div>15</div>
+              <div>16</div><div>17</div><div>18</div><div>19</div><div>20</div>
+              <div>21</div><div>22</div><div>23</div>
+            </div>
+            <div class="code-lines">
+<div><span class="kw">import</span> { useState, useEffect } <span class="kw">from</span> <span class="str">'react'</span></div>
+<div><span class="kw">import</span> { TerminalGrid } <span class="kw">from</span> <span class="str">'./components/terminal'</span></div>
+<div><span class="kw">import</span> { PanelProvider } <span class="kw">from</span> <span class="str">'./contexts/PanelContext'</span></div>
+<div><span class="kw">import</span> { MenuBar } <span class="kw">from</span> <span class="str">'./components/menu'</span></div>
+<div></div>
+<div><span class="kw">export default function</span> <span class="fn">App</span>() {</div>
+<div>  <span class="kw">const</span> [activeView, setActiveView] = <span class="fn">useState</span>(<span class="str">'terminal'</span>)</div>
+<div>  <span class="kw">const</span> [terminals, setTerminals] = <span class="fn">useState</span>([])</div>
+<div></div>
+<div>  <span class="fn">useEffect</span>(() => {</div>
+<div>    <span class="cm">// Initialize terminal manager</span></div>
+<div>    <span class="kw">const</span> init = <span class="kw">async</span> () => {</div>
+<div>      <span class="kw">const</span> list = <span class="kw">await</span> window.api.terminal.<span class="fn">list</span>()</div>
+<div>      <span class="fn">setTerminals</span>(list)</div>
+<div>    }</div>
+<div>    <span class="fn">init</span>()</div>
+<div>  }, [])</div>
+<div></div>
+<div>  <span class="kw">return</span> (</div>
+<div>    &lt;<span class="ty">PanelProvider</span>&gt;</div>
+<div>      &lt;<span class="ty">MenuBar</span> /&gt;</div>
+<div>      &lt;<span class="ty">TerminalGrid</span> terminals={terminals} /&gt;</div>
+<div>    &lt;/<span class="ty">PanelProvider</span>&gt;</div>
+            </div>
+          </div>
+        </div>
+        <div class="column-label">文档内容</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- 右: 终端 -->
+      <div class="panel terminal-panel" style="width: 300px;">
+        <div class="panel-header">
+          <span class="icon">⬛</span>
+          <span class="label">Terminal</span>
+          <span class="badge-sm">zsh</span>
+        </div>
+        <div class="panel-body">
+          <div><span class="prompt">~/muxvo $</span> <span class="cmd">npm run build</span></div>
+          <div class="output"></div>
+          <div class="output">> muxvo@0.2.19 build</div>
+          <div class="output">> electron-vite build</div>
+          <div class="output"></div>
+          <div class="output">vite v5.4.2 building for production...</div>
+          <div class="output">✓ 186 modules transformed.</div>
+          <div class="output">dist/main/index.js      42.8 kB</div>
+          <div class="output">dist/preload/index.js   3.2 kB</div>
+          <div class="output">dist/renderer/index.html  0.5 kB</div>
+          <div class="output">dist/renderer/assets/</div>
+          <div class="output">  index-Dk3f8.css      28.4 kB</div>
+          <div class="output">  index-Ba2x1.js      312.6 kB</div>
+          <div class="output"></div>
+          <div class="output" style="color: var(--green);">✓ built in 4.32s</div>
+          <div class="output"></div>
+          <div><span class="prompt">~/muxvo $</span> <span class="cursor-block"></span></div>
+        </div>
+        <div class="column-label">终端</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pros-cons">
+    <div class="pros">
+      <strong>优势</strong>
+      <ul>
+        <li>与 VS Code / JetBrains 等主流 IDE 布局一致，零学习成本</li>
+        <li>文件树在左侧是最自然的导航位置</li>
+        <li>代码编辑区在中间获得最大空间和视觉焦点</li>
+        <li>终端在右侧作为辅助参考，不抢主体注意力</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <strong>考虑</strong>
+      <ul>
+        <li>与当前 Muxvo 的实现完全一致（文件树 | 内容 | 终端）</li>
+        <li>终端在右侧宽度受限，长命令输出可能需要横向滚动</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
