@@ -16,6 +16,7 @@ import '@xterm/xterm/css/xterm.css';
 
 interface Props {
   terminalId: string;
+  suppressResize?: boolean;
 }
 
 /** Check if a drag event carries file data (Finder or Muxvo internal) */
@@ -47,13 +48,16 @@ function extractFilePaths(e: React.DragEvent): string[] {
   return [];
 }
 
-export function XTermRenderer({ terminalId }: Props): JSX.Element {
+export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const searchAddonRef = useRef<SearchAddon | null>(null);
   const [searchVisible, setSearchVisible] = useState(false);
   const [fileDropActive, setFileDropActive] = useState(false);
   const dragEnterCountRef = useRef(0);
+  // Ref tracks latest suppressResize value so the closure in useEffect always reads current state
+  const suppressResizeRef = useRef(suppressResize ?? false);
+  useEffect(() => { suppressResizeRef.current = suppressResize ?? false; }, [suppressResize]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -246,9 +250,11 @@ export function XTermRenderer({ terminalId }: Props): JSX.Element {
     });
     observer.observe(containerRef.current);
 
-    // Notify Main process of terminal size changes
+    // Notify Main process of terminal size changes (suppressed for compact/sidebar terminals)
     term.onResize(({ cols, rows }) => {
-      window.api.terminal.resize(terminalId, cols, rows);
+      if (!suppressResizeRef.current) {
+        window.api.terminal.resize(terminalId, cols, rows);
+      }
     });
 
     // Listen for UI theme changes to update xterm theme live
