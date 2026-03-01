@@ -142,6 +142,8 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.FS.WRITE_TEMP_IMAGE, { imageData, format }),
     writeClipboardImage: (imagePath: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.FS.WRITE_CLIPBOARD_IMAGE, { imagePath }),
+    showFileMenu: (path: string, isDirectory: boolean, x: number, y: number) =>
+      ipcRenderer.invoke(IPC_CHANNELS.FS.SHOW_FILE_MENU, { path, isDirectory, x, y }),
   },
 
   // --- Chat domain ---

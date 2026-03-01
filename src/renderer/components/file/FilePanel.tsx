@@ -157,6 +157,12 @@ export function FilePanel({ projectCwd, onClose, onOpenFile }: FilePanelProps) {
     }
   }, [expandedFolders]);
 
+  const handleContextMenu = useCallback((entry: FileEntry, e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!entry.path) return;
+    window.api.fs.showFileMenu(entry.path, entry.type === 'folder', e.clientX, e.clientY);
+  }, []);
+
   const handleFileClick = useCallback(
     (entry: FileEntry) => {
       if (entry.type === 'folder') {
@@ -203,6 +209,7 @@ export function FilePanel({ projectCwd, onClose, onOpenFile }: FilePanelProps) {
               isActive={false}
               expanded={entry.type === 'folder' && entry.path ? expandedFolders.has(entry.path) : undefined}
               onClick={() => handleFileClick(entry)}
+              onContextMenu={(e) => handleContextMenu(entry, e)}
               filePath={entry.path}
             />
           ))}

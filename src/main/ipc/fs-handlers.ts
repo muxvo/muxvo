@@ -4,7 +4,7 @@
  * Handles fs:read-dir, fs:read-file, fs:write-file IPC channels.
  */
 
-import { ipcMain, dialog } from 'electron';
+import { ipcMain, dialog, shell, clipboard, Menu, BrowserWindow } from 'electron';
 import { promises as fsp } from 'fs';
 import { join, resolve, normalize } from 'path';
 import { homedir, tmpdir } from 'os';
@@ -131,5 +131,30 @@ export function registerFsHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.FS.SELECT_DIRECTORY, async (_event, params?: { defaultPath?: string }) => {
     return handlers.selectDirectory(params);
+  });
+
+  // Right-click context menu for file/folder items
+  ipcMain.handle(IPC_CHANNELS.FS.SHOW_FILE_MENU, async (_event, p: { path: string; isDirectory: boolean; x: number; y: number }) => {
+    return new Promise<{ action: string | null }>((resolve) => {
+      const template: Electron.MenuItemConstructorOptions[] = [
+        { label: '复制路径', click: () => { clipboard.writeText(p.path); resolve({ action: 'copy-path' }); } },
+        { label: '在 Finder 中打开', click: () => { shell.showItemInFolder(p.path); resolve({ action: 'reveal' }); } },
+      ];
+
+      if (!p.isDirectory) {
+        template.push(
+          { type: 'separator' },
+          { label: '用默认应用打开', click: () => { shell.openPath(p.path); resolve({ action: 'open-default' }); } },
+        );
+      }
+
+      const menu = Menu.buildFromTemplate(template);
+      menu.popup({
+        x: p.x,
+        y: p.y,
+        window: BrowserWindow.getFocusedWindow() || undefined,
+        callback: () => resolve({ action: null }),
+      });
+    });
   });
 }

@@ -17,6 +17,7 @@ interface FileItemProps {
   isActive?: boolean;
   expanded?: boolean;
   onClick?: () => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
   filePath?: string;
 }
 
@@ -42,6 +43,7 @@ export function FileItem({
   isActive,
   expanded,
   onClick,
+  onContextMenu,
   filePath,
 }: FileItemProps) {
   const { t } = useI18n();
@@ -73,6 +75,7 @@ export function FileItem({
       className={classList}
       style={{ paddingLeft: 8 + indent * 20 }}
       onClick={onClick}
+      onContextMenu={onContextMenu}
       draggable={isDraggable}
       onDragStart={isDraggable ? handleDragStart : undefined}
       onDragEnd={isDraggable ? handleDragEnd : undefined}

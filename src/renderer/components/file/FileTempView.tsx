@@ -261,6 +261,12 @@ export function FileTempView({
     }
   }, [expandedFolders]);
 
+  const handleContextMenu = useCallback((entry: TreeEntry, e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!entry.path) return;
+    window.api.fs.showFileMenu(entry.path, entry.type === 'folder', e.clientX, e.clientY);
+  }, []);
+
   // File click with unsaved check
   const handleTreeFileClick = useCallback(
     (entry: TreeEntry) => {
@@ -327,6 +333,7 @@ export function FileTempView({
               isActive={entry.path === filePath || entry.name === fileName}
               expanded={entry.type === 'folder' && entry.path ? expandedFolders.has(entry.path) : undefined}
               onClick={() => handleTreeFileClick(entry)}
+              onContextMenu={(e) => handleContextMenu(entry, e)}
               filePath={entry.path}
             />
           ))}
