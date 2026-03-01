@@ -213,33 +213,32 @@
   padding: 0 2px;
 }
 
-/* File button (amber pill) */
+/* File/folder button (icon-only) */
 .tile-file-btn {
   display: flex;
   align-items: center;
-  gap: 0;
-  padding: 3px 6px;
+  justify-content: center;
+  padding: 3px 5px;
   border-radius: 4px;
-  background: rgba(232, 167, 72, 0.15);
-  border: 1px solid rgba(232, 167, 72, 0.3);
+  background: transparent;
+  border: 1px solid transparent;
   color: var(--accent);
-  font-size: 11px;
-  font-weight: 600;
-  font-family: var(--font-sans);
   transition: all 0.15s;
   flex-shrink: 0;
   z-index: 10;
   cursor: pointer;
+  opacity: 0.7;
 }
 
 .tile-file-btn:hover {
-  background: rgba(232, 167, 72, 0.25);
-  border-color: var(--accent);
+  background: rgba(232, 167, 72, 0.15);
+  border-color: rgba(232, 167, 72, 0.3);
+  opacity: 1;
 }
 
 .tile-file-btn svg {
-  width: 13px;
-  height: 13px;
+  width: 14px;
+  height: 14px;
 }
 
 /* Maximize / focus button (blue pill) */

@@ -10,12 +10,12 @@ import { usePanelDispatch } from '@/renderer/contexts/PanelContext';
 import { shortenPath } from '@/renderer/utils/path-display';
 import type { UseNamingResult } from '@/renderer/hooks/useNaming';
 
-/** File icon SVG (inline) */
-function FileIcon() {
+/** Folder icon SVG (inline) */
+function FolderIcon() {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 7c0-1.1.9-2 2-2h4l2 2h8c1.1 0 2 .9 2 2v9c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V7z" fillOpacity="0.2" />
+      <path d="M3 7c0-1.1.9-2 2-2h4l2 2h8c1.1 0 2 .9 2 2v9c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V7z" fill="none" strokeWidth="1.5" />
     </svg>
   );
 }
@@ -188,8 +188,8 @@ export function TileHeader({
         ) : (
           <>
             {/* File button (amber pill) */}
-            <button className="tile-file-btn" onClick={handleFileClick}>
-              <FileIcon />
+            <button className="tile-file-btn" onClick={handleFileClick} title={t('terminal.file')}>
+              <FolderIcon />
             </button>
 
             {/* Maximize button (blue pill) */}

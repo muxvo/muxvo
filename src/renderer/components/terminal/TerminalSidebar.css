@@ -9,5 +9,6 @@
 
 .terminal-sidebar__item {
   min-height: 150px;
+  flex-shrink: 0;
   cursor: pointer;
 }
