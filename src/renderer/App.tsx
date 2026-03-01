@@ -162,6 +162,8 @@ function AppContent({
           viewMode={terminalState.viewMode}
           focusedId={terminalState.focusedId}
           selectedId={terminalState.selectedId}
+          chatSidebarTerminalId={state.terminalChat.open ? state.terminalChat.terminalId : null}
+          onCloseChatSidebar={() => dispatch({ type: 'CLOSE_TERMINAL_CHAT' })}
           onDoubleClick={actions.handleDoubleClick}
           onSidebarClick={actions.handleSidebarClick}
           onClick={actions.handleTileClick}

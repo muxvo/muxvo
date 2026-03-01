@@ -1,0 +1,73 @@
+/* TerminalChatSidebar — 终端聊天历史侧边栏样式 */
+
+.terminal-chat-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-primary);
+  border-left: 1px solid var(--border);
+  overflow: hidden;
+}
+
+/* Header: session selector + close button */
+.terminal-chat-sidebar__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  min-height: 36px;
+  flex-shrink: 0;
+}
+
+.terminal-chat-sidebar__select {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  text-overflow: ellipsis;
+}
+
+.terminal-chat-sidebar__select:focus {
+  border-color: var(--accent);
+}
+
+.terminal-chat-sidebar__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.terminal-chat-sidebar__close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+/* Content area */
+.terminal-chat-sidebar__content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.terminal-chat-sidebar__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
+  font-size: 13px;
+}

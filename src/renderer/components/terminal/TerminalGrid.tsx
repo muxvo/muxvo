@@ -19,6 +19,7 @@ import { calculateGridLayout, GridLayoutResult } from '@/shared/utils/grid-layou
 import { createGridResizeManager } from '@/renderer/stores/grid-resize';
 import { createDragManager } from '@/renderer/stores/drag-manager';
 import { TerminalTile } from './TerminalTile';
+import { TerminalChatSidebar } from './TerminalChatSidebar';
 import { ResizeHandle } from './ResizeHandle';
 import { TerminalInfo } from '@/renderer/types/terminal';
 
@@ -27,6 +28,8 @@ interface Props {
   viewMode?: 'Tiling' | 'Focused';
   focusedId?: string | null;
   selectedId?: string | null;
+  chatSidebarTerminalId?: string | null;
+  onCloseChatSidebar?: () => void;
   onDoubleClick?: (id: string) => void;
   onSidebarClick?: (id: string) => void;
   onClick?: (id: string) => void;
@@ -37,7 +40,7 @@ interface Props {
   maxReached?: boolean;
 }
 
-export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, selectedId, onDoubleClick, onSidebarClick, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached }: Props): JSX.Element {
+export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, selectedId, chatSidebarTerminalId, onCloseChatSidebar, onDoubleClick, onSidebarClick, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached }: Props): JSX.Element {
   const { t } = useI18n();
   if (terminals.length === 0) {
     return (
@@ -67,6 +70,8 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
       terminals={terminals}
       selectedId={selectedId}
       focusedId={viewMode === 'Focused' ? focusedId : null}
+      chatSidebarTerminalId={viewMode === 'Focused' ? null : chatSidebarTerminalId}
+      onCloseChatSidebar={onCloseChatSidebar}
       onDoubleClick={onDoubleClick}
       onSidebarClick={onSidebarClick}
       onClick={onClick}
@@ -148,6 +153,8 @@ interface TilingGridProps {
   terminals: TerminalInfo[];
   selectedId?: string | null;
   focusedId?: string | null;
+  chatSidebarTerminalId?: string | null;
+  onCloseChatSidebar?: () => void;
   onDoubleClick?: (id: string) => void;
   onSidebarClick?: (id: string) => void;
   onClick?: (id: string) => void;
@@ -158,7 +165,7 @@ interface TilingGridProps {
   maxReached?: boolean;
 }
 
-function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebarClick, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached }: TilingGridProps): JSX.Element {
+function TilingGrid({ terminals, selectedId, focusedId, chatSidebarTerminalId, onCloseChatSidebar, onDoubleClick, onSidebarClick, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached }: TilingGridProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const layout = calculateGridLayout(terminals.length);
   const { cols, rows } = layout;
@@ -328,34 +335,55 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
           };
         }
 
+        const hasChatSidebar = !isFocusedMode && chatSidebarTerminalId === t.id;
+
+        // When chat sidebar is open, wrap tile + sidebar in a flex row container
+        const outerStyle: React.CSSProperties = hasChatSidebar
+          ? { ...cellStyle, display: 'flex', flexDirection: 'row' }
+          : cellStyle;
+
         return (
           <div
             key={t.id}
-            style={cellStyle}
+            style={outerStyle}
             onClick={isFocusedMode && !isFocused ? () => onSidebarClick?.(t.id) : undefined}
             onWheel={isFocusedMode && !isFocused ? handleSidebarWheel : undefined}
           >
-            <TerminalTile
-              id={t.id}
-              state={t.state}
-              cwd={t.cwd}
-              customName={t.customName}
-              onRename={onRename}
-              selected={!isFocusedMode && t.id === selectedId}
-              focused={isFocused}
-              compact={isFocusedMode && !isFocused}
-              staggerIndex={i}
-              draggable={!isFocusedMode}
-              onDragStart={!isFocusedMode ? handleDragStart : undefined}
-              onDragEnd={!isFocusedMode ? handleDragEnd : undefined}
-              onDragOver={!isFocusedMode ? handleDragOver : undefined}
-              onDrop={!isFocusedMode ? handleDrop : undefined}
-              onDragLeave={!isFocusedMode ? handleDragLeave : undefined}
-              dragState={!isFocusedMode ? ds : 'none'}
-              onDoubleClick={() => onDoubleClick?.(t.id)}
-              onClick={() => onClick?.(t.id)}
-              onClose={onClose}
-            />
+            <div style={hasChatSidebar
+              ? { flex: '0 0 50%', minWidth: 0, overflow: 'hidden', height: '100%' }
+              : { width: '100%', height: '100%' }
+            }>
+              <TerminalTile
+                id={t.id}
+                state={t.state}
+                cwd={t.cwd}
+                customName={t.customName}
+                onRename={onRename}
+                selected={!isFocusedMode && t.id === selectedId}
+                focused={isFocused}
+                compact={isFocusedMode && !isFocused}
+                staggerIndex={i}
+                draggable={!isFocusedMode}
+                onDragStart={!isFocusedMode ? handleDragStart : undefined}
+                onDragEnd={!isFocusedMode ? handleDragEnd : undefined}
+                onDragOver={!isFocusedMode ? handleDragOver : undefined}
+                onDrop={!isFocusedMode ? handleDrop : undefined}
+                onDragLeave={!isFocusedMode ? handleDragLeave : undefined}
+                dragState={!isFocusedMode ? ds : 'none'}
+                onDoubleClick={() => onDoubleClick?.(t.id)}
+                onClick={() => onClick?.(t.id)}
+                onClose={onClose}
+              />
+            </div>
+            {hasChatSidebar && (
+              <div style={{ flex: '0 0 50%', minWidth: 0, overflow: 'hidden', height: '100%' }}>
+                <TerminalChatSidebar
+                  terminalId={t.id}
+                  cwd={t.cwd}
+                  onClose={() => onCloseChatSidebar?.()}
+                />
+              </div>
+            )}
           </div>
         );
       })}
