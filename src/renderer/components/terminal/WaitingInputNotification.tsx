@@ -5,6 +5,7 @@
  * Follows the same position:fixed pattern as UpdateNotification.
  */
 
+import { useState, useEffect } from 'react';
 import { useI18n } from '@/renderer/i18n';
 
 interface Props {
@@ -48,13 +49,29 @@ const styles = {
   label: {
     flex: 1,
   },
+  closeBtn: {
+    background: 'none',
+    border: 'none',
+    color: 'var(--text-secondary)',
+    cursor: 'pointer',
+    padding: '0 2px',
+    fontSize: 14,
+    lineHeight: 1,
+    flexShrink: 0,
+  },
 };
 
 export function WaitingInputNotification({ waitingCount, overlayActive, onSwitchToTerminals }: Props) {
   const { t } = useI18n();
+  const [dismissed, setDismissed] = useState(false);
 
-  // Only show when terminals are waiting AND user can't see terminal tiles
-  if (waitingCount === 0 || !overlayActive) return null;
+  // Reset dismissed when waitingCount changes (new terminal needs attention)
+  useEffect(() => {
+    setDismissed(false);
+  }, [waitingCount]);
+
+  // Only show when terminals are waiting AND user can't see terminal tiles AND not dismissed
+  if (waitingCount === 0 || !overlayActive || dismissed) return null;
 
   return (
     <div style={styles.container} onClick={onSwitchToTerminals}>
@@ -65,6 +82,16 @@ export function WaitingInputNotification({ waitingCount, overlayActive, onSwitch
             ? `1 ${t('terminal.waitingInput')}`
             : `${waitingCount} ${t('terminal.waitingInput')}`}
         </span>
+        <button
+          style={styles.closeBtn}
+          onClick={(e) => {
+            e.stopPropagation();
+            setDismissed(true);
+          }}
+          aria-label="Dismiss"
+        >
+          ✕
+        </button>
       </div>
       <style>{`
         @keyframes waitingDotPulse {

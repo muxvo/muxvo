@@ -231,17 +231,17 @@ describe('Input Detector L2', () => {
       expect(shouldExitWaiting('term-1')).toBe(false);
     });
 
-    test('returns false when buffer has less than 500 bytes', () => {
+    test('returns false when buffer has less than 2000 bytes', () => {
       // After positive detection, feed small output
       detectWaitingInput('Esc to cancel\n', 'term-1'); // triggers, clears buffer
       detectWaitingInput('⠋ Sketching...\n', 'term-1'); // small new output
       expect(shouldExitWaiting('term-1')).toBe(false);
     });
 
-    test('returns true when buffer has >= 500 bytes of new output', () => {
+    test('returns true when buffer has >= 2000 bytes of new output', () => {
       // After positive detection, feed substantial output
       detectWaitingInput('Esc to cancel\n', 'term-1'); // triggers, clears buffer
-      const largeOutput = 'x'.repeat(500);
+      const largeOutput = 'x'.repeat(2000);
       detectWaitingInput(largeOutput, 'term-1');
       expect(shouldExitWaiting('term-1')).toBe(true);
     });
@@ -252,7 +252,7 @@ describe('Input Detector L2', () => {
 
     test('returns false after resetInputDetector clears buffer', () => {
       // Accumulate enough data
-      detectWaitingInput('x'.repeat(600), 'term-1');
+      detectWaitingInput('x'.repeat(2100), 'term-1');
       expect(shouldExitWaiting('term-1')).toBe(true);
       // Reset clears buffer
       resetInputDetector('term-1');

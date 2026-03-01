@@ -178,6 +178,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
             if (machine.state === 'Running') {
               resetInputDetector(id);
               machine.send('WAIT_INPUT');
+              if (managed) managed.waitingSince = Date.now();
               pushStateChange(id, machine.state);
             }
           } else {
@@ -189,12 +190,18 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
               const detected = detectWaitingInput(data, id);
               if (isRunning && detected) {
                 machine.send('WAIT_INPUT');
+                if (managed) managed.waitingSince = Date.now();
                 pushStateChange(id, machine.state);
               } else if (isWaiting && !detected && shouldExitWaiting(id)) {
-                // Process moved past the interactive prompt — auto-recover
-                resetInputDetector(id);
-                machine.send('AUTO_RESUME');
-                pushStateChange(id, machine.state);
+                // Debounce: require at least WAITING_DEBOUNCE_MS in WaitingInput
+                const elapsed = managed?.waitingSince ? Date.now() - managed.waitingSince : Infinity;
+                if (elapsed >= WAITING_DEBOUNCE_MS) {
+                  // Process moved past the interactive prompt — auto-recover
+                  resetInputDetector(id);
+                  machine.send('AUTO_RESUME');
+                  if (managed) managed.waitingSince = null;
+                  pushStateChange(id, machine.state);
+                }
               }
             }
           }
@@ -243,6 +250,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
       if (terminal.machine.state === 'WaitingInput' && !isTerminalAutoResponse(data)) {
         resetInputDetector(id);
         terminal.machine.send('USER_INPUT');
+        terminal.waitingSince = null;
         pushStateChange(id, terminal.machine.state);
       }
       terminal.process.write(data);
