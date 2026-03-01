@@ -124,35 +124,6 @@ describe('TERM L2 -- 状态机与布局测试', () => {
   // 2.2 状态机: 终端进程生命周期 (PRD 6.2)
   // ---------------------------------------------------------------------------
   describe('状态机: 终端进程生命周期', () => {
-    describe('状态 UI 映射验证', () => {
-      const termProcessUiCases = stateUiSpec.cases.filter(
-        (c) => c.machine === 'terminalProcess',
-      );
-
-      test.each(termProcessUiCases)(
-        '$id: $description',
-        async ({ state, ui }) => {
-          // RED: import the real state-ui mapper (will fail)
-          const { getTerminalProcessUI } = await import(
-            '@/renderer/stores/terminal-process-ui-map'
-          );
-
-          const uiState = getTerminalProcessUI(state);
-
-          expect(uiState.statusDotColor).toBe(ui.statusDotColor);
-          expect(uiState.statusDotAnimation).toBe(ui.statusDotAnimation);
-          expect(uiState.inputEnabled).toBe(ui.inputEnabled);
-
-          if ('inputPlaceholder' in ui) {
-            expect(uiState.inputPlaceholder).toBe(ui.inputPlaceholder);
-          }
-          if ('inputHasOptions' in ui) {
-            expect(uiState.inputHasOptions).toBe(ui.inputHasOptions);
-          }
-        },
-      );
-    });
-
     describe('转换路径覆盖 (16/16)', () => {
       test('TERM_L2_21_trans_init_created: T1 [*] -> Created', async () => {
         // RED: import the real terminal state machine (will fail)

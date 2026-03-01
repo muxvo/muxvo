@@ -68,16 +68,6 @@ function TerminalTileInner({
     if (e.animationName === 'tileEnter') setEntered(true);
   }, []);
 
-  // Mouse tracking for gloss effect
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!tileRef.current || compact) return;
-    const rect = tileRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    tileRef.current.style.setProperty('--mx', `${x}%`);
-    tileRef.current.style.setProperty('--my', `${y}%`);
-  };
-
   // Drag: disable in focused/compact mode
   const isDraggable = draggableProp && !focused && !compact;
 
@@ -135,7 +125,6 @@ function TerminalTileInner({
       onDoubleClick={onDoubleClick}
       onMouseDown={onClick}
       onAnimationEnd={handleAnimationEnd}
-      onMouseMove={handleMouseMove}
       onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
       onDrop={handleDrop}

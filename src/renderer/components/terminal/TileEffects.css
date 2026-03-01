@@ -23,27 +23,6 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
-/* Gloss overlay on hover (radial gradient following cursor) */
-.tile::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(
-    circle at var(--mx, 50%) var(--my, 50%),
-    rgba(255, 255, 255, 0.15) 0%,
-    transparent 50%
-  );
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.3s;
-  z-index: 5;
-}
-
-.tile:hover::after {
-  opacity: 0;
-}
-
 /* === Tile header === */
 .tile-header {
   display: flex;
@@ -346,10 +325,6 @@
   50% {
     box-shadow: 0 0 12px var(--success), 0 0 24px rgba(74, 222, 128, 0.3);
   }
-}
-
-.status-dot-pulse {
-  animation: statusPulse 2s infinite ease-in-out;
 }
 
 /* === Entrance animation === */

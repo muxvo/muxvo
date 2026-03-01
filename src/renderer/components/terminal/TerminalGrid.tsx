@@ -17,13 +17,7 @@ import { createGridResizeManager } from '@/renderer/stores/grid-resize';
 import { createDragManager } from '@/renderer/stores/drag-manager';
 import { TerminalTile } from './TerminalTile';
 import { ResizeHandle } from './ResizeHandle';
-
-interface TerminalInfo {
-  id: string;
-  state: string;
-  cwd: string;
-  customName?: string;
-}
+import { TerminalInfo } from '@/renderer/types/terminal';
 
 interface Props {
   terminals: TerminalInfo[];

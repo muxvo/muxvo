@@ -14,7 +14,6 @@ interface GridResizeManager {
   columnRatios: number[];
   rowRatios: number[];
   cursor: string;
-  persistedRatios: number[];
   startColResize(index: number, event: { clientX: number }, containerSize?: number): boolean;
   moveResize(event: { clientX?: number; clientY?: number }): void;
   endResize(): void;
@@ -33,7 +32,6 @@ export function createGridResizeManager(opts: GridResizeOpts): GridResizeManager
     columnRatios: opts.columnRatios ? [...opts.columnRatios] : Array(opts.cols).fill(1),
     rowRatios: opts.rowRatios ? [...opts.rowRatios] : Array(opts.rows).fill(1),
     cursor: 'default',
-    persistedRatios: [],
 
     startColResize(index: number, event: { clientX: number }, containerSize?: number): boolean {
       if (opts.viewMode === 'Focused') return false;
@@ -82,11 +80,6 @@ export function createGridResizeManager(opts: GridResizeOpts): GridResizeManager
     },
 
     endResize() {
-      if (resizeType === 'col') {
-        manager.persistedRatios = [...manager.columnRatios];
-      } else if (resizeType === 'row') {
-        manager.persistedRatios = [...manager.rowRatios];
-      }
       resizeType = null;
       resizeIndex = -1;
       containerPx = 0;
@@ -103,13 +96,11 @@ export function createGridResizeManager(opts: GridResizeOpts): GridResizeManager
     doubleClickColGap(_index: number) {
       const count = manager.columnRatios.length;
       manager.columnRatios = Array(count).fill(1);
-      manager.persistedRatios = [...manager.columnRatios];
     },
 
     doubleClickRowGap(_index: number) {
       const count = manager.rowRatios.length;
       manager.rowRatios = Array(count).fill(1);
-      manager.persistedRatios = [...manager.rowRatios];
     },
   };
 

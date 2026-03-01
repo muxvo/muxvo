@@ -1,12 +1,6 @@
 import { TerminalTile } from './TerminalTile';
+import { TerminalInfo } from '@/renderer/types/terminal';
 import './TerminalSidebar.css';
-
-interface TerminalInfo {
-  id: string;
-  state: string;
-  cwd: string;
-  customName?: string;
-}
 
 interface TerminalSidebarProps {
   terminals: TerminalInfo[];
