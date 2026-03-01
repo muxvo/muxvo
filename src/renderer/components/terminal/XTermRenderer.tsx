@@ -93,8 +93,9 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     const writeDisposable = term.onWriteParsed(() => syncScrollDataAttrs());
 
     // Helper: fit terminal while preserving scroll position.
-    // Saves distance-from-bottom before fit, restores after.
-    // Prevents viewport jumping to top when columns change and buffer rewraps.
+    // Uses proportional (ratio-based) scroll position to survive buffer rewrap
+    // when column count changes significantly (e.g. tiled → focused mode switch).
+    // Absolute offset would overshoot when baseY shrinks after unwrapping lines.
     // Scroll restoration is deferred to next frame because xterm.js v6
     // processes buffer rewrap asynchronously after fit().
     let fitSeq = 0;
@@ -102,7 +103,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       const seq = ++fitSeq;
       const buf = term.buffer.active;
       const wasAtBottom = buf.viewportY >= buf.baseY;
-      const offsetFromBottom = buf.baseY - buf.viewportY;
+      const scrollRatio = buf.baseY > 0 ? buf.viewportY / buf.baseY : 1;
 
       fitAddon.fit();
 
@@ -113,9 +114,12 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
         if (wasAtBottom) {
           term.scrollToBottom();
         } else {
+          const newBaseY = term.buffer.active.baseY;
+          const targetViewportY = Math.round(scrollRatio * newBaseY);
+          const newOffset = newBaseY - targetViewportY;
           term.scrollToBottom();
-          if (offsetFromBottom > 0) {
-            term.scrollLines(-offsetFromBottom);
+          if (newOffset > 0) {
+            term.scrollLines(-newOffset);
           }
         }
         syncScrollDataAttrs();
