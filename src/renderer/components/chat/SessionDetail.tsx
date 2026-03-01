@@ -450,7 +450,7 @@ export const SessionDetail = forwardRef<SessionDetailHandle, SessionDetailProps>
   if (messages.length === 0) {
     return (
       <div className="session-detail">
-        <div className="session-detail__empty">选择一个会话查看详情</div>
+        <div className="session-detail__empty">{t('chat.selectSession')}</div>
       </div>
     );
   }

@@ -46,6 +46,7 @@ export const en = {
   'chat.deleteConfirm': 'Delete this session? This cannot be undone.',
   'chat.resumeSession': 'Resume Chat',
   'chat.resumeTooltip': 'Continue this conversation in terminal',
+  'chat.selectSession': 'Select a session to view details',
   'cwd.title': 'Change Working Directory',
   'cwd.current': 'Current:',
   'cwd.quickPaths': 'Quick Paths',

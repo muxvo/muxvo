@@ -46,6 +46,7 @@ export const zh = {
   'chat.deleteConfirm': '确定删除此聊天记录？删除后无法恢复。',
   'chat.resumeSession': '继续聊天',
   'chat.resumeTooltip': '在终端中继续此对话',
+  'chat.selectSession': '选择一个会话查看详情',
   'cwd.title': '切换工作目录',
   'cwd.current': '当前:',
   'cwd.quickPaths': '快捷路径',
