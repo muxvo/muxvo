@@ -20,16 +20,6 @@ function FolderIcon() {
   );
 }
 
-/** Chat bubble icon SVG (inline, with translucent fill) */
-function ChatIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fillOpacity="0.2" />
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="none" strokeWidth="1.5" />
-    </svg>
-  );
-}
-
 /** Maximize icon SVG (inline) */
 function MaximizeIcon() {
   return (
@@ -99,11 +89,6 @@ export function TileHeader({
   const handleFocusClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onDoubleClick?.();
-  };
-
-  const handleChatClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    panelDispatch({ type: 'OPEN_TERMINAL_CHAT', terminalId: id });
   };
 
   const handleFileClick = (e: React.MouseEvent) => {
@@ -202,11 +187,6 @@ export function TileHeader({
           )
         ) : (
           <>
-            {/* Chat history button (purple pill) */}
-            <button className="tile-chat-btn" onClick={handleChatClick} title={t('chat.history' as any)}>
-              <ChatIcon />
-            </button>
-
             {/* File button (amber pill) */}
             <button className="tile-file-btn" onClick={handleFileClick} title={t('terminal.file')}>
               <FolderIcon />

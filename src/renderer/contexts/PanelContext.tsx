@@ -18,7 +18,6 @@ export interface PanelState {
   menuDropdown: { open: boolean; type: 'mcp' | null };
   tour: { active: boolean };
   settingsModal: { open: boolean };
-  terminalChat: { open: boolean; terminalId: string | null };
 }
 
 export const initialState: PanelState = {
@@ -32,7 +31,6 @@ export const initialState: PanelState = {
   menuDropdown: { open: false, type: null },
   tour: { active: false },
   settingsModal: { open: false },
-  terminalChat: { open: false, terminalId: null },
 };
 
 // ── Actions ──
@@ -57,8 +55,6 @@ type PanelAction =
   | { type: 'COMPLETE_TOUR' }
   | { type: 'OPEN_SETTINGS' }
   | { type: 'CLOSE_SETTINGS' }
-  | { type: 'OPEN_TERMINAL_CHAT'; terminalId: string }
-  | { type: 'CLOSE_TERMINAL_CHAT' }
   | { type: 'CLOSE_ALL' };
 
 // ── Reducer ──
@@ -153,16 +149,6 @@ export function panelReducer(state: PanelState, action: PanelAction): PanelState
       return { ...initialState, settingsModal: { open: true } };
     case 'CLOSE_SETTINGS':
       return { ...state, settingsModal: { open: false } };
-    case 'OPEN_TERMINAL_CHAT':
-      return {
-        ...state,
-        terminalChat: { open: true, terminalId: action.terminalId },
-      };
-    case 'CLOSE_TERMINAL_CHAT':
-      return {
-        ...state,
-        terminalChat: { open: false, terminalId: null },
-      };
     case 'CLOSE_ALL':
       return { ...initialState, tour: state.tour };
     default:

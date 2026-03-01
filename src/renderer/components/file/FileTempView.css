@@ -11,9 +11,9 @@
   background: var(--bg-deep);
 }
 
-/* === Close button === */
-.file-temp-view__close {
-  width: 28px;
+/* === Back button === */
+.file-temp-view__back {
+  width: 32px;
   height: 28px;
   display: flex;
   align-items: center;
@@ -23,14 +23,17 @@
   color: var(--accent);
   background: var(--accent-muted);
   border: 1px solid var(--accent-glow);
-  font-size: 15px;
-  font-weight: 700;
   flex-shrink: 0;
   transition: all 0.15s;
 }
-.file-temp-view__close:hover {
+.file-temp-view__back svg {
+  transition: transform 0.2s;
+}
+.file-temp-view__back:hover {
   background: var(--accent-glow);
-  color: var(--accent-hover);
+}
+.file-temp-view__back:hover svg {
+  transform: translateX(-3px);
 }
 
 /* === Resize handle === */

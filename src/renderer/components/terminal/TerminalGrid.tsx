@@ -19,7 +19,6 @@ import { calculateGridLayout, GridLayoutResult } from '@/shared/utils/grid-layou
 import { createGridResizeManager } from '@/renderer/stores/grid-resize';
 import { createDragManager } from '@/renderer/stores/drag-manager';
 import { TerminalTile } from './TerminalTile';
-import { TerminalChatSidebar } from './TerminalChatSidebar';
 import { ResizeHandle } from './ResizeHandle';
 import { TerminalInfo } from '@/renderer/types/terminal';
 
@@ -28,8 +27,6 @@ interface Props {
   viewMode?: 'Tiling' | 'Focused';
   focusedId?: string | null;
   selectedId?: string | null;
-  chatSidebarTerminalId?: string | null;
-  onCloseChatSidebar?: () => void;
   onDoubleClick?: (id: string) => void;
   onSidebarClick?: (id: string) => void;
   onClick?: (id: string) => void;
@@ -40,7 +37,7 @@ interface Props {
   maxReached?: boolean;
 }
 
-export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, selectedId, chatSidebarTerminalId, onCloseChatSidebar, onDoubleClick, onSidebarClick, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached }: Props): JSX.Element {
+export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, selectedId, onDoubleClick, onSidebarClick, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached }: Props): JSX.Element {
   const { t } = useI18n();
   if (terminals.length === 0) {
     return (
@@ -70,8 +67,6 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
       terminals={terminals}
       selectedId={selectedId}
       focusedId={viewMode === 'Focused' ? focusedId : null}
-      chatSidebarTerminalId={viewMode === 'Focused' ? null : chatSidebarTerminalId}
-      onCloseChatSidebar={onCloseChatSidebar}
       onDoubleClick={onDoubleClick}
       onSidebarClick={onSidebarClick}
       onClick={onClick}
@@ -153,8 +148,6 @@ interface TilingGridProps {
   terminals: TerminalInfo[];
   selectedId?: string | null;
   focusedId?: string | null;
-  chatSidebarTerminalId?: string | null;
-  onCloseChatSidebar?: () => void;
   onDoubleClick?: (id: string) => void;
   onSidebarClick?: (id: string) => void;
   onClick?: (id: string) => void;
@@ -165,7 +158,7 @@ interface TilingGridProps {
   maxReached?: boolean;
 }
 
-function TilingGrid({ terminals, selectedId, focusedId, chatSidebarTerminalId, onCloseChatSidebar, onDoubleClick, onSidebarClick, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached }: TilingGridProps): JSX.Element {
+function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebarClick, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached }: TilingGridProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const layout = calculateGridLayout(terminals.length);
   const { cols, rows } = layout;
@@ -238,7 +231,6 @@ function TilingGrid({ terminals, selectedId, focusedId, chatSidebarTerminalId, o
     setDragOverId(null);
   }, [draggingId, terminals, onReorder]);
 
-  const isChatMode = !!chatSidebarTerminalId;
   const isFocusedMode = !!focusedId;
   const nonFocusedTerminals = isFocusedMode
     ? terminals.filter((t) => t.id !== focusedId)
@@ -264,15 +256,15 @@ function TilingGrid({ terminals, selectedId, focusedId, chatSidebarTerminalId, o
     width: '100%',
     height: '100%',
     position: 'relative',
-    cursor: isFocusedMode || isChatMode ? 'default' : resizeManager.cursor,
+    cursor: isFocusedMode ? 'default' : resizeManager.cursor,
   };
 
   return (
     <div
       ref={containerRef}
       style={gridStyle}
-      onMouseMove={isFocusedMode || isChatMode ? undefined : handleMouseMove}
-      onMouseUp={isFocusedMode || isChatMode ? undefined : handleMouseUp}
+      onMouseMove={isFocusedMode ? undefined : handleMouseMove}
+      onMouseUp={isFocusedMode ? undefined : handleMouseUp}
     >
       {/* Single terminals.map() — mode switching only changes CSS, never unmounts */}
       {terminals.map((t, i) => {
@@ -284,28 +276,7 @@ function TilingGrid({ terminals, selectedId, focusedId, chatSidebarTerminalId, o
 
         let cellStyle: React.CSSProperties;
 
-        if (isChatMode && chatSidebarTerminalId === t.id) {
-          // Chat mode target terminal: left 50%
-          cellStyle = {
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: '50%',
-            bottom: 0,
-            zIndex: 10,
-            overflow: 'hidden',
-          };
-        } else if (isChatMode) {
-          // Chat mode other terminals: hidden but alive
-          cellStyle = {
-            position: 'absolute',
-            width: 0,
-            height: 0,
-            overflow: 'hidden',
-            opacity: 0,
-            pointerEvents: 'none',
-          };
-        } else if (isFocusedMode && isFocused) {
+        if (isFocusedMode && isFocused) {
           // Focused terminal: left 75% (or 100% if no sidebar)
           cellStyle = {
             position: 'absolute',
@@ -370,17 +341,17 @@ function TilingGrid({ terminals, selectedId, focusedId, chatSidebarTerminalId, o
               cwd={t.cwd}
               customName={t.customName}
               onRename={onRename}
-              selected={!isFocusedMode && !isChatMode && t.id === selectedId}
-              focused={isFocused || (isChatMode && chatSidebarTerminalId === t.id)}
+              selected={!isFocusedMode && t.id === selectedId}
+              focused={isFocused}
               compact={isFocusedMode && !isFocused}
               staggerIndex={i}
-              draggable={!isFocusedMode && !isChatMode}
-              onDragStart={!isFocusedMode && !isChatMode ? handleDragStart : undefined}
-              onDragEnd={!isFocusedMode && !isChatMode ? handleDragEnd : undefined}
-              onDragOver={!isFocusedMode && !isChatMode ? handleDragOver : undefined}
-              onDrop={!isFocusedMode && !isChatMode ? handleDrop : undefined}
-              onDragLeave={!isFocusedMode && !isChatMode ? handleDragLeave : undefined}
-              dragState={!isFocusedMode && !isChatMode ? ds : 'none'}
+              draggable={!isFocusedMode}
+              onDragStart={!isFocusedMode ? handleDragStart : undefined}
+              onDragEnd={!isFocusedMode ? handleDragEnd : undefined}
+              onDragOver={!isFocusedMode ? handleDragOver : undefined}
+              onDrop={!isFocusedMode ? handleDrop : undefined}
+              onDragLeave={!isFocusedMode ? handleDragLeave : undefined}
+              dragState={!isFocusedMode ? ds : 'none'}
               onDoubleClick={() => onDoubleClick?.(t.id)}
               onClick={() => onClick?.(t.id)}
               onClose={onClose}
@@ -389,18 +360,8 @@ function TilingGrid({ terminals, selectedId, focusedId, chatSidebarTerminalId, o
         );
       })}
 
-      {/* Chat sidebar: right 50% (chat mode only) */}
-      {isChatMode && chatSidebarTerminalId && (() => {
-        const target = terminals.find(t => t.id === chatSidebarTerminalId);
-        return target ? (
-          <div style={{ position: 'absolute', top: 0, left: '50%', right: 0, bottom: 0, zIndex: 10, overflow: 'hidden' }}>
-            <TerminalChatSidebar terminalId={target.id} cwd={target.cwd} onClose={() => onCloseChatSidebar?.()} />
-          </div>
-        ) : null;
-      })()}
-
       {/* Column resize handles (tiling mode only) */}
-      {!isFocusedMode && !isChatMode && cols > 1 && colHandlePositions.map((pct, idx) => (
+      {!isFocusedMode && cols > 1 && colHandlePositions.map((pct, idx) => (
         <ResizeHandle
           key={`col-${idx}`}
           type="col"
@@ -419,7 +380,7 @@ function TilingGrid({ terminals, selectedId, focusedId, chatSidebarTerminalId, o
       ))}
 
       {/* Row resize handles (tiling mode only) */}
-      {!isFocusedMode && !isChatMode && rows > 1 && rowHandlePositions.map((pct, idx) => (
+      {!isFocusedMode && rows > 1 && rowHandlePositions.map((pct, idx) => (
         <ResizeHandle
           key={`row-${idx}`}
           type="row"

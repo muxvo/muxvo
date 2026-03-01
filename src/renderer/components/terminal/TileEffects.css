@@ -192,34 +192,6 @@
   padding: 0 2px;
 }
 
-/* Chat history button (purple pill) */
-.tile-chat-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3px 5px;
-  border-radius: 4px;
-  background: transparent;
-  border: 1px solid transparent;
-  color: #a78bfa;
-  transition: all 0.15s;
-  flex-shrink: 0;
-  z-index: 10;
-  cursor: pointer;
-  opacity: 0.7;
-}
-
-.tile-chat-btn:hover {
-  background: rgba(167, 139, 250, 0.15);
-  border-color: rgba(167, 139, 250, 0.3);
-  opacity: 1;
-}
-
-.tile-chat-btn svg {
-  width: 18px;
-  height: 18px;
-}
-
 /* File/folder button (icon-only) */
 .tile-file-btn {
   display: flex;
