@@ -10,7 +10,7 @@
  * - Focused mode with sidebar (unchanged)
  */
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { useI18n } from '@/renderer/i18n';
 import { calculateGridLayout, GridLayoutResult } from '@/shared/utils/grid-layout';
 import { createGridResizeManager } from '@/renderer/stores/grid-resize';
@@ -161,16 +161,10 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
   const { cols, rows } = layout;
 
   // Resize manager — recreate when grid shape changes
-  const resizeRef = useRef<ReturnType<typeof createGridResizeManager> | null>(null);
-  const prevShapeRef = useRef<string>('');
-  const shapeKey = `${cols}x${rows}`;
-
-  if (shapeKey !== prevShapeRef.current) {
-    resizeRef.current = createGridResizeManager({ cols, rows });
-    prevShapeRef.current = shapeKey;
-  }
-
-  const resizeManager = resizeRef.current!;
+  const resizeManager = useMemo(
+    () => createGridResizeManager({ cols, rows }),
+    [cols, rows],
+  );
 
   // Force re-render when ratios change during resize
   const [, forceUpdate] = useState(0);

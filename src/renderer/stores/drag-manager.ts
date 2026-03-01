@@ -1,5 +1,7 @@
 /**
  * Drag manager for terminal reordering.
+ * TODO: Simplify — each drop creates a new instance and cancel() is never called.
+ * Could be replaced with a pure function reorderArray(order, dragId, targetId).
  */
 
 interface DragManagerOpts {
