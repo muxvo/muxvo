@@ -190,7 +190,6 @@ export function TileHeader({
             {/* File button (amber pill) */}
             <button className="tile-file-btn" onClick={handleFileClick}>
               <FileIcon />
-              {t('terminal.file')}
             </button>
 
             {/* Maximize button (blue pill) */}

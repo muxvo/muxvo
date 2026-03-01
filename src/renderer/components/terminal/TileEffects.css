@@ -217,8 +217,8 @@
 .tile-file-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
+  gap: 0;
+  padding: 3px 6px;
   border-radius: 4px;
   background: rgba(232, 167, 72, 0.15);
   border: 1px solid rgba(232, 167, 72, 0.3);
