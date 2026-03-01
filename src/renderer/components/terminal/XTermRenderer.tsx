@@ -16,7 +16,6 @@ import '@xterm/xterm/css/xterm.css';
 
 interface Props {
   terminalId: string;
-  suppressResize?: boolean;
 }
 
 /** Check if a drag event carries file data (Finder or Muxvo internal) */
@@ -48,7 +47,7 @@ function extractFilePaths(e: React.DragEvent): string[] {
   return [];
 }
 
-export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Element {
+export function XTermRenderer({ terminalId }: Props): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const searchAddonRef = useRef<SearchAddon | null>(null);
@@ -76,8 +75,13 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       containerRef.current.style.opacity = '0';
     }
     const addonManager = createAddonManager(term);
-    addonManager.loadAll();
-    searchAddonRef.current = addonManager.getSearchAddon();
+    // loadAll is async (waits for document.fonts.ready before WebGL init).
+    // FitAddon is loaded synchronously at the start, so getFitAddon() is safe here.
+    // SearchAddon is set after the promise resolves.
+    addonManager.loadAll().then(() => {
+      if (disposed) return;
+      searchAddonRef.current = addonManager.getSearchAddon();
+    });
     const fitAddon = addonManager.getFitAddon();
 
     // Expose xterm scroll state on the container div for E2E testability.
@@ -242,11 +246,9 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     });
     observer.observe(containerRef.current);
 
-    // Notify Main process of terminal size changes (skip for compact/sidebar instances)
+    // Notify Main process of terminal size changes
     term.onResize(({ cols, rows }) => {
-      if (!suppressResize) {
-        window.api.terminal.resize(terminalId, cols, rows);
-      }
+      window.api.terminal.resize(terminalId, cols, rows);
     });
 
     // Listen for UI theme changes to update xterm theme live
@@ -265,9 +267,9 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
 
     // Listen for force-refit requests (e.g. after FileTempView overlay closes)
     const onRefit = () => {
-      if (!disposed && !suppressResize) {
+      if (!disposed) {
         fitPreservingScroll();
-        // Force re-send dimensions even if cols/rows unchanged (another instance may have altered PTY size)
+        // Force re-send dimensions even if cols/rows unchanged
         window.api.terminal.resize(terminalId, term.cols, term.rows);
       }
     };

@@ -50,6 +50,10 @@ vi.mock('@xterm/addon-search', () => ({
   })),
 }));
 
+// Mock document.fonts.ready for node test environment
+(globalThis as any).document = (globalThis as any).document || {};
+(globalThis as any).document.fonts = { ready: Promise.resolve() };
+
 function createMockTerminal() {
   return {
     loadAddon: vi.fn(),
@@ -73,11 +77,11 @@ describe('Terminal Addon Manager', () => {
 
     expect(typeof manager.loadAll).toBe('function');
     expect(typeof manager.disposeAll).toBe('function');
-    expect(typeof manager.recoverWebgl).toBe('function');
+    expect(typeof manager.releaseWebgl).toBe('function');
     expect(typeof manager.getFitAddon).toBe('function');
     expect(typeof manager.getSearchAddon).toBe('function');
 
-    const addons = manager.loadAll();
+    const addons = await manager.loadAll();
     expect(addons).toHaveProperty('fit');
     expect(addons).toHaveProperty('webgl');
     expect(addons).toHaveProperty('unicode11');
@@ -100,7 +104,7 @@ describe('Terminal Addon Manager', () => {
     const manager = createAddonManager(term as any);
 
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const addons = manager.loadAll();
+    const addons = await manager.loadAll();
 
     expect(addons.webgl).toBeNull();
     expect(addons.fit).toBeTruthy();
@@ -120,7 +124,7 @@ describe('Terminal Addon Manager', () => {
     const term = createMockTerminal();
     const manager = createAddonManager(term as any);
 
-    manager.loadAll();
+    await manager.loadAll();
 
     expect(term.unicode.activeVersion).toBe('11');
   });

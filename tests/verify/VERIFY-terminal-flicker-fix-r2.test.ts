@@ -93,21 +93,42 @@ describe('Grid container perspective removal', () => {
 });
 
 // ============================================================================
-// 4. TerminalSidebar always rendered (not conditionally mounted)
+// 4. CSS-only sidebar — no separate TerminalSidebar in TerminalGrid
 // ============================================================================
-describe('TerminalSidebar always-render', () => {
-  it('TerminalSidebar is not conditionally rendered with && short-circuit', () => {
+describe('CSS-only sidebar layout (no dual instances)', () => {
+  it('TerminalGrid does not import or render TerminalSidebar', () => {
     const fs = require('fs');
     const code = fs.readFileSync(
       require('path').resolve(__dirname, '../../src/renderer/components/terminal/TerminalGrid.tsx'),
       'utf-8'
     );
 
-    // Old pattern: {isFocusedMode && sidebarTerminals.length > 0 && <TerminalSidebar
-    // This should NOT exist — sidebar should always be rendered
-    expect(code).not.toMatch(/isFocusedMode\s*&&\s*sidebarTerminals\.length\s*>\s*0\s*&&\s*[<(]\s*TerminalSidebar/);
+    // TerminalSidebar should not be imported or used — sidebar is CSS-only now
+    expect(code).not.toMatch(/import\s*\{[^}]*TerminalSidebar/);
+    expect(code).not.toMatch(/<TerminalSidebar/);
+  });
 
-    // Sidebar should use display CSS for visibility control instead
-    expect(code).toMatch(/display:\s*isFocusedMode/);
+  it('Non-focused terminals are positioned via CSS absolute in right 25%', () => {
+    const fs = require('fs');
+    const code = fs.readFileSync(
+      require('path').resolve(__dirname, '../../src/renderer/components/terminal/TerminalGrid.tsx'),
+      'utf-8'
+    );
+
+    // Non-focused terminals use absolute positioning with width: '25%'
+    expect(code).toMatch(/width:\s*'25%'/);
+    // They are not hidden with width:0/height:0/opacity:0
+    expect(code).not.toMatch(/width:\s*0,\s*\n?\s*height:\s*0/);
+  });
+
+  it('XTermRenderer no longer accepts suppressResize prop', () => {
+    const fs = require('fs');
+    const code = fs.readFileSync(
+      require('path').resolve(__dirname, '../../src/renderer/components/terminal/XTermRenderer.tsx'),
+      'utf-8'
+    );
+
+    // suppressResize should be completely removed
+    expect(code).not.toMatch(/suppressResize/);
   });
 });

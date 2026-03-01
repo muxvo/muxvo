@@ -3,8 +3,9 @@
  *
  * 验证 onContextLoss 回调中：
  * 1. dispose 当前 WebGL addon
- * 2. 延迟 100ms 后尝试重建 WebGL（调用 loadWebgl）
- * 3. 重建失败时 webglAddon 保持 null（xterm 自动使用 canvas）
+ * 2. 使用指数退避延迟重建 WebGL（1s, 2s, 4s）
+ * 3. 3 次 context loss 后永久降级为 Canvas
+ * 4. 重建失败时 webglAddon 保持 null（xterm 自动使用 canvas）
  */
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 
@@ -58,6 +59,10 @@ vi.mock('@xterm/addon-ligatures/lib/addon-ligatures.mjs', () => ({
   })),
 }));
 
+// Mock document.fonts.ready for node test environment
+(globalThis as any).document = (globalThis as any).document || {};
+(globalThis as any).document.fonts = { ready: Promise.resolve() };
+
 // Mock Terminal
 const mockTerminal = {
   loadAddon: vi.fn().mockImplementation(() => {
@@ -78,10 +83,10 @@ describe('Bug 3: WebGL context loss recovery', () => {
     vi.useFakeTimers();
   });
 
-  test('onContextLoss disposes addon and attempts rebuild after 100ms', async () => {
+  test('onContextLoss disposes addon and attempts rebuild with exponential backoff', async () => {
     const { createAddonManager } = await import('@/renderer/utils/terminal-addon-manager');
     const manager = createAddonManager(mockTerminal as any);
-    const addons = manager.loadAll();
+    const addons = await manager.loadAll();
 
     // WebGL should have been loaded (1 instance)
     expect(webglInstanceCount).toBe(1);
@@ -97,8 +102,8 @@ describe('Bug 3: WebGL context loss recovery', () => {
     // Before timeout: no rebuild yet
     expect(webglInstanceCount).toBe(1);
 
-    // Advance timer by 100ms
-    vi.advanceTimersByTime(100);
+    // First retry: 1000ms delay (1000 * 2^0)
+    vi.advanceTimersByTime(1000);
 
     // Should have attempted rebuild (new instance created)
     expect(webglInstanceCount).toBe(2);
@@ -109,13 +114,14 @@ describe('Bug 3: WebGL context loss recovery', () => {
 
     const { createAddonManager } = await import('@/renderer/utils/terminal-addon-manager');
     const manager = createAddonManager(mockTerminal as any);
-    manager.loadAll();
+    await manager.loadAll();
 
     expect(webglInstanceCount).toBe(1);
 
     // Simulate context loss
     contextLossCallback!();
-    vi.advanceTimersByTime(100);
+    // First retry: 1000ms delay
+    vi.advanceTimersByTime(1000);
 
     // Rebuild attempted but loadAddon throws → loadWebgl returns null
     // WebglAddon constructor is called (instance count goes up) but loadAddon fails

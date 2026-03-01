@@ -16,7 +16,6 @@ import { calculateGridLayout, GridLayoutResult } from '@/shared/utils/grid-layou
 import { createGridResizeManager } from '@/renderer/stores/grid-resize';
 import { createDragManager } from '@/renderer/stores/drag-manager';
 import { TerminalTile } from './TerminalTile';
-import { TerminalSidebar } from './TerminalSidebar';
 import { ResizeHandle } from './ResizeHandle';
 
 interface TerminalInfo {
@@ -242,7 +241,7 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
   }, [draggingId, terminals, onReorder]);
 
   const isFocusedMode = !!focusedId;
-  const sidebarTerminals = isFocusedMode
+  const nonFocusedTerminals = isFocusedMode
     ? terminals.filter((t) => t.id !== focusedId)
     : [];
   const gridStyle: React.CSSProperties = {
@@ -271,38 +270,54 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
           t.id === draggingId ? 'dragging' :
           t.id === dragOverId ? 'drag-over' : 'none';
 
-        // In focused mode: hide non-focused terminals via CSS instead of unmounting
-        // to preserve XTermRenderer instances and avoid buffer replay flash on mode switch
-        const cellStyle: React.CSSProperties = isFocusedMode
-          ? isFocused
-            ? {
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: sidebarTerminals.length > 0 ? '25%' : 0,
-                bottom: 0,
-                zIndex: 10,
-                overflow: 'hidden',
-              }
-            : {
-                position: 'absolute',
-                width: 0,
-                height: 0,
-                overflow: 'hidden',
-                opacity: 0,
-                pointerEvents: 'none',
-              }
-          : {
-              gridRow: placement?.gridRow,
-              gridColumn: placement?.gridColumn,
-              minWidth: 0,
-              minHeight: 0,
-              height: '100%',
+        // In focused mode: focused terminal fills left 75%, non-focused terminals
+        // are positioned absolutely in the right 25% sidebar area, vertically split.
+        // Each terminal keeps its single xterm instance — no double-instance problem.
+        let cellStyle: React.CSSProperties;
+        if (isFocusedMode) {
+          if (isFocused) {
+            cellStyle = {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: nonFocusedTerminals.length > 0 ? '25%' : 0,
+              bottom: 0,
+              zIndex: 10,
               overflow: 'hidden',
             };
+          } else {
+            const sidebarIndex = nonFocusedTerminals.findIndex((s) => s.id === t.id);
+            const sidebarCount = nonFocusedTerminals.length;
+            cellStyle = {
+              position: 'absolute',
+              right: 0,
+              width: '25%',
+              top: `${sidebarIndex * (100 / sidebarCount)}%`,
+              height: `${100 / sidebarCount}%`,
+              zIndex: 11,
+              overflow: 'hidden',
+              borderLeft: '1px solid var(--border)',
+            };
+          }
+        } else {
+          cellStyle = {
+            gridRow: placement?.gridRow,
+            gridColumn: placement?.gridColumn,
+            minWidth: 0,
+            minHeight: 0,
+            height: '100%',
+            overflow: 'hidden',
+          };
+        }
+
+        const isCompact = isFocusedMode && !isFocused;
 
         return (
-          <div key={t.id} style={cellStyle}>
+          <div
+            key={t.id}
+            style={cellStyle}
+            onClick={isCompact ? () => onSidebarClick?.(t.id) : undefined}
+          >
             <TerminalTile
               id={t.id}
               state={t.state}
@@ -311,7 +326,7 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
               onRename={onRename}
               selected={!isFocusedMode && t.id === selectedId}
               focused={isFocused && isFocusedMode}
-              compact={false}
+              compact={isCompact}
               staggerIndex={i}
               draggable={!isFocusedMode}
               onDragStart={!isFocusedMode ? handleDragStart : undefined}
@@ -327,23 +342,6 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
           </div>
         );
       })}
-
-      {/* Sidebar scroll container — always rendered to avoid mount/unmount flicker
-          on focus mode switch. Hidden via CSS display:none when not needed. */}
-      <TerminalSidebar
-        terminals={sidebarTerminals}
-        onSelect={onSidebarClick}
-        onClose={onClose}
-        style={{
-          position: 'absolute',
-          right: 0,
-          top: 0,
-          width: '25%',
-          height: '100%',
-          zIndex: 11,
-          display: isFocusedMode && sidebarTerminals.length > 0 ? undefined : 'none',
-        }}
-      />
 
       {/* Column resize handles (tiling mode only) */}
       {!isFocusedMode && cols > 1 && colHandlePositions.map((pct, idx) => (

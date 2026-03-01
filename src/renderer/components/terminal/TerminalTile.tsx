@@ -156,7 +156,7 @@ function TerminalTileInner({
 
       {/* Terminal content */}
       <div className="tile-terminal" onClick={compact ? (e) => e.stopPropagation() : undefined}>
-        <XTermRenderer terminalId={id} suppressResize={compact} />
+        <XTermRenderer terminalId={id} />
       </div>
     </div>
   );

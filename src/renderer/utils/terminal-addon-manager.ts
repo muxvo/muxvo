@@ -2,6 +2,11 @@
  * Terminal Addon Manager — manages xterm.js addon lifecycle
  * Phase 1: WebGL (with silent fallback) + Unicode11 + FitAddon
  * Phase 3: Ligatures (dynamic import) + Image + Search addons
+ *
+ * WebGL context management:
+ * - Global counter enforces MAX_WEBGL_CONTEXTS limit (Chromium ~16 cap)
+ * - Context loss uses exponential backoff, permanent Canvas degradation after 3 losses
+ * - Font readiness gate prevents TextureAtlas glyph mapping errors
  */
 
 import { Terminal, type IDisposable, type ITerminalAddon } from '@xterm/xterm';
@@ -10,6 +15,15 @@ import { WebglAddon } from '@xterm/addon-webgl';
 import { Unicode11Addon } from '@xterm/addon-unicode11';
 import { ImageAddon } from '@xterm/addon-image';
 import { SearchAddon } from '@xterm/addon-search';
+
+// Global WebGL context counter — shared across all AddonManager instances
+let activeWebglCount = 0;
+const MAX_WEBGL_CONTEXTS = 8;
+
+/** Exported for testing only */
+export function _getActiveWebglCount(): number {
+  return activeWebglCount;
+}
 
 export interface AddonSet {
   fit: FitAddon;
@@ -21,9 +35,9 @@ export interface AddonSet {
 }
 
 export interface AddonManager {
-  loadAll(): AddonSet;
+  loadAll(): Promise<AddonSet>;
   disposeAll(): void;
-  recoverWebgl(): void;
+  releaseWebgl(): void;
   getFitAddon(): FitAddon;
   getSearchAddon(): SearchAddon;
 }
@@ -35,22 +49,39 @@ export function createAddonManager(term: Terminal): AddonManager {
   let ligaturesAddon: IDisposable | null = null;
   let imageAddon: ImageAddon | null = null;
   let searchAddon: SearchAddon | null = null;
+  let disposed = false;
+  let contextLossCount = 0;
 
   function loadWebgl(): WebglAddon | null {
+    if (activeWebglCount >= MAX_WEBGL_CONTEXTS) {
+      console.warn(`[AddonManager] WebGL context limit reached (${activeWebglCount}/${MAX_WEBGL_CONTEXTS}), using Canvas renderer`);
+      return null;
+    }
+
     try {
       const addon = new WebglAddon();
       addon.onContextLoss(() => {
         console.warn('[AddonManager] WebGL context lost, disposing WebGL addon');
         addon.dispose();
         webglAddon = null;
-        // 延迟重建，等浏览器回收 GPU 资源
+        activeWebglCount--;
+        contextLossCount++;
+
+        if (contextLossCount >= 3) {
+          console.warn(`[AddonManager] WebGL permanently degraded after ${contextLossCount} context losses`);
+          return;
+        }
+
+        const delay = Math.min(1000 * Math.pow(2, contextLossCount - 1), 4000);
         setTimeout(() => {
-          webglAddon = loadWebgl();
-          // loadWebgl 内部已有 try/catch，失败返回 null
-          // 返回 null 时 xterm 自动使用 canvas 渲染
-        }, 100);
+          if (disposed) return;
+          if (activeWebglCount < MAX_WEBGL_CONTEXTS) {
+            webglAddon = loadWebgl();
+          }
+        }, delay);
       });
       term.loadAddon(addon);
+      activeWebglCount++;
       return addon;
     } catch (e) {
       console.warn('[AddonManager] WebGL addon failed to load, falling back to canvas renderer', e);
@@ -59,13 +90,28 @@ export function createAddonManager(term: Terminal): AddonManager {
   }
 
   return {
-    loadAll(): AddonSet {
+    async loadAll(): Promise<AddonSet> {
       fitAddon = new FitAddon();
       term.loadAddon(fitAddon);
 
       unicode11Addon = new Unicode11Addon();
       term.loadAddon(unicode11Addon);
       term.unicode.activeVersion = '11';
+
+      // Wait for fonts to be ready before initializing WebGL
+      // to prevent TextureAtlas glyph mapping errors
+      await document.fonts.ready;
+
+      if (disposed) {
+        return {
+          fit: fitAddon,
+          webgl: null,
+          unicode11: unicode11Addon!,
+          ligatures: null,
+          image: null,
+          search: searchAddon!,
+        };
+      }
 
       webglAddon = loadWebgl();
 
@@ -74,6 +120,7 @@ export function createAddonManager(term: Terminal): AddonManager {
       // @ts-expect-error -- .mjs has no declaration file
       import('@xterm/addon-ligatures/lib/addon-ligatures.mjs').then(({ LigaturesAddon }: { LigaturesAddon: new () => IDisposable }) => {
         try {
+          if (disposed) return;
           const addon = new LigaturesAddon();
           term.loadAddon(addon as unknown as ITerminalAddon);
           ligaturesAddon = addon;
@@ -108,6 +155,7 @@ export function createAddonManager(term: Terminal): AddonManager {
     },
 
     disposeAll(): void {
+      disposed = true;
       if (searchAddon) {
         try { searchAddon.dispose(); } catch { /* already disposed */ }
         searchAddon = null;
@@ -123,6 +171,7 @@ export function createAddonManager(term: Terminal): AddonManager {
       if (webglAddon) {
         try { webglAddon.dispose(); } catch { /* already disposed */ }
         webglAddon = null;
+        activeWebglCount--;
       }
       if (unicode11Addon) {
         try { unicode11Addon.dispose(); } catch { /* already disposed */ }
@@ -134,11 +183,12 @@ export function createAddonManager(term: Terminal): AddonManager {
       }
     },
 
-    recoverWebgl(): void {
+    releaseWebgl(): void {
       if (webglAddon) {
         try { webglAddon.dispose(); } catch { /* already disposed */ }
+        webglAddon = null;
+        activeWebglCount--;
       }
-      webglAddon = loadWebgl();
     },
 
     getFitAddon(): FitAddon {
