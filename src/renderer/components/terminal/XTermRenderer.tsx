@@ -55,9 +55,11 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
   const [searchVisible, setSearchVisible] = useState(false);
   const [fileDropActive, setFileDropActive] = useState(false);
   const dragEnterCountRef = useRef(0);
-  // Ref tracks latest suppressResize value so the closure in useEffect always reads current state
+  // Ref tracks latest suppressResize value so ResizeObserver closure reads current state.
+  // Assigned during render (not useEffect) to avoid race: ResizeObserver fires before
+  // useEffect, so the ref must be updated synchronously before paint.
   const suppressResizeRef = useRef(suppressResize ?? false);
-  useEffect(() => { suppressResizeRef.current = suppressResize ?? false; }, [suppressResize]);
+  suppressResizeRef.current = suppressResize ?? false;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -245,7 +247,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       if (resizeRafId !== null) cancelAnimationFrame(resizeRafId);
       resizeRafId = requestAnimationFrame(() => {
         resizeRafId = null;
-        if (!disposed) fitPreservingScroll();
+        if (!disposed && !suppressResizeRef.current) fitPreservingScroll();
       });
     });
     observer.observe(containerRef.current);
