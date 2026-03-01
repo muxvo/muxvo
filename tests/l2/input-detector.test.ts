@@ -9,7 +9,7 @@
  * and exclusion rules.
  */
 import { describe, test, expect, beforeEach } from 'vitest';
-import { detectWaitingInput, resetInputDetector, shouldExitWaiting, detectBellSignal, detectOscNotification } from '@/main/services/terminal/input-detector';
+import { detectWaitingInput, resetInputDetector, detectBellSignal, detectOscNotification } from '@/main/services/terminal/input-detector';
 
 describe('Input Detector L2', () => {
   beforeEach(() => {
@@ -218,45 +218,6 @@ describe('Input Detector L2', () => {
     test('normal git output with ? in diff → does NOT trigger', () => {
       // Has "?" in content but no ❯ selector, no inquirer format
       expect(detectWaitingInput('diff --git a/file.ts\n+  // TODO: what is this?\n', 'term-1')).toBe(false);
-    });
-  });
-
-  // ---------------------------------------------------------------------------
-  // shouldExitWaiting (auto-recovery from WaitingInput)
-  // ---------------------------------------------------------------------------
-  describe('shouldExitWaiting (auto-recovery)', () => {
-    test('returns false when buffer is empty (just cleared by positive detection)', () => {
-      // Trigger a positive detection → buffer is deleted
-      detectWaitingInput('Esc to cancel\n', 'term-1');
-      expect(shouldExitWaiting('term-1')).toBe(false);
-    });
-
-    test('returns false when buffer has less than 2000 bytes', () => {
-      // After positive detection, feed small output
-      detectWaitingInput('Esc to cancel\n', 'term-1'); // triggers, clears buffer
-      detectWaitingInput('⠋ Sketching...\n', 'term-1'); // small new output
-      expect(shouldExitWaiting('term-1')).toBe(false);
-    });
-
-    test('returns true when buffer has >= 2000 bytes of new output', () => {
-      // After positive detection, feed substantial output
-      detectWaitingInput('Esc to cancel\n', 'term-1'); // triggers, clears buffer
-      const largeOutput = 'x'.repeat(2000);
-      detectWaitingInput(largeOutput, 'term-1');
-      expect(shouldExitWaiting('term-1')).toBe(true);
-    });
-
-    test('returns false for unknown terminal id', () => {
-      expect(shouldExitWaiting('nonexistent')).toBe(false);
-    });
-
-    test('returns false after resetInputDetector clears buffer', () => {
-      // Accumulate enough data
-      detectWaitingInput('x'.repeat(2100), 'term-1');
-      expect(shouldExitWaiting('term-1')).toBe(true);
-      // Reset clears buffer
-      resetInputDetector('term-1');
-      expect(shouldExitWaiting('term-1')).toBe(false);
     });
   });
 

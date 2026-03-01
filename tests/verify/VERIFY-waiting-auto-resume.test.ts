@@ -1,31 +1,17 @@
 /**
- * VERIFY: WaitingInput state auto-recovers when process continues producing output.
+ * VERIFY: WaitingInput state transitions — AUTO_RESUME via acknowledgeWaiting (click to dismiss).
  *
- * Root cause: detectWaitingInput() triggers WaitingInput on "Esc to cancel",
- * but when CC finishes the tool and continues (Envisioning, Sketching, etc.),
- * there was no mechanism to transition back to Running. The terminal tile
- * kept flashing its red border indefinitely.
+ * After simplification, WaitingInput exits via:
+ * 1. USER_INPUT — user types in terminal
+ * 2. AUTO_RESUME — user clicks terminal tile (acknowledgeWaiting)
+ * 3. Terminal exit (CLOSE + EXIT_NORMAL)
  *
- * Fix: Added AUTO_RESUME event to state machine + shouldExitWaiting() check
- * in manager's onData callback. When WaitingInput + no pattern match +
- * buffer >= 500 bytes of new output → auto-recover to Running.
- *
- * Verifies:
- * 1. State machine accepts AUTO_RESUME in WaitingInput → Running
- * 2. shouldExitWaiting returns true after 500+ bytes accumulate post-detection
- * 3. shouldExitWaiting returns false with insufficient new output
- * 4. Integrated scenario: "Esc to cancel" → WaitingInput → substantial output → auto-recover
- * 5. Real prompt scenario: "Esc to cancel" → WaitingInput → no further output → stays waiting
+ * Auto-resume via buffer accumulation has been removed in favor of explicit user action.
  */
-import { describe, test, expect, beforeEach } from 'vitest';
-import { detectWaitingInput, resetInputDetector, shouldExitWaiting } from '@/main/services/terminal/input-detector';
+import { describe, test, expect } from 'vitest';
 import { createTerminalMachine } from '@/shared/machines/terminal-process';
 
-describe('VERIFY: WaitingInput auto-resume on continued output', () => {
-  beforeEach(() => {
-    resetInputDetector();
-  });
-
+describe('VERIFY: WaitingInput state transitions', () => {
   // --- State machine level ---
 
   test('AUTO_RESUME transitions WaitingInput → Running', () => {
@@ -49,87 +35,29 @@ describe('VERIFY: WaitingInput auto-resume on continued output', () => {
     expect(machine.state).toBe('Running'); // no-op, stays Running
   });
 
-  // --- shouldExitWaiting threshold ---
-
-  test('shouldExitWaiting = false immediately after positive detection (buffer cleared)', () => {
-    detectWaitingInput('Esc to cancel\n', 'term-auto');
-    // Buffer was deleted by positive detection
-    expect(shouldExitWaiting('term-auto')).toBe(false);
-  });
-
-  test('shouldExitWaiting = false with < 500 bytes of new output', () => {
-    detectWaitingInput('Esc to cancel\n', 'term-auto'); // triggers, clears buffer
-    // Simulate small output chunks (spinner updates)
-    detectWaitingInput('\x1b[2K⠋ Sketching...\r', 'term-auto');
-    detectWaitingInput('\x1b[2K⠙ Sketching...\r', 'term-auto');
-    expect(shouldExitWaiting('term-auto')).toBe(false);
-  });
-
-  test('shouldExitWaiting = true with >= 500 bytes of new output', () => {
-    detectWaitingInput('Esc to cancel\n', 'term-auto'); // triggers, clears buffer
-    // Simulate substantial output (CC moved to next phase)
-    const output = '\x1b[2K'.repeat(10) + 'Phase 2: Write Verification Test\n'.repeat(20);
-    detectWaitingInput(output, 'term-auto');
-    expect(shouldExitWaiting('term-auto')).toBe(true);
-  });
-
-  // --- Integrated scenario: the actual bug ---
-
-  test('full scenario: Esc to cancel → WaitingInput → substantial output → should auto-recover', () => {
+  test('USER_INPUT transitions WaitingInput → Running', () => {
     const machine = createTerminalMachine();
     machine.send('SPAWN');
     machine.send('SPAWN_SUCCESS');
-    expect(machine.state).toBe('Running');
-
-    // Step 1: CC shows tool permission prompt with "Esc to cancel"
-    const promptOutput = '\x1b[2mEsc to cancel\x1b[0m · Tab to amend\n';
-    const detected1 = detectWaitingInput(promptOutput, 'term-scenario');
-    expect(detected1).toBe(true);
     machine.send('WAIT_INPUT');
     expect(machine.state).toBe('WaitingInput');
 
-    // Step 2: CC auto-approves (accept edits on), continues with thinking
-    // Realistic CC output: spinner updates + tool output (>500 bytes total raw)
-    const chunks = [
-      '\x1b[2K⠋ Envisioning… (0s · thought for 0s)\r',
-      '\x1b[2K⠙ Envisioning… (1s · thought for 1s)\r',
-      '\x1b[2K⠹ Envisioning… (2s · thought for 1s)\r',
-      '\x1b[2K⠸ Envisioning… (3s · thought for 2s)\r',
-      '● Read 1 file (ctrl+o to expand)\n● Bash(npx vitest run --config <(cat <<\'EOF\' import { defineConfig } from \'vitest/config\';...)\n  └ ────────Startup Error ────────\n    Error: Build failed with 2 errors:\n    error: Cannot read directory "../.."  … +35 lines (ctrl+o to expand)\n',
-      '● 先把测试移到正式目录运行。\n● Bash(cp tests/verify/VERIFY-search-flash-fix.test.ts tests/l2/search-flash-fix.test.ts && npx vitest run tests/l2/search-flash-fix.test.ts 2>&1 | tail -25)\n',
-      '● 9 个测试全部通过。\n\n  Phase 4.5: Cross-File Consistency Check\n\n● Bash(git diff HEAD --unified=0 | grep "^-" | grep -v "^---")\n',
-      '\x1b[2K⠋ Sketching… (1m 35s · thought for 21s)\r',
-    ];
-
-    let autoResumeTriggered = false;
-    for (const chunk of chunks) {
-      const det = detectWaitingInput(chunk, 'term-scenario');
-      if (machine.state === 'WaitingInput' && !det && shouldExitWaiting('term-scenario')) {
-        resetInputDetector('term-scenario');
-        machine.send('AUTO_RESUME');
-        autoResumeTriggered = true;
-        break;
-      }
-    }
-
-    expect(autoResumeTriggered).toBe(true);
+    machine.send('USER_INPUT');
     expect(machine.state).toBe('Running');
   });
 
-  test('real prompt scenario: Esc to cancel → WaitingInput → no further output → stays waiting', () => {
+  test('real prompt scenario: WaitingInput stays until explicit action', () => {
     const machine = createTerminalMachine();
     machine.send('SPAWN');
     machine.send('SPAWN_SUCCESS');
-
-    // CC shows tool permission prompt, user hasn't responded yet
-    const promptOutput = 'Do you want to run this bash command?\n❯ 1. Yes\n  2. No\nEsc to cancel\n';
-    const detected = detectWaitingInput(promptOutput, 'term-real-prompt');
-    expect(detected).toBe(true);
     machine.send('WAIT_INPUT');
     expect(machine.state).toBe('WaitingInput');
 
-    // No further output → shouldExitWaiting stays false
-    expect(shouldExitWaiting('term-real-prompt')).toBe(false);
+    // Without USER_INPUT or AUTO_RESUME, state stays
     expect(machine.state).toBe('WaitingInput');
+
+    // User clicks tile → AUTO_RESUME
+    machine.send('AUTO_RESUME');
+    expect(machine.state).toBe('Running');
   });
 });
