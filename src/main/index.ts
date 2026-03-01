@@ -21,6 +21,12 @@ import { is } from '@electron-toolkit/utils';
 protocol.registerSchemesAsPrivileged([
   { scheme: 'local-file', privileges: { bypassCSP: true, supportFetchAPI: true, stream: true } },
 ]);
+
+// Disable GPU rasterization to prevent CJK text glyph corruption
+// when many compositing layers + WebGL contexts are active.
+// This moves text rendering to CPU while keeping GPU compositing.
+app.commandLine.appendSwitch('disable-gpu-rasterization');
+
 import { createTerminalManager } from './services/terminal/manager';
 import { createRealPtyAdapter } from './services/terminal/pty-adapter';
 import { registerTerminalHandlers } from './ipc/terminal-handlers';

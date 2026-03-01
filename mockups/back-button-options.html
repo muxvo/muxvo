@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>返回按钮方案选择</title>
+<style>
+  :root {
+    --bg-deep: #0d1117;
+    --bg-surface: #161b22;
+    --bg-hover: #272d36;
+    --border: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent: #58a6ff;
+    --accent-muted: rgba(88, 166, 255, 0.08);
+    --accent-glow: rgba(88, 166, 255, 0.15);
+    --accent-hover: #79b8ff;
+    --font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    padding: 40px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 22px;
+    margin-bottom: 12px;
+  }
+  .subtitle {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 40px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .card-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .card-number {
+    font-size: 11px;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    background: var(--accent-muted);
+    padding: 1px 8px;
+    border-radius: 10px;
+  }
+
+  /* 模拟 header 条 */
+  .mock-header {
+    width: 100%;
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .mock-header .filename {
+    flex: 1;
+  }
+  .mock-header .tag {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: var(--accent-glow);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* ========== 按钮通用基础 ========== */
+  .btn-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    border: none;
+    outline: none;
+  }
+  .btn-back:hover {
+    transform: scale(1.05);
+  }
+
+  /* === 1. 圆角方块 + 左箭头 (当前样式改进) === */
+  .btn-style-1 {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    color: var(--accent);
+    background: var(--accent-muted);
+    border: 1px solid var(--accent-glow) !important;
+    font-size: 16px;
+    font-weight: 400;
+  }
+  .btn-style-1:hover {
+    background: var(--accent-glow);
+    color: var(--accent-hover);
+  }
+
+  /* === 2. 圆形 + chevron SVG === */
+  .btn-style-2 {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    color: var(--accent);
+    background: var(--accent-muted);
+    border: 1px solid var(--accent-glow) !important;
+  }
+  .btn-style-2 svg {
+    width: 14px;
+    height: 14px;
+  }
+  .btn-style-2:hover {
+    background: var(--accent-glow);
+    color: var(--accent-hover);
+  }
+
+  /* === 3. 胶囊形 + 文字"返回" === */
+  .btn-style-3 {
+    height: 26px;
+    padding: 0 12px;
+    border-radius: 13px;
+    color: var(--accent);
+    background: var(--accent-muted);
+    border: 1px solid var(--accent-glow) !important;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    gap: 4px;
+  }
+  .btn-style-3 svg {
+    width: 12px;
+    height: 12px;
+  }
+  .btn-style-3:hover {
+    background: var(--accent-glow);
+    color: var(--accent-hover);
+  }
+
+  /* === 4. 无边框幽灵按钮 === */
+  .btn-style-4 {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    background: transparent;
+    font-size: 18px;
+  }
+  .btn-style-4:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  /* === 5. macOS 风格小圆点 === */
+  .btn-style-5 {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #ff5f56;
+    position: relative;
+  }
+  .btn-style-5::after {
+    content: '←';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: transparent;
+    font-weight: 700;
+    transition: color 0.15s;
+  }
+  .btn-style-5:hover::after {
+    color: rgba(0,0,0,0.6);
+  }
+
+  /* === 6. 方块渐变高亮 === */
+  .btn-style-6 {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    color: #fff;
+    background: linear-gradient(135deg, rgba(88,166,255,0.2), rgba(88,166,255,0.05));
+    border: 1px solid rgba(88,166,255,0.2) !important;
+    font-size: 14px;
+  }
+  .btn-style-6 svg {
+    width: 14px;
+    height: 14px;
+  }
+  .btn-style-6:hover {
+    background: linear-gradient(135deg, rgba(88,166,255,0.35), rgba(88,166,255,0.1));
+    border-color: rgba(88,166,255,0.4) !important;
+  }
+
+  /* === 7. 下划线文字链接风格 === */
+  .btn-style-7 {
+    color: var(--accent);
+    background: transparent;
+    font-size: 12px;
+    font-family: var(--font-sans);
+    gap: 3px;
+    text-decoration: none;
+    border-bottom: 1px dashed var(--accent-glow);
+    border-radius: 0;
+    padding-bottom: 1px;
+  }
+  .btn-style-7 svg {
+    width: 12px;
+    height: 12px;
+  }
+  .btn-style-7:hover {
+    color: var(--accent-hover);
+    border-bottom-color: var(--accent);
+    transform: none;
+  }
+
+  /* === 8. 圆角 + 箭头动画 === */
+  .btn-style-8 {
+    width: 32px;
+    height: 28px;
+    border-radius: 6px;
+    color: var(--accent);
+    background: var(--accent-muted);
+    border: 1px solid var(--accent-glow) !important;
+  }
+  .btn-style-8 svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s;
+  }
+  .btn-style-8:hover {
+    background: var(--accent-glow);
+  }
+  .btn-style-8:hover svg {
+    transform: translateX(-3px);
+  }
+
+  /* chevron SVG */
+  .chevron-left {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* arrow-left SVG */
+  .arrow-left {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+</style>
+</head>
+<body>
+
+<h1>返回按钮方案</h1>
+<p class="subtitle">每个方案都在模拟的文件头部栏中展示实际效果</p>
+
+<div class="grid">
+
+  <!-- 1 -->
+  <div class="card">
+    <span class="card-number">#1</span>
+    <span class="card-label">圆角方块 + 箭头</span>
+    <div class="mock-header">
+      <button class="btn-back btn-style-1">&#x2190;</button>
+      <span class="filename">App.tsx</span>
+      <span class="tag">CODE</span>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="card">
+    <span class="card-number">#2</span>
+    <span class="card-label">圆形 + chevron</span>
+    <div class="mock-header">
+      <button class="btn-back btn-style-2">
+        <svg viewBox="0 0 24 24" class="chevron-left"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="filename">App.tsx</span>
+      <span class="tag">CODE</span>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="card">
+    <span class="card-number">#3</span>
+    <span class="card-label">胶囊 + 文字</span>
+    <div class="mock-header">
+      <button class="btn-back btn-style-3">
+        <svg viewBox="0 0 24 24" class="chevron-left"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <span class="filename">App.tsx</span>
+      <span class="tag">CODE</span>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="card">
+    <span class="card-number">#4</span>
+    <span class="card-label">幽灵无边框</span>
+    <div class="mock-header">
+      <button class="btn-back btn-style-4">&#x2190;</button>
+      <span class="filename">App.tsx</span>
+      <span class="tag">CODE</span>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="card">
+    <span class="card-number">#5</span>
+    <span class="card-label">macOS 红点</span>
+    <div class="mock-header">
+      <button class="btn-back btn-style-5"></button>
+      <span class="filename">App.tsx</span>
+      <span class="tag">CODE</span>
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="card">
+    <span class="card-number">#6</span>
+    <span class="card-label">渐变高亮方块</span>
+    <div class="mock-header">
+      <button class="btn-back btn-style-6">
+        <svg viewBox="0 0 24 24" class="chevron-left"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="filename">App.tsx</span>
+      <span class="tag">CODE</span>
+    </div>
+  </div>
+
+  <!-- 7 -->
+  <div class="card">
+    <span class="card-number">#7</span>
+    <span class="card-label">文字链接风格</span>
+    <div class="mock-header">
+      <button class="btn-back btn-style-7">
+        <svg viewBox="0 0 24 24" class="chevron-left"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <span class="filename">App.tsx</span>
+      <span class="tag">CODE</span>
+    </div>
+  </div>
+
+  <!-- 8 -->
+  <div class="card">
+    <span class="card-number">#8</span>
+    <span class="card-label">悬浮箭头动画</span>
+    <div class="mock-header">
+      <button class="btn-back btn-style-8">
+        <svg viewBox="0 0 24 24" class="arrow-left"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      </button>
+      <span class="filename">App.tsx</span>
+      <span class="tag">CODE</span>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
