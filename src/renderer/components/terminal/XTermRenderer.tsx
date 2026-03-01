@@ -71,6 +71,10 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     });
 
     term.open(containerRef.current);
+    // Hide terminal until buffer replay completes, preventing blank/partial content flash
+    if (containerRef.current) {
+      containerRef.current.style.opacity = '0';
+    }
     const addonManager = createAddonManager(term);
     addonManager.loadAll();
     searchAddonRef.current = addonManager.getSearchAddon();
@@ -93,23 +97,19 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     // Prevents viewport jumping to top when columns change and buffer rewraps.
     // Scroll restoration is deferred to next frame because xterm.js v6
     // processes buffer rewrap asynchronously after fit().
+    let fitSeq = 0;
     function fitPreservingScroll(): void {
+      const seq = ++fitSeq;
       const buf = term.buffer.active;
       const wasAtBottom = buf.viewportY >= buf.baseY;
       const offsetFromBottom = buf.baseY - buf.viewportY;
-
-      // Hide content during reflow to prevent 1-frame flash of wrong scroll position.
-      // visibility:hidden keeps element dimensions (unlike display:none) so fitAddon
-      // calculates correct cols/rows. Only hidden for ~16ms (1 frame).
-      const viewport = containerRef.current?.querySelector('.xterm-viewport') as HTMLElement | null;
-      if (viewport) viewport.style.visibility = 'hidden';
 
       fitAddon.fit();
 
       // Defer scroll restoration to next frame — xterm needs a tick to
       // complete buffer rewrap and update baseY/viewportY after fit().
       requestAnimationFrame(() => {
-        if (disposed) return;
+        if (disposed || seq !== fitSeq) return; // stale restore → skip
         if (wasAtBottom) {
           term.scrollToBottom();
         } else {
@@ -119,8 +119,6 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
           }
         }
         syncScrollDataAttrs();
-        // Restore visibility after scroll position is correct
-        if (viewport) viewport.style.visibility = '';
       });
     }
 
@@ -202,6 +200,11 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       }
       pendingLiveData.length = 0;
       bufferedDataWritten = true;
+
+      // Buffer replay complete — reveal terminal
+      if (containerRef.current) {
+        containerRef.current.style.opacity = '1';
+      }
 
       // buffer 写入完成后重新 fit + scrollToBottom，确保列宽与内容匹配且 viewport 显示最新内容
       requestAnimationFrame(() => {
