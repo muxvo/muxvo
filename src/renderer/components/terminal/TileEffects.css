@@ -294,6 +294,13 @@
 .tile-terminal {
   flex: 1;
   overflow: hidden;
+  transition: opacity 80ms ease-out;
+}
+
+/* Hide terminal canvas content during mode transition to prevent flicker.
+ * Uses opacity (not visibility) to preserve layout for ResizeObserver. */
+.terminal-grid--transitioning .tile-terminal {
+  opacity: 0;
 }
 
 /* === Selected / Focused states === */
