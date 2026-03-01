@@ -294,6 +294,19 @@ export function useTerminalActions() {
   const state = useTerminalState();
   stateRef.current = state;
 
+  // Double-click-to-focus setting (default: true)
+  const doubleClickToFocusRef = useRef(true);
+  useEffect(() => {
+    const loadConfig = () => {
+      window.api.app.getConfig().then((result: any) => {
+        doubleClickToFocusRef.current = result?.data?.doubleClickToFocus !== false;
+      }).catch(() => {});
+    };
+    loadConfig();
+    window.addEventListener('muxvo:config-changed', loadConfig);
+    return () => window.removeEventListener('muxvo:config-changed', loadConfig);
+  }, []);
+
   const addTerminal = useCallback(async () => {
     const home = window.api.app.getHomePath();
     const result = await window.api.terminal.create(home);
@@ -330,6 +343,7 @@ export function useTerminalActions() {
   }, [dispatch]);
 
   const handleDoubleClick = useCallback((id: string) => {
+    if (!doubleClickToFocusRef.current) return;
     dispatch({ type: 'SET_VIEW_MODE', mode: 'Focused' });
     dispatch({ type: 'SET_FOCUSED', id });
   }, [dispatch]);

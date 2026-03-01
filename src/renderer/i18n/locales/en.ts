@@ -203,4 +203,8 @@ export const en = {
   'settings.langEn': 'English',
   'settings.restartTour': 'Beginner Guide',
   'settings.restartTourDesc': 'View the beginner guide again',
+  'settings.doubleClickFocus': 'Double-click Focus',
+  'settings.doubleClickFocusDesc': 'Double-click a terminal to enter focused mode',
+  'settings.enabled': 'On',
+  'settings.disabled': 'Off',
 } as const;

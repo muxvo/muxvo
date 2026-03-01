@@ -12,6 +12,7 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
   const { state, dispatch } = usePanelContext();
   const { t, locale, setLocale } = useI18n();
   const [startupCount, setStartupCount] = useState(1);
+  const [dblClickFocus, setDblClickFocus] = useState(true);
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'up-to-date' | 'error'>('idle');
   const [newVersion, setNewVersion] = useState('');
 
@@ -22,6 +23,7 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
       if (result?.data?.startupTerminalCount) {
         setStartupCount(Math.max(1, Math.min(20, result.data.startupTerminalCount)));
       }
+      setDblClickFocus(result?.data?.doubleClickToFocus !== false);
     }).catch(() => {});
   }, [state.settingsModal.open]);
 
@@ -43,6 +45,14 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
     setStartupCount(count);
     window.api.app.getConfig().then((result: any) => {
       window.api.app.saveConfig({ ...result?.data, startupTerminalCount: count });
+    }).catch(() => {});
+  }, []);
+
+  const handleDblClickFocusChange = useCallback((enabled: boolean) => {
+    setDblClickFocus(enabled);
+    window.api.app.getConfig().then((result: any) => {
+      window.api.app.saveConfig({ ...result?.data, doubleClickToFocus: enabled });
+      window.dispatchEvent(new CustomEvent('muxvo:config-changed'));
     }).catch(() => {});
   }, []);
 
@@ -114,6 +124,26 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
                   onClick={() => handleStartupCountChange(Math.min(20, startupCount + 1))}
                   disabled={startupCount >= 20}
                 >&#x2b;</button>
+              </div>
+            </div>
+            <div className="settings-modal__row">
+              <div>
+                <div className="settings-modal__label">{t('settings.doubleClickFocus')}</div>
+                <div className="settings-modal__desc">{t('settings.doubleClickFocusDesc')}</div>
+              </div>
+              <div className="settings-modal__toggle-group">
+                <button
+                  className={`settings-modal__toggle-btn${dblClickFocus ? ' settings-modal__toggle-btn--active' : ''}`}
+                  onClick={() => { if (!dblClickFocus) handleDblClickFocusChange(true); }}
+                >
+                  {t('settings.enabled')}
+                </button>
+                <button
+                  className={`settings-modal__toggle-btn${!dblClickFocus ? ' settings-modal__toggle-btn--active' : ''}`}
+                  onClick={() => { if (dblClickFocus) handleDblClickFocusChange(false); }}
+                >
+                  {t('settings.disabled')}
+                </button>
               </div>
             </div>
           </div>

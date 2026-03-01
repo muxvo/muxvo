@@ -107,6 +107,8 @@ export interface MuxvoConfig {
   sessionCustomTitles?: Record<string, string>;
   /** 全局缩放级别（0=100%，每±1步=10%缩放，范围 -5~+10） */
   zoomLevel?: number;
+  /** 双击终端 tile 是否切换到聚焦模式（默认 true） */
+  doubleClickToFocus?: boolean;
 }
 
 /** app:get-preferences 返回的用户偏好 */
