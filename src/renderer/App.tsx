@@ -280,7 +280,7 @@ function AppContent({
         overlayActive={
           state.chatHistory.open || state.skillsPanel.open || state.mcpPanel.open ||
           state.hooksPanel.open || state.pluginsPanel.open ||
-          state.filePanel.open || state.tempView.active
+          state.filePanel.open || state.tempView.active || state.terminalChat.open
         }
         onSwitchToTerminals={() => dispatch({ type: 'CLOSE_ALL' })}
       />
