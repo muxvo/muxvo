@@ -9,7 +9,7 @@ import { BrowserWindow } from 'electron';
 import { existsSync } from 'fs';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 import type { PtyAdapter, PtyProcess } from './pty-adapter';
-import { getForegroundProcessName } from './foreground-detector';
+import { getForegroundProcessName, getForegroundChildPid, getProcessCwd } from './foreground-detector';
 import { detectWaitingInput, resetInputDetector, detectBellSignal, detectOscNotification } from './input-detector';
 import type {
   TerminalInfo,
@@ -20,6 +20,7 @@ import { createTerminalMachine } from '@/shared/machines/terminal-process';
 
 const MAX_TERMINALS = 20;
 const GRACEFUL_CLOSE_TIMEOUT = 5000;
+const CWD_POLL_INTERVAL_MS = 3000;
 
 /** Terminal emulator auto-responses that should NOT trigger USER_INPUT */
 export function isTerminalAutoResponse(data: string): boolean {
@@ -134,6 +135,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
         machine.send('SPAWN_SUCCESS');
 
         terminals.set(id, { id, process: proc, cwd: options.cwd, machine });
+        startCwdPolling();
 
         pushStateChange(id, machine.state);
 
@@ -195,6 +197,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
           terminals.delete(id);
           outputBuffers.delete(id);
           resetInputDetector(id);
+          if (terminals.size === 0) stopCwdPolling();
         });
 
         return { success: true, state: machine.state, id, pid: proc.pid };
@@ -250,6 +253,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
       terminals.delete(id);
       outputBuffers.delete(id);
       resetInputDetector(id);
+      if (terminals.size === 0) stopCwdPolling();
       return { success: true };
     }
 
@@ -265,6 +269,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
         terminals.delete(id);
         outputBuffers.delete(id);
         resetInputDetector(id);
+        if (terminals.size === 0) stopCwdPolling();
         resolve({ success: true });
       }, GRACEFUL_CLOSE_TIMEOUT);
 
@@ -273,6 +278,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
         terminals.delete(id);
         outputBuffers.delete(id);
         resetInputDetector(id);
+        if (terminals.size === 0) stopCwdPolling();
         resolve({ success: true });
       });
     });
@@ -296,8 +302,50 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
   function getForegroundProcess(id: string): ForegroundProcessInfo | null {
     const terminal = terminals.get(id);
     if (!terminal) return null;
-    const name = getForegroundProcessName(terminal.process.pid);
-    return { name: name ?? 'shell', pid: terminal.process.pid };
+
+    const shellPid = terminal.process.pid;
+    const childPid = getForegroundChildPid(shellPid);
+    if (childPid) {
+      const childName = getForegroundProcessName(childPid);
+      return { name: childName ?? 'unknown', pid: childPid };
+    }
+
+    const shellName = getForegroundProcessName(shellPid);
+    return { name: shellName ?? 'shell', pid: shellPid };
+  }
+
+  // --- CWD polling: detect foreground child process directory changes ---
+  let cwdPollTimer: ReturnType<typeof setInterval> | null = null;
+
+  function pollForegroundCwd(): void {
+    for (const [id, terminal] of terminals) {
+      const state = terminal.machine.state;
+      if (state !== 'Running' && state !== 'WaitingInput') continue;
+
+      const childPid = getForegroundChildPid(terminal.process.pid);
+      if (!childPid) continue;
+
+      const childCwd = getProcessCwd(childPid);
+      if (!childCwd || childCwd === terminal.cwd) continue;
+
+      terminal.cwd = childCwd;
+      const win = BrowserWindow.getAllWindows()[0];
+      if (win && !win.isDestroyed()) {
+        win.webContents.send(IPC_CHANNELS.TERMINAL.CWD_CHANGED, { id, cwd: childCwd });
+      }
+    }
+  }
+
+  function startCwdPolling(): void {
+    if (cwdPollTimer) return;
+    cwdPollTimer = setInterval(pollForegroundCwd, CWD_POLL_INTERVAL_MS);
+  }
+
+  function stopCwdPolling(): void {
+    if (cwdPollTimer) {
+      clearInterval(cwdPollTimer);
+      cwdPollTimer = null;
+    }
   }
 
   function closeAll(): void {
@@ -307,6 +355,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
       outputBuffers.delete(id);
       resetInputDetector(id);
     }
+    stopCwdPolling();
   }
 
   function getBuffer(id: string): string {
