@@ -115,6 +115,12 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       const wasAtBottom = buf.viewportY >= buf.baseY;
       const scrollRatio = buf.baseY > 0 ? buf.viewportY / buf.baseY : 1;
 
+      // Hide content during reflow to prevent 1-frame flash of wrong scroll position.
+      // visibility:hidden keeps element dimensions (unlike display:none) so fitAddon
+      // calculates correct cols/rows. Only hidden for ~16ms (1 frame).
+      const viewport = containerRef.current?.querySelector('.xterm-viewport') as HTMLElement | null;
+      if (viewport) viewport.style.visibility = 'hidden';
+
       fitAddon.fit();
 
       // Defer scroll restoration to next frame — xterm needs a tick to
@@ -133,6 +139,8 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
           }
         }
         syncScrollDataAttrs();
+        // Restore visibility after scroll position is correct
+        if (viewport) viewport.style.visibility = '';
       });
     }
 

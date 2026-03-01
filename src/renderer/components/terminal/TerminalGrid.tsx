@@ -13,7 +13,7 @@
 /** Sidebar shows at most this many terminals per screen; extras are scrollable */
 const MAX_SIDEBAR_VISIBLE = 3;
 
-import { useState, useRef, useCallback, useMemo, useEffect, useLayoutEffect } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { useI18n } from '@/renderer/i18n';
 import { calculateGridLayout, GridLayoutResult } from '@/shared/utils/grid-layout';
 import { createGridResizeManager } from '@/renderer/stores/grid-resize';
@@ -236,46 +236,6 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
     ? terminals.filter((t) => t.id !== focusedId)
     : [];
 
-  // Mode transition: hide terminal content during layout switch to prevent flicker.
-  // useLayoutEffect + setState triggers sync re-render before paint, ensuring
-  // new layout and opacity:0 are applied in the same frame.
-  const [modeTransitioning, setModeTransitioning] = useState(false);
-  const prevFocusedModeRef = useRef(isFocusedMode);
-  const prevFocusedIdRef = useRef(focusedId);
-  const transitionRafRef = useRef<number | null>(null);
-
-  useLayoutEffect(() => {
-    const modeChanged = prevFocusedModeRef.current !== isFocusedMode;
-    const focusChanged = isFocusedMode && prevFocusedIdRef.current !== focusedId;
-    prevFocusedModeRef.current = isFocusedMode;
-    prevFocusedIdRef.current = focusedId;
-
-    if (modeChanged || focusChanged) {
-      setModeTransitioning(true);
-      if (transitionRafRef.current !== null) {
-        cancelAnimationFrame(transitionRafRef.current);
-      }
-      let frame = 0;
-      const tick = (): void => {
-        if (++frame >= 5) {
-          transitionRafRef.current = null;
-          setModeTransitioning(false);
-        } else {
-          transitionRafRef.current = requestAnimationFrame(tick);
-        }
-      };
-      transitionRafRef.current = requestAnimationFrame(tick);
-    }
-  }, [isFocusedMode, focusedId]);
-
-  useEffect(() => {
-    return () => {
-      if (transitionRafRef.current !== null) {
-        cancelAnimationFrame(transitionRafRef.current);
-      }
-    };
-  }, []);
-
   // Virtual sidebar scroll: wheel events control which 3 terminals are visible
   const [sidebarOffset, setSidebarOffset] = useState(0);
   useEffect(() => { setSidebarOffset(0); }, [focusedId]);
@@ -302,7 +262,6 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
   return (
     <div
       ref={containerRef}
-      className={modeTransitioning ? 'terminal-grid--transitioning' : undefined}
       style={gridStyle}
       onMouseMove={isFocusedMode ? undefined : handleMouseMove}
       onMouseUp={isFocusedMode ? undefined : handleMouseUp}
