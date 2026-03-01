@@ -162,40 +162,20 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
             }
           }
 
-          // 1. Signal detection (high priority): BEL / OSC 9 / OSC 777
+          // WaitingInput detection: BEL/OSC signals or text pattern matching
+          // Exit is handled by: user clicking tile (acknowledgeWaiting), typing (USER_INPUT), or terminal exit
           const hasBell = detectBellSignal(data);
           const oscNotif = detectOscNotification(data);
-          if (hasBell || oscNotif) {
-            // Mark terminal as signal-capable — skip text pattern matching from now on
-            const managed = terminals.get(id);
-            if (managed) managed.signalCapable = true;
-            if (machine.state === 'Running') {
+          if (machine.state === 'Running') {
+            if (hasBell || oscNotif) {
               resetInputDetector(id);
               machine.send('WAIT_INPUT');
-              if (managed) managed.waitingSince = Date.now();
               pushStateChange(id, machine.state);
-            }
-          } else {
-            // 2. Text pattern matching (fallback for non-signal-capable terminals only)
-            const managed = terminals.get(id);
-            if (!managed?.signalCapable) {
-              const isRunning = machine.state === 'Running';
-              const isWaiting = machine.state === 'WaitingInput';
+            } else {
               const detected = detectWaitingInput(data, id);
-              if (isRunning && detected) {
+              if (detected) {
                 machine.send('WAIT_INPUT');
-                if (managed) managed.waitingSince = Date.now();
                 pushStateChange(id, machine.state);
-              } else if (isWaiting && !detected && shouldExitWaiting(id)) {
-                // Debounce: require at least WAITING_DEBOUNCE_MS in WaitingInput
-                const elapsed = managed?.waitingSince ? Date.now() - managed.waitingSince : Infinity;
-                if (elapsed >= WAITING_DEBOUNCE_MS) {
-                  // Process moved past the interactive prompt — auto-recover
-                  resetInputDetector(id);
-                  machine.send('AUTO_RESUME');
-                  if (managed) managed.waitingSince = null;
-                  pushStateChange(id, machine.state);
-                }
               }
             }
           }
@@ -244,7 +224,6 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
       if (terminal.machine.state === 'WaitingInput' && !isTerminalAutoResponse(data)) {
         resetInputDetector(id);
         terminal.machine.send('USER_INPUT');
-        terminal.waitingSince = null;
         pushStateChange(id, terminal.machine.state);
       }
       terminal.process.write(data);
@@ -342,7 +321,17 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
     return true;
   }
 
-  return { spawn, write, resize, close, list, getState, getForegroundProcess, closeAll, getBuffer, updateCwd };
+  /** User clicked on a terminal tile — clear WaitingInput if active */
+  function acknowledgeWaiting(id: string): void {
+    const terminal = terminals.get(id);
+    if (terminal && terminal.machine.state === 'WaitingInput') {
+      resetInputDetector(id);
+      terminal.machine.send('AUTO_RESUME');
+      pushStateChange(id, terminal.machine.state);
+    }
+  }
+
+  return { spawn, write, resize, close, list, getState, getForegroundProcess, closeAll, getBuffer, updateCwd, acknowledgeWaiting };
 }
 
 function isValidCwd(cwd: string): boolean {

@@ -35,6 +35,8 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.GET_FOREGROUND_PROCESS, { id }),
     updateCwd: (id: string, cwd: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.UPDATE_CWD, { id, cwd }),
+    acknowledgeWaiting: (id: string) =>
+      ipcRenderer.send(IPC_CHANNELS.TERMINAL.ACKNOWLEDGE_WAITING, { id }),
     onOutput: (callback: (data: { id: string; data: string }) => void) => {
       const handler = (_event: Electron.IpcRendererEvent, data: { id: string; data: string }) => callback(data);
       ipcRenderer.on(IPC_CHANNELS.TERMINAL.OUTPUT, handler);

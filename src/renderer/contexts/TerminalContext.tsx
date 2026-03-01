@@ -345,6 +345,11 @@ export function useTerminalActions() {
 
   const handleTileClick = useCallback((id: string) => {
     dispatch({ type: 'SET_SELECTED', id });
+    // Clear WaitingInput badge when user clicks on the terminal tile
+    const terminal = stateRef.current.terminals.find((t) => t.id === id);
+    if (terminal?.state === 'WaitingInput') {
+      window.api.terminal.acknowledgeWaiting(id);
+    }
   }, [dispatch]);
 
   const handleReorder = useCallback((newOrder: string[]) => {

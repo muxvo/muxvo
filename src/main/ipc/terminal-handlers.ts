@@ -76,6 +76,11 @@ export function registerTerminalHandlers(
     return { success: true, data };
   });
 
+  // terminal:acknowledge-waiting — one-way (R->M fire-and-forget)
+  ipcMain.on(IPC_CHANNELS.TERMINAL.ACKNOWLEDGE_WAITING, (_event, req: { id: string }) => {
+    manager.acknowledgeWaiting(req.id);
+  });
+
   // terminal:update-cwd — invoke
   ipcMain.handle(IPC_CHANNELS.TERMINAL.UPDATE_CWD, async (_event, req: { id: string; cwd: string }) => {
     const ok = manager.updateCwd(req.id, req.cwd);
