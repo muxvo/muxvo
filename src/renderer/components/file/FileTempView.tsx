@@ -367,8 +367,8 @@ export function FileTempView({
           >
             {getTagLabel(fileType)}
           </span>
-          <button className="file-temp-view__close" onClick={handleCloseRequest}>
-            &#x2715;
+          <button className="file-temp-view__close" onClick={handleCloseRequest} title="Esc">
+            &#x2190;
           </button>
         </div>
         <div className="file-temp-view__content-body">
