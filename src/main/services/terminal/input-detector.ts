@@ -103,25 +103,6 @@ export function detectWaitingInput(output: string, terminalId?: string): boolean
   return false;
 }
 
-/** Threshold (raw bytes) before auto-recovery from WaitingInput */
-const AUTO_RESUME_THRESHOLD = 2000;
-
-/**
- * Check whether enough new output has accumulated since the last positive
- * detection to conclude that the interactive prompt has passed.
- *
- * After a positive detection the buffer is deleted. Subsequent calls to
- * detectWaitingInput() rebuild the buffer from new output chunks. When the
- * raw buffer exceeds AUTO_RESUME_THRESHOLD bytes without re-matching any
- * prompt pattern, the process has clearly moved on.
- */
-export function shouldExitWaiting(terminalId: string): boolean {
-  const key = terminalId ?? '__default__';
-  const buf = buffers.get(key);
-  if (!buf) return false;
-  return buf.length >= AUTO_RESUME_THRESHOLD;
-}
-
 /** Reset the rolling buffer for a specific terminal, or all buffers if no id */
 export function resetInputDetector(terminalId?: string): void {
   if (terminalId) {

@@ -19,6 +19,7 @@ export const IPC_CHANNELS = {
     UPDATE_CWD: 'terminal:update-cwd',
     CWD_CHANGED: 'terminal:cwd-changed',
     LIST_UPDATED: 'terminal:list-updated',
+    ACKNOWLEDGE_WAITING: 'terminal:acknowledge-waiting',
     ZOOM: 'terminal:zoom',
   },
   FS: {

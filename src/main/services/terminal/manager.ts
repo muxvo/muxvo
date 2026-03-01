@@ -10,7 +10,7 @@ import { existsSync } from 'fs';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 import type { PtyAdapter, PtyProcess } from './pty-adapter';
 import { getForegroundProcessName } from './foreground-detector';
-import { detectWaitingInput, resetInputDetector, shouldExitWaiting, detectBellSignal, detectOscNotification } from './input-detector';
+import { detectWaitingInput, resetInputDetector, detectBellSignal, detectOscNotification } from './input-detector';
 import type {
   TerminalInfo,
   ForegroundProcessInfo,
@@ -20,8 +20,6 @@ import { createTerminalMachine } from '@/shared/machines/terminal-process';
 
 const MAX_TERMINALS = 20;
 const GRACEFUL_CLOSE_TIMEOUT = 5000;
-/** Minimum time (ms) in WaitingInput before auto-resume can trigger */
-const WAITING_DEBOUNCE_MS = 500;
 
 /** Terminal emulator auto-responses that should NOT trigger USER_INPUT */
 export function isTerminalAutoResponse(data: string): boolean {
@@ -51,10 +49,6 @@ interface ManagedTerminal {
   process: PtyProcess;
   cwd: string;
   machine: ReturnType<typeof createTerminalMachine>;
-  /** True once the terminal emits BEL/OSC signals — skip text-based pattern matching */
-  signalCapable: boolean;
-  /** Timestamp when terminal entered WaitingInput (for debounce) */
-  waitingSince: number | null;
 }
 
 interface TerminalManagerDeps {
@@ -139,7 +133,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
 
         machine.send('SPAWN_SUCCESS');
 
-        terminals.set(id, { id, process: proc, cwd: options.cwd, machine, signalCapable: false, waitingSince: null });
+        terminals.set(id, { id, process: proc, cwd: options.cwd, machine });
 
         pushStateChange(id, machine.state);
 
