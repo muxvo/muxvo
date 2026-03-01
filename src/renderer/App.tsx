@@ -6,9 +6,8 @@
  * DEV-PLAN B1/B2: Focus mode with Esc exit + sidebar switching
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MenuBar } from './components/layout/MenuBar';
-import { FloatingControls } from './components/layout/FloatingControls';
 import { TerminalGrid } from './components/terminal/TerminalGrid';
 import { CloseConfirmDialog } from './components/terminal/CloseConfirmDialog';
 import { ChatHistoryPanel } from './components/chat/ChatHistoryPanel';
@@ -23,41 +22,17 @@ import { WaitingInputNotification } from './components/terminal/WaitingInputNoti
 import { LoginModal } from './components/auth/LoginModal';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { PanelProvider, usePanelContext } from './contexts/PanelContext';
+import { TerminalProvider, useTerminalState, useOrderedTerminals, useTerminalActions } from './contexts/TerminalContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { I18nProvider, useI18n, type Locale } from './i18n';
 import { mapExtToFileType, toLocalFileUrl } from './utils/file-tree';
-import { trackEvent, trackError } from './hooks/useAnalytics';
+import { trackEvent } from './hooks/useAnalytics';
 import { useGlobalZoom } from './hooks/useGlobalZoom';
 import { ANALYTICS_EVENTS } from '@/shared/constants/analytics-events';
 import type { ChatSource } from '@/shared/types/chat.types';
 import './App.css';
 
-const MAX_TERMINALS = 20;
-
-interface TerminalEntry {
-  id: string;
-  state: string;
-  cwd: string;
-}
-
-interface CloseConfirmState {
-  open: boolean;
-  terminalId: string;
-  processName: string;
-}
-
 export function App(): JSX.Element {
-  const [terminals, setTerminals] = useState<TerminalEntry[]>([]);
-  const [terminalOrder, setTerminalOrder] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<'Tiling' | 'Focused'>('Tiling');
-  const [focusedId, setFocusedId] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [terminalNames, setTerminalNames] = useState<Record<string, string>>({});
-  const [closeConfirm, setCloseConfirm] = useState<CloseConfirmState>({
-    open: false,
-    terminalId: '',
-    processName: '',
-  });
   const [initialLocale, setInitialLocale] = useState<Locale>('zh');
   const [uiTheme, setUiTheme] = useState<'dark' | 'light'>('dark');
   useGlobalZoom();
@@ -80,150 +55,6 @@ export function App(): JSX.Element {
     }).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    // Load existing terminals on mount
-    window.api.terminal.list().then((result: { success: boolean; data?: any[] }) => {
-      if (result?.success && result.data) {
-        // Map TerminalInfo to TerminalEntry with cwd
-        const entries = result.data.map((info: any) => ({
-          id: info.id,
-          state: info.state,
-          cwd: info.cwd || '/',
-        }));
-        setTerminals(entries);
-        setTerminalOrder(entries.map((e) => e.id));
-      }
-    });
-
-    // Listen for terminal exits to remove from grid
-    const unsubExit = window.api.terminal.onExit((event) => {
-      setTerminals((prev) => prev.filter((t) => t.id !== event.id));
-      setTerminalOrder((prev) => prev.filter((id) => id !== event.id));
-      setTerminalNames((prev) => { const next = { ...prev }; delete next[event.id]; return next; });
-    });
-
-    // Listen for state changes to update terminal state
-    const unsubState = window.api.terminal.onStateChange((event) => {
-      setTerminals((prev) => {
-        const target = prev.find((t) => t.id === event.id);
-        if (target && target.state === event.state) return prev; // Same state — skip re-render
-        return prev.map((t) => (t.id === event.id ? { ...t, state: event.state } : t));
-      });
-    });
-
-    // Listen for restored terminal list (after app restart)
-    const unsubListUpdated = window.api.terminal.onListUpdated?.((list: any[]) => {
-      // Map list to TerminalEntry with cwd
-      const entries = list.map((info: any) => ({
-        id: info.id,
-        state: info.state,
-        cwd: info.cwd || '/',
-      }));
-      setTerminals(entries);
-      setTerminalOrder(entries.map((e) => e.id));
-    });
-
-    // Listen for cwd changes (OSC 7 detection from main process)
-    const unsubCwd = window.api.terminal.onCwdChange?.((event) => {
-      setTerminals((prev) =>
-        prev.map((t) => (t.id === event.id ? { ...t, cwd: event.cwd } : t))
-      );
-    });
-
-    return () => {
-      unsubExit();
-      unsubState();
-      unsubListUpdated?.();
-      unsubCwd?.();
-    };
-  }, []);
-
-  const addTerminal = useCallback(async () => {
-    const home = window.api.app.getHomePath();
-    const result = await window.api.terminal.create(home);
-    if (result?.success && result.data) {
-      setTerminals((prev) => [...prev, { id: result.data.id, state: 'Running', cwd: home }]);
-      setTerminalOrder((prev) => [...prev, result.data.id]);
-      setSelectedId(result.data.id);
-      trackEvent(ANALYTICS_EVENTS.TERMINAL.CREATE, { cwd: home });
-    } else {
-      trackError('terminal', { type: 'spawn_fail' });
-    }
-  }, []);
-
-  const removeTerminal = useCallback(async (id: string) => {
-    // Check if there's a foreground process running
-    const fgResult = await window.api.terminal.getForegroundProcess(id);
-    if (fgResult?.success && fgResult.data && fgResult.data.name !== 'shell') {
-      // Show confirmation dialog
-      setCloseConfirm({ open: true, terminalId: id, processName: fgResult.data.name });
-      return;
-    }
-    // No active process or just shell — close directly
-    await window.api.terminal.close(id);
-    trackEvent(ANALYTICS_EVENTS.TERMINAL.CLOSE, { had_process: false });
-    setTerminals((prev) => prev.filter((t) => t.id !== id));
-    setTerminalOrder((prev) => prev.filter((tid) => tid !== id));
-    setTerminalNames((prev) => { const next = { ...prev }; delete next[id]; return next; });
-  }, []);
-
-  const handleCloseConfirm = useCallback(async () => {
-    const { terminalId } = closeConfirm;
-    setCloseConfirm({ open: false, terminalId: '', processName: '' });
-    await window.api.terminal.close(terminalId, true);
-    trackEvent(ANALYTICS_EVENTS.TERMINAL.CLOSE, { had_process: true });
-    setTerminals((prev) => prev.filter((t) => t.id !== terminalId));
-    setTerminalOrder((prev) => prev.filter((tid) => tid !== terminalId));
-    setTerminalNames((prev) => { const next = { ...prev }; delete next[terminalId]; return next; });
-  }, [closeConfirm]);
-
-  const handleCloseCancel = useCallback(() => {
-    setCloseConfirm({ open: false, terminalId: '', processName: '' });
-  }, []);
-
-  const handleDoubleClick = useCallback((id: string) => {
-    setViewMode('Focused');
-    setFocusedId(id);
-  }, []);
-
-  const handleBackToTiling = useCallback(() => {
-    setViewMode('Tiling');
-    setFocusedId(null);
-  }, []);
-
-  const handleSidebarClick = useCallback((id: string) => {
-    setFocusedId(id);
-  }, []);
-
-  const handleTileClick = useCallback((id: string) => {
-    setSelectedId(id);
-  }, []);
-
-  const handleReorder = useCallback((newOrder: string[]) => {
-    setTerminalOrder(newOrder);
-  }, []);
-
-  // Ref to access latest terminals without adding to callback deps
-  const terminalsRef = useRef(terminals);
-  terminalsRef.current = terminals;
-
-  const handleRename = useCallback((id: string, name: string) => {
-    setTerminalNames((prev) => {
-      if (!name) {
-        const next = { ...prev };
-        delete next[id];
-        return next;
-      }
-      return { ...prev, [id]: name };
-    });
-
-    // Propagate name to chat session associated with this terminal's cwd
-    const terminal = terminalsRef.current.find(t => t.id === id);
-    if (terminal?.cwd) {
-      window.api.chat.setSessionName(terminal.cwd, name || '').catch(() => {});
-    }
-  }, []);
-
   const handleToggleTheme = useCallback(() => {
     setUiTheme((prev) => {
       const next = prev === 'dark' ? 'light' : 'dark';
@@ -241,145 +72,36 @@ export function App(): JSX.Element {
     });
   }, []);
 
-  const handleResumeSession = useCallback(async (info: { sessionId: string; cwd: string; source: ChatSource }) => {
-    console.log('[resume-chat] creating terminal:', { cwd: info.cwd, sessionId: info.sessionId, source: info.source });
-    const result = await window.api.terminal.create(info.cwd);
-    if (!result?.success || !result.data) {
-      console.error('[resume-chat] terminal creation failed:', result);
-      window.alert(`无法创建终端：${(result as any)?.error || '未知错误'}\n目录: ${info.cwd}`);
-      return;
-    }
-    const newId = result.data.id;
-    setTerminals(prev => [...prev, { id: newId, state: 'Running', cwd: info.cwd }]);
-    setTerminalOrder(prev => [...prev, newId]);
-    setSelectedId(newId);
-    setTimeout(() => {
-      // Use cd + && to ensure correct cwd before resume, bypassing terminal.create path resolution issues
-      const escapedCwd = info.cwd.replace(/([ ()&|;<>$`"'\\])/g, '\\$1');
-      const resumeCmd = info.source === 'codex'
-        ? `codex resume ${info.sessionId}`
-        : `claude --resume ${info.sessionId}`;
-      window.api.terminal.write(newId, `cd ${escapedCwd} && ${resumeCmd}\n`);
-    }, 500);
-  }, []);
-
-  // Esc key exits focused mode (only when focus is on UI, not inside terminal)
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent): void {
-      if (e.key === 'Escape' && viewMode === 'Focused') {
-        // Only handle Esc if focus is NOT inside a terminal xterm element
-        const active = document.activeElement;
-        const isInTerminal = active?.closest('.xterm') !== null;
-        if (!isInTerminal) {
-          handleBackToTiling();
-        }
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [viewMode, handleBackToTiling]);
-
-  // Clear focused state if the focused terminal is removed
-  useEffect(() => {
-    if (focusedId && !terminals.find((t) => t.id === focusedId)) {
-      setViewMode('Tiling');
-      setFocusedId(null);
-    }
-    if (selectedId && !terminals.find((t) => t.id === selectedId)) {
-      setSelectedId(null);
-    }
-  }, [terminals, focusedId, selectedId]);
-
-  const maxReached = terminals.length >= MAX_TERMINALS;
-
-  // Sort terminals by terminalOrder (memoized to avoid creating new array references on every render)
-  const orderedTerminals = useMemo(() => {
-    return (terminalOrder.length > 0
-      ? terminalOrder
-          .map((id) => terminals.find((t) => t.id === id))
-          .filter((t): t is TerminalEntry => t !== undefined)
-      : terminals
-    ).map((t) => ({ ...t, customName: terminalNames[t.id] }));
-  }, [terminals, terminalOrder, terminalNames]);
-
   return (
     <I18nProvider initialLocale={initialLocale}>
       <AuthProvider>
-        <PanelProvider>
-          <AppContent
-            terminals={orderedTerminals}
-            viewMode={viewMode}
-            focusedId={focusedId}
-            selectedId={selectedId}
-            maxReached={maxReached}
-            closeConfirm={closeConfirm}
-            uiTheme={uiTheme}
-            onDoubleClick={handleDoubleClick}
-            onSidebarClick={handleSidebarClick}
-            onClick={handleTileClick}
-            onBackToTiling={handleBackToTiling}
-            onAddTerminal={addTerminal}
-            onClose={removeTerminal}
-            onCloseConfirm={handleCloseConfirm}
-            onCloseCancel={handleCloseCancel}
-            onReorder={handleReorder}
-            onRename={handleRename}
-            onToggleTheme={handleToggleTheme}
-            terminalNames={terminalNames}
-            onResumeSession={handleResumeSession}
-          />
-        </PanelProvider>
+        <TerminalProvider>
+          <PanelProvider>
+            <AppContent
+              uiTheme={uiTheme}
+              onToggleTheme={handleToggleTheme}
+            />
+          </PanelProvider>
+        </TerminalProvider>
       </AuthProvider>
     </I18nProvider>
   );
 }
 
-/** Inner component to access PanelContext (must be child of PanelProvider) */
+/** Inner component to access PanelContext + TerminalContext */
 function AppContent({
-  terminals,
-  viewMode,
-  focusedId,
-  selectedId,
-  maxReached,
-  closeConfirm,
   uiTheme,
-  onDoubleClick,
-  onSidebarClick,
-  onClick,
-  onBackToTiling,
-  onAddTerminal,
-  onClose,
-  onCloseConfirm,
-  onCloseCancel,
-  onReorder,
-  onRename,
   onToggleTheme,
-  terminalNames,
-  onResumeSession,
 }: {
-  terminals: (TerminalEntry & { customName?: string })[];
-  viewMode: 'Tiling' | 'Focused';
-  focusedId: string | null;
-  selectedId: string | null;
-  maxReached: boolean;
-  closeConfirm: CloseConfirmState;
   uiTheme: 'dark' | 'light';
-  onDoubleClick: (id: string) => void;
-  onSidebarClick: (id: string) => void;
-  onClick: (id: string) => void;
-  onBackToTiling: () => void;
-  onAddTerminal: () => void;
-  onClose: (id: string) => void;
-  onCloseConfirm: () => void;
-  onCloseCancel: () => void;
-  onReorder: (newOrder: string[]) => void;
-  onRename: (id: string, name: string) => void;
   onToggleTheme: () => void;
-  terminalNames: Record<string, string>;
-  onResumeSession: (info: { sessionId: string; cwd: string; source: ChatSource }) => void;
 }): JSX.Element {
   const { state, dispatch } = usePanelContext();
   const { t } = useI18n();
+
+  const terminalState = useTerminalState();
+  const terminals = useOrderedTerminals();
+  const actions = useTerminalActions();
 
   // Auto-start tour on first launch (tourCompleted not set)
   useEffect(() => {
@@ -390,17 +112,17 @@ function AppContent({
     }).catch(() => {});
   }, [dispatch]);
 
-  // Wrap onAddTerminal to close all panels first (switch back to terminal tab)
+  // Wrap addTerminal to close all panels first (switch back to terminal tab)
   const handleAddTerminal = useCallback(async () => {
     dispatch({ type: 'CLOSE_ALL' });
-    await onAddTerminal();
-  }, [dispatch, onAddTerminal]);
+    await actions.addTerminal();
+  }, [dispatch, actions.addTerminal]);
 
-  // Wrap onResumeSession to close all panels first
+  // Wrap handleResumeSession to close all panels first
   const handleResumeSession = useCallback(async (info: { sessionId: string; cwd: string; source: ChatSource }) => {
     dispatch({ type: 'CLOSE_ALL' });
-    await onResumeSession(info);
-  }, [dispatch, onResumeSession]);
+    await actions.handleResumeSession(info);
+  }, [dispatch, actions.handleResumeSession]);
 
   // File content loading for FileTempView
   const [fileContent, setFileContent] = useState('');
@@ -433,27 +155,27 @@ function AppContent({
 
   return (
     <div className="app">
-      <MenuBar viewMode={viewMode} onBackToTiling={onBackToTiling} terminalCount={terminals.length} />
+      <MenuBar viewMode={terminalState.viewMode} onBackToTiling={actions.handleBackToTiling} terminalCount={terminals.length} />
       <main className="app-content">
         <TerminalGrid
           terminals={terminals}
-          viewMode={viewMode}
-          focusedId={focusedId}
-          selectedId={selectedId}
-          onDoubleClick={onDoubleClick}
-          onSidebarClick={onSidebarClick}
-          onClick={onClick}
-          onClose={onClose}
-          onReorder={onReorder}
-          onRename={onRename}
+          viewMode={terminalState.viewMode}
+          focusedId={terminalState.focusedId}
+          selectedId={terminalState.selectedId}
+          onDoubleClick={actions.handleDoubleClick}
+          onSidebarClick={actions.handleSidebarClick}
+          onClick={actions.handleTileClick}
+          onClose={actions.removeTerminal}
+          onReorder={actions.handleReorder}
+          onRename={actions.handleRename}
           onAddTerminal={handleAddTerminal}
-          maxReached={maxReached}
+          maxReached={actions.maxReached}
         />
       </main>
 
       {/* "回到平铺" centered floating button (visible in Focused mode) */}
-      {viewMode === 'Focused' && (
-        <button className="grid-return-btn" onClick={onBackToTiling}>
+      {terminalState.viewMode === 'Focused' && (
+        <button className="grid-return-btn" onClick={actions.handleBackToTiling}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="3" y="3" width="7" height="7" rx="1" />
             <rect x="14" y="3" width="7" height="7" rx="1" />
@@ -529,24 +251,24 @@ function AppContent({
           }}
           onSelectTerminal={(id) => {
             dispatch({ type: 'CLOSE_TEMP_VIEW' });
-            onDoubleClick(id);
+            actions.handleDoubleClick(id);
           }}
-          onCloseTerminal={onClose}
+          onCloseTerminal={actions.removeTerminal}
         />
       )}
 
       <CloseConfirmDialog
-        open={closeConfirm.open}
-        terminalId={closeConfirm.terminalId}
-        processName={closeConfirm.processName}
-        onConfirm={onCloseConfirm}
-        onCancel={onCloseCancel}
+        open={terminalState.closeConfirm.open}
+        terminalId={terminalState.closeConfirm.terminalId}
+        processName={terminalState.closeConfirm.processName}
+        onConfirm={actions.handleCloseConfirm}
+        onCancel={actions.handleCloseCancel}
       />
 
       <TourOverlay
         terminalCount={terminals.length}
-        viewMode={viewMode}
-        terminalNames={terminalNames}
+        viewMode={terminalState.viewMode}
+        terminalNames={terminalState.terminalNames}
       />
 
       <SettingsModal uiTheme={uiTheme} onToggleTheme={onToggleTheme} />

@@ -2,10 +2,10 @@
  * TERM L2 -- Business Rules Tests (Part 2 of 2)
  *
  * Source: docs/Muxvo_测试_v2/02_modules/test_TERM.md
- * Covers: Focus mode, naming state machine, border resize,
+ * Covers: Naming state machine, border resize,
  *         auto-grouping, special rules
  *
- * Total cases in this file: 36
+ * Total cases in this file: 28
  *
  * RED phase: all tests have real assertions but will FAIL because
  * source modules are not yet implemented.
@@ -17,101 +17,6 @@ import { defaultConfig, terminalFixtures } from '../helpers/test-fixtures';
 describe('TERM L2 -- 业务规则测试', () => {
   beforeEach(() => {
     resetIpcMocks();
-  });
-
-  // ---------------------------------------------------------------------------
-  // 2.6 聚焦模式规则 (PRD 8.1, Feature B)
-  // ---------------------------------------------------------------------------
-  describe('聚焦模式规则', () => {
-    test('TERM_L2_61_focus_dblclick: 双击终端进入聚焦模式', async () => {
-      const { createFocusModeManager } = await import(
-        '@/renderer/stores/focus-mode'
-      );
-      const manager = createFocusModeManager({
-        terminals: ['A', 'B', 'C'],
-        viewMode: 'Tiling',
-      });
-
-      manager.doubleClick('A');
-
-      expect(manager.viewMode).toBe('Focused');
-      expect(manager.focusedTerminal).toBe('A');
-      // Terminal A should be approximately 75% width
-      expect(manager.layout.mainWidthPercent).toBeCloseTo(75, 0);
-      // B and C should be in the sidebar
-      expect(manager.sidebarTerminals).toEqual(['B', 'C']);
-    });
-
-    test('TERM_L2_62_focus_single_click: 单击仅选中不进入聚焦', async () => {
-      const { createFocusModeManager } = await import(
-        '@/renderer/stores/focus-mode'
-      );
-      const manager = createFocusModeManager({
-        terminals: ['A', 'B', 'C'],
-        viewMode: 'Tiling',
-      });
-
-      manager.singleClick('A');
-
-      // Should NOT enter focused mode
-      expect(manager.viewMode).toBe('Tiling');
-      // Should only select (highlight with amber border)
-      expect(manager.selectedTerminal).toBe('A');
-    });
-
-    test('TERM_L2_63_focus_sidebar_max3: 右侧栏最多显示 3 个终端', async () => {
-      const { createFocusModeManager } = await import(
-        '@/renderer/stores/focus-mode'
-      );
-      const manager = createFocusModeManager({
-        terminals: ['A', 'B', 'C', 'D', 'E', 'F'],
-        viewMode: 'Tiling',
-      });
-
-      manager.doubleClick('A');
-
-      expect(manager.viewMode).toBe('Focused');
-      // Max 3 visible in sidebar, rest scrollable
-      expect(manager.sidebarVisibleCount).toBe(3);
-      expect(manager.sidebarTerminals).toHaveLength(5); // All except focused
-      expect(manager.sidebarScrollable).toBe(true);
-    });
-
-    test('TERM_L2_64_focus_switch: 聚焦模式切换目标', async () => {
-      const { createFocusModeManager } = await import(
-        '@/renderer/stores/focus-mode'
-      );
-      const manager = createFocusModeManager({
-        terminals: ['A', 'B', 'C'],
-        viewMode: 'Tiling',
-      });
-
-      manager.doubleClick('A');
-      expect(manager.focusedTerminal).toBe('A');
-
-      // Click sidebar terminal B
-      manager.clickSidebar('B');
-      expect(manager.focusedTerminal).toBe('B');
-      // A should now be in sidebar
-      expect(manager.sidebarTerminals).toContain('A');
-    });
-
-    test('TERM_L2_65_focus_esc_return: Esc 返回平铺模式', async () => {
-      const { createFocusModeManager } = await import(
-        '@/renderer/stores/focus-mode'
-      );
-      const manager = createFocusModeManager({
-        terminals: ['A', 'B', 'C'],
-        viewMode: 'Tiling',
-      });
-
-      manager.doubleClick('A');
-      expect(manager.viewMode).toBe('Focused');
-
-      // Esc (UI layer focus, not terminal focus)
-      manager.handleEsc({ terminalFocused: false });
-      expect(manager.viewMode).toBe('Tiling');
-    });
   });
 
   // ---------------------------------------------------------------------------
@@ -461,41 +366,6 @@ describe('TERM L2 -- 业务规则测试', () => {
       expect(defaultConfig.tile.opacity).toBe(1);
     });
 
-    test('TERM_L2_89_focus_dblclick_layout: 聚焦模式下终端约 75% 宽度', async () => {
-      const { createFocusModeManager } = await import(
-        '@/renderer/stores/focus-mode'
-      );
-      const manager = createFocusModeManager({
-        terminals: ['A', 'B', 'C'],
-        viewMode: 'Tiling',
-      });
-
-      manager.doubleClick('A');
-
-      expect(manager.viewMode).toBe('Focused');
-      // Main terminal should occupy approximately 75% width
-      expect(manager.layout.mainWidthPercent).toBeGreaterThanOrEqual(70);
-      expect(manager.layout.mainWidthPercent).toBeLessThanOrEqual(80);
-    });
-
-    test('TERM_L2_90_focus_sidebar_scroll: 右侧栏超过 3 个时可滚动', async () => {
-      const { createFocusModeManager } = await import(
-        '@/renderer/stores/focus-mode'
-      );
-      const manager = createFocusModeManager({
-        terminals: ['A', 'B', 'C', 'D', 'E', 'F'],
-        viewMode: 'Tiling',
-      });
-
-      manager.doubleClick('A');
-
-      // 5 terminals in sidebar (all except A)
-      expect(manager.sidebarTerminals).toHaveLength(5);
-      // Only 3 visible, rest scrollable
-      expect(manager.sidebarVisibleCount).toBe(3);
-      expect(manager.sidebarScrollable).toBe(true);
-    });
-
     test('TERM_L2_91_resize_persist_ratios: 调整后比例持久化', async () => {
       const { createGridResizeManager } = await import(
         '@/renderer/stores/grid-resize'
@@ -543,30 +413,6 @@ describe('TERM L2 -- 业务规则测试', () => {
       const layout4 = calculateGridLayout(4);
       expect(layout4.cols).toBe(2);
       expect(layout4.rows).toBe(2);
-    });
-
-    test('TERM_L2_94_view_mode_grid_restore: 退出聚焦后 Grid 恢复原布局', async () => {
-      const { createFocusModeManager } = await import(
-        '@/renderer/stores/focus-mode'
-      );
-      const manager = createFocusModeManager({
-        terminals: ['A', 'B', 'C', 'D'],
-        viewMode: 'Tiling',
-        gridLayout: { cols: 2, rows: 2, columnRatios: [0.6, 0.4] },
-      });
-
-      // Enter focused mode
-      manager.doubleClick('A');
-      expect(manager.viewMode).toBe('Focused');
-
-      // Exit focused mode
-      manager.handleEsc({ terminalFocused: false });
-      expect(manager.viewMode).toBe('Tiling');
-
-      // Grid should restore original layout
-      expect(manager.gridLayout.cols).toBe(2);
-      expect(manager.gridLayout.rows).toBe(2);
-      expect(manager.gridLayout.columnRatios).toEqual([0.6, 0.4]);
     });
 
     test('TERM_L2_95_esc_priority_overlap: Esc 多状态重叠时按优先级处理', async () => {

@@ -104,7 +104,7 @@ export function detectWaitingInput(output: string, terminalId?: string): boolean
 }
 
 /** Threshold (raw bytes) before auto-recovery from WaitingInput */
-const AUTO_RESUME_THRESHOLD = 500;
+const AUTO_RESUME_THRESHOLD = 2000;
 
 /**
  * Check whether enough new output has accumulated since the last positive

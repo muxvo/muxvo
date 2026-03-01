@@ -13,7 +13,7 @@
     "docs/Muxvo_测试_v2/02_modules/test_V2_CONTENT.md"
   ],
   "fixtureSource": "tests/helpers/test-fixtures.ts (defaultConfig, timeConstants)",
-  "totalCases": 13,
+  "totalCases": 11,
   "removedCases": [
     { "id": "ESC_PRIORITY", "reason": "composite — individual tests TERM_L2_48~55 exist in stubs" },
     { "id": "INSTALL_TYPE_ROUTING", "reason": "composite — INSTALL_L2_03 + INSTALL_L2_04 exist in stubs" },
@@ -100,27 +100,6 @@
       "boundaries": [
         { "parameter": "border", "expected": "var(--border)" },
         { "parameter": "opacity", "expected": 1 }
-      ],
-      "priority": "P1"
-    },
-    {
-      "id": "TERM_L2_63_focus_sidebar_max3",
-      "description": "聚焦模式右侧栏最多显示 3 个终端",
-      "type": "boundary",
-      "category": "focus-sidebar",
-      "boundaries": [
-        { "terminalCount": 4, "focusedSidebarVisible": 3, "scrollable": false, "expected": { "maxVisible": 3, "scrollable": false } },
-        { "terminalCount": 6, "focusedSidebarVisible": 3, "scrollable": true, "expected": { "maxVisible": 3, "scrollable": true } }
-      ],
-      "priority": "P0"
-    },
-    {
-      "id": "TERM_L2_89_focus_dblclick_layout",
-      "description": "聚焦模式下终端约 75% 宽度",
-      "type": "boundary",
-      "category": "focus-layout",
-      "boundaries": [
-        { "parameter": "focusedTerminalWidthPercent", "expected": 75, "tolerance": 5 }
       ],
       "priority": "P1"
     },

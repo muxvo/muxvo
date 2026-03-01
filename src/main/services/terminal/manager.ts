@@ -20,6 +20,8 @@ import { createTerminalMachine } from '@/shared/machines/terminal-process';
 
 const MAX_TERMINALS = 20;
 const GRACEFUL_CLOSE_TIMEOUT = 5000;
+/** Minimum time (ms) in WaitingInput before auto-resume can trigger */
+const WAITING_DEBOUNCE_MS = 500;
 
 /** Terminal emulator auto-responses that should NOT trigger USER_INPUT */
 export function isTerminalAutoResponse(data: string): boolean {
@@ -49,6 +51,10 @@ interface ManagedTerminal {
   process: PtyProcess;
   cwd: string;
   machine: ReturnType<typeof createTerminalMachine>;
+  /** True once the terminal emits BEL/OSC signals — skip text-based pattern matching */
+  signalCapable: boolean;
+  /** Timestamp when terminal entered WaitingInput (for debounce) */
+  waitingSince: number | null;
 }
 
 interface TerminalManagerDeps {
@@ -133,7 +139,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
 
         machine.send('SPAWN_SUCCESS');
 
-        terminals.set(id, { id, process: proc, cwd: options.cwd, machine });
+        terminals.set(id, { id, process: proc, cwd: options.cwd, machine, signalCapable: false, waitingSince: null });
 
         pushStateChange(id, machine.state);
 
@@ -165,23 +171,31 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
           // 1. Signal detection (high priority): BEL / OSC 9 / OSC 777
           const hasBell = detectBellSignal(data);
           const oscNotif = detectOscNotification(data);
-          if ((hasBell || oscNotif) && machine.state === 'Running') {
-            resetInputDetector(id);
-            machine.send('WAIT_INPUT');
-            pushStateChange(id, machine.state);
-          } else {
-            // 2. Text pattern matching (fallback for non-CC tools)
-            const isRunning = machine.state === 'Running';
-            const isWaiting = machine.state === 'WaitingInput';
-            const detected = detectWaitingInput(data, id);
-            if (isRunning && detected) {
+          if (hasBell || oscNotif) {
+            // Mark terminal as signal-capable — skip text pattern matching from now on
+            const managed = terminals.get(id);
+            if (managed) managed.signalCapable = true;
+            if (machine.state === 'Running') {
+              resetInputDetector(id);
               machine.send('WAIT_INPUT');
               pushStateChange(id, machine.state);
-            } else if (isWaiting && !detected && shouldExitWaiting(id)) {
-              // Process moved past the interactive prompt — auto-recover
-              resetInputDetector(id);
-              machine.send('AUTO_RESUME');
-              pushStateChange(id, machine.state);
+            }
+          } else {
+            // 2. Text pattern matching (fallback for non-signal-capable terminals only)
+            const managed = terminals.get(id);
+            if (!managed?.signalCapable) {
+              const isRunning = machine.state === 'Running';
+              const isWaiting = machine.state === 'WaitingInput';
+              const detected = detectWaitingInput(data, id);
+              if (isRunning && detected) {
+                machine.send('WAIT_INPUT');
+                pushStateChange(id, machine.state);
+              } else if (isWaiting && !detected && shouldExitWaiting(id)) {
+                // Process moved past the interactive prompt — auto-recover
+                resetInputDetector(id);
+                machine.send('AUTO_RESUME');
+                pushStateChange(id, machine.state);
+              }
             }
           }
         });
@@ -326,18 +340,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
     return true;
   }
 
-  /** Handle bell notification from renderer (xterm.js onBell / OSC handler) */
-  function handleBell(id: string, _detail?: string): void {
-    const terminal = terminals.get(id);
-    if (!terminal) return;
-    if (terminal.machine.state === 'Running') {
-      resetInputDetector(id);
-      terminal.machine.send('WAIT_INPUT');
-      pushStateChange(id, terminal.machine.state);
-    }
-  }
-
-  return { spawn, write, resize, close, list, getState, getForegroundProcess, closeAll, getBuffer, updateCwd, handleBell };
+  return { spawn, write, resize, close, list, getState, getForegroundProcess, closeAll, getBuffer, updateCwd };
 }
 
 function isValidCwd(cwd: string): boolean {

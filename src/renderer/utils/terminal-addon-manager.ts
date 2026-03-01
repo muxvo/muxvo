@@ -43,6 +43,12 @@ export function createAddonManager(term: Terminal): AddonManager {
         console.warn('[AddonManager] WebGL context lost, disposing WebGL addon');
         addon.dispose();
         webglAddon = null;
+        // 延迟重建，等浏览器回收 GPU 资源
+        setTimeout(() => {
+          webglAddon = loadWebgl();
+          // loadWebgl 内部已有 try/catch，失败返回 null
+          // 返回 null 时 xterm 自动使用 canvas 渲染
+        }, 100);
       });
       term.loadAddon(addon);
       return addon;

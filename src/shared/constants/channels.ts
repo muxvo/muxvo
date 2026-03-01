@@ -20,7 +20,6 @@ export const IPC_CHANNELS = {
     CWD_CHANGED: 'terminal:cwd-changed',
     LIST_UPDATED: 'terminal:list-updated',
     ZOOM: 'terminal:zoom',
-    BELL: 'terminal:bell',
   },
   FS: {
     READ_DIR: 'fs:read-dir',

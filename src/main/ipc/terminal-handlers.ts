@@ -76,11 +76,6 @@ export function registerTerminalHandlers(
     return { success: true, data };
   });
 
-  // terminal:bell — one-way (R->M fire-and-forget, renderer detected bell/OSC notification)
-  ipcMain.on(IPC_CHANNELS.TERMINAL.BELL, (_event, req: { id: string; detail?: string }) => {
-    manager.handleBell(req.id, req.detail);
-  });
-
   // terminal:update-cwd — invoke
   ipcMain.handle(IPC_CHANNELS.TERMINAL.UPDATE_CWD, async (_event, req: { id: string; cwd: string }) => {
     const ok = manager.updateCwd(req.id, req.cwd);
