@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>亮色主题 — "回到平铺"按钮配色方案</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #f0f0f3;
+    color: #1c1c1e;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    padding: 40px 60px;
+  }
+  h1 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #888;
+    margin-bottom: 12px;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 12px;
+    color: #aeaeb2;
+    margin-bottom: 32px;
+  }
+  .variants {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .variant {
+    display: flex;
+    align-items: flex-start;
+    gap: 28px;
+  }
+  .variant-label {
+    flex-shrink: 0;
+    width: 80px;
+    padding-top: 30px;
+    text-align: right;
+    font-size: 13px;
+    font-weight: 600;
+    color: #999;
+  }
+  .variant-label span { display: block; color: #bbb; font-weight: 400; font-size: 11px; margin-top: 4px; }
+
+  /* ——— Simulated terminal area (light) ——— */
+  .terminal-sim {
+    flex: 1;
+    height: 200px;
+    background: #ffffff;
+    border: 1px solid #d1d1d6;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .fake-menubar {
+    height: 36px;
+    background: #f5f5f7;
+    border-bottom: 1px solid #d1d1d6;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 8px;
+    font-size: 11px;
+    color: #999;
+  }
+  .fake-menubar .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .fake-menubar .dot.r { background: #ff5f57; }
+  .fake-menubar .dot.y { background: #febc2e; }
+  .fake-menubar .dot.g { background: #28c840; }
+  .fake-menubar .title { margin-left: auto; color: #aaa; font-size: 10px; }
+
+  .fake-content {
+    padding: 12px 16px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 11px;
+    color: #c0c0c5;
+    line-height: 1.6;
+  }
+  .fake-content .prompt { color: #c87d1a; }
+  .fake-content .cmd { color: #b0b0b8; }
+
+  .fake-sidebar {
+    position: absolute;
+    top: 36px;
+    right: 0;
+    width: 22%;
+    bottom: 0;
+    border-left: 1px solid #d1d1d6;
+    background: #f8f8fa;
+  }
+  .fake-sidebar-item {
+    height: 33.33%;
+    border-bottom: 1px solid #d1d1d6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: #ccc;
+  }
+
+  .desc {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    font-size: 9px;
+    color: #c0c0c5;
+    text-align: right;
+    line-height: 1.5;
+  }
+
+  /* ============================================
+     暗色主题参考（对照）
+     ============================================ */
+  .terminal-sim.dark {
+    background: #0e1117;
+    border-color: #1e2530;
+  }
+  .terminal-sim.dark .fake-menubar {
+    background: #0a0c10;
+    border-color: #1e2530;
+    color: #555;
+  }
+  .terminal-sim.dark .fake-content .prompt { color: #e8a748; }
+  .terminal-sim.dark .fake-content .cmd { color: #3a3f4b; }
+  .terminal-sim.dark .fake-content { color: #3a3f4b; }
+  .terminal-sim.dark .fake-sidebar {
+    border-color: #1e2530;
+    background: #0c0e14;
+  }
+  .terminal-sim.dark .fake-sidebar-item {
+    border-color: #1e2530;
+    color: #333;
+  }
+  .terminal-sim.dark .desc { color: #2a2f38; }
+
+  .btn-dark-ref {
+    position: absolute;
+    top: 44px;
+    right: calc(22% + 12px);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: #14181f;
+    border: 1px solid #1e2530;
+    border-radius: 6px;
+    color: #4a4f5a;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-dark-ref:hover {
+    background: #1e2530;
+    color: #aaa;
+    border-color: #3a4050;
+  }
+  .btn-dark-ref svg { width: 14px; height: 14px; }
+
+  /* ============================================
+     方案 A: 纯白底 + 浅灰边框（最融入）
+     ============================================ */
+  .btn-la {
+    position: absolute;
+    top: 44px;
+    right: calc(22% + 12px);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: #ffffff;
+    border: 1px solid #d1d1d6;
+    border-radius: 6px;
+    color: #aeaeb2;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-la:hover {
+    background: #e5e5ea;
+    color: #636366;
+    border-color: #aeaeb2;
+  }
+  .btn-la svg { width: 14px; height: 14px; }
+
+  /* ============================================
+     方案 B: 浅灰底 + 深灰边框（略微突出）
+     ============================================ */
+  .btn-lb {
+    position: absolute;
+    top: 44px;
+    right: calc(22% + 12px);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: #e8e8ec;
+    border: 1px solid #c7c7cc;
+    border-radius: 6px;
+    color: #8e8e93;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-lb:hover {
+    background: #d1d1d6;
+    color: #48484a;
+    border-color: #8e8e93;
+  }
+  .btn-lb svg { width: 14px; height: 14px; }
+
+  /* ============================================
+     方案 C: 透明底 + 最细边框（最低调）
+     ============================================ */
+  .btn-lc {
+    position: absolute;
+    top: 44px;
+    right: calc(22% + 12px);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: 1px solid #d1d1d6;
+    border-radius: 6px;
+    color: #c7c7cc;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-lc:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #636366;
+    border-color: #aeaeb2;
+  }
+  .btn-lc svg { width: 14px; height: 14px; }
+
+</style>
+</head>
+<body>
+
+<h1>亮色主题 — "回到平铺" 按钮配色方案</h1>
+<p class="subtitle">暗色主题的方案 B 已选定，以下为亮色主题的 3 种配色 · hover 可交互</p>
+
+<div class="variants">
+
+  <!-- Dark reference -->
+  <div class="variant">
+    <div class="variant-label">暗色参考<span>已选定</span></div>
+    <div class="terminal-sim dark">
+      <div class="fake-menubar">
+        <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+        <div class="title">暗色主题 · 已选方案 B</div>
+      </div>
+      <div class="fake-content">
+        <div><span class="prompt">❯ </span><span class="cmd">claude "explain this codebase"</span></div>
+        <div><span class="cmd">Analyzing repository structure...</span></div>
+      </div>
+      <div class="fake-sidebar">
+        <div class="fake-sidebar-item">T2</div>
+        <div class="fake-sidebar-item">T3</div>
+        <div class="fake-sidebar-item">T4</div>
+      </div>
+      <button class="btn-dark-ref" title="回到平铺">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+      </button>
+      <div class="desc">暗色 · #14181f 底 · #1e2530 边 · #4a4f5a 图标</div>
+    </div>
+  </div>
+
+  <!-- Light A -->
+  <div class="variant">
+    <div class="variant-label">方案 A<span>白底浅边</span></div>
+    <div class="terminal-sim">
+      <div class="fake-menubar">
+        <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+        <div class="title">白色底 · 浅灰边框 · 最融入背景</div>
+      </div>
+      <div class="fake-content">
+        <div><span class="prompt">❯ </span><span class="cmd">claude "explain this codebase"</span></div>
+        <div><span class="cmd">Analyzing repository structure...</span></div>
+      </div>
+      <div class="fake-sidebar">
+        <div class="fake-sidebar-item">T2</div>
+        <div class="fake-sidebar-item">T3</div>
+        <div class="fake-sidebar-item">T4</div>
+      </div>
+      <button class="btn-la" title="回到平铺">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+      </button>
+      <div class="desc">#fff 底 · #d1d1d6 边 · #aeaeb2 图标<br>hover → #e5e5ea 底 · #636366 图标</div>
+    </div>
+  </div>
+
+  <!-- Light B -->
+  <div class="variant">
+    <div class="variant-label">方案 B<span>灰底深边</span></div>
+    <div class="terminal-sim">
+      <div class="fake-menubar">
+        <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+        <div class="title">浅灰底 · 深灰边框 · 略微突出</div>
+      </div>
+      <div class="fake-content">
+        <div><span class="prompt">❯ </span><span class="cmd">claude "explain this codebase"</span></div>
+        <div><span class="cmd">Analyzing repository structure...</span></div>
+      </div>
+      <div class="fake-sidebar">
+        <div class="fake-sidebar-item">T2</div>
+        <div class="fake-sidebar-item">T3</div>
+        <div class="fake-sidebar-item">T4</div>
+      </div>
+      <button class="btn-lb" title="回到平铺">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+      </button>
+      <div class="desc">#e8e8ec 底 · #c7c7cc 边 · #8e8e93 图标<br>hover → #d1d1d6 底 · #48484a 图标</div>
+    </div>
+  </div>
+
+  <!-- Light C -->
+  <div class="variant">
+    <div class="variant-label">方案 C<span>透明最低调</span></div>
+    <div class="terminal-sim">
+      <div class="fake-menubar">
+        <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+        <div class="title">透明底 · 细线边框 · 最不打扰</div>
+      </div>
+      <div class="fake-content">
+        <div><span class="prompt">❯ </span><span class="cmd">claude "explain this codebase"</span></div>
+        <div><span class="cmd">Analyzing repository structure...</span></div>
+      </div>
+      <div class="fake-sidebar">
+        <div class="fake-sidebar-item">T2</div>
+        <div class="fake-sidebar-item">T3</div>
+        <div class="fake-sidebar-item">T4</div>
+      </div>
+      <button class="btn-lc" title="回到平铺">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+      </button>
+      <div class="desc">transparent 底 · #d1d1d6 边 · #c7c7cc 图标<br>hover → rgba(0,0,0,0.05) 底 · #636366 图标</div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
