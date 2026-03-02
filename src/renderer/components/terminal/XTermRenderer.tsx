@@ -185,7 +185,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     // Guards: skip if disposed, suppressResize (compact/sidebar), or container too small
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        if (disposed || suppressResizeRef.current) return;
+        if (disposed) return;
         if (!isContainerReady(containerRef.current)) return;
         fitAddon.fit();
       });
@@ -194,7 +194,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     // initial double-RAF was too early (e.g. CSS Grid not fully settled).
     // fitAddon.fit() is a no-op when dimensions haven't changed.
     const safetyTimer = setTimeout(() => {
-      if (disposed || suppressResizeRef.current) return;
+      if (disposed) return;
       if (!isContainerReady(containerRef.current)) return;
       fitAddon.fit();
     }, 200);
@@ -211,7 +211,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
         term.options.cursorStyle = cfg.cursorStyle;
         term.options.cursorBlink = cfg.cursorBlink;
         requestAnimationFrame(() => {
-          if (!disposed && !suppressResizeRef.current && isContainerReady(containerRef.current)) {
+          if (!disposed && isContainerReady(containerRef.current)) {
             fitPreservingScroll();
           }
         });
@@ -263,7 +263,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       // buffer 写入完成后重新 fit + scrollToBottom，确保列宽与内容匹配且 viewport 显示最新内容
       requestAnimationFrame(() => {
         if (!disposed) {
-          if (!suppressResizeRef.current && isContainerReady(containerRef.current)) {
+          if (isContainerReady(containerRef.current)) {
             fitAddon.fit();
           }
           term.scrollToBottom();
@@ -287,7 +287,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       if (!entry || disposed) return;
       const { width, height } = entry.contentRect;
       if (width < 10 || height < 10) return;
-      if (!suppressResizeRef.current) fitPreservingScroll();
+      fitPreservingScroll();
       trackRenderer('resizeObs');
     });
     observer.observe(containerRef.current);
