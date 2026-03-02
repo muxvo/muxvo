@@ -123,6 +123,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       if (viewport) viewport.style.visibility = 'hidden';
 
       fitAddon.fit();
+      trackRenderer('fitCall');
 
       // Defer scroll restoration to next frame — xterm needs a tick to
       // complete buffer rewrap and update baseY/viewportY after fit().
@@ -200,9 +201,11 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
 
     const unsubOutput = window.api.terminal.onOutput((event) => {
       if (event.id === terminalId) {
+        trackRenderer('ipcOutput');
         if (!bufferedDataWritten) {
           pendingLiveData.push(event.data);
         } else {
+          trackRenderer('termWrite');
           term.write(event.data);
         }
       }
@@ -255,6 +258,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       const { width, height } = entry.contentRect;
       if (width < 10 || height < 10) return;
       if (!suppressResizeRef.current) fitPreservingScroll();
+      trackRenderer('resizeObs');
     });
     observer.observe(containerRef.current);
 

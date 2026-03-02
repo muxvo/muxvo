@@ -249,6 +249,47 @@
   height: 12px;
 }
 
+/* Back-to-tiling button (icon-only, replaces maximize in focused mode) */
+.tile-tiling-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #14181f;
+  border: 1px solid #1e2530;
+  border-radius: 6px;
+  color: #4a4f5a;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.tile-tiling-btn:hover {
+  background: #1e2530;
+  color: #aaa;
+  border-color: #3a4050;
+}
+
+.tile-tiling-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Back-to-tiling button — light theme (warm gray / scheme D) */
+[data-theme="light"] .tile-tiling-btn {
+  background: #ede8e2;
+  border-color: #d4ccc3;
+  color: #a09080;
+}
+
+[data-theme="light"] .tile-tiling-btn:hover {
+  background: #ddd5cb;
+  color: #6b5d4f;
+  border-color: #a09080;
+}
+
 /* Close button (subtle) */
 .tile-close-btn {
   display: flex;

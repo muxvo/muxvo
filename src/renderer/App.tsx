@@ -28,6 +28,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { I18nProvider, useI18n, type Locale } from './i18n';
 import { mapExtToFileType, toLocalFileUrl } from './utils/file-tree';
 import { trackEvent } from './hooks/useAnalytics';
+import { startRendererPerfLogger } from './utils/renderer-perf-logger';
 import { useGlobalZoom } from './hooks/useGlobalZoom';
 import { ANALYTICS_EVENTS } from '@/shared/constants/analytics-events';
 import type { ChatSource } from '@/shared/types/chat.types';
@@ -37,6 +38,11 @@ export function App(): JSX.Element {
   const [initialLocale, setInitialLocale] = useState<Locale>('zh');
   const [uiTheme, setUiTheme] = useState<'dark' | 'light'>('dark');
   useGlobalZoom();
+
+  // Start renderer performance logger (writes to ~/.muxvo/logs/perf.log via IPC)
+  useEffect(() => {
+    startRendererPerfLogger();
+  }, []);
 
   useEffect(() => {
     // Apply default dark theme immediately
@@ -195,20 +201,9 @@ function AppContent({
           onRename={actions.handleRename}
           onAddTerminal={handleAddTerminal}
           maxReached={actions.maxReached}
+          onBackToTiling={actions.handleBackToTiling}
         />
       </main>
-
-      {/* "回到平铺" icon-only button (visible in Focused mode) */}
-      {terminalState.viewMode === 'Focused' && (
-        <button className="grid-return-btn" onClick={actions.handleBackToTiling} title={t('app.backToTiling')}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="3" width="7" height="7" rx="1" />
-            <rect x="14" y="3" width="7" height="7" rx="1" />
-            <rect x="3" y="14" width="7" height="7" rx="1" />
-            <rect x="14" y="14" width="7" height="7" rx="1" />
-          </svg>
-        </button>
-      )}
 
       {/* FloatingControls removed — add button moved to MenuBar */}
 

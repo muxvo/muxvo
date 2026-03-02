@@ -76,6 +76,7 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
       onRename={onRename}
       onAddTerminal={onAddTerminal}
       maxReached={maxReached}
+      onBackToTiling={onBackToTiling}
     />
   );
 }
@@ -157,9 +158,10 @@ interface TilingGridProps {
   onRename?: (id: string, name: string) => void;
   onAddTerminal?: () => void;
   maxReached?: boolean;
+  onBackToTiling?: () => void;
 }
 
-function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebarClick, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached }: TilingGridProps): JSX.Element {
+function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebarClick, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached, onBackToTiling }: TilingGridProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const layout = calculateGridLayout(terminals.length);
   const { cols, rows } = layout;
@@ -355,6 +357,7 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
               onDoubleClick={() => onDoubleClick?.(t.id)}
               onClick={() => onClick?.(t.id)}
               onClose={onClose}
+              onBackToTiling={isFocused ? onBackToTiling : undefined}
             />
             {/* Sidebar overlay: intercept wheel/click before xterm consumes them */}
             {isFocusedMode && !isFocused && (
