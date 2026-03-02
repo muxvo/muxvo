@@ -22,12 +22,20 @@ disown
 - Production：`~/Library/Application Support/muxvo/`
 - 调试时修改 preferences 等文件，必须改 **Muxvo Dev** 目录下的，不是 `muxvo/` 或 `~/.muxvo/`
 
-**⚠️ 启动规范（必须严格遵守）**：
-1. 先杀掉所有进程：`pkill -f "electron-vite"; pkill -f "Electron"`
-2. **等待 5 秒**让端口完全释放：`sleep 5`
-3. 再启动：`nohup npx electron-vite dev > /dev/null 2>&1 & disown`
-4. 完整一行命令：`pkill -f "electron-vite"; pkill -f "Electron"; sleep 5; nohup npx electron-vite dev > /dev/null 2>&1 & disown`
-5. **禁止用 sleep 2 或 sleep 3**，实测不够，必须 sleep 5
+**⚠️ 重启规范（必须严格遵守，否则白屏）**：
+
+白屏根因：`pkill` 后旧 Vite 进程不一定立刻释放 5173 端口，新 Vite 绑不到端口，Electron 加载空页面。
+
+**必须用这个完整命令，不可省略任何步骤：**
+```bash
+pkill -f "electron-vite"; pkill -f "Electron"; lsof -ti:5173 2>/dev/null | xargs kill -9 2>/dev/null; sleep 5; nohup npx electron-vite dev > /dev/null 2>&1 & disown
+```
+
+关键步骤说明：
+1. `pkill` 杀进程
+2. **`lsof -ti:5173 | xargs kill -9`** 强制释放 5173 端口（**不可省略！这是防白屏的关键**）
+3. `sleep 5` 等端口完全释放
+4. 启动 dev server
 
 ## Commands
 
