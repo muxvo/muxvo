@@ -32,6 +32,8 @@
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   gap: 8px;
+  position: relative;
+  z-index: 2; /* Above sidebar overlay (z-index: 1) so header buttons stay clickable */
 }
 
 /* Status dot */

@@ -56,6 +56,7 @@ export interface TileHeaderProps {
   onDoubleClick?: () => void;
   onClose?: (id: string) => void;
   onBackToTiling?: () => void;
+  onSidebarSwitch?: () => void;
 }
 
 export function TileHeader({
@@ -70,6 +71,7 @@ export function TileHeader({
   onDoubleClick,
   onClose,
   onBackToTiling,
+  onSidebarSwitch,
 }: TileHeaderProps): JSX.Element {
   const { t } = useI18n();
   const panelDispatch = usePanelDispatch();
@@ -191,14 +193,21 @@ export function TileHeader({
 
         {/* Header action buttons */}
         {compact ? (
-          onClose && (
-            <button className="tile-close-btn" onClick={handleCloseClick}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          )
+          <>
+            {onSidebarSwitch && (
+              <button className="tile-max-btn" onClick={(e) => { e.stopPropagation(); onSidebarSwitch(); }}>
+                <MaximizeIcon />
+              </button>
+            )}
+            {onClose && (
+              <button className="tile-close-btn" onClick={handleCloseClick}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            )}
+          </>
         ) : (
           <>
             {/* File button (amber pill) */}

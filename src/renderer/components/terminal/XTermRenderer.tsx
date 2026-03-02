@@ -325,6 +325,25 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     };
     window.addEventListener('muxvo:terminal-refit', onRefit);
 
+    // Sidebar activation: receive focus request from overlay
+    const onTerminalFocusReq = (e: Event) => {
+      const { detail } = e as CustomEvent;
+      if (detail === terminalId && !disposed) {
+        term.focus();
+      }
+    };
+    window.addEventListener('muxvo:terminal-focus', onTerminalFocusReq);
+
+    // Sidebar activation: receive scroll forwarding from overlay
+    const onTerminalScrollReq = (e: Event) => {
+      const { detail } = e as CustomEvent<{ id: string; deltaY: number }>;
+      if (detail.id === terminalId && !disposed) {
+        const lines = Math.round(detail.deltaY / 20);
+        if (lines !== 0) term.scrollLines(lines);
+      }
+    };
+    window.addEventListener('muxvo:terminal-scroll', onTerminalScrollReq);
+
     // Pause cursor blink when window loses focus to reduce idle CPU usage.
     // WebGL renderer's rAF loop runs continuously when cursorBlink is true,
     // even when the window is behind other windows. Pausing the blink
@@ -356,6 +375,8 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       window.removeEventListener('muxvo:theme-change', onThemeChange);
       window.removeEventListener('muxvo:global-zoom', onGlobalZoom);
       window.removeEventListener('muxvo:terminal-refit', onRefit);
+      window.removeEventListener('muxvo:terminal-focus', onTerminalFocusReq);
+      window.removeEventListener('muxvo:terminal-scroll', onTerminalScrollReq);
       window.removeEventListener('blur', onWindowBlur);
       window.removeEventListener('focus', onWindowFocus);
       document.removeEventListener('visibilitychange', onVisibilityChange);

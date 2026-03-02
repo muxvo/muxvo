@@ -193,8 +193,11 @@ function AppContent({
           viewMode={terminalState.viewMode}
           focusedId={terminalState.focusedId}
           selectedId={terminalState.selectedId}
+          activeSidebarId={terminalState.activeSidebarId}
           onDoubleClick={actions.handleDoubleClick}
           onSidebarClick={actions.handleSidebarClick}
+          onSidebarActivate={actions.handleSidebarActivate}
+          onSidebarDeactivate={actions.handleSidebarDeactivate}
           onClick={actions.handleTileClick}
           onClose={actions.removeTerminal}
           onReorder={actions.handleReorder}

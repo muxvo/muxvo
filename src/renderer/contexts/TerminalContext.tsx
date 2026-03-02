@@ -42,6 +42,7 @@ export interface TerminalState {
   viewMode: 'Tiling' | 'Focused';
   focusedId: string | null;
   selectedId: string | null;
+  activeSidebarId: string | null;
   terminalNames: Record<string, string>;
   closeConfirm: CloseConfirmState;
 }
@@ -52,6 +53,7 @@ export const initialTerminalState: TerminalState = {
   viewMode: 'Tiling',
   focusedId: null,
   selectedId: null,
+  activeSidebarId: null,
   terminalNames: {},
   closeConfirm: { open: false, terminalId: '', processName: '' },
 };
@@ -69,6 +71,7 @@ type TerminalAction =
   | { type: 'SET_VIEW_MODE'; mode: 'Tiling' | 'Focused' }
   | { type: 'SET_FOCUSED'; id: string | null }
   | { type: 'SET_SELECTED'; id: string | null }
+  | { type: 'SET_ACTIVE_SIDEBAR'; id: string | null }
   | { type: 'OPEN_CLOSE_CONFIRM'; terminalId: string; processName: string }
   | { type: 'CLOSE_CLOSE_CONFIRM' };
 
@@ -137,13 +140,20 @@ export function terminalReducer(state: TerminalState, action: TerminalAction): T
       return { ...state, terminalOrder: action.newOrder };
 
     case 'SET_VIEW_MODE':
-      return { ...state, viewMode: action.mode };
+      return {
+        ...state,
+        viewMode: action.mode,
+        activeSidebarId: action.mode === 'Tiling' ? null : state.activeSidebarId,
+      };
 
     case 'SET_FOCUSED':
-      return { ...state, focusedId: action.id };
+      return { ...state, focusedId: action.id, activeSidebarId: null };
 
     case 'SET_SELECTED':
       return { ...state, selectedId: action.id };
+
+    case 'SET_ACTIVE_SIDEBAR':
+      return { ...state, activeSidebarId: action.id };
 
     case 'OPEN_CLOSE_CONFIRM':
       return {
@@ -357,6 +367,15 @@ export function useTerminalActions() {
     dispatch({ type: 'SET_FOCUSED', id });
   }, [dispatch]);
 
+  const handleSidebarActivate = useCallback((id: string) => {
+    dispatch({ type: 'SET_ACTIVE_SIDEBAR', id });
+    window.dispatchEvent(new CustomEvent('muxvo:terminal-focus', { detail: id }));
+  }, [dispatch]);
+
+  const handleSidebarDeactivate = useCallback(() => {
+    dispatch({ type: 'SET_ACTIVE_SIDEBAR', id: null });
+  }, [dispatch]);
+
   const handleTileClick = useCallback((id: string) => {
     dispatch({ type: 'SET_SELECTED', id });
     // Clear WaitingInput badge when user clicks on the terminal tile
@@ -408,6 +427,8 @@ export function useTerminalActions() {
     handleDoubleClick,
     handleBackToTiling,
     handleSidebarClick,
+    handleSidebarActivate,
+    handleSidebarDeactivate,
     handleTileClick,
     handleReorder,
     handleRename,

@@ -27,8 +27,11 @@ interface Props {
   viewMode?: 'Tiling' | 'Focused';
   focusedId?: string | null;
   selectedId?: string | null;
+  activeSidebarId?: string | null;
   onDoubleClick?: (id: string) => void;
   onSidebarClick?: (id: string) => void;
+  onSidebarActivate?: (id: string) => void;
+  onSidebarDeactivate?: () => void;
   onClick?: (id: string) => void;
   onClose?: (id: string) => void;
   onReorder?: (newOrder: string[]) => void;
@@ -38,7 +41,7 @@ interface Props {
   onBackToTiling?: () => void;
 }
 
-export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, selectedId, onDoubleClick, onSidebarClick, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached, onBackToTiling }: Props): JSX.Element {
+export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, selectedId, activeSidebarId, onDoubleClick, onSidebarClick, onSidebarActivate, onSidebarDeactivate, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached, onBackToTiling }: Props): JSX.Element {
   const { t } = useI18n();
   if (terminals.length === 0) {
     return (
@@ -68,8 +71,11 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
       terminals={terminals}
       selectedId={selectedId}
       focusedId={viewMode === 'Focused' ? focusedId : null}
+      activeSidebarId={viewMode === 'Focused' ? activeSidebarId : null}
       onDoubleClick={onDoubleClick}
       onSidebarClick={onSidebarClick}
+      onSidebarActivate={onSidebarActivate}
+      onSidebarDeactivate={onSidebarDeactivate}
       onClick={onClick}
       onClose={onClose}
       onReorder={onReorder}
@@ -150,8 +156,11 @@ interface TilingGridProps {
   terminals: TerminalInfo[];
   selectedId?: string | null;
   focusedId?: string | null;
+  activeSidebarId?: string | null;
   onDoubleClick?: (id: string) => void;
   onSidebarClick?: (id: string) => void;
+  onSidebarActivate?: (id: string) => void;
+  onSidebarDeactivate?: () => void;
   onClick?: (id: string) => void;
   onClose?: (id: string) => void;
   onReorder?: (newOrder: string[]) => void;
@@ -161,7 +170,7 @@ interface TilingGridProps {
   onBackToTiling?: () => void;
 }
 
-function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebarClick, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached, onBackToTiling }: TilingGridProps): JSX.Element {
+function TilingGrid({ terminals, selectedId, focusedId, activeSidebarId, onDoubleClick, onSidebarClick, onSidebarActivate, onSidebarDeactivate, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached, onBackToTiling }: TilingGridProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const layout = calculateGridLayout(terminals.length);
   const { cols, rows } = layout;
@@ -306,6 +315,7 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
           <div
             key={t.id}
             style={cellStyle}
+            onClick={isFocused ? () => onSidebarDeactivate?.() : undefined}
           >
             <TerminalTile
               id={t.id}
@@ -333,30 +343,38 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
         );
       })}
 
-      {/* Focused mode sidebar: CSS scroll container replaces virtual scroll */}
+      {/* Focused mode sidebar: CSS scroll container with smart overlay */}
       {isFocusedMode && nonFocusedTerminals.length > 0 && (
-        <div style={{
-          position: 'absolute',
-          right: 0,
-          width: '25%',
-          top: 0,
-          bottom: 0,
-          overflowY: 'auto',
-          zIndex: 11,
-          display: 'flex',
-          flexDirection: 'column',
-        }}>
+        <div
+          style={{
+            position: 'absolute',
+            right: 0,
+            width: '25%',
+            top: 0,
+            bottom: 0,
+            overflowY: 'auto',
+            zIndex: 11,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+          onClick={(e) => {
+            // Click on sidebar container background → deactivate
+            if (e.target === e.currentTarget) onSidebarDeactivate?.();
+          }}
+        >
           {nonFocusedTerminals.map((t) => {
+            const isActivated = activeSidebarId === t.id;
             const visibleCount = Math.min(nonFocusedTerminals.length, MAX_SIDEBAR_VISIBLE);
             return (
               <div
                 key={t.id}
+                className={isActivated ? 'sidebar-tile--active' : undefined}
                 style={{
                   height: `${100 / visibleCount}%`,
                   minHeight: '150px',
                   flexShrink: 0,
                   position: 'relative',
-                  borderLeft: '1px solid var(--border)',
+                  borderLeft: isActivated ? '2px solid var(--accent)' : '1px solid var(--border)',
                   overflow: 'hidden',
                 }}
               >
@@ -367,11 +385,44 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
                   customName={t.customName}
                   compact
                   onClose={onClose}
+                  onSidebarSwitch={() => onSidebarClick?.(t.id)}
                 />
-                {/* Overlay: intercept clicks before xterm consumes them */}
+                {/* Smart overlay: always present, behavior varies by activation state */}
                 <div
-                  style={{ position: 'absolute', inset: 0, zIndex: 1, cursor: 'pointer' }}
-                  onClick={() => onSidebarClick?.(t.id)}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    zIndex: 1,
+                    pointerEvents: 'auto',
+                    cursor: isActivated ? 'text' : 'default',
+                    background: isActivated ? 'transparent' : 'rgba(0,0,0,0.03)',
+                    transition: 'background 150ms ease',
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (isActivated) {
+                      // Already active: re-focus xterm (in case focus was lost)
+                      window.dispatchEvent(new CustomEvent('muxvo:terminal-focus', { detail: t.id }));
+                    } else {
+                      // Activate this sidebar terminal
+                      onSidebarActivate?.(t.id);
+                    }
+                  }}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    // Double-click: switch to focused terminal
+                    onSidebarClick?.(t.id);
+                  }}
+                  onWheel={(e) => {
+                    if (isActivated) {
+                      // Activated: forward scroll to xterm
+                      e.stopPropagation();
+                      window.dispatchEvent(new CustomEvent('muxvo:terminal-scroll', {
+                        detail: { id: t.id, deltaY: e.deltaY },
+                      }));
+                    }
+                    // Not activated: wheel bubbles to sidebar container for list scrolling
+                  }}
                 />
               </div>
             );
