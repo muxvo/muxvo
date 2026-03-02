@@ -222,16 +222,16 @@
   height: 18px;
 }
 
-/* Maximize / focus button (blue pill) */
+/* Maximize / focus button (amber in dark, blue in light) */
 .tile-max-btn {
   display: flex;
   align-items: center;
   gap: 4px;
   padding: 3px 8px;
   border-radius: 4px;
-  background: rgba(96, 165, 250, 0.15);
-  border: 1px solid rgba(96, 165, 250, 0.3);
-  color: var(--info);
+  background: rgba(232, 167, 72, 0.15);
+  border: 1px solid rgba(232, 167, 72, 0.3);
+  color: var(--accent);
   font-size: 11px;
   font-weight: 600;
   font-family: var(--font-sans);
@@ -242,6 +242,17 @@
 }
 
 .tile-max-btn:hover {
+  background: rgba(232, 167, 72, 0.3);
+  border-color: rgba(232, 167, 72, 0.5);
+}
+
+[data-theme="light"] .tile-max-btn {
+  background: rgba(96, 165, 250, 0.15);
+  border-color: rgba(96, 165, 250, 0.3);
+  color: var(--info);
+}
+
+[data-theme="light"] .tile-max-btn:hover {
   background: rgba(96, 165, 250, 0.3);
   border-color: var(--info);
 }
