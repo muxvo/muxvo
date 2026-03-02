@@ -65,6 +65,8 @@ let mainWindow: BrowserWindow | null = null;
 let lastBounds: Electron.Rectangle | null = null;
 let pendingDeepLinkUrl: string | null = null;
 let updateDownloaded = false;
+let forceClose = false;
+let isQuitting = false;
 const sessionStartTime = Date.now();
 
 interface WindowConfig {
@@ -189,15 +191,48 @@ function createWindow(windowConfig?: WindowConfig): void {
     mainWindow?.show();
   });
 
-  // Save full config before window is destroyed (terminals still alive at this point)
-  mainWindow.on('close', () => {
+  // Intercept close to show confirmation dialog
+  mainWindow.on('close', (event) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       lastBounds = mainWindow.getBounds();
     }
-    // Save window bounds and clear terminal list on normal close.
-    // On crash/kill the close event won't fire, so openTerminals stays
-    // intact from real-time saves, enabling restore on next launch.
-    saveWindowBoundsAndClearTerminals();
+
+    if (forceClose) {
+      // Save window bounds and clear terminal list on confirmed close.
+      // On crash/kill the close event won't fire, so openTerminals stays
+      // intact from real-time saves, enabling restore on next launch.
+      saveWindowBoundsAndClearTerminals();
+      return;
+    }
+
+    event.preventDefault();
+
+    const terminalCount = terminalManager ? terminalManager.list().length : 0;
+    const detail = terminalCount > 0
+      ? `当前有 ${terminalCount} 个终端正在运行，关闭后将全部终止。`
+      : '确定要关闭 Muxvo 吗？';
+
+    dialog.showMessageBox(mainWindow!, {
+      type: 'question',
+      title: '关闭 Muxvo',
+      message: '确定要退出吗？',
+      detail,
+      buttons: ['退出', '取消'],
+      defaultId: 1,
+      cancelId: 1,
+    }).then(({ response }) => {
+      if (response === 0) {
+        forceClose = true;
+        saveWindowBoundsAndClearTerminals();
+        if (isQuitting) {
+          app.quit();
+        } else {
+          mainWindow?.close();
+        }
+      } else {
+        isQuitting = false;
+      }
+    });
   });
 
   // Right-click context menu with copy support
@@ -538,6 +573,7 @@ app.whenReady().then(() => {
         console.log('[MUXVO:update] User chose restart, calling quitAndInstall');
         // setImmediate avoids SIGABRT from calling quit inside dialog callback stack
         setImmediate(() => {
+          forceClose = true;
           autoUpdater.quitAndInstall(false, true);
         });
       }
@@ -671,6 +707,7 @@ app.whenReady().then(() => {
           detail: '如有疑问请联系支持。',
           buttons: ['退出'],
         });
+        forceClose = true;
         app.quit();
       }
     } catch (err) {
@@ -678,8 +715,14 @@ app.whenReady().then(() => {
     }
   })();
 
+  app.on('before-quit', () => {
+    isQuitting = true;
+  });
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
+      forceClose = false;
+      isQuitting = false;
       // Restart lightweight services stopped by window-all-closed
       chatWatcher?.start();
       configWatcher?.start();
