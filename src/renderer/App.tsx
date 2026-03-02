@@ -137,8 +137,9 @@ function AppContent({
 
   // Show welcome page on first launch (tourCompleted not set)
   useEffect(() => {
+    const logPath = '/Users/rl/.muxvo/welcome-debug.log';
     const logToFile = (msg: string) => {
-      window.api.fs.writeFile('/tmp/muxvo-welcome-debug.log', msg).catch(() => {});
+      window.api.fs.writeFile(logPath, msg).catch(() => {});
     };
     window.api.app.getPreferences().then((result: any) => {
       logToFile(JSON.stringify({ result, keys: Object.keys(result || {}), type: typeof result }, null, 2));
