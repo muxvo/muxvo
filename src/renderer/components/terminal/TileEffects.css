@@ -281,10 +281,12 @@
 [data-theme="light"] .tile-tiling-btn {
   background: #ede8e2;
   border-color: #d4ccc3;
+  color: #a09080;
 }
 
 [data-theme="light"] .tile-tiling-btn:hover {
   background: #ddd5cb;
+  color: #6b5d4f;
   border-color: #a09080;
 }
 

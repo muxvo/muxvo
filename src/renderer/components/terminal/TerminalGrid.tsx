@@ -13,7 +13,7 @@
 /** Sidebar shows at most this many terminals per screen; extras are scrollable */
 const MAX_SIDEBAR_VISIBLE = 3;
 
-import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { useI18n } from '@/renderer/i18n';
 import { calculateGridLayout, GridLayoutResult } from '@/shared/utils/grid-layout';
 import { createGridResizeManager } from '@/renderer/stores/grid-resize';
@@ -239,17 +239,6 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
     ? terminals.filter((t) => t.id !== focusedId)
     : [];
 
-  // Virtual sidebar scroll: wheel events control which 3 terminals are visible
-  const [sidebarOffset, setSidebarOffset] = useState(0);
-  useEffect(() => { setSidebarOffset(0); }, [focusedId]);
-
-  const handleSidebarWheel = useCallback((e: React.WheelEvent) => {
-    const maxOffset = Math.max(0, nonFocusedTerminals.length - MAX_SIDEBAR_VISIBLE);
-    if (maxOffset === 0) return;
-    if (e.deltaY > 0) setSidebarOffset((prev) => Math.min(prev + 1, maxOffset));
-    else if (e.deltaY < 0) setSidebarOffset((prev) => Math.max(prev - 1, 0));
-  }, [nonFocusedTerminals.length]);
-
   const gridStyle: React.CSSProperties = {
     display: 'grid',
     gridTemplateColumns,
@@ -291,35 +280,16 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
             overflow: 'hidden',
           };
         } else if (isFocusedMode) {
-          // Sidebar terminal: right 25%, virtual scroll controls visibility
-          const sidebarIndex = nonFocusedTerminals.findIndex((s) => s.id === t.id);
-          const isVisible = sidebarIndex >= sidebarOffset
-            && sidebarIndex < sidebarOffset + MAX_SIDEBAR_VISIBLE;
-
-          if (isVisible) {
-            const visibleIndex = sidebarIndex - sidebarOffset;
-            const visibleCount = Math.min(nonFocusedTerminals.length, MAX_SIDEBAR_VISIBLE);
-            cellStyle = {
-              position: 'absolute',
-              right: 0,
-              width: '25%',
-              top: `${visibleIndex * (100 / visibleCount)}%`,
-              height: `${100 / visibleCount}%`,
-              zIndex: 11,
-              overflow: 'hidden',
-              borderLeft: '1px solid var(--border)',
-            };
-          } else {
-            // Hidden but alive — no unmount, ResizeObserver guard prevents PTY resize
-            cellStyle = {
-              position: 'absolute',
-              width: 0,
-              height: 0,
-              overflow: 'hidden',
-              opacity: 0,
-              pointerEvents: 'none',
-            };
-          }
+          // Hidden but alive — keeps xterm instance for seamless focus switching.
+          // Visual sidebar is rendered separately in a CSS scroll container below.
+          cellStyle = {
+            position: 'absolute',
+            width: 0,
+            height: 0,
+            overflow: 'hidden',
+            opacity: 0,
+            pointerEvents: 'none',
+          };
         } else {
           // Tiling mode: normal grid placement
           cellStyle = {
@@ -359,17 +329,55 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
               onClose={onClose}
               onBackToTiling={isFocused ? onBackToTiling : undefined}
             />
-            {/* Sidebar overlay: intercept wheel/click before xterm consumes them */}
-            {isFocusedMode && !isFocused && (
-              <div
-                style={{ position: 'absolute', inset: 0, zIndex: 1, cursor: 'pointer' }}
-                onWheel={handleSidebarWheel}
-                onClick={() => onSidebarClick?.(t.id)}
-              />
-            )}
           </div>
         );
       })}
+
+      {/* Focused mode sidebar: CSS scroll container replaces virtual scroll */}
+      {isFocusedMode && nonFocusedTerminals.length > 0 && (
+        <div style={{
+          position: 'absolute',
+          right: 0,
+          width: '25%',
+          top: 0,
+          bottom: 0,
+          overflowY: 'auto',
+          zIndex: 11,
+          display: 'flex',
+          flexDirection: 'column',
+        }}>
+          {nonFocusedTerminals.map((t) => {
+            const visibleCount = Math.min(nonFocusedTerminals.length, MAX_SIDEBAR_VISIBLE);
+            return (
+              <div
+                key={t.id}
+                style={{
+                  height: `${100 / visibleCount}%`,
+                  minHeight: '150px',
+                  flexShrink: 0,
+                  position: 'relative',
+                  borderLeft: '1px solid var(--border)',
+                  overflow: 'hidden',
+                }}
+              >
+                <TerminalTile
+                  id={t.id}
+                  state={t.state}
+                  cwd={t.cwd}
+                  customName={t.customName}
+                  compact
+                  onClose={onClose}
+                />
+                {/* Overlay: intercept clicks before xterm consumes them */}
+                <div
+                  style={{ position: 'absolute', inset: 0, zIndex: 1, cursor: 'pointer' }}
+                  onClick={() => onSidebarClick?.(t.id)}
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Column resize handles (tiling mode only) */}
       {!isFocusedMode && cols > 1 && colHandlePositions.map((pct, idx) => (
