@@ -78,6 +78,9 @@ export const IPC_CHANNELS = {
     CHECK_FOR_UPDATE: 'app:check-for-update',
     DOWNLOAD_UPDATE: 'app:download-update',
     ZOOM: 'app:zoom',
+    CLOSE_REQUESTED: 'app:close-requested',
+    CONFIRM_CLOSE: 'app:confirm-close',
+    CANCEL_CLOSE: 'app:cancel-close',
   },
   DISCOVERY: {
     FETCH: 'discovery:fetch',

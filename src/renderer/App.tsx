@@ -6,7 +6,7 @@
  * DEV-PLAN B1/B2: Focus mode with Esc exit + sidebar switching
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { MenuBar } from './components/layout/MenuBar';
 import { TerminalGrid } from './components/terminal/TerminalGrid';
 import { CloseConfirmDialog } from './components/terminal/CloseConfirmDialog';
@@ -21,6 +21,7 @@ import { TourOverlay } from './components/tour/TourOverlay';
 import { WaitingInputNotification } from './components/terminal/WaitingInputNotification';
 import { LoginModal } from './components/auth/LoginModal';
 import { SettingsModal } from './components/settings/SettingsModal';
+import { AppCloseConfirmDialog } from './components/app/AppCloseConfirmDialog';
 import { PanelProvider, usePanelContext } from './contexts/PanelContext';
 import { TerminalProvider, useTerminalState, useOrderedTerminals, useTerminalActions } from './contexts/TerminalContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -102,6 +103,30 @@ function AppContent({
   const terminalState = useTerminalState();
   const terminals = useOrderedTerminals();
   const actions = useTerminalActions();
+
+  // App close confirmation state
+  const [closeRequested, setCloseRequested] = useState<{ open: boolean; terminalCount: number }>({ open: false, terminalCount: 0 });
+  const closeRequestedRef = useRef(closeRequested);
+  closeRequestedRef.current = closeRequested;
+
+  useEffect(() => {
+    const unsub = window.api.app.onCloseRequested((data: { terminalCount: number }) => {
+      if (!closeRequestedRef.current.open) {
+        setCloseRequested({ open: true, terminalCount: data.terminalCount });
+      }
+    });
+    return () => { unsub(); };
+  }, []);
+
+  const handleCloseConfirm = useCallback(() => {
+    setCloseRequested({ open: false, terminalCount: 0 });
+    window.api.app.confirmClose();
+  }, []);
+
+  const handleCloseCancel = useCallback(() => {
+    setCloseRequested({ open: false, terminalCount: 0 });
+    window.api.app.cancelClose();
+  }, []);
 
   // Auto-start tour on first launch (tourCompleted not set)
   useEffect(() => {
@@ -281,6 +306,13 @@ function AppContent({
           state.filePanel.open || state.tempView.active
         }
         onSwitchToTerminals={() => dispatch({ type: 'CLOSE_ALL' })}
+      />
+
+      <AppCloseConfirmDialog
+        open={closeRequested.open}
+        terminalCount={closeRequested.terminalCount}
+        onConfirm={handleCloseConfirm}
+        onCancel={handleCloseCancel}
       />
     </div>
   );

@@ -117,6 +117,13 @@ const api = {
     },
     setZoomFactor: (factor: number) => webFrame.setZoomFactor(factor),
     getZoomFactor: () => webFrame.getZoomFactor(),
+    onCloseRequested: (callback: (data: { terminalCount: number }) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: { terminalCount: number }) => callback(data);
+      ipcRenderer.on(IPC_CHANNELS.APP.CLOSE_REQUESTED, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.APP.CLOSE_REQUESTED, handler);
+    },
+    confirmClose: () => ipcRenderer.invoke(IPC_CHANNELS.APP.CONFIRM_CLOSE),
+    cancelClose: () => ipcRenderer.invoke(IPC_CHANNELS.APP.CANCEL_CLOSE),
   },
 
   // --- FS domain ---

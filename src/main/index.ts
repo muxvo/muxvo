@@ -191,7 +191,7 @@ function createWindow(windowConfig?: WindowConfig): void {
     mainWindow?.show();
   });
 
-  // Intercept close to show confirmation dialog
+  // Intercept close to show custom confirmation dialog in renderer
   mainWindow.on('close', (event) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       lastBounds = mainWindow.getBounds();
@@ -206,33 +206,8 @@ function createWindow(windowConfig?: WindowConfig): void {
     }
 
     event.preventDefault();
-
     const terminalCount = terminalManager ? terminalManager.list().length : 0;
-    const detail = terminalCount > 0
-      ? `当前有 ${terminalCount} 个终端正在运行，关闭后将全部终止。`
-      : '确定要关闭 Muxvo 吗？';
-
-    dialog.showMessageBox(mainWindow!, {
-      type: 'question',
-      title: '关闭 Muxvo',
-      message: '确定要退出吗？',
-      detail,
-      buttons: ['退出', '取消'],
-      defaultId: 1,
-      cancelId: 1,
-    }).then(({ response }) => {
-      if (response === 0) {
-        forceClose = true;
-        saveWindowBoundsAndClearTerminals();
-        if (isQuitting) {
-          app.quit();
-        } else {
-          mainWindow?.close();
-        }
-      } else {
-        isQuitting = false;
-      }
-    });
+    pushToAllWindows(IPC_CHANNELS.APP.CLOSE_REQUESTED, { terminalCount });
   });
 
   // Right-click context menu with copy support
@@ -443,6 +418,20 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC_CHANNELS.APP.SAVE_CONFIG, async (_event, config) => {
     const result = configManager.saveConfig(config);
     return { success: true, data: result };
+  });
+
+  // Close confirmation: renderer confirms → main proceeds with close
+  ipcMain.handle(IPC_CHANNELS.APP.CONFIRM_CLOSE, () => {
+    forceClose = true;
+    saveWindowBoundsAndClearTerminals();
+    if (isQuitting) {
+      app.quit();
+    } else {
+      mainWindow?.close();
+    }
+  });
+  ipcMain.handle(IPC_CHANNELS.APP.CANCEL_CLOSE, () => {
+    isQuitting = false;
   });
 
   // INSTALL_UPDATE handler removed — update installs automatically on next quit
