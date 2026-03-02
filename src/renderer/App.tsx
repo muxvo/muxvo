@@ -138,7 +138,7 @@ function AppContent({
   // Show welcome page on first launch (tourCompleted not set)
   useEffect(() => {
     window.api.app.getPreferences().then((result: any) => {
-      if (result?.success && !result.data?.tourCompleted) {
+      if (result?.preferences && !result.preferences?.tourCompleted) {
         setTimeout(() => dispatch({ type: 'SHOW_WELCOME' }), 1500);
       }
     }).catch(() => {});
