@@ -19,7 +19,12 @@ export function TerminalSidebar({ terminals, onSelect, onClose, className, style
           key={t.id}
           className="terminal-sidebar__item"
           style={{ height: `${100 / visibleCount}%` }}
-          onClick={() => onSelect?.(t.id)}
+          onClick={() => {
+            if (t.state === 'WaitingInput') {
+              window.api.terminal.acknowledgeWaiting(t.id);
+            }
+            onSelect?.(t.id);
+          }}
         >
           <TerminalTile
             id={t.id}

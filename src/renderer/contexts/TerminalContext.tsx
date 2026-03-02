@@ -365,11 +365,19 @@ export function useTerminalActions() {
 
   const handleSidebarClick = useCallback((id: string) => {
     dispatch({ type: 'SET_FOCUSED', id });
+    const terminal = stateRef.current.terminals.find((t) => t.id === id);
+    if (terminal?.state === 'WaitingInput') {
+      window.api.terminal.acknowledgeWaiting(id);
+    }
   }, [dispatch]);
 
   const handleSidebarActivate = useCallback((id: string) => {
     dispatch({ type: 'SET_ACTIVE_SIDEBAR', id });
     window.dispatchEvent(new CustomEvent('muxvo:terminal-focus', { detail: id }));
+    const terminal = stateRef.current.terminals.find((t) => t.id === id);
+    if (terminal?.state === 'WaitingInput') {
+      window.api.terminal.acknowledgeWaiting(id);
+    }
   }, [dispatch]);
 
   const handleSidebarDeactivate = useCallback(() => {

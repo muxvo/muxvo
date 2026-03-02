@@ -274,6 +274,10 @@ function AppContent({
           }}
           onSelectTerminal={(id) => {
             dispatch({ type: 'CLOSE_TEMP_VIEW' });
+            const terminal = terminals.find(t => t.id === id);
+            if (terminal?.state === 'WaitingInput') {
+              window.api.terminal.acknowledgeWaiting(id);
+            }
             actions.handleDoubleClick(id);
           }}
           onCloseTerminal={actions.removeTerminal}

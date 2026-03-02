@@ -21,6 +21,22 @@ import '@xterm/xterm/css/xterm.css';
 const MIN_COLS_FOR_RESIZE = 10;
 const MIN_ROWS_FOR_RESIZE = 2;
 
+/** Diagnostic logging — set to false after debugging */
+const RESIZE_DEBUG = true;
+
+function logFit(id: string, src: string, container: HTMLElement | null, cols: number, rows: number, action: string): void {
+  if (!RESIZE_DEBUG) return;
+  const rect = container?.getBoundingClientRect();
+  const w = Math.round(rect?.width ?? 0);
+  const h = Math.round(rect?.height ?? 0);
+  console.log(`[XTERM:fit] id=${id.slice(0, 5)} src=${src} container=${w}x${h} cols=${cols} rows=${rows} ${action}`);
+}
+
+function logResize(id: string, cols: number, rows: number, action: string): void {
+  if (!RESIZE_DEBUG) return;
+  console.log(`[XTERM:resize] id=${id.slice(0, 5)} cols=${cols} rows=${rows} → ${action}`);
+}
+
 /** Check if container has sufficient dimensions for a meaningful fit */
 function isContainerReady(container: HTMLElement | null): boolean {
   if (!container) return false;
@@ -123,8 +139,10 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     // Scroll restoration is deferred to next frame because xterm.js v6
     // processes buffer rewrap asynchronously after fit().
     let fitSeq = 0;
-    function fitPreservingScroll(): void {
+    function fitPreservingScroll(source: string = 'unknown'): void {
       const seq = ++fitSeq;
+      const prevCols = term.cols;
+      const prevRows = term.rows;
       const buf = term.buffer.active;
       const wasAtBottom = buf.viewportY >= buf.baseY;
       const scrollRatio = buf.baseY > 0 ? buf.viewportY / buf.baseY : 1;
@@ -137,6 +155,12 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
 
       fitAddon.fit();
       trackRenderer('fitCall');
+      logFit(terminalId, source, containerRef.current, term.cols, term.rows,
+        `${prevCols}x${prevRows}→${term.cols}x${term.rows}`);
+      if (RESIZE_DEBUG && prevCols > 20 && term.cols < prevCols / 2) {
+        console.warn(`[XTERM:WARN] id=${terminalId.slice(0, 5)} cols DROPPED ${prevCols}→${term.cols} src=${source}`);
+        console.trace();
+      }
 
       // Defer scroll restoration to next frame — xterm needs a tick to
       // complete buffer rewrap and update baseY/viewportY after fit().
@@ -186,8 +210,14 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         if (disposed) return;
-        if (!isContainerReady(containerRef.current)) return;
+        if (!isContainerReady(containerRef.current)) {
+          logFit(terminalId, 'initialFit', containerRef.current, term.cols, term.rows, 'SKIPPED(notReady)');
+          return;
+        }
+        const prevCols = term.cols;
         fitAddon.fit();
+        logFit(terminalId, 'initialFit', containerRef.current, term.cols, term.rows,
+          `${prevCols}x${term.rows}→${term.cols}x${term.rows}`);
       });
     });
     // Safety-net: retry fit after a generous delay to catch cases where the
@@ -195,8 +225,14 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     // fitAddon.fit() is a no-op when dimensions haven't changed.
     const safetyTimer = setTimeout(() => {
       if (disposed) return;
-      if (!isContainerReady(containerRef.current)) return;
+      if (!isContainerReady(containerRef.current)) {
+        logFit(terminalId, 'safetyNet', containerRef.current, term.cols, term.rows, 'SKIPPED(notReady)');
+        return;
+      }
+      const prevCols = term.cols;
       fitAddon.fit();
+      logFit(terminalId, 'safetyNet', containerRef.current, term.cols, term.rows,
+        `${prevCols}x${term.rows}→${term.cols}x${term.rows}`);
     }, 200);
     termRef.current = term;
 
@@ -212,7 +248,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
         term.options.cursorBlink = cfg.cursorBlink;
         requestAnimationFrame(() => {
           if (!disposed && isContainerReady(containerRef.current)) {
-            fitPreservingScroll();
+            fitPreservingScroll('configApply');
           }
         });
       }
@@ -264,7 +300,12 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       requestAnimationFrame(() => {
         if (!disposed) {
           if (isContainerReady(containerRef.current)) {
+            const prevCols = term.cols;
             fitAddon.fit();
+            logFit(terminalId, 'bufferReplay', containerRef.current, term.cols, term.rows,
+              `${prevCols}x${term.rows}→${term.cols}x${term.rows}`);
+          } else {
+            logFit(terminalId, 'bufferReplay', containerRef.current, term.cols, term.rows, 'SKIPPED(notReady)');
           }
           term.scrollToBottom();
         }
