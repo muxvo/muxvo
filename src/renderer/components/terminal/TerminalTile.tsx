@@ -18,6 +18,7 @@ interface Props {
   state: string;
   cwd: string;
   onDoubleClick?: () => void;
+  onFocus?: () => void;
   onClick?: () => void;
   onClose?: (id: string) => void;
   compact?: boolean;
@@ -42,6 +43,7 @@ function TerminalTileInner({
   state,
   cwd,
   onDoubleClick,
+  onFocus,
   onClick,
   onClose,
   compact,
@@ -144,6 +146,7 @@ function TerminalTileInner({
         naming={naming}
         onDragStart={handleDragStart}
         onDoubleClick={onDoubleClick}
+        onFocus={onFocus}
         onClose={onClose}
         onBackToTiling={onBackToTiling}
         onSidebarSwitch={onSidebarSwitch}

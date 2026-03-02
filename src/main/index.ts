@@ -365,6 +365,41 @@ app.whenReady().then(() => {
     });
   }
 
+  // Terminal debug log: renderer + main → terminal-debug.log
+  // Used to diagnose "output invisible after focus switch" bugs.
+  let termDebugLogWriter: (line: string) => void = () => {};
+  {
+    const { appendFile: termAppendFile, mkdir: termMkdir, stat: termStat, readFile: termReadFile, writeFile: termWriteFile } = require('fs/promises');
+    const termLogDir = require('path').join(require('os').homedir(), '.muxvo', 'logs');
+    const termLogPath = require('path').join(termLogDir, 'terminal-debug.log');
+    const TERM_MAX_LOG_BYTES = 500 * 1024;
+    const TERM_KEEP_LOG_BYTES = 200 * 1024;
+
+    // Rotate on startup
+    termMkdir(termLogDir, { recursive: true }).then(() =>
+      termStat(termLogPath).then((s: { size: number }) => {
+        if (s.size > TERM_MAX_LOG_BYTES) {
+          return termReadFile(termLogPath, 'utf-8').then((content: string) =>
+            termWriteFile(termLogPath, content.slice(-TERM_KEEP_LOG_BYTES))
+          );
+        }
+      }).catch(() => {})
+    ).catch(() => {});
+
+    termDebugLogWriter = (line: string) => {
+      const ts = new Date().toISOString();
+      const fullLine = `[${ts}] ${line}\n`;
+      termMkdir(termLogDir, { recursive: true })
+        .then(() => termAppendFile(termLogPath, fullLine))
+        .catch(() => {});
+    };
+
+    ipcMain.on(IPC_CHANNELS.TERMINAL.DEBUG_LOG, (_event, data: { message: string }) => {
+      if (!data?.message) return;
+      termDebugLogWriter(data.message);
+    });
+  }
+
   // Renderer perf log relay: renderer sends perf data → main writes to log file
   ipcMain.on(IPC_CHANNELS.PERF.LOG, (_event, data: { message: string }) => {
     if (data?.message) {
@@ -383,7 +418,7 @@ app.whenReady().then(() => {
 
   // Initialize PTY adapter and terminal manager
   const ptyAdapter = createRealPtyAdapter();
-  terminalManager = createTerminalManager({ pty: ptyAdapter, perfLogger });
+  terminalManager = createTerminalManager({ pty: ptyAdapter, perfLogger, debugLogger: termDebugLogWriter });
 
   // Register terminal IPC handlers (with config save on terminal change)
   registerTerminalHandlers(terminalManager, () => {

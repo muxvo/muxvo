@@ -196,6 +196,7 @@ function AppContent({
           selectedId={terminalState.selectedId}
           activeSidebarId={terminalState.activeSidebarId}
           onDoubleClick={actions.handleDoubleClick}
+          onFocusTerminal={actions.handleFocusTerminal}
           onSidebarClick={actions.handleSidebarClick}
           onSidebarActivate={actions.handleSidebarActivate}
           onSidebarDeactivate={actions.handleSidebarDeactivate}
@@ -278,7 +279,7 @@ function AppContent({
             if (terminal?.state === 'WaitingInput') {
               window.api.terminal.acknowledgeWaiting(id);
             }
-            actions.handleDoubleClick(id);
+            actions.handleFocusTerminal(id);
           }}
           onCloseTerminal={actions.removeTerminal}
         />

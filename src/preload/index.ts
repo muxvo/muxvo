@@ -280,6 +280,10 @@ const api = {
   glyphLog: (message: string) =>
     ipcRenderer.send('glyph:log', { message }),
 
+  // --- Terminal diagnostic log (writes to ~/.muxvo/logs/terminal-debug.log) ---
+  termDebugLog: (message: string) =>
+    ipcRenderer.send(IPC_CHANNELS.TERMINAL.DEBUG_LOG, { message }),
+
   // --- Utility: native file path from drag-and-drop ---
   getPathForFile: (file: File) => webUtils.getPathForFile(file),
 };

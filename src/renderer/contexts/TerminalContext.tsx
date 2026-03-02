@@ -358,6 +358,11 @@ export function useTerminalActions() {
     dispatch({ type: 'SET_FOCUSED', id });
   }, [dispatch]);
 
+  const handleFocusTerminal = useCallback((id: string) => {
+    dispatch({ type: 'SET_VIEW_MODE', mode: 'Focused' });
+    dispatch({ type: 'SET_FOCUSED', id });
+  }, [dispatch]);
+
   const handleBackToTiling = useCallback(() => {
     dispatch({ type: 'SET_VIEW_MODE', mode: 'Tiling' });
     dispatch({ type: 'SET_FOCUSED', id: null });
@@ -433,6 +438,7 @@ export function useTerminalActions() {
     handleCloseConfirm,
     handleCloseCancel,
     handleDoubleClick,
+    handleFocusTerminal,
     handleBackToTiling,
     handleSidebarClick,
     handleSidebarActivate,

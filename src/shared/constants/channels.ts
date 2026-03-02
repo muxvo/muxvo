@@ -21,6 +21,7 @@ export const IPC_CHANNELS = {
     LIST_UPDATED: 'terminal:list-updated',
     ACKNOWLEDGE_WAITING: 'terminal:acknowledge-waiting',
     ZOOM: 'terminal:zoom',
+    DEBUG_LOG: 'terminal:debug-log',
   },
   FS: {
     READ_DIR: 'fs:read-dir',

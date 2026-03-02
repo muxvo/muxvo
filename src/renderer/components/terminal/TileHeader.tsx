@@ -54,6 +54,7 @@ export interface TileHeaderProps {
   naming: UseNamingResult;
   onDragStart?: (e: React.DragEvent) => void;
   onDoubleClick?: () => void;
+  onFocus?: () => void;
   onClose?: (id: string) => void;
   onBackToTiling?: () => void;
   onSidebarSwitch?: () => void;
@@ -69,6 +70,7 @@ export function TileHeader({
   naming,
   onDragStart,
   onDoubleClick,
+  onFocus,
   onClose,
   onBackToTiling,
   onSidebarSwitch,
@@ -104,7 +106,7 @@ export function TileHeader({
 
   const handleFocusClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onDoubleClick?.();
+    onFocus?.();
   };
 
   const handleFileClick = (e: React.MouseEvent) => {

@@ -29,6 +29,7 @@ interface Props {
   selectedId?: string | null;
   activeSidebarId?: string | null;
   onDoubleClick?: (id: string) => void;
+  onFocusTerminal?: (id: string) => void;
   onSidebarClick?: (id: string) => void;
   onSidebarActivate?: (id: string) => void;
   onSidebarDeactivate?: () => void;
@@ -41,7 +42,7 @@ interface Props {
   onBackToTiling?: () => void;
 }
 
-export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, selectedId, activeSidebarId, onDoubleClick, onSidebarClick, onSidebarActivate, onSidebarDeactivate, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached, onBackToTiling }: Props): JSX.Element {
+export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, selectedId, activeSidebarId, onDoubleClick, onFocusTerminal, onSidebarClick, onSidebarActivate, onSidebarDeactivate, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached, onBackToTiling }: Props): JSX.Element {
   const { t } = useI18n();
   if (terminals.length === 0) {
     return (
@@ -73,6 +74,7 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
       focusedId={viewMode === 'Focused' ? focusedId : null}
       activeSidebarId={viewMode === 'Focused' ? activeSidebarId : null}
       onDoubleClick={onDoubleClick}
+      onFocusTerminal={onFocusTerminal}
       onSidebarClick={onSidebarClick}
       onSidebarActivate={onSidebarActivate}
       onSidebarDeactivate={onSidebarDeactivate}
@@ -158,6 +160,7 @@ interface TilingGridProps {
   focusedId?: string | null;
   activeSidebarId?: string | null;
   onDoubleClick?: (id: string) => void;
+  onFocusTerminal?: (id: string) => void;
   onSidebarClick?: (id: string) => void;
   onSidebarActivate?: (id: string) => void;
   onSidebarDeactivate?: () => void;
@@ -170,7 +173,7 @@ interface TilingGridProps {
   onBackToTiling?: () => void;
 }
 
-function TilingGrid({ terminals, selectedId, focusedId, activeSidebarId, onDoubleClick, onSidebarClick, onSidebarActivate, onSidebarDeactivate, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached, onBackToTiling }: TilingGridProps): JSX.Element {
+function TilingGrid({ terminals, selectedId, focusedId, activeSidebarId, onDoubleClick, onFocusTerminal, onSidebarClick, onSidebarActivate, onSidebarDeactivate, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached, onBackToTiling }: TilingGridProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const layout = calculateGridLayout(terminals.length);
   const { cols, rows } = layout;
@@ -335,6 +338,7 @@ function TilingGrid({ terminals, selectedId, focusedId, activeSidebarId, onDoubl
               onDragLeave={!isFocusedMode ? handleDragLeave : undefined}
               dragState={!isFocusedMode ? ds : 'none'}
               onDoubleClick={() => onDoubleClick?.(t.id)}
+              onFocus={() => onFocusTerminal?.(t.id)}
               onClick={() => onClick?.(t.id)}
               onClose={onClose}
               onBackToTiling={isFocused ? onBackToTiling : undefined}
