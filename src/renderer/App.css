@@ -59,35 +59,29 @@
   background: var(--bg-deep);
 }
 
-/* === "回到平铺" floating button (centered, top) === */
+/* === "回到平铺" icon-only button (top-right of main area) === */
 .grid-return-btn {
   position: fixed;
-  top: 48px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: calc(var(--menu-bar-height) + 8px);
+  right: calc(25% + 12px);
   z-index: 160;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 16px;
-  background: var(--accent);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--bg-surface, #14181f);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary, #4a4f5a);
   cursor: pointer;
-  font-family: var(--font-sans);
-  transition: all 0.15s;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s;
 }
 
 .grid-return-btn:hover {
-  background: var(--accent-hover, var(--accent));
-  color: white;
-  border-color: var(--accent-hover, var(--accent));
-  filter: brightness(1.15);
+  background: var(--border);
+  color: var(--text-primary, #aaa);
+  border-color: var(--text-secondary, #3a4050);
 }
 
 .grid-return-btn svg {
