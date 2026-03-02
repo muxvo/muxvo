@@ -259,7 +259,7 @@
   background: #14181f;
   border: 1px solid #1e2530;
   border-radius: 6px;
-  color: #fff;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
@@ -268,7 +268,7 @@
 
 .tile-tiling-btn:hover {
   background: #1e2530;
-  color: #fff;
+  color: var(--text-primary);
   border-color: #3a4050;
 }
 
@@ -281,12 +281,10 @@
 [data-theme="light"] .tile-tiling-btn {
   background: #ede8e2;
   border-color: #d4ccc3;
-  color: #fff;
 }
 
 [data-theme="light"] .tile-tiling-btn:hover {
   background: #ddd5cb;
-  color: #fff;
   border-color: #a09080;
 }
 
