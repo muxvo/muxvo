@@ -64,14 +64,14 @@ export function createAddonManager(term: Terminal): AddonManager {
     try {
       const addon = new WebglAddon();
       addon.onContextLoss(() => {
-        console.warn('[AddonManager] WebGL context lost, disposing WebGL addon');
+        console.warn(`[GLYPH:webgl] ${Date.now()} CONTEXT_LOSS lossCount=${contextLossCount + 1} activeCount=${activeWebglCount}`);
         addon.dispose();
         webglAddon = null;
         activeWebglCount--;
         contextLossCount++;
 
         if (contextLossCount >= 3) {
-          console.warn(`[AddonManager] WebGL permanently degraded after ${contextLossCount} context losses`);
+          console.warn(`[GLYPH:webgl] ${Date.now()} DEGRADED_TO_CANVAS lossCount=${contextLossCount}`);
           return;
         }
 
@@ -79,12 +79,14 @@ export function createAddonManager(term: Terminal): AddonManager {
         setTimeout(() => {
           if (disposed) return;
           if (activeWebglCount < MAX_WEBGL_CONTEXTS) {
+            console.log(`[GLYPH:webgl] ${Date.now()} RECOVERING delay=${delay}ms activeCount=${activeWebglCount}`);
             webglAddon = loadWebgl();
           }
         }, delay);
       });
       term.loadAddon(addon);
       activeWebglCount++;
+      console.log(`[GLYPH:webgl] ${Date.now()} CREATED activeCount=${activeWebglCount}`);
       return addon;
     } catch (e) {
       console.warn('[AddonManager] WebGL addon failed to load, falling back to canvas renderer', e);

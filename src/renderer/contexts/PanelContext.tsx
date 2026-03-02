@@ -62,6 +62,7 @@ type PanelAction =
 // ── Reducer ──
 
 export function panelReducer(state: PanelState, action: PanelAction): PanelState {
+  console.log(`[GLYPH:panel] ${Date.now()} action=${action.type}`);
   switch (action.type) {
     case 'OPEN_FILE_PANEL':
       return {

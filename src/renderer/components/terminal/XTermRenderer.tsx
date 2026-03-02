@@ -367,6 +367,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     // Listen for force-refit requests (e.g. after FileTempView overlay closes)
     const onRefit = () => {
       if (!disposed) {
+        console.log(`[GLYPH:refit] ${Date.now()} id=${terminalId.slice(0, 5)} cols=${term.cols} rows=${term.rows}`);
         fitPreservingScroll('forceRefit');
         // Force re-send dimensions even if cols/rows unchanged
         window.api.terminal.resize(terminalId, term.cols, term.rows);
@@ -399,17 +400,25 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     // eliminates the primary render trigger when user isn't looking at the app.
     const savedCursorBlink = term.options.cursorBlink;
     const onWindowBlur = () => {
-      if (!disposed) term.options.cursorBlink = false;
+      if (!disposed) {
+        term.options.cursorBlink = false;
+        console.log(`[GLYPH:cursor] ${Date.now()} id=${terminalId.slice(0, 5)} BLINK_PAUSE reason=blur`);
+      }
     };
     const onWindowFocus = () => {
-      if (!disposed) term.options.cursorBlink = savedCursorBlink ?? true;
+      if (!disposed) {
+        term.options.cursorBlink = savedCursorBlink ?? true;
+        console.log(`[GLYPH:cursor] ${Date.now()} id=${terminalId.slice(0, 5)} BLINK_RESUME reason=focus`);
+      }
     };
     const onVisibilityChange = () => {
       if (disposed) return;
       if (document.hidden) {
         term.options.cursorBlink = false;
+        console.log(`[GLYPH:cursor] ${Date.now()} id=${terminalId.slice(0, 5)} BLINK_PAUSE reason=visibility`);
       } else {
         term.options.cursorBlink = savedCursorBlink ?? true;
+        console.log(`[GLYPH:cursor] ${Date.now()} id=${terminalId.slice(0, 5)} BLINK_RESUME reason=visibility`);
       }
     };
     window.addEventListener('blur', onWindowBlur);
