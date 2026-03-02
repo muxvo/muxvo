@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>聚焦模式 — "回到平铺"按钮方案对比</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0c10;
+    color: #e0e0e0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    padding: 40px 60px;
+  }
+  h1 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #888;
+    margin-bottom: 32px;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+  .variants {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .variant {
+    display: flex;
+    align-items: flex-start;
+    gap: 28px;
+  }
+  .variant-label {
+    flex-shrink: 0;
+    width: 80px;
+    padding-top: 30px;
+    text-align: right;
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+  }
+  .variant-label span { display: block; color: #777; font-weight: 400; font-size: 11px; margin-top: 4px; }
+
+  /* ——— Simulated terminal area ——— */
+  .terminal-sim {
+    flex: 1;
+    height: 220px;
+    background: #0e1117;
+    border: 1px solid #1e2530;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  /* Fake menu bar */
+  .fake-menubar {
+    height: 36px;
+    background: #0a0c10;
+    border-bottom: 1px solid #1e2530;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 8px;
+    font-size: 11px;
+    color: #555;
+  }
+  .fake-menubar .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .fake-menubar .dot.r { background: #ff5f57; }
+  .fake-menubar .dot.y { background: #febc2e; }
+  .fake-menubar .dot.g { background: #28c840; }
+  .fake-menubar .title { margin-left: auto; color: #444; font-size: 10px; }
+
+  /* Fake terminal content */
+  .fake-content {
+    padding: 12px 16px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 11px;
+    color: #3a3f4b;
+    line-height: 1.6;
+  }
+  .fake-content .prompt { color: #e8a748; }
+  .fake-content .cmd { color: #5a6070; }
+
+  /* Fake sidebar */
+  .fake-sidebar {
+    position: absolute;
+    top: 36px;
+    right: 0;
+    width: 22%;
+    bottom: 0;
+    border-left: 1px solid #1e2530;
+    background: #0c0e14;
+  }
+  .fake-sidebar-item {
+    height: 33.33%;
+    border-bottom: 1px solid #1e2530;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: #333;
+  }
+
+  /* ============================================
+     CURRENT: 当前按钮样式（对照）
+     ============================================ */
+  .btn-current {
+    position: absolute;
+    top: 44px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    background: #e8a748;
+    border: 1px solid #e8a748;
+    border-radius: 8px;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    transition: all 0.15s;
+  }
+  .btn-current:hover { filter: brightness(1.15); }
+  .btn-current svg { width: 14px; height: 14px; }
+
+  /* ============================================
+     A: 左上角幽灵按钮（与界面融为一体）
+     ============================================ */
+  .btn-a {
+    position: absolute;
+    top: 44px;
+    left: 12px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: transparent;
+    border: 1px solid #2a3040;
+    border-radius: 6px;
+    color: #555;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .btn-a:hover {
+    background: #1a1f2a;
+    border-color: #3a4050;
+    color: #999;
+  }
+  .btn-a svg { width: 12px; height: 12px; opacity: 0.6; }
+  .btn-a:hover svg { opacity: 1; }
+
+  /* ============================================
+     B: 右上角极简图标按钮（纯图标，无文字）
+     ============================================ */
+  .btn-b {
+    position: absolute;
+    top: 44px;
+    right: calc(22% + 12px);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: #14181f;
+    border: 1px solid #1e2530;
+    border-radius: 6px;
+    color: #4a4f5a;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-b:hover {
+    background: #1e2530;
+    color: #aaa;
+    border-color: #3a4050;
+  }
+  .btn-b svg { width: 14px; height: 14px; }
+
+  /* ============================================
+     C: 底部中央呼吸条（hover 展开）
+     ============================================ */
+  .btn-c-wrapper {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(calc(-50% - 11%));
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-c {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 3px 20px;
+    background: #181c24;
+    border: 1px solid #1e2530;
+    border-radius: 12px;
+    color: #3a3f4a;
+    font-size: 0;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    max-width: 44px;
+    height: 24px;
+  }
+  .btn-c:hover {
+    max-width: 160px;
+    gap: 5px;
+    padding: 3px 14px;
+    background: #1e2530;
+    border-color: #2a3545;
+    color: #888;
+    font-size: 11px;
+  }
+  .btn-c svg { width: 12px; height: 12px; flex-shrink: 0; opacity: 0.4; transition: opacity 0.2s; }
+  .btn-c:hover svg { opacity: 0.8; }
+  .btn-c .btn-text { white-space: nowrap; }
+
+  /* ============================================
+     D: 顶部边缘线（鼠标靠近才变明显）
+     ============================================ */
+  .btn-d-zone {
+    position: absolute;
+    top: 36px;
+    left: 0;
+    right: 22%;
+    height: 36px;
+    z-index: 10;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  .btn-d {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 16px;
+    background: #12151b;
+    border: none;
+    border-bottom: 1px solid #1a1f28;
+    border-radius: 0 0 8px 8px;
+    color: #2a2f38;
+    font-size: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.25s;
+    letter-spacing: 0.5px;
+  }
+  .btn-d:hover {
+    color: #888;
+    background: #1a1f2a;
+    border-bottom-color: #2a3545;
+    padding: 4px 18px;
+  }
+  .btn-d svg { width: 10px; height: 10px; opacity: 0.3; transition: opacity 0.2s; }
+  .btn-d:hover svg { opacity: 0.8; }
+
+  /* ============================================
+     E: 左侧垂直标签（贴边，像抽屉把手）
+     ============================================ */
+  .btn-e {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    padding: 12px 3px;
+    background: #12151b;
+    border: 1px solid #1a1f28;
+    border-left: none;
+    border-radius: 0 6px 6px 0;
+    color: #2a2f38;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.25s;
+  }
+  .btn-e:hover {
+    background: #1a1f2a;
+    border-color: #2a3545;
+    color: #888;
+    padding: 12px 5px;
+  }
+  .btn-e svg {
+    width: 10px; height: 10px;
+    margin-bottom: 6px;
+    opacity: 0.3;
+    transition: opacity 0.2s;
+    transform: rotate(90deg);
+  }
+  .btn-e:hover svg { opacity: 0.8; }
+
+  /* ============================================
+     DESCRIPTION TAGS
+     ============================================ */
+  .desc {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    font-size: 9px;
+    color: #2a2f38;
+    text-align: right;
+    line-height: 1.5;
+  }
+
+  /* ============================================
+     SVG ICON (shared)
+     ============================================ */
+
+</style>
+</head>
+<body>
+
+<h1>FOCUS MODE — "回到平铺" 按钮方案对比（暗色主题）</h1>
+
+<div class="variants">
+
+  <!-- CURRENT -->
+  <div class="variant">
+    <div class="variant-label">当前<span>对照</span></div>
+    <div class="terminal-sim">
+      <div class="fake-menubar">
+        <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+        <div class="title">聚焦模式 · 当前样式</div>
+      </div>
+      <div class="fake-content">
+        <div><span class="prompt">❯ </span><span class="cmd">claude "explain this codebase"</span></div>
+        <div><span class="cmd">Analyzing repository structure...</span></div>
+      </div>
+      <div class="fake-sidebar">
+        <div class="fake-sidebar-item">T2</div>
+        <div class="fake-sidebar-item">T3</div>
+        <div class="fake-sidebar-item">T4</div>
+      </div>
+      <button class="btn-current">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        回到平铺
+      </button>
+      <div class="desc">accent 高亮 · 高对比 · 分散注意力</div>
+    </div>
+  </div>
+
+  <!-- A -->
+  <div class="variant">
+    <div class="variant-label">方案 A<span>幽灵按钮</span></div>
+    <div class="terminal-sim">
+      <div class="fake-menubar">
+        <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+        <div class="title">左上角 · 低调透明 · hover 才亮</div>
+      </div>
+      <div class="fake-content">
+        <div><span class="prompt">❯ </span><span class="cmd">claude "explain this codebase"</span></div>
+        <div><span class="cmd">Analyzing repository structure...</span></div>
+      </div>
+      <div class="fake-sidebar">
+        <div class="fake-sidebar-item">T2</div>
+        <div class="fake-sidebar-item">T3</div>
+        <div class="fake-sidebar-item">T4</div>
+      </div>
+      <button class="btn-a">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        平铺
+      </button>
+      <div class="desc">左上角 · 透明背景 · 暗色边框<br>hover 时微亮 · 文字极简</div>
+    </div>
+  </div>
+
+  <!-- B -->
+  <div class="variant">
+    <div class="variant-label">方案 B<span>纯图标</span></div>
+    <div class="terminal-sim">
+      <div class="fake-menubar">
+        <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+        <div class="title">主区右上角 · 纯图标 · 最小干扰</div>
+      </div>
+      <div class="fake-content">
+        <div><span class="prompt">❯ </span><span class="cmd">claude "explain this codebase"</span></div>
+        <div><span class="cmd">Analyzing repository structure...</span></div>
+      </div>
+      <div class="fake-sidebar">
+        <div class="fake-sidebar-item">T2</div>
+        <div class="fake-sidebar-item">T3</div>
+        <div class="fake-sidebar-item">T4</div>
+      </div>
+      <button class="btn-b" title="回到平铺">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+      </button>
+      <div class="desc">纯图标 · 无文字 · 28×28<br>hover 时才变亮 · tooltip 提示</div>
+    </div>
+  </div>
+
+  <!-- C -->
+  <div class="variant">
+    <div class="variant-label">方案 C<span>底部展开条</span></div>
+    <div class="terminal-sim">
+      <div class="fake-menubar">
+        <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+        <div class="title">底部中央 · 平时收缩 · hover 展开显示文字</div>
+      </div>
+      <div class="fake-content">
+        <div><span class="prompt">❯ </span><span class="cmd">claude "explain this codebase"</span></div>
+        <div><span class="cmd">Analyzing repository structure...</span></div>
+      </div>
+      <div class="fake-sidebar">
+        <div class="fake-sidebar-item">T2</div>
+        <div class="fake-sidebar-item">T3</div>
+        <div class="fake-sidebar-item">T4</div>
+      </div>
+      <div class="btn-c-wrapper">
+        <button class="btn-c">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+          <span class="btn-text">回到平铺</span>
+        </button>
+      </div>
+      <div class="desc">底部 · 默认只显示图标药丸<br>hover 展开文字 · 过渡动画</div>
+    </div>
+  </div>
+
+  <!-- D -->
+  <div class="variant">
+    <div class="variant-label">方案 D<span>顶部边缘</span></div>
+    <div class="terminal-sim">
+      <div class="fake-menubar">
+        <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+        <div class="title">紧贴菜单栏下沿 · 几乎隐形 · hover 浮出</div>
+      </div>
+      <div class="fake-content">
+        <div><span class="prompt">❯ </span><span class="cmd">claude "explain this codebase"</span></div>
+        <div><span class="cmd">Analyzing repository structure...</span></div>
+      </div>
+      <div class="fake-sidebar">
+        <div class="fake-sidebar-item">T2</div>
+        <div class="fake-sidebar-item">T3</div>
+        <div class="fake-sidebar-item">T4</div>
+      </div>
+      <div class="btn-d-zone">
+        <button class="btn-d">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+          回到平铺
+        </button>
+      </div>
+      <div class="desc">顶部下拉标签 · 融入边框<br>hover 下移展开 · 最不打扰</div>
+    </div>
+  </div>
+
+  <!-- E -->
+  <div class="variant">
+    <div class="variant-label">方案 E<span>左侧标签</span></div>
+    <div class="terminal-sim">
+      <div class="fake-menubar">
+        <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+        <div class="title">左边缘 · 竖排文字 · 像抽屉把手</div>
+      </div>
+      <div class="fake-content" style="padding-left: 24px;">
+        <div><span class="prompt">❯ </span><span class="cmd">claude "explain this codebase"</span></div>
+        <div><span class="cmd">Analyzing repository structure...</span></div>
+      </div>
+      <div class="fake-sidebar">
+        <div class="fake-sidebar-item">T2</div>
+        <div class="fake-sidebar-item">T3</div>
+        <div class="fake-sidebar-item">T4</div>
+      </div>
+      <button class="btn-e">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        平铺
+      </button>
+      <div class="desc">左侧贴边 · 竖排 · 像抽屉标签<br>hover 微微加宽 · 不占主区空间</div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
