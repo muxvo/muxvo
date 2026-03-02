@@ -250,16 +250,17 @@
 }
 
 /* Back-to-tiling button (icon-only, replaces maximize in focused mode) */
+/* Uses warm gray (scheme D) in both dark and light themes for visibility */
 .tile-tiling-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 28px;
   height: 28px;
-  background: #14181f;
-  border: 1px solid #1e2530;
+  background: #ede8e2;
+  border: 1px solid #d4ccc3;
   border-radius: 6px;
-  color: #4a4f5a;
+  color: #a09080;
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
@@ -267,27 +268,14 @@
 }
 
 .tile-tiling-btn:hover {
-  background: #1e2530;
-  color: #aaa;
-  border-color: #3a4050;
+  background: #ddd5cb;
+  color: #6b5d4f;
+  border-color: #a09080;
 }
 
 .tile-tiling-btn svg {
   width: 14px;
   height: 14px;
-}
-
-/* Back-to-tiling button — light theme (warm gray / scheme D) */
-[data-theme="light"] .tile-tiling-btn {
-  background: #ede8e2;
-  border-color: #d4ccc3;
-  color: #a09080;
-}
-
-[data-theme="light"] .tile-tiling-btn:hover {
-  background: #ddd5cb;
-  color: #6b5d4f;
-  border-color: #a09080;
 }
 
 /* Close button (subtle) */
