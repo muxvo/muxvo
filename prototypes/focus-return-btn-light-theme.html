@@ -244,6 +244,113 @@
   }
   .btn-lc svg { width: 14px; height: 14px; }
 
+  /* ============================================
+     方案 D: 暖灰底 + 棕调边框（呼应 accent 色调）
+     ============================================ */
+  .btn-ld {
+    position: absolute;
+    top: 44px;
+    right: calc(22% + 12px);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: #ede8e2;
+    border: 1px solid #d4ccc3;
+    border-radius: 6px;
+    color: #a09080;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-ld:hover {
+    background: #ddd5cb;
+    color: #6b5d4f;
+    border-color: #a09080;
+  }
+  .btn-ld svg { width: 14px; height: 14px; }
+
+  /* ============================================
+     方案 E: 冷蓝灰底（偏科技感）
+     ============================================ */
+  .btn-le {
+    position: absolute;
+    top: 44px;
+    right: calc(22% + 12px);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: #e4e7ed;
+    border: 1px solid #c8cdd6;
+    border-radius: 6px;
+    color: #8a90a0;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-le:hover {
+    background: #d0d5e0;
+    color: #4a5068;
+    border-color: #8a90a0;
+  }
+  .btn-le svg { width: 14px; height: 14px; }
+
+  /* ============================================
+     方案 F: 纯无边框（磨砂玻璃感）
+     ============================================ */
+  .btn-lf {
+    position: absolute;
+    top: 44px;
+    right: calc(22% + 12px);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: rgba(0, 0, 0, 0.04);
+    border: none;
+    border-radius: 6px;
+    color: #b0b0b8;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-lf:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #555;
+  }
+  .btn-lf svg { width: 14px; height: 14px; }
+
+  /* ============================================
+     方案 G: 深色反转（暗按钮在亮背景上）
+     ============================================ */
+  .btn-lg {
+    position: absolute;
+    top: 44px;
+    right: calc(22% + 12px);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: #3a3a3c;
+    border: 1px solid #2c2c2e;
+    border-radius: 6px;
+    color: #8e8e93;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-lg:hover {
+    background: #48484a;
+    color: #d1d1d6;
+    border-color: #48484a;
+  }
+  .btn-lg svg { width: 14px; height: 14px; }
+
 </style>
 </head>
 <body>
@@ -366,6 +473,122 @@
         </svg>
       </button>
       <div class="desc">transparent 底 · #d1d1d6 边 · #c7c7cc 图标<br>hover → rgba(0,0,0,0.05) 底 · #636366 图标</div>
+    </div>
+  </div>
+
+  <!-- Light D -->
+  <div class="variant">
+    <div class="variant-label">方案 D<span>暖灰棕调</span></div>
+    <div class="terminal-sim">
+      <div class="fake-menubar">
+        <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+        <div class="title">暖灰底 · 棕调边框 · 呼应 accent 金色</div>
+      </div>
+      <div class="fake-content">
+        <div><span class="prompt">❯ </span><span class="cmd">claude "explain this codebase"</span></div>
+        <div><span class="cmd">Analyzing repository structure...</span></div>
+      </div>
+      <div class="fake-sidebar">
+        <div class="fake-sidebar-item">T2</div>
+        <div class="fake-sidebar-item">T3</div>
+        <div class="fake-sidebar-item">T4</div>
+      </div>
+      <button class="btn-ld" title="回到平铺">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+      </button>
+      <div class="desc">#ede8e2 底 · #d4ccc3 边 · #a09080 图标<br>hover → #ddd5cb 底 · #6b5d4f 图标</div>
+    </div>
+  </div>
+
+  <!-- Light E -->
+  <div class="variant">
+    <div class="variant-label">方案 E<span>冷蓝灰</span></div>
+    <div class="terminal-sim">
+      <div class="fake-menubar">
+        <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+        <div class="title">冷蓝灰底 · 偏科技感</div>
+      </div>
+      <div class="fake-content">
+        <div><span class="prompt">❯ </span><span class="cmd">claude "explain this codebase"</span></div>
+        <div><span class="cmd">Analyzing repository structure...</span></div>
+      </div>
+      <div class="fake-sidebar">
+        <div class="fake-sidebar-item">T2</div>
+        <div class="fake-sidebar-item">T3</div>
+        <div class="fake-sidebar-item">T4</div>
+      </div>
+      <button class="btn-le" title="回到平铺">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+      </button>
+      <div class="desc">#e4e7ed 底 · #c8cdd6 边 · #8a90a0 图标<br>hover → #d0d5e0 底 · #4a5068 图标</div>
+    </div>
+  </div>
+
+  <!-- Light F -->
+  <div class="variant">
+    <div class="variant-label">方案 F<span>无边磨砂</span></div>
+    <div class="terminal-sim">
+      <div class="fake-menubar">
+        <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+        <div class="title">无边框 · 磨砂玻璃感 · 极简</div>
+      </div>
+      <div class="fake-content">
+        <div><span class="prompt">❯ </span><span class="cmd">claude "explain this codebase"</span></div>
+        <div><span class="cmd">Analyzing repository structure...</span></div>
+      </div>
+      <div class="fake-sidebar">
+        <div class="fake-sidebar-item">T2</div>
+        <div class="fake-sidebar-item">T3</div>
+        <div class="fake-sidebar-item">T4</div>
+      </div>
+      <button class="btn-lf" title="回到平铺">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+      </button>
+      <div class="desc">rgba(0,0,0,0.04) 底 · 无边框<br>hover → rgba(0,0,0,0.1) 底 · #555 图标</div>
+    </div>
+  </div>
+
+  <!-- Light G -->
+  <div class="variant">
+    <div class="variant-label">方案 G<span>深色反转</span></div>
+    <div class="terminal-sim">
+      <div class="fake-menubar">
+        <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+        <div class="title">暗色按钮在亮背景上 · 与暗色主题统一</div>
+      </div>
+      <div class="fake-content">
+        <div><span class="prompt">❯ </span><span class="cmd">claude "explain this codebase"</span></div>
+        <div><span class="cmd">Analyzing repository structure...</span></div>
+      </div>
+      <div class="fake-sidebar">
+        <div class="fake-sidebar-item">T2</div>
+        <div class="fake-sidebar-item">T3</div>
+        <div class="fake-sidebar-item">T4</div>
+      </div>
+      <button class="btn-lg" title="回到平铺">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+      </button>
+      <div class="desc">#3a3a3c 底 · #2c2c2e 边 · #8e8e93 图标<br>hover → #48484a 底 · #d1d1d6 图标</div>
     </div>
   </div>
 
