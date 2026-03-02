@@ -304,12 +304,12 @@ export function useTerminalActions() {
   const state = useTerminalState();
   stateRef.current = state;
 
-  // Double-click-to-focus setting (default: true)
-  const doubleClickToFocusRef = useRef(true);
+  // Double-click-to-focus setting (default: false)
+  const doubleClickToFocusRef = useRef(false);
   useEffect(() => {
     const loadConfig = () => {
       window.api.app.getConfig().then((result: any) => {
-        doubleClickToFocusRef.current = result?.data?.doubleClickToFocus !== false;
+        doubleClickToFocusRef.current = result?.data?.doubleClickToFocus === true;
       }).catch(() => {});
     };
     loadConfig();

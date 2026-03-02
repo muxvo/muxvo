@@ -12,7 +12,7 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
   const { state, dispatch } = usePanelContext();
   const { t, locale, setLocale } = useI18n();
   const [startupCount, setStartupCount] = useState(1);
-  const [dblClickFocus, setDblClickFocus] = useState(true);
+  const [dblClickFocus, setDblClickFocus] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'up-to-date' | 'error'>('idle');
   const [newVersion, setNewVersion] = useState('');
 
@@ -23,7 +23,7 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
       if (result?.data?.startupTerminalCount) {
         setStartupCount(Math.max(1, Math.min(20, result.data.startupTerminalCount)));
       }
-      setDblClickFocus(result?.data?.doubleClickToFocus !== false);
+      setDblClickFocus(result?.data?.doubleClickToFocus === true);
     }).catch(() => {});
   }, [state.settingsModal.open]);
 
