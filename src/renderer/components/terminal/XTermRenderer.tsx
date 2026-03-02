@@ -134,7 +134,20 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
         containerRef.current.dataset.baseY = String(term.buffer.active.baseY);
       }
     }
-    const scrollDisposable = term.onScroll(() => syncScrollDataAttrs());
+    // Track previous viewportY to detect abnormal scroll-to-top events
+    let prevScrollViewportY = 0;
+    const scrollDisposable = term.onScroll(() => {
+      const vY = term.buffer.active.viewportY;
+      const bY = term.buffer.active.baseY;
+      // Detect abnormal jump to top: viewportY drops from meaningful position to 0
+      // while buffer has content (baseY > 10). This catches browser scrollTop resets
+      // and other unexpected scroll corruption.
+      if (prevScrollViewportY > 5 && vY === 0 && bY > 10) {
+        termLog('scrollJump!', `id=${terminalId} prevViewportY=${prevScrollViewportY} → 0 baseY=${bY}`);
+      }
+      prevScrollViewportY = vY;
+      syncScrollDataAttrs();
+    });
     // Also sync after any write (covers initial buffer replay)
     const writeDisposable = term.onWriteParsed(() => syncScrollDataAttrs());
 
@@ -152,6 +165,9 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       const buf = term.buffer.active;
       const wasAtBottom = buf.viewportY >= buf.baseY;
       const scrollRatio = buf.baseY > 0 ? buf.viewportY / buf.baseY : 1;
+
+      // Diagnostic: log scroll state BEFORE fit (critical for debugging scroll-to-top bug)
+      termLog('scrollFit:before', `id=${terminalId} src=${source} seq=${seq} viewportY=${buf.viewportY} baseY=${buf.baseY} ratio=${scrollRatio.toFixed(3)} wasAtBottom=${wasAtBottom}`);
 
       // Hide content during reflow to prevent 1-frame flash of wrong scroll position.
       // visibility:hidden keeps element dimensions (unlike display:none) so fitAddon
@@ -172,7 +188,13 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       // Defer scroll restoration to next frame — xterm needs a tick to
       // complete buffer rewrap and update baseY/viewportY after fit().
       requestAnimationFrame(() => {
-        if (disposed || seq !== fitSeq) return; // stale restore → skip
+        if (disposed || seq !== fitSeq) {
+          // Stale restore: a newer fit superseded this one. Log for diagnostics.
+          termLog('scrollFit:stale', `id=${terminalId} src=${source} seq=${seq} current=${fitSeq} → SKIP`);
+          // Ensure viewport visibility is restored even on stale skip
+          if (viewport) viewport.style.visibility = '';
+          return;
+        }
         if (wasAtBottom) {
           term.scrollToBottom();
         } else {
@@ -185,6 +207,8 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
           }
         }
         syncScrollDataAttrs();
+        // Diagnostic: log scroll state AFTER restoration
+        termLog('scrollFit:after', `id=${terminalId} src=${source} seq=${seq} viewportY=${term.buffer.active.viewportY} baseY=${term.buffer.active.baseY} wasAtBottom=${wasAtBottom}`);
         // Restore visibility after scroll position is correct
         if (viewport) viewport.style.visibility = '';
       });
@@ -329,7 +353,9 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
           } else {
             logFit(terminalId, 'bufferReplay', containerRef.current, term.cols, term.rows, 'SKIPPED(notReady)');
           }
+          const beforeVY = term.buffer.active.viewportY;
           term.scrollToBottom();
+          termLog('bufScrollBottom', `id=${terminalId} beforeVY=${beforeVY} afterVY=${term.buffer.active.viewportY} baseY=${term.buffer.active.baseY}`);
         }
       });
 
@@ -351,10 +377,13 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       const { width, height } = entry.contentRect;
       if (width < 10 || height < 10) {
         if (RESIZE_DEBUG) console.log(`[XTERM:resizeObs] id=${terminalId.slice(0, 5)} w=${Math.round(width)} h=${Math.round(height)} → SKIP(tooSmall)`);
-        if (Math.random() < 0.05) {
-          termLog('resizeSkip', `id=${terminalId} w=${Math.round(width)} h=${Math.round(height)}`);
-        }
+        termLog('resizeSkip', `id=${terminalId} w=${Math.round(width)} h=${Math.round(height)} viewportY=${term.buffer.active.viewportY} baseY=${term.buffer.active.baseY}`);
         return;
+      }
+      // Log scroll state at resize trigger point (before fitPreservingScroll modifies it)
+      if (RESIZE_DEBUG) {
+        const buf = term.buffer.active;
+        console.log(`[XTERM:resizeObs] id=${terminalId.slice(0, 5)} w=${Math.round(width)} h=${Math.round(height)} viewportY=${buf.viewportY} baseY=${buf.baseY}`);
       }
       fitPreservingScroll('resizeObs');
       trackRenderer('resizeObs');
