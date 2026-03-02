@@ -295,12 +295,13 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
 
           if (isVisible) {
             const visibleIndex = sidebarIndex - sidebarOffset;
+            const visibleCount = Math.min(nonFocusedTerminals.length, MAX_SIDEBAR_VISIBLE);
             cellStyle = {
               position: 'absolute',
               right: 0,
               width: '25%',
-              top: `${visibleIndex * (100 / MAX_SIDEBAR_VISIBLE)}%`,
-              height: `${100 / MAX_SIDEBAR_VISIBLE}%`,
+              top: `${visibleIndex * (100 / visibleCount)}%`,
+              height: `${100 / visibleCount}%`,
               zIndex: 11,
               overflow: 'hidden',
               borderLeft: '1px solid var(--border)',
