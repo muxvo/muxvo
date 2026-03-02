@@ -17,6 +17,11 @@ disown
 
 **白屏问题**: `electron-vite dev` 并行启动 Vite 服务器和 Electron，存在竞态条件。如果 Electron 在 Vite 就绪前加载 `localhost:5173` 会白屏。已在 `src/main/index.ts` 中添加 `did-fail-load` 自动重试机制（仅 dev 模式）。
 
+**⚠️ Dev vs Production 数据目录不同**：
+- Dev 模式：`~/Library/Application Support/Muxvo Dev/`（preferences.json、config.json 等）
+- Production：`~/Library/Application Support/muxvo/`
+- 调试时修改 preferences 等文件，必须改 **Muxvo Dev** 目录下的，不是 `muxvo/` 或 `~/.muxvo/`
+
 **⚠️ 启动规范（必须严格遵守）**：
 1. 先杀掉所有进程：`pkill -f "electron-vite"; pkill -f "Electron"`
 2. **等待 5 秒**让端口完全释放：`sleep 5`
