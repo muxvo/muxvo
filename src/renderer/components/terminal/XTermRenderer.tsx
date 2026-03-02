@@ -327,8 +327,11 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       const entry = entries[0];
       if (!entry || disposed) return;
       const { width, height } = entry.contentRect;
-      if (width < 10 || height < 10) return;
-      fitPreservingScroll();
+      if (width < 10 || height < 10) {
+        if (RESIZE_DEBUG) console.log(`[XTERM:resizeObs] id=${terminalId.slice(0, 5)} w=${Math.round(width)} h=${Math.round(height)} → SKIP(tooSmall)`);
+        return;
+      }
+      fitPreservingScroll('resizeObs');
       trackRenderer('resizeObs');
     });
     observer.observe(containerRef.current);
@@ -337,7 +340,12 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     // Min-size gate: never send tiny dimensions to PTY — they cause irreversible
     // hard-wrapping when shell redraws prompt at e.g. 2 columns.
     term.onResize(({ cols, rows }) => {
-      if (!suppressResizeRef.current && cols >= MIN_COLS_FOR_RESIZE && rows >= MIN_ROWS_FOR_RESIZE) {
+      if (suppressResizeRef.current) {
+        logResize(terminalId, cols, rows, 'BLOCKED(suppressResize)');
+      } else if (cols < MIN_COLS_FOR_RESIZE || rows < MIN_ROWS_FOR_RESIZE) {
+        logResize(terminalId, cols, rows, `BLOCKED(min:${MIN_COLS_FOR_RESIZE}x${MIN_ROWS_FOR_RESIZE})`);
+      } else {
+        logResize(terminalId, cols, rows, 'IPC_SENT');
         window.api.terminal.resize(terminalId, cols, rows);
       }
     });
@@ -352,14 +360,14 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
 
     // Refit after global zoom changes (webFrame.setZoomFactor alters viewport dimensions)
     const onGlobalZoom = () => {
-      requestAnimationFrame(() => { if (!disposed) fitPreservingScroll(); });
+      requestAnimationFrame(() => { if (!disposed) fitPreservingScroll('globalZoom'); });
     };
     window.addEventListener('muxvo:global-zoom', onGlobalZoom);
 
     // Listen for force-refit requests (e.g. after FileTempView overlay closes)
     const onRefit = () => {
       if (!disposed) {
-        fitPreservingScroll();
+        fitPreservingScroll('forceRefit');
         // Force re-send dimensions even if cols/rows unchanged
         window.api.terminal.resize(terminalId, term.cols, term.rows);
       }
