@@ -22,23 +22,6 @@
   animation: app-close-scale-in 0.2s ease-out;
 }
 
-.app-close-icon {
-  width: 40px;
-  height: 40px;
-  margin: 0 auto 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  background: var(--accent-muted);
-  color: var(--accent);
-}
-
-.app-close-icon svg {
-  width: 20px;
-  height: 20px;
-}
-
 .app-close-title {
   font-size: 15px;
   font-weight: 600;

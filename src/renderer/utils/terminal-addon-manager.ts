@@ -50,7 +50,6 @@ export function createAddonManager(term: Terminal): AddonManager {
   let fitAddon: FitAddon | null = null;
   let webglAddon: WebglAddon | null = null;
   let unicode11Addon: Unicode11Addon | null = null;
-  let ligaturesAddon: IDisposable | null = null;
   let imageAddon: ImageAddon | null = null;
   let searchAddon: SearchAddon | null = null;
   let disposed = false;
@@ -111,29 +110,12 @@ export function createAddonManager(term: Terminal): AddonManager {
           fit: fitAddon,
           webgl: null,
           unicode11: unicode11Addon!,
-          ligatures: null,
           image: null,
           search: searchAddon!,
         };
       }
 
       webglAddon = loadWebgl();
-
-      // Ligatures addon (optional, loaded via dynamic import to avoid bundling issues)
-      // Use direct .mjs path because the package's "main" field points to a missing .js file
-      // @ts-expect-error -- .mjs has no declaration file
-      import('@xterm/addon-ligatures/lib/addon-ligatures.mjs').then(({ LigaturesAddon }: { LigaturesAddon: new () => IDisposable }) => {
-        try {
-          if (disposed) return;
-          const addon = new LigaturesAddon();
-          term.loadAddon(addon as unknown as ITerminalAddon);
-          ligaturesAddon = addon;
-        } catch (e) {
-          console.warn('[AddonManager] Ligatures addon failed to load', e);
-        }
-      }).catch((e) => {
-        console.warn('[AddonManager] Ligatures addon not available', e);
-      });
 
       // Image addon (optional, sixel support)
       try {
@@ -152,7 +134,6 @@ export function createAddonManager(term: Terminal): AddonManager {
         fit: fitAddon,
         webgl: webglAddon,
         unicode11: unicode11Addon,
-        ligatures: ligaturesAddon,
         image: imageAddon,
         search: searchAddon,
       };
@@ -167,10 +148,6 @@ export function createAddonManager(term: Terminal): AddonManager {
       if (imageAddon) {
         try { imageAddon.dispose(); } catch { /* already disposed */ }
         imageAddon = null;
-      }
-      if (ligaturesAddon) {
-        try { ligaturesAddon.dispose(); } catch { /* already disposed */ }
-        ligaturesAddon = null;
       }
       if (webglAddon) {
         try { webglAddon.dispose(); } catch { /* already disposed */ }

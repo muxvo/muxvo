@@ -288,6 +288,29 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     };
     window.addEventListener('muxvo:terminal-refit', onRefit);
 
+    // Pause cursor blink when window loses focus to reduce idle CPU usage.
+    // WebGL renderer's rAF loop runs continuously when cursorBlink is true,
+    // even when the window is behind other windows. Pausing the blink
+    // eliminates the primary render trigger when user isn't looking at the app.
+    const savedCursorBlink = term.options.cursorBlink;
+    const onWindowBlur = () => {
+      if (!disposed) term.options.cursorBlink = false;
+    };
+    const onWindowFocus = () => {
+      if (!disposed) term.options.cursorBlink = savedCursorBlink ?? true;
+    };
+    const onVisibilityChange = () => {
+      if (disposed) return;
+      if (document.hidden) {
+        term.options.cursorBlink = false;
+      } else {
+        term.options.cursorBlink = savedCursorBlink ?? true;
+      }
+    };
+    window.addEventListener('blur', onWindowBlur);
+    window.addEventListener('focus', onWindowFocus);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
     return () => {
       disposed = true;
       unsubOutput();
@@ -295,6 +318,9 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       window.removeEventListener('muxvo:theme-change', onThemeChange);
       window.removeEventListener('muxvo:global-zoom', onGlobalZoom);
       window.removeEventListener('muxvo:terminal-refit', onRefit);
+      window.removeEventListener('blur', onWindowBlur);
+      window.removeEventListener('focus', onWindowFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       scrollDisposable.dispose();
       writeDisposable.dispose();
       addonManager.disposeAll();
