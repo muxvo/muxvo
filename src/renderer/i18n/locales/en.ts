@@ -151,6 +151,11 @@ export const en = {
   'tour.noTerminal.title': 'Create a Terminal First',
   'tour.noTerminal.desc': 'Click the + button to create a terminal and start the full feature tour.',
   'tour.complete': 'Congrats! You\'ve completed the tour. Enjoy Muxvo!',
+  // Welcome
+  'welcome.title': 'Welcome to Muxvo',
+  'welcome.desc': 'Muxvo is a desktop workbench for AI CLI tools.\nA quick tour will show you the core features.',
+  'welcome.startTour': 'Start Tour',
+  'welcome.skip': 'Skip for now',
   // Auth
   'auth.loginButton': 'Login',
   'auth.modalTitle': 'Login to Muxvo',

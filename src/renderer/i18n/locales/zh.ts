@@ -151,6 +151,11 @@ export const zh = {
   'tour.noTerminal.title': '请先创建终端',
   'tour.noTerminal.desc': '点击 + 按钮创建一个终端，即可开始完整的功能导览。',
   'tour.complete': '恭喜！你已完成新手引导，开始享受 Muxvo 吧！',
+  // Welcome
+  'welcome.title': '欢迎使用 Muxvo',
+  'welcome.desc': 'Muxvo 是为 AI CLI 工具打造的桌面工作台。\n接下来的快速导览将帮助你了解核心功能。',
+  'welcome.startTour': '开始导览',
+  'welcome.skip': '跳过，稍后再看',
   // Auth
   'auth.loginButton': '登录',
   'auth.modalTitle': 'Muxvo 登录',

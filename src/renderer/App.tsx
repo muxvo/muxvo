@@ -17,6 +17,7 @@ import { HooksPanel } from './components/hook/HooksPanel';
 import { PluginPanel } from './components/plugin/PluginPanel';
 import { FilePanel } from './components/file/FilePanel';
 import { FileTempView } from './components/file/FileTempView';
+import { WelcomeOverlay } from './components/tour/WelcomeOverlay';
 import { TourOverlay } from './components/tour/TourOverlay';
 import { WaitingInputNotification } from './components/terminal/WaitingInputNotification';
 import { LoginModal } from './components/auth/LoginModal';
@@ -134,11 +135,11 @@ function AppContent({
     window.api.app.cancelClose();
   }, []);
 
-  // Auto-start tour on first launch (tourCompleted not set)
+  // Show welcome page on first launch (tourCompleted not set)
   useEffect(() => {
     window.api.app.getPreferences().then((result: any) => {
       if (result?.success && !result.data?.tourCompleted) {
-        setTimeout(() => dispatch({ type: 'START_TOUR' }), 1500);
+        setTimeout(() => dispatch({ type: 'SHOW_WELCOME' }), 1500);
       }
     }).catch(() => {});
   }, [dispatch]);
@@ -287,6 +288,7 @@ function AppContent({
         onCancel={actions.handleCloseCancel}
       />
 
+      <WelcomeOverlay />
       <TourOverlay
         terminalCount={terminals.length}
         viewMode={terminalState.viewMode}

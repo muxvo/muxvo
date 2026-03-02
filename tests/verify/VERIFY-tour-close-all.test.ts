@@ -13,6 +13,7 @@ describe('VERIFY: CLOSE_ALL preserves tour state', () => {
     // Start tour
     let state = panelReducer(initialState, { type: 'START_TOUR' });
     expect(state.tour.active).toBe(true);
+    expect(state.tour.welcomeVisible).toBe(false);
 
     // Open chat history (simulates other panel being open)
     state = panelReducer(state, { type: 'OPEN_CHAT_HISTORY' });
@@ -32,6 +33,16 @@ describe('VERIFY: CLOSE_ALL preserves tour state', () => {
   test('CLOSE_ALL with tour inactive keeps it inactive', () => {
     const state = panelReducer(initialState, { type: 'CLOSE_ALL' });
     expect(state.tour.active).toBe(false);
+    expect(state.tour.welcomeVisible).toBe(false);
+  });
+
+  test('CLOSE_ALL preserves welcome state', () => {
+    let state = panelReducer(initialState, { type: 'SHOW_WELCOME' });
+    expect(state.tour.welcomeVisible).toBe(true);
+
+    state = panelReducer(state, { type: 'CLOSE_ALL' });
+    expect(state.tour.welcomeVisible).toBe(true);
+    expect(state.tour.active).toBe(false);
   });
 
   test('COMPLETE_TOUR still works after CLOSE_ALL', () => {
@@ -41,6 +52,31 @@ describe('VERIFY: CLOSE_ALL preserves tour state', () => {
 
     state = panelReducer(state, { type: 'COMPLETE_TOUR' });
     expect(state.tour.active).toBe(false); // correctly completed
+    expect(state.tour.welcomeVisible).toBe(false);
+  });
+});
+
+describe('VERIFY: Welcome → Tour state transitions', () => {
+  test('SHOW_WELCOME sets welcomeVisible and resets other panels', () => {
+    let state = panelReducer(initialState, { type: 'OPEN_CHAT_HISTORY' });
+    state = panelReducer(state, { type: 'SHOW_WELCOME' });
+    expect(state.tour.welcomeVisible).toBe(true);
+    expect(state.tour.active).toBe(false);
+    expect(state.chatHistory.open).toBe(false);
+  });
+
+  test('DISMISS_WELCOME hides welcome without starting tour', () => {
+    let state = panelReducer(initialState, { type: 'SHOW_WELCOME' });
+    state = panelReducer(state, { type: 'DISMISS_WELCOME' });
+    expect(state.tour.welcomeVisible).toBe(false);
+    expect(state.tour.active).toBe(false);
+  });
+
+  test('START_TOUR from welcome hides welcome and activates tour', () => {
+    let state = panelReducer(initialState, { type: 'SHOW_WELCOME' });
+    state = panelReducer(state, { type: 'START_TOUR' });
+    expect(state.tour.welcomeVisible).toBe(false);
+    expect(state.tour.active).toBe(true);
   });
 });
 

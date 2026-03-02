@@ -16,7 +16,7 @@ export interface PanelState {
   hooksPanel: { open: boolean };
   pluginsPanel: { open: boolean };
   menuDropdown: { open: boolean; type: 'mcp' | null };
-  tour: { active: boolean };
+  tour: { active: boolean; welcomeVisible: boolean };
   settingsModal: { open: boolean };
 }
 
@@ -29,7 +29,7 @@ export const initialState: PanelState = {
   hooksPanel: { open: false },
   pluginsPanel: { open: false },
   menuDropdown: { open: false, type: null },
-  tour: { active: false },
+  tour: { active: false, welcomeVisible: false },
   settingsModal: { open: false },
 };
 
@@ -51,6 +51,8 @@ type PanelAction =
   | { type: 'OPEN_PLUGINS_PANEL' }
   | { type: 'CLOSE_PLUGINS_PANEL' }
   | { type: 'TOGGLE_MENU_DROPDOWN'; dropdownType: 'mcp' }
+  | { type: 'SHOW_WELCOME' }
+  | { type: 'DISMISS_WELCOME' }
   | { type: 'START_TOUR' }
   | { type: 'COMPLETE_TOUR' }
   | { type: 'OPEN_SETTINGS' }
@@ -141,10 +143,14 @@ export function panelReducer(state: PanelState, action: PanelAction): PanelState
           : { open: true, type: action.dropdownType },
       };
     }
+    case 'SHOW_WELCOME':
+      return { ...initialState, tour: { active: false, welcomeVisible: true } };
+    case 'DISMISS_WELCOME':
+      return { ...state, tour: { active: false, welcomeVisible: false } };
     case 'START_TOUR':
-      return { ...initialState, tour: { active: true } };
+      return { ...initialState, tour: { active: true, welcomeVisible: false } };
     case 'COMPLETE_TOUR':
-      return { ...state, tour: { active: false } };
+      return { ...state, tour: { active: false, welcomeVisible: false } };
     case 'OPEN_SETTINGS':
       return { ...initialState, settingsModal: { open: true } };
     case 'CLOSE_SETTINGS':

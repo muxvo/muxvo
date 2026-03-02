@@ -242,7 +242,7 @@ describe('SETTINGS L2 -- 设置面板规则层', () => {
       hooksPanel: { open: false },
       pluginsPanel: { open: false },
       menuDropdown: { open: false, type: null },
-      tour: { active: false },
+      tour: { active: false, welcomeVisible: false },
       settingsModal: { open: false },
     };
 

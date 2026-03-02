@@ -1,0 +1,99 @@
+/* WelcomeOverlay — Full-screen welcome page for first-time users */
+
+.welcome-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  background: rgba(6, 8, 12, 0.92);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: welcomeFadeIn 0.4s ease-out;
+}
+
+@keyframes welcomeFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.welcome-overlay__card {
+  text-align: center;
+  max-width: 420px;
+  padding: 48px 40px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-dialog);
+  animation: welcomeCardIn 0.4s ease-out 0.1s both;
+}
+
+@keyframes welcomeCardIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.welcome-overlay__title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0 0 12px;
+  font-family: var(--font-sans);
+}
+
+.welcome-overlay__desc {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin: 0 0 32px;
+  font-family: var(--font-sans);
+  white-space: pre-line;
+}
+
+.welcome-overlay__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.welcome-overlay__start-btn {
+  width: 200px;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #000;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-sans);
+}
+
+.welcome-overlay__start-btn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(232, 167, 72, 0.3);
+}
+
+.welcome-overlay__skip-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 6px 12px;
+  transition: color 0.15s;
+  font-family: var(--font-sans);
+}
+
+.welcome-overlay__skip-btn:hover {
+  color: var(--text-secondary);
+}
