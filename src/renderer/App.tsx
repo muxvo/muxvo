@@ -137,15 +137,15 @@ function AppContent({
 
   // Show welcome page on first launch (tourCompleted not set)
   useEffect(() => {
+    const logToFile = (msg: string) => {
+      window.api.fs.writeFile('/tmp/muxvo-welcome-debug.log', msg).catch(() => {});
+    };
     window.api.app.getPreferences().then((result: any) => {
-      console.log('[Welcome] getPreferences result:', JSON.stringify(result));
+      logToFile(JSON.stringify({ result, keys: Object.keys(result || {}), type: typeof result }, null, 2));
       if (result?.preferences && !result.preferences?.tourCompleted) {
-        console.log('[Welcome] Will show welcome in 1.5s');
         setTimeout(() => dispatch({ type: 'SHOW_WELCOME' }), 1500);
-      } else {
-        console.log('[Welcome] Skipped. success:', result?.success, 'preferences:', result?.preferences, 'tourCompleted:', result?.preferences?.tourCompleted ?? result?.data?.tourCompleted);
       }
-    }).catch((err: any) => { console.error('[Welcome] getPreferences error:', err); });
+    }).catch((err: any) => { logToFile('ERROR: ' + String(err)); });
   }, [dispatch]);
 
   // Wrap addTerminal to close all panels first (switch back to terminal tab)
