@@ -8,34 +8,24 @@ Muxvo is an Electron desktop workbench for AI CLI tools (Claude Code, Codex, Gem
 
 ## 启动 Muxvo
 
-启动 Muxvo 时必须使用 `nohup` + `disown`，确保关闭 Claude Code 后 Muxvo 不会被终止：
+**⚠️ 启动/重启 Muxvo（必须严格遵守，否则白屏）**：
 
 ```bash
-nohup npx electron-vite dev > /dev/null 2>&1 &
-disown
+pkill -f "electron-vite"; pkill -f "Electron"; lsof -ti:5173 2>/dev/null | xargs kill -9 2>/dev/null; sleep 5; nohup npx electron-vite dev > /dev/null 2>&1 & disown
 ```
 
-**白屏问题**: `electron-vite dev` 并行启动 Vite 服务器和 Electron，存在竞态条件。如果 Electron 在 Vite 就绪前加载 `localhost:5173` 会白屏。已在 `src/main/index.ts` 中添加 `did-fail-load` 自动重试机制（仅 dev 模式）。
+**任何场景下启动 Muxvo 都必须用上面这条完整命令，禁止简化！** 步骤说明：
+1. `pkill` 杀 electron-vite 和 Electron 进程
+2. `lsof -ti:5173 | xargs kill -9` **强制释放 5173 端口（防白屏的关键，不可省略！）**
+3. `sleep 5` 等端口完全释放（禁止用 2 秒或 3 秒）
+4. `nohup ... & disown` 后台启动，确保关闭 Claude Code 后 Muxvo 不会被终止
+
+**白屏根因**：`pkill` 发 SIGTERM 后旧 Vite 进程不一定立刻释放 5173 端口。如果不用 `lsof | kill -9` 强制释放，新 Vite 绑不到端口，Electron 加载空页面 → 白屏。`did-fail-load` 自动重试机制不能完全覆盖此场景。
 
 **⚠️ Dev vs Production 数据目录不同**：
 - Dev 模式：`~/Library/Application Support/Muxvo Dev/`（preferences.json、config.json 等）
 - Production：`~/Library/Application Support/muxvo/`
 - 调试时修改 preferences 等文件，必须改 **Muxvo Dev** 目录下的，不是 `muxvo/` 或 `~/.muxvo/`
-
-**⚠️ 重启规范（必须严格遵守，否则白屏）**：
-
-白屏根因：`pkill` 后旧 Vite 进程不一定立刻释放 5173 端口，新 Vite 绑不到端口，Electron 加载空页面。
-
-**必须用这个完整命令，不可省略任何步骤：**
-```bash
-pkill -f "electron-vite"; pkill -f "Electron"; lsof -ti:5173 2>/dev/null | xargs kill -9 2>/dev/null; sleep 5; nohup npx electron-vite dev > /dev/null 2>&1 & disown
-```
-
-关键步骤说明：
-1. `pkill` 杀进程
-2. **`lsof -ti:5173 | xargs kill -9`** 强制释放 5173 端口（**不可省略！这是防白屏的关键**）
-3. `sleep 5` 等端口完全释放
-4. 启动 dev server
 
 ## Commands
 

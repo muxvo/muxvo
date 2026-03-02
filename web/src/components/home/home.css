@@ -384,6 +384,11 @@
    RESPONSIVE — Tablet
    ========================================================== */
 @media (max-width: 1023px) {
+  .mv-hero__title {
+    white-space: normal;
+    max-width: 100%;
+  }
+
   .mv-mock__bar-tabs {
     display: none;
   }
@@ -409,6 +414,21 @@
 @media (max-width: 639px) {
   .mv-hero {
     padding: 56px 20px 0;
+  }
+
+  .mv-hero__title {
+    white-space: normal;
+    font-size: clamp(28px, 8vw, 40px);
+    max-width: 100%;
+  }
+
+  .mv-hero__sub {
+    font-size: 14px;
+    max-width: 100%;
+  }
+
+  .mv-hero__mock {
+    margin-top: 32px;
   }
 
   .mv-hero__actions {
