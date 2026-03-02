@@ -1,15 +1,20 @@
 /**
  * Terminal Addon Manager — manages xterm.js addon lifecycle
  * Phase 1: WebGL (with silent fallback) + Unicode11 + FitAddon
- * Phase 3: Ligatures (dynamic import) + Image + Search addons
+ * Phase 3: Image + Search addons
  *
  * WebGL context management:
  * - Global counter enforces MAX_WEBGL_CONTEXTS limit (Chromium ~16 cap)
  * - Context loss uses exponential backoff, permanent Canvas degradation after 3 losses
  * - Font readiness gate prevents TextureAtlas glyph mapping errors
+ *
+ * NOTE: Ligatures addon removed (2026-03-02) — caused intermittent 333% CPU usage.
+ * The addon runs expensive OpenType font table analysis on every WebGL render pass,
+ * especially during TextureAtlas rebuilds. Most monospace fonts (Menlo, SF Mono, Monaco)
+ * don't support ligatures anyway.
  */
 
-import { Terminal, type IDisposable, type ITerminalAddon } from '@xterm/xterm';
+import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebglAddon } from '@xterm/addon-webgl';
 import { Unicode11Addon } from '@xterm/addon-unicode11';
@@ -29,7 +34,6 @@ export interface AddonSet {
   fit: FitAddon;
   webgl: WebglAddon | null;
   unicode11: Unicode11Addon;
-  ligatures: IDisposable | null;
   image: ImageAddon | null;
   search: SearchAddon;
 }
