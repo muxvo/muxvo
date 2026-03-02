@@ -205,6 +205,8 @@ export const zh = {
   'settings.restartTourDesc': '再次查看新手引导教程',
   'settings.doubleClickFocus': '双击聚焦',
   'settings.doubleClickFocusDesc': '双击终端切换到全屏聚焦模式',
+  'settings.zoom': '界面缩放',
+  'settings.zoomDesc': '⌘+ 放大 · ⌘- 缩小 · ⌘0 重置',
   'settings.enabled': '启用',
   'settings.disabled': '关闭',
 } as const;

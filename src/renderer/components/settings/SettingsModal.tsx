@@ -168,6 +168,12 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
                 </button>
               </div>
             </div>
+            <div className="settings-modal__row">
+              <div>
+                <div className="settings-modal__label">{t('settings.zoom')}</div>
+                <div className="settings-modal__desc">{t('settings.zoomDesc')}</div>
+              </div>
+            </div>
           </div>
 
           {/* Language Section */}
