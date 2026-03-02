@@ -276,6 +276,10 @@ const api = {
       ipcRenderer.send(IPC_CHANNELS.PERF.LOG, { message }),
   },
 
+  // --- Glyph diagnostic log (writes to ~/.muxvo/logs/glyph-debug.log) ---
+  glyphLog: (message: string) =>
+    ipcRenderer.send('glyph:log', { message }),
+
   // --- Utility: native file path from drag-and-drop ---
   getPathForFile: (file: File) => webUtils.getPathForFile(file),
 };

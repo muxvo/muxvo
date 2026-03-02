@@ -4,6 +4,7 @@
  */
 
 import { createContext, useContext, useReducer, type Dispatch, type ReactNode } from 'react';
+import { glyphLog } from '@/renderer/utils/glyph-logger';
 
 // ── State Shape ──
 
@@ -62,7 +63,7 @@ type PanelAction =
 // ── Reducer ──
 
 export function panelReducer(state: PanelState, action: PanelAction): PanelState {
-  console.log(`[GLYPH:panel] ${Date.now()} action=${action.type}`);
+  glyphLog('panel', `action=${action.type}`);
   switch (action.type) {
     case 'OPEN_FILE_PANEL':
       return {

@@ -334,6 +334,37 @@ app.whenReady().then(() => {
   // Performance logger (writes to ~/.muxvo/logs/perf.log on anomalies)
   perfLogger = createPerfLogger();
 
+  // Glyph debug log: renderer sends diagnostic data → main writes to glyph-debug.log
+  // Used to diagnose intermittent text garbling (CJK glyph corruption).
+  // Users send this file when reporting rendering issues.
+  {
+    const { appendFile, mkdir, stat, readFile, writeFile } = require('fs/promises');
+    const glyphLogDir = require('path').join(require('os').homedir(), '.muxvo', 'logs');
+    const glyphLogPath = require('path').join(glyphLogDir, 'glyph-debug.log');
+    const MAX_LOG_BYTES = 500 * 1024;
+    const KEEP_LOG_BYTES = 200 * 1024;
+
+    // Rotate on startup
+    mkdir(glyphLogDir, { recursive: true }).then(() =>
+      stat(glyphLogPath).then((s: { size: number }) => {
+        if (s.size > MAX_LOG_BYTES) {
+          return readFile(glyphLogPath, 'utf-8').then((content: string) =>
+            writeFile(glyphLogPath, content.slice(-KEEP_LOG_BYTES))
+          );
+        }
+      }).catch(() => {})
+    ).catch(() => {});
+
+    ipcMain.on('glyph:log', (_event, data: { message: string }) => {
+      if (!data?.message) return;
+      const ts = new Date().toISOString();
+      const line = `[${ts}] ${data.message}\n`;
+      mkdir(glyphLogDir, { recursive: true })
+        .then(() => appendFile(glyphLogPath, line))
+        .catch(() => {});
+    });
+  }
+
   // Renderer perf log relay: renderer sends perf data → main writes to log file
   ipcMain.on(IPC_CHANNELS.PERF.LOG, (_event, data: { message: string }) => {
     if (data?.message) {
