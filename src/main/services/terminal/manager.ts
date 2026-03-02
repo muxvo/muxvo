@@ -54,6 +54,7 @@ interface ManagedTerminal {
 
 interface TerminalManagerDeps {
   pty?: PtyAdapter;
+  perfLogger?: { track(event: string, terminalId?: string): void };
 }
 
 export function createTerminalManager(deps?: TerminalManagerDeps) {
@@ -61,6 +62,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
   const OUTPUT_BUFFER_MAX_BYTES = 64 * 1024;
   const outputBuffers = new Map<string, string>();
   const ptyAdapter = deps?.pty;
+  const perfLogger = deps?.perfLogger;
 
   // Debounce state change pushes to avoid rapid Running↔WaitingInput oscillation
   // causing excessive React re-renders (e.g. user pressing up/down in yes/no prompt)
@@ -141,6 +143,8 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
 
         // Push terminal output to renderer
         proc.onData((data) => {
+          perfLogger?.track('termOutput', id);
+
           const existing = outputBuffers.get(id) ?? '';
           const updated = existing + data;
           outputBuffers.set(id, updated.length > OUTPUT_BUFFER_MAX_BYTES ? updated.slice(updated.length - OUTPUT_BUFFER_MAX_BYTES) : updated);
