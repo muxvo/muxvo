@@ -33,6 +33,7 @@ interface Props {
   dragState?: 'none' | 'dragging' | 'drag-over';
   customName?: string;
   onRename?: (id: string, name: string) => void;
+  onBackToTiling?: () => void;
 }
 
 function TerminalTileInner({
@@ -54,7 +55,8 @@ function TerminalTileInner({
   onDragLeave,
   dragState = 'none',
   customName,
-  onRename
+  onRename,
+  onBackToTiling
 }: Props): JSX.Element {
   const tileRef = useRef<HTMLDivElement>(null);
   const naming = useNaming(id, customName, onRename);
@@ -141,6 +143,7 @@ function TerminalTileInner({
         onDragStart={handleDragStart}
         onDoubleClick={onDoubleClick}
         onClose={onClose}
+        onBackToTiling={onBackToTiling}
       />
 
       {/* Terminal content */}

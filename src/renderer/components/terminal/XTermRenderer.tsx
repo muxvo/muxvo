@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Terminal } from '@xterm/xterm';
 import type { SearchAddon } from '@xterm/addon-search';
 import { createAddonManager } from '../../utils/terminal-addon-manager';
+import { trackRenderer } from '../../utils/renderer-perf-logger';
 import { resolveTerminalTheme } from '@/shared/constants/terminal-themes';
 import { DEFAULT_TERMINAL_CONFIG } from '@/renderer/stores/terminal-config';
 import { TerminalSearchBar } from './TerminalSearchBar';

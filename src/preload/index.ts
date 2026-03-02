@@ -270,6 +270,12 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.ANALYTICS.CLEAR),
   },
 
+  // --- Perf domain (renderer → main perf log) ---
+  perf: {
+    log: (message: string) =>
+      ipcRenderer.send(IPC_CHANNELS.PERF.LOG, { message }),
+  },
+
   // --- Utility: native file path from drag-and-drop ---
   getPathForFile: (file: File) => webUtils.getPathForFile(file),
 };

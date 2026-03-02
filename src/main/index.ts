@@ -334,6 +334,22 @@ app.whenReady().then(() => {
   // Performance logger (writes to ~/.muxvo/logs/perf.log on anomalies)
   perfLogger = createPerfLogger();
 
+  // Renderer perf log relay: renderer sends perf data → main writes to log file
+  ipcMain.on(IPC_CHANNELS.PERF.LOG, (_event, data: { message: string }) => {
+    if (data?.message) {
+      perfLogger?.track('ipcPush'); // count as IPC activity
+      const { appendFile, mkdir } = require('fs/promises');
+      const logDir = require('path').join(require('os').homedir(), '.muxvo', 'logs');
+      const logPath = require('path').join(logDir, 'perf.log');
+      const timestamp = new Date().toISOString();
+      const line = `[${timestamp}] [RENDERER] ${data.message}\n`;
+      mkdir(logDir, { recursive: true })
+        .then(() => appendFile(logPath, line))
+        .catch(() => {});
+      console.warn('[MUXVO:renderer-perf]', data.message);
+    }
+  });
+
   // Initialize PTY adapter and terminal manager
   const ptyAdapter = createRealPtyAdapter();
   terminalManager = createTerminalManager({ pty: ptyAdapter, perfLogger });

@@ -116,4 +116,7 @@ export const IPC_CHANNELS = {
     GET_SUMMARY: 'analytics:get-summary',
     CLEAR: 'analytics:clear',
   },
+  PERF: {
+    LOG: 'perf:log',
+  },
 } as const;

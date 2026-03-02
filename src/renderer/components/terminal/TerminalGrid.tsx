@@ -35,9 +35,10 @@ interface Props {
   onRename?: (id: string, name: string) => void;
   onAddTerminal?: () => void;
   maxReached?: boolean;
+  onBackToTiling?: () => void;
 }
 
-export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, selectedId, onDoubleClick, onSidebarClick, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached }: Props): JSX.Element {
+export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, selectedId, onDoubleClick, onSidebarClick, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached, onBackToTiling }: Props): JSX.Element {
   const { t } = useI18n();
   if (terminals.length === 0) {
     return (
@@ -333,8 +334,6 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
           <div
             key={t.id}
             style={cellStyle}
-            onClick={isFocusedMode && !isFocused ? () => onSidebarClick?.(t.id) : undefined}
-            onWheel={isFocusedMode && !isFocused ? handleSidebarWheel : undefined}
           >
             <TerminalTile
               id={t.id}
@@ -357,6 +356,14 @@ function TilingGrid({ terminals, selectedId, focusedId, onDoubleClick, onSidebar
               onClick={() => onClick?.(t.id)}
               onClose={onClose}
             />
+            {/* Sidebar overlay: intercept wheel/click before xterm consumes them */}
+            {isFocusedMode && !isFocused && (
+              <div
+                style={{ position: 'absolute', inset: 0, zIndex: 1, cursor: 'pointer' }}
+                onWheel={handleSidebarWheel}
+                onClick={() => onSidebarClick?.(t.id)}
+              />
+            )}
           </div>
         );
       })}
