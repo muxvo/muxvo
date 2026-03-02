@@ -20,6 +20,7 @@ export const IPC_CHANNELS = {
     CWD_CHANGED: 'terminal:cwd-changed',
     LIST_UPDATED: 'terminal:list-updated',
     ACKNOWLEDGE_WAITING: 'terminal:acknowledge-waiting',
+    SET_NAME: 'terminal:set-name',
     ZOOM: 'terminal:zoom',
     DEBUG_LOG: 'terminal:debug-log',
   },

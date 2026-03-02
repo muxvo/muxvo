@@ -712,7 +712,10 @@ app.whenReady().then(() => {
             for (const terminal of terminalsToRestore) {
               const result = terminalManager.spawn({ cwd: terminal.cwd });
               if (result.success && result.id) {
-                console.log('[MUXVO:restore] spawned id=' + result.id + ' cwd=' + terminal.cwd);
+                if (terminal.customName) {
+                  terminalManager.setName(result.id, terminal.customName);
+                }
+                console.log('[MUXVO:restore] spawned id=' + result.id + ' cwd=' + terminal.cwd + (terminal.customName ? ' name=' + terminal.customName : ''));
               }
             }
           } else {
@@ -730,7 +733,7 @@ app.whenReady().then(() => {
           if (win) {
             const list = terminalManager.list();
             win.webContents.send(IPC_CHANNELS.TERMINAL.LIST_UPDATED, list.map((t) => ({
-              id: t.id, state: t.state, cwd: t.cwd,
+              id: t.id, state: t.state, cwd: t.cwd, customName: t.customName,
             })));
           }
 
@@ -817,6 +820,7 @@ function saveTerminalConfig(configManager: ReturnType<typeof createConfigManager
     ...existing,
     openTerminals: terminals.map((t) => ({
       cwd: t.cwd,
+      customName: t.customName,
     })),
   });
 }

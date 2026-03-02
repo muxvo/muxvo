@@ -49,6 +49,7 @@ interface ManagedTerminal {
   id: string;
   process: PtyProcess;
   cwd: string;
+  customName?: string;
   machine: ReturnType<typeof createTerminalMachine>;
 }
 
@@ -303,8 +304,16 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
       id: t.id,
       pid: t.process.pid,
       cwd: t.cwd,
+      customName: t.customName,
       state: t.machine.state as TerminalState,
     }));
+  }
+
+  function setName(id: string, name: string): boolean {
+    const terminal = terminals.get(id);
+    if (!terminal) return false;
+    terminal.customName = name || undefined;
+    return true;
   }
 
   function getState(id: string): { state: string } | null {
@@ -396,7 +405,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
     }
   }
 
-  return { spawn, write, resize, close, list, getState, getForegroundProcess, closeAll, getBuffer, updateCwd, acknowledgeWaiting };
+  return { spawn, write, resize, close, list, getState, getForegroundProcess, closeAll, getBuffer, updateCwd, acknowledgeWaiting, setName };
 }
 
 function isValidCwd(cwd: string): boolean {

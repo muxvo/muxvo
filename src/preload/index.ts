@@ -37,6 +37,8 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.UPDATE_CWD, { id, cwd }),
     acknowledgeWaiting: (id: string) =>
       ipcRenderer.send(IPC_CHANNELS.TERMINAL.ACKNOWLEDGE_WAITING, { id }),
+    setName: (id: string, name: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.SET_NAME, { id, name }),
     onOutput: (callback: (data: { id: string; data: string }) => void) => {
       const handler = (_event: Electron.IpcRendererEvent, data: { id: string; data: string }) => callback(data);
       ipcRenderer.on(IPC_CHANNELS.TERMINAL.OUTPUT, handler);
@@ -52,8 +54,8 @@ const api = {
       ipcRenderer.on(IPC_CHANNELS.TERMINAL.EXIT, handler);
       return () => ipcRenderer.removeListener(IPC_CHANNELS.TERMINAL.EXIT, handler);
     },
-    onListUpdated: (callback: (data: Array<{ id: string; state: string }>) => void) => {
-      const handler = (_event: Electron.IpcRendererEvent, data: Array<{ id: string; state: string }>) => callback(data);
+    onListUpdated: (callback: (data: Array<{ id: string; state: string; cwd?: string; customName?: string }>) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: Array<{ id: string; state: string; cwd?: string; customName?: string }>) => callback(data);
       ipcRenderer.on(IPC_CHANNELS.TERMINAL.LIST_UPDATED, handler);
       return () => ipcRenderer.removeListener(IPC_CHANNELS.TERMINAL.LIST_UPDATED, handler);
     },

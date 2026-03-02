@@ -54,6 +54,7 @@ export interface TerminalInfo {
   cwd: string;
   state: TerminalState;
   processName?: string;
+  customName?: string;
 }
 
 /** terminal:output 事件数据（M->R 推送） */

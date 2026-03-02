@@ -79,7 +79,7 @@ function ArchiveBanner({ onDismiss }: { onDismiss: () => void }) {
 }
 
 interface ChatHistoryPanelProps {
-  onResumeSession?: (info: { sessionId: string; cwd: string; source: ChatSource }) => void;
+  onResumeSession?: (info: { sessionId: string; cwd: string; source: ChatSource; customTitle?: string }) => void;
 }
 
 export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
@@ -424,6 +424,7 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
               sessionId: sel.sessionId,
               cwd,
               source: sel.source || 'claude-code',
+              customTitle: sel.customTitle,
             });
           }}
         />

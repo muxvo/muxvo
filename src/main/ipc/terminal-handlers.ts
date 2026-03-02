@@ -81,6 +81,13 @@ export function registerTerminalHandlers(
     manager.acknowledgeWaiting(req.id);
   });
 
+  // terminal:set-name — invoke (R->M, persist custom name on terminal)
+  ipcMain.handle(IPC_CHANNELS.TERMINAL.SET_NAME, async (_event, req: { id: string; name: string }) => {
+    const ok = manager.setName(req.id, req.name);
+    onTerminalChange?.();
+    return { success: ok };
+  });
+
   // terminal:update-cwd — invoke
   ipcMain.handle(IPC_CHANNELS.TERMINAL.UPDATE_CWD, async (_event, req: { id: string; cwd: string }) => {
     const ok = manager.updateCwd(req.id, req.cwd);

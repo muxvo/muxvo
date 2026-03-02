@@ -193,6 +193,12 @@ export function TerminalProvider({ children }: { children: ReactNode }): JSX.Ele
           cwd: info.cwd || '/',
         }));
         dispatch({ type: 'SET_TERMINALS', entries });
+        // Restore custom names from main process
+        for (const info of result.data) {
+          if (info.customName) {
+            dispatch({ type: 'RENAME', id: info.id, name: info.customName });
+          }
+        }
       }
     });
   }, []);
@@ -214,6 +220,12 @@ export function TerminalProvider({ children }: { children: ReactNode }): JSX.Ele
         cwd: info.cwd || '/',
       }));
       dispatch({ type: 'SET_TERMINALS', entries });
+      // Restore custom names from main process
+      for (const info of list) {
+        if (info.customName) {
+          dispatch({ type: 'RENAME', id: info.id, name: info.customName });
+        }
+      }
     });
 
     const unsubCwd = window.api.terminal.onCwdChange?.((event) => {
@@ -410,6 +422,9 @@ export function useTerminalActions() {
   const handleRename = useCallback((id: string, name: string) => {
     dispatch({ type: 'RENAME', id, name });
 
+    // Persist custom name in main process terminal manager (for crash recovery)
+    window.api.terminal.setName(id, name || '').catch(() => {});
+
     // Propagate name to chat session associated with this terminal's cwd
     const terminal = stateRef.current.terminals.find((t) => t.id === id);
     if (terminal?.cwd) {
@@ -417,8 +432,8 @@ export function useTerminalActions() {
     }
   }, [dispatch]);
 
-  const handleResumeSession = useCallback(async (info: { sessionId: string; cwd: string; source: ChatSource }) => {
-    console.log('[resume-chat] creating terminal:', { cwd: info.cwd, sessionId: info.sessionId, source: info.source });
+  const handleResumeSession = useCallback(async (info: { sessionId: string; cwd: string; source: ChatSource; customTitle?: string }) => {
+    console.log('[resume-chat] creating terminal:', { cwd: info.cwd, sessionId: info.sessionId, source: info.source, customTitle: info.customTitle });
     const result = await window.api.terminal.create(info.cwd);
     if (!result?.success || !result.data) {
       console.error('[resume-chat] terminal creation failed:', result);
@@ -428,6 +443,13 @@ export function useTerminalActions() {
     const newId = result.data.id;
     dispatch({ type: 'ADD_TERMINAL', entry: { id: newId, state: 'Running', cwd: info.cwd } });
     dispatch({ type: 'SET_SELECTED', id: newId });
+
+    // Restore custom name from chat session
+    if (info.customTitle) {
+      dispatch({ type: 'RENAME', id: newId, name: info.customTitle });
+      window.api.terminal.setName(newId, info.customTitle).catch(() => {});
+    }
+
     setTimeout(() => {
       const escapedCwd = info.cwd.replace(/([ ()&|;<>$`"'\\])/g, '\\$1');
       const resumeCmd = info.source === 'codex'
