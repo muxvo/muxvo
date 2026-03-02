@@ -52,13 +52,6 @@ vi.mock('@xterm/addon-search', () => ({
   })),
 }));
 
-// Mock dynamic import for ligatures
-vi.mock('@xterm/addon-ligatures/lib/addon-ligatures.mjs', () => ({
-  LigaturesAddon: vi.fn().mockImplementation(() => ({
-    dispose: vi.fn(),
-  })),
-}));
-
 // Mock document.fonts.ready for node test environment
 (globalThis as any).document = (globalThis as any).document || {};
 (globalThis as any).document.fonts = { ready: Promise.resolve() };

@@ -29,12 +29,6 @@ vi.mock('@xterm/addon-unicode11', () => ({
   })),
 }));
 
-vi.mock('@xterm/addon-ligatures/lib/addon-ligatures.mjs', () => ({
-  LigaturesAddon: vi.fn().mockImplementation(() => ({
-    dispose: vi.fn(),
-  })),
-}));
-
 vi.mock('@xterm/addon-image', () => ({
   ImageAddon: vi.fn().mockImplementation(() => ({
     dispose: vi.fn(),
@@ -85,7 +79,6 @@ describe('Terminal Addon Manager', () => {
     expect(addons).toHaveProperty('fit');
     expect(addons).toHaveProperty('webgl');
     expect(addons).toHaveProperty('unicode11');
-    expect(addons).toHaveProperty('ligatures');
     expect(addons).toHaveProperty('image');
     expect(addons).toHaveProperty('search');
   });

@@ -4,11 +4,16 @@ import { homedir } from 'os';
 import { BrowserWindow } from 'electron';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 
-export function createChatWatcher() {
+interface ChatWatcherDeps {
+  perfLogger?: { track(event: string, terminalId?: string): void };
+}
+
+export function createChatWatcher(deps?: ChatWatcherDeps) {
   let watcher: FSWatcher | null = null;
   const projectsDir = join(homedir(), '.claude', 'projects');
   const pendingTimers = new Map<string, ReturnType<typeof setTimeout>>();
   let sessionUpdateCallback: ((projectHash: string, sessionId: string) => void) | null = null;
+  const perfLogger = deps?.perfLogger;
 
   return {
     /**
@@ -23,6 +28,7 @@ export function createChatWatcher() {
       try {
         watcher = watch(projectsDir, { recursive: true }, (eventType, filename) => {
           if (!filename || !filename.endsWith('.jsonl')) return;
+          perfLogger?.track('fsWatch');
           const parts = filename.split('/');
           if (parts.length >= 2) {
             const projectHash = parts[parts.length - 2];

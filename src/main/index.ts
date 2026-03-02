@@ -47,6 +47,7 @@ import { createChatWatcher } from './services/chat-watcher';
 import { createChatArchiveManager } from './services/chat-archive';
 import { createConfigWatcher } from './services/config-watcher';
 import { createMemoryPushTimer } from './services/perf/memory-push';
+import { createPerfLogger } from './services/perf/perf-logger';
 import { createSyncStatusPusher } from './services/chat-sync-push';
 import { initConfigDir, createConfigManager } from './services/app/config';
 import { initPrefsDir, getPreferences, savePreferences } from './services/app/preferences';
@@ -261,6 +262,7 @@ let chatWatcher: ReturnType<typeof createChatWatcher> | null = null;
 let chatArchive: ReturnType<typeof createChatArchiveManager> | null = null;
 let configWatcher: ReturnType<typeof createConfigWatcher> | null = null;
 let memoryPush: ReturnType<typeof createMemoryPushTimer> | null = null;
+let perfLogger: ReturnType<typeof createPerfLogger> | null = null;
 let tracker: AnalyticsTracker | null = null;
 
 app.whenReady().then(() => {
@@ -329,9 +331,12 @@ app.whenReady().then(() => {
   const configManager = createConfigManager();
   const savedConfig = configManager.loadConfig();
 
+  // Performance logger (writes to ~/.muxvo/logs/perf.log on anomalies)
+  perfLogger = createPerfLogger();
+
   // Initialize PTY adapter and terminal manager
   const ptyAdapter = createRealPtyAdapter();
-  terminalManager = createTerminalManager({ pty: ptyAdapter });
+  terminalManager = createTerminalManager({ pty: ptyAdapter, perfLogger });
 
   // Register terminal IPC handlers (with config save on terminal change)
   registerTerminalHandlers(terminalManager, () => {
@@ -380,7 +385,7 @@ app.whenReady().then(() => {
 
   ({ tracker } = registerAnalyticsHandlers({ upload: uploadToServer }));
 
-  chatWatcher = createChatWatcher();
+  chatWatcher = createChatWatcher({ perfLogger: perfLogger! });
   chatArchive = createChatArchiveManager();
   registerChatArchiveHandlers(chatArchive);
   chatWatcher.onSessionUpdate((projectHash, sessionId) => {
@@ -400,7 +405,7 @@ app.whenReady().then(() => {
     });
   });
 
-  configWatcher = createConfigWatcher();
+  configWatcher = createConfigWatcher({ perfLogger: perfLogger! });
   configWatcher.start();
 
   // Memory warning push (60s interval, 2GB threshold)
@@ -777,6 +782,7 @@ app.on('window-all-closed', () => {
     chatArchive?.stop();
     configWatcher?.stop();
     memoryPush?.stop();
+    perfLogger?.dispose();
     tracker?.flush();
     tracker?.dispose();
     app.quit();
@@ -785,5 +791,6 @@ app.on('window-all-closed', () => {
     chatWatcher?.stop();
     configWatcher?.stop();
     memoryPush?.stop();
+    perfLogger?.dispose();
   }
 });
