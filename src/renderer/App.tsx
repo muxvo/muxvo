@@ -138,10 +138,14 @@ function AppContent({
   // Show welcome page on first launch (tourCompleted not set)
   useEffect(() => {
     window.api.app.getPreferences().then((result: any) => {
+      console.log('[Welcome] getPreferences result:', JSON.stringify(result));
       if (result?.preferences && !result.preferences?.tourCompleted) {
+        console.log('[Welcome] Will show welcome in 1.5s');
         setTimeout(() => dispatch({ type: 'SHOW_WELCOME' }), 1500);
+      } else {
+        console.log('[Welcome] Skipped. success:', result?.success, 'preferences:', result?.preferences, 'tourCompleted:', result?.preferences?.tourCompleted ?? result?.data?.tourCompleted);
       }
-    }).catch(() => {});
+    }).catch((err: any) => { console.error('[Welcome] getPreferences error:', err); });
   }, [dispatch]);
 
   // Wrap addTerminal to close all panels first (switch back to terminal tab)
