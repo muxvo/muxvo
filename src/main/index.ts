@@ -21,6 +21,12 @@ import { is } from '@electron-toolkit/utils';
 protocol.registerSchemesAsPrivileged([
   { scheme: 'local-file', privileges: { bypassCSP: true, supportFetchAPI: true, stream: true } },
 ]);
+
+// Increase GPU memory budget to reduce glyph texture atlas eviction/contention.
+// Apple Silicon unified memory makes 4GB safe; default ~512MB can cause
+// intermittent glyph corruption when many WebGL contexts + DOM text coexist.
+app.commandLine.appendSwitch('force-gpu-mem-available-mb', '4096');
+
 import { createTerminalManager } from './services/terminal/manager';
 import { createRealPtyAdapter } from './services/terminal/pty-adapter';
 import { registerTerminalHandlers } from './ipc/terminal-handlers';

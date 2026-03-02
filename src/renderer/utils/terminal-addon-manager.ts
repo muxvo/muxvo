@@ -23,7 +23,7 @@ import { SearchAddon } from '@xterm/addon-search';
 
 // Global WebGL context counter — shared across all AddonManager instances
 let activeWebglCount = 0;
-const MAX_WEBGL_CONTEXTS = 8;
+const MAX_WEBGL_CONTEXTS = 4;
 
 /** Exported for testing only */
 export function _getActiveWebglCount(): number {
