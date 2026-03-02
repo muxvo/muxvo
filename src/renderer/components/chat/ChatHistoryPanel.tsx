@@ -279,7 +279,20 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
     const chatApi = window.api.chat as any;
     if (!chatApi.showSessionMenu) return;
     const action = await chatApi.showSessionMenu(x, y);
-    if (action === 'export') {
+    if (action === 'rename') {
+      const currentName = session.customTitle || session.title;
+      const newName = window.prompt('输入新的会话名称（留空恢复默认名称）:', currentName);
+      if (newName === null) return; // cancelled
+      try {
+        const trimmed = newName.trim();
+        await window.api.chat.setSessionName('', trimmed, session.sessionId);
+        setSessions(prev => prev.map(s =>
+          s.sessionId === session.sessionId
+            ? { ...s, customTitle: trimmed || undefined }
+            : s
+        ));
+      } catch { /* ignore */ }
+    } else if (action === 'export') {
       try {
         const result = await window.api.chat.export(session.projectHash, session.sessionId, 'markdown', session.customTitle || session.title) as { outputPath?: string };
         if (result?.outputPath) {

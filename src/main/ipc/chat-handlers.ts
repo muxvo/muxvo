@@ -90,18 +90,25 @@ export function createChatHandlers() {
       return { results };
     },
 
-    async setSessionName(params: { cwd: string; customName: string }) {
-      const { cwd, customName } = params;
-      if (!cwd) return { success: false };
+    async setSessionName(params: { cwd?: string; customName: string; sessionId?: string }) {
+      const { cwd, customName, sessionId: directSessionId } = params;
 
-      const projectHash = encodeProjectHash(cwd);
-      if (!projectHash) return { success: false };
+      let sessionId: string;
 
-      // Find the most recent session for this project (the one the user is currently using)
-      const sessions = await reader.getSessionsForProject(projectHash, 1);
-      if (sessions.length === 0) return { success: false };
+      if (directSessionId) {
+        // Direct rename by sessionId (from chat history context menu)
+        sessionId = directSessionId;
+      } else if (cwd) {
+        // Legacy: find most recent session by cwd (from terminal rename)
+        const projectHash = encodeProjectHash(cwd);
+        if (!projectHash) return { success: false };
+        const sessions = await reader.getSessionsForProject(projectHash, 1);
+        if (sessions.length === 0) return { success: false };
+        sessionId = sessions[0].sessionId;
+      } else {
+        return { success: false };
+      }
 
-      const sessionId = sessions[0].sessionId;
       const cm = createConfigManager();
       const config = cm.loadConfig();
       const titles = { ...(config.sessionCustomTitles || {}) };
@@ -190,6 +197,7 @@ export function registerChatHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.CHAT.SHOW_SESSION_MENU, async (_e, p: { x: number; y: number }) => {
     return new Promise<string | null>((resolve) => {
       const template: Electron.MenuItemConstructorOptions[] = [
+        { label: '✏️ 重命名', click: () => resolve('rename') },
         { label: '📄 导出为 Markdown', click: () => resolve('export') },
         { type: 'separator' },
         { label: '🗑 删除聊天记录', click: () => resolve('delete') },
