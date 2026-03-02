@@ -55,6 +55,7 @@ interface ManagedTerminal {
 interface TerminalManagerDeps {
   pty?: PtyAdapter;
   perfLogger?: { track(event: string, terminalId?: string): void };
+  debugLogger?: (line: string) => void;
 }
 
 export function createTerminalManager(deps?: TerminalManagerDeps) {
@@ -63,6 +64,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
   const outputBuffers = new Map<string, string>();
   const ptyAdapter = deps?.pty;
   const perfLogger = deps?.perfLogger;
+  const debugLog = deps?.debugLogger ?? (() => {});
 
   // Debounce state change pushes to avoid rapid Running↔WaitingInput oscillation
   // causing excessive React re-renders (e.g. user pressing up/down in yes/no prompt)
@@ -75,6 +77,8 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
 
     const existing = pendingStateChanges.get(id);
     if (existing) clearTimeout(existing.timer);
+
+    debugLog(`[TERM:stateChange] id=${id} state=${state} processName=${processName ?? ''} immediate=${immediate}`);
 
     if (immediate) {
       pendingStateChanges.delete(id);
@@ -138,6 +142,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
 
         terminals.set(id, { id, process: proc, cwd: options.cwd, machine });
         startCwdPolling();
+        debugLog(`[TERM:spawn] id=${id} pid=${proc.pid} cwd=${options.cwd}`);
 
         pushStateChange(id, machine.state);
 
@@ -152,6 +157,10 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
           const win = BrowserWindow.getAllWindows()[0];
           if (win) {
             win.webContents.send(IPC_CHANNELS.TERMINAL.OUTPUT, { id, data });
+          }
+          // Sampled diagnostic log (1% of output events)
+          if (Math.random() < 0.01) {
+            debugLog(`[TERM:ipcPush] id=${id} bytes=${data.length} bufSize=${updated.length} winExists=${!!win} winDestroyed=${win?.isDestroyed() ?? 'N/A'}`);
           }
 
           // Detect OSC 7 cwd change: \x1b]7;file://hostname/path\x07 or \x1b]7;file://hostname/path\x1b\\
@@ -189,6 +198,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
 
         // Push terminal exit to renderer
         proc.onExit((code) => {
+          debugLog(`[TERM:exit] id=${id} code=${code} state=${machine.state}`);
           machine.send('CLOSE');
           machine.send('EXIT_NORMAL');
 
@@ -363,7 +373,9 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
   }
 
   function getBuffer(id: string): string {
-    console.log(`[MUXVO:restore] getBuffer id=${id} bytes=${(outputBuffers.get(id) ?? '').length}`);
+    const bytes = (outputBuffers.get(id) ?? '').length;
+    console.log(`[MUXVO:restore] getBuffer id=${id} bytes=${bytes}`);
+    debugLog(`[TERM:getBuffer] id=${id} bytes=${bytes}`);
     return outputBuffers.get(id) ?? '';
   }
 

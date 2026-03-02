@@ -14,6 +14,7 @@ import { TerminalSearchBar } from './TerminalSearchBar';
 import { shellEscapePaths } from '../../utils/shell-escape';
 import { stripPromptEolMark } from '@/shared/utils/strip-prompt-eol-mark';
 import { glyphLog } from '../../utils/glyph-logger';
+import { termLog } from '../../utils/term-debug-logger';
 import '@xterm/xterm/css/xterm.css';
 
 /** Minimum terminal dimensions to send to PTY. Prevents hard-wrapping damage
@@ -111,6 +112,10 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     if (containerRef.current) {
       containerRef.current.style.opacity = '0';
     }
+    {
+      const rect = containerRef.current?.getBoundingClientRect();
+      termLog('mount', `id=${terminalId} containerW=${Math.round(rect?.width ?? 0)} containerH=${Math.round(rect?.height ?? 0)} suppressResize=${suppressResizeRef.current}`);
+    }
     const addonManager = createAddonManager(term);
     // loadAll is async (waits for document.fonts.ready before WebGL init).
     // FitAddon is loaded synchronously at the start, so getFitAddon() is safe here.
@@ -158,6 +163,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       trackRenderer('fitCall');
       logFit(terminalId, source, containerRef.current, term.cols, term.rows,
         `${prevCols}x${prevRows}→${term.cols}x${term.rows}`);
+      termLog('fit', `id=${terminalId} src=${source} prev=${prevCols}x${prevRows} now=${term.cols}x${term.rows} containerW=${Math.round(containerRef.current?.getBoundingClientRect().width ?? 0)} containerH=${Math.round(containerRef.current?.getBoundingClientRect().height ?? 0)}`);
       if (RESIZE_DEBUG && prevCols > 20 && term.cols < prevCols / 2) {
         console.warn(`[XTERM:WARN] id=${terminalId.slice(0, 5)} cols DROPPED ${prevCols}→${term.cols} src=${source}`);
         console.trace();
@@ -269,9 +275,16 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
         trackRenderer('ipcOutput');
         if (!bufferedDataWritten) {
           pendingLiveData.push(event.data);
+          // Always log queued events (rare, only during buffer fetch)
+          termLog('output', `id=${terminalId} bytes=${event.data.length} buffered=true queueLen=${pendingLiveData.length}`);
         } else {
           trackRenderer('termWrite');
           term.write(event.data);
+          // Sampled log (2%) for live output
+          if (Math.random() < 0.02) {
+            const rect = containerRef.current?.getBoundingClientRect();
+            termLog('write', `id=${terminalId} bytes=${event.data.length} lines=${term.buffer.active.length} cols=${term.cols} rows=${term.rows} containerW=${Math.round(rect?.width ?? 0)} containerH=${Math.round(rect?.height ?? 0)}`);
+          }
         }
       }
     });
@@ -280,11 +293,13 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     console.log(`[MUXVO:restore] XTermRenderer mounted for id=${terminalId}`);
     window.api.terminal.getBuffer(terminalId).then((result: { success: boolean; data?: string }) => {
       if (disposed) return; // Component unmounted — discard
+      termLog('bufReplay', `id=${terminalId} bufBytes=${result?.data?.length ?? 0} success=${result?.success}`);
       if (result?.success && result.data) {
         console.log(`[MUXVO:restore] buffer received for id=${terminalId} bytes=${result.data.length}`);
         term.write(stripPromptEolMark(result.data));
       }
       // Flush any live data that arrived during getBuffer round-trip
+      const flushedCount = pendingLiveData.length;
       for (const data of pendingLiveData) {
         if (disposed) break;
         term.write(data);
@@ -296,11 +311,17 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       if (containerRef.current) {
         containerRef.current.style.opacity = '1';
       }
+      {
+        const rect = containerRef.current?.getBoundingClientRect();
+        termLog('reveal', `id=${terminalId} flushed=${flushedCount} lines=${term.buffer.active.length} cols=${term.cols} rows=${term.rows} containerW=${Math.round(rect?.width ?? 0)} containerH=${Math.round(rect?.height ?? 0)}`);
+      }
 
       // buffer 写入完成后重新 fit + scrollToBottom，确保列宽与内容匹配且 viewport 显示最新内容
       requestAnimationFrame(() => {
         if (!disposed) {
-          if (isContainerReady(containerRef.current)) {
+          const ready = isContainerReady(containerRef.current);
+          termLog('postBufFit', `id=${terminalId} containerReady=${ready} cols=${term.cols} rows=${term.rows}`);
+          if (ready) {
             const prevCols = term.cols;
             fitAddon.fit();
             logFit(terminalId, 'bufferReplay', containerRef.current, term.cols, term.rows,
@@ -330,6 +351,9 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       const { width, height } = entry.contentRect;
       if (width < 10 || height < 10) {
         if (RESIZE_DEBUG) console.log(`[XTERM:resizeObs] id=${terminalId.slice(0, 5)} w=${Math.round(width)} h=${Math.round(height)} → SKIP(tooSmall)`);
+        if (Math.random() < 0.05) {
+          termLog('resizeSkip', `id=${terminalId} w=${Math.round(width)} h=${Math.round(height)}`);
+        }
         return;
       }
       fitPreservingScroll('resizeObs');
@@ -380,6 +404,8 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     const onTerminalFocusReq = (e: Event) => {
       const { detail } = e as CustomEvent;
       if (detail === terminalId && !disposed) {
+        const rect = containerRef.current?.getBoundingClientRect();
+        termLog('focus', `id=${terminalId} containerW=${Math.round(rect?.width ?? 0)} containerH=${Math.round(rect?.height ?? 0)} cols=${term.cols} rows=${term.rows}`);
         term.focus();
       }
     };
@@ -427,6 +453,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
+      termLog('unmount', `id=${terminalId}`);
       disposed = true;
       clearTimeout(safetyTimer);
       unsubOutput();

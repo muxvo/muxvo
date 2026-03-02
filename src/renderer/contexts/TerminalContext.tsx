@@ -18,6 +18,7 @@ import {
 } from 'react';
 import { trackEvent, trackError } from '../hooks/useAnalytics';
 import { ANALYTICS_EVENTS } from '@/shared/constants/analytics-events';
+import { termLog } from '../utils/term-debug-logger';
 import type { ChatSource } from '@/shared/types/chat.types';
 
 // ── State Shape ──
@@ -354,6 +355,7 @@ export function useTerminalActions() {
 
   const handleDoubleClick = useCallback((id: string) => {
     if (!doubleClickToFocusRef.current) return;
+    termLog('dblClick', `id=${id} terminals=[${stateRef.current.terminals.map(t => t.id.slice(0, 8)).join(',')}] prevMode=${stateRef.current.viewMode} prevFocused=${stateRef.current.focusedId}`);
     dispatch({ type: 'SET_VIEW_MODE', mode: 'Focused' });
     dispatch({ type: 'SET_FOCUSED', id });
   }, [dispatch]);
@@ -364,11 +366,13 @@ export function useTerminalActions() {
   }, [dispatch]);
 
   const handleBackToTiling = useCallback(() => {
+    termLog('backToTiling', `prevFocusedId=${stateRef.current.focusedId} terminals=[${stateRef.current.terminals.map(t => t.id.slice(0, 8)).join(',')}]`);
     dispatch({ type: 'SET_VIEW_MODE', mode: 'Tiling' });
     dispatch({ type: 'SET_FOCUSED', id: null });
   }, [dispatch]);
 
   const handleSidebarClick = useCallback((id: string) => {
+    termLog('sidebarClick', `newFocusId=${id} prevFocusId=${stateRef.current.focusedId} activeSidebar=${stateRef.current.activeSidebarId}`);
     dispatch({ type: 'SET_FOCUSED', id });
     const terminal = stateRef.current.terminals.find((t) => t.id === id);
     if (terminal?.state === 'WaitingInput') {
@@ -377,6 +381,7 @@ export function useTerminalActions() {
   }, [dispatch]);
 
   const handleSidebarActivate = useCallback((id: string) => {
+    termLog('sidebarActivate', `id=${id} prevActiveSidebar=${stateRef.current.activeSidebarId}`);
     dispatch({ type: 'SET_ACTIVE_SIDEBAR', id });
     window.dispatchEvent(new CustomEvent('muxvo:terminal-focus', { detail: id }));
     const terminal = stateRef.current.terminals.find((t) => t.id === id);
