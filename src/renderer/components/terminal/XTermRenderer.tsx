@@ -15,6 +15,19 @@ import { shellEscapePaths } from '../../utils/shell-escape';
 import { stripPromptEolMark } from '@/shared/utils/strip-prompt-eol-mark';
 import '@xterm/xterm/css/xterm.css';
 
+/** Minimum terminal dimensions to send to PTY. Prevents hard-wrapping damage
+ *  from layout transitions (fullscreen toggle, focus mode switch) where
+ *  fitAddon briefly calculates cols from not-yet-settled containers. */
+const MIN_COLS_FOR_RESIZE = 10;
+const MIN_ROWS_FOR_RESIZE = 2;
+
+/** Check if container has sufficient dimensions for a meaningful fit */
+function isContainerReady(container: HTMLElement | null): boolean {
+  if (!container) return false;
+  const { width, height } = container.getBoundingClientRect();
+  return width >= 10 && height >= 10;
+}
+
 interface Props {
   terminalId: string;
   suppressResize?: boolean;
@@ -169,11 +182,22 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       return true;
     });
     // 延迟 fit，等待容器完成布局后再计算列宽行高
+    // Guards: skip if disposed, suppressResize (compact/sidebar), or container too small
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
+        if (disposed || suppressResizeRef.current) return;
+        if (!isContainerReady(containerRef.current)) return;
         fitAddon.fit();
       });
     });
+    // Safety-net: retry fit after a generous delay to catch cases where the
+    // initial double-RAF was too early (e.g. CSS Grid not fully settled).
+    // fitAddon.fit() is a no-op when dimensions haven't changed.
+    const safetyTimer = setTimeout(() => {
+      if (disposed || suppressResizeRef.current) return;
+      if (!isContainerReady(containerRef.current)) return;
+      fitAddon.fit();
+    }, 200);
     termRef.current = term;
 
     // Async: load persisted config and apply (theme/font changes take effect live)
@@ -186,7 +210,11 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
         term.options.fontFamily = cfg.fontFamily;
         term.options.cursorStyle = cfg.cursorStyle;
         term.options.cursorBlink = cfg.cursorBlink;
-        requestAnimationFrame(() => { if (!disposed) fitPreservingScroll(); });
+        requestAnimationFrame(() => {
+          if (!disposed && !suppressResizeRef.current && isContainerReady(containerRef.current)) {
+            fitPreservingScroll();
+          }
+        });
       }
     }).catch(() => { /* use defaults on error */ });
 
@@ -235,7 +263,9 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       // buffer 写入完成后重新 fit + scrollToBottom，确保列宽与内容匹配且 viewport 显示最新内容
       requestAnimationFrame(() => {
         if (!disposed) {
-          fitAddon.fit();
+          if (!suppressResizeRef.current && isContainerReady(containerRef.current)) {
+            fitAddon.fit();
+          }
           term.scrollToBottom();
         }
       });
@@ -262,9 +292,11 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     });
     observer.observe(containerRef.current);
 
-    // Notify Main process of terminal size changes (suppressed for compact/sidebar terminals)
+    // Notify Main process of terminal size changes (suppressed for compact/sidebar terminals).
+    // Min-size gate: never send tiny dimensions to PTY — they cause irreversible
+    // hard-wrapping when shell redraws prompt at e.g. 2 columns.
     term.onResize(({ cols, rows }) => {
-      if (!suppressResizeRef.current) {
+      if (!suppressResizeRef.current && cols >= MIN_COLS_FOR_RESIZE && rows >= MIN_ROWS_FOR_RESIZE) {
         window.api.terminal.resize(terminalId, cols, rows);
       }
     });
@@ -318,6 +350,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
 
     return () => {
       disposed = true;
+      clearTimeout(safetyTimer);
       unsubOutput();
       observer.disconnect();
       window.removeEventListener('muxvo:theme-change', onThemeChange);
