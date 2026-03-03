@@ -17,6 +17,14 @@ export function SkillFileTree({ skillPath, selectedFilePath, onSelectFile }: Ski
   const { t } = useI18n();
   const [treeFiles, setTreeFiles] = useState<TreeEntry[]>([]);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [showHidden, setShowHidden] = useState(false);
+
+  // Load showHiddenFiles preference from config
+  useEffect(() => {
+    window.api.app.getConfig().then((result: any) => {
+      if (result?.data?.showHiddenFiles) setShowHidden(true);
+    }).catch(() => {});
+  }, []);
 
   // Load root entries when skillPath changes
   useEffect(() => {
@@ -30,14 +38,14 @@ export function SkillFileTree({ skillPath, selectedFilePath, onSelectFile }: Ski
       const result = await window.api.fs.readDir(skillPath);
       if (cancelled) return;
       if (result.success && result.data) {
-        setTreeFiles(mapIpcToTree(result.data, 0));
+        setTreeFiles(mapIpcToTree(result.data, 0, showHidden));
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [skillPath]);
+  }, [skillPath, showHidden]);
 
   const handleFolderClick = useCallback(
     async (entry: TreeEntry) => {
@@ -61,7 +69,7 @@ export function SkillFileTree({ skillPath, selectedFilePath, onSelectFile }: Ski
         // Expand: load children and insert after parent
         const result = await window.api.fs.readDir(folderPath);
         if (result.success && result.data) {
-          const children = mapIpcToTree(result.data, entry.indent + 1);
+          const children = mapIpcToTree(result.data, entry.indent + 1, showHidden);
           setTreeFiles((prev) => insertAfter(prev, entry, children));
           setExpandedFolders((prev) => new Set(prev).add(folderPath));
         }

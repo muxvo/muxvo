@@ -38,13 +38,13 @@ export function toLocalFileUrl(filePath: string): string {
 }
 
 /** Map IPC file entries to flat tree nodes, sorted folders-first then alphabetical */
-export function mapIpcToTree(entries: IpcFileEntry[], indent: number): TreeEntry[] {
+export function mapIpcToTree(entries: IpcFileEntry[], indent: number, showHidden = false): TreeEntry[] {
   return [...entries]
     .sort((a, b) => {
       if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1;
       return a.name.localeCompare(b.name);
     })
-    .filter(e => !e.name.startsWith('.'))
+    .filter(e => showHidden || !e.name.startsWith('.'))
     .map(e => ({
       name: e.name,
       type: (e.isDirectory ? 'folder' : 'file') as 'file' | 'folder',

@@ -48,6 +48,37 @@
   color: var(--accent);
   font-family: var(--font-mono);
 }
+/* === Header actions group === */
+.file-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* === Toggle hidden files button === */
+.file-panel__toggle-hidden {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+.file-panel__toggle-hidden:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.file-panel__toggle-hidden--active {
+  color: var(--accent);
+  background: var(--accent-muted);
+  border-color: var(--accent-glow);
+}
+
 .file-panel__close {
   width: 28px;
   height: 28px;

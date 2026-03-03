@@ -109,6 +109,8 @@ export interface MuxvoConfig {
   zoomLevel?: number;
   /** 双击终端 tile 是否切换到聚焦模式（默认 false） */
   doubleClickToFocus?: boolean;
+  /** 是否在文件面板显示隐藏文件（dotfiles），默认 false */
+  showHiddenFiles?: boolean;
 }
 
 /** app:get-preferences 返回的用户偏好 */

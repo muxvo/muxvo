@@ -42,14 +42,14 @@ function formatFileSize(bytes: number): string {
 }
 
 /** Map IPC FileEntry[] to UI FileEntry[] */
-function mapIpcEntries(entries: IpcFileEntry[], indent: number): FileEntry[] {
+function mapIpcEntries(entries: IpcFileEntry[], indent: number, showHidden = false): FileEntry[] {
   const sorted = [...entries].sort((a, b) => {
     if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1;
     return a.name.localeCompare(b.name);
   });
 
   return sorted
-    .filter(entry => !entry.name.startsWith('.'))
+    .filter(entry => showHidden || !entry.name.startsWith('.'))
     .map(entry => {
       const ext = entry.isDirectory
         ? undefined
@@ -95,6 +95,14 @@ export function FilePanel({ projectCwd, onClose, onOpenFile }: FilePanelProps) {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [isOpen, setIsOpen] = useState(false);
+  const [showHidden, setShowHidden] = useState(false);
+
+  // Load showHiddenFiles preference from config
+  useEffect(() => {
+    window.api.app.getConfig().then((result: any) => {
+      if (result?.data?.showHiddenFiles) setShowHidden(true);
+    }).catch(() => {});
+  }, []);
 
   // Trigger slide-in on mount
   useEffect(() => {
@@ -109,13 +117,13 @@ export function FilePanel({ projectCwd, onClose, onOpenFile }: FilePanelProps) {
       .readDir(projectCwd)
       .then((result: { success: boolean; data?: IpcFileEntry[] }) => {
         if (result?.success && result.data) {
-          setFiles(mapIpcEntries(result.data, 0));
+          setFiles(mapIpcEntries(result.data, 0, showHidden));
         }
       })
       .catch(() => {
         // Silently fail — panel shows empty
       });
-  }, [projectCwd]);
+  }, [projectCwd, showHidden]);
 
   // Esc to close
   useEffect(() => {
@@ -148,14 +156,24 @@ export function FilePanel({ projectCwd, onClose, onOpenFile }: FilePanelProps) {
       try {
         const result = await window.api.fs.readDir(folderPath);
         if (result?.success && result.data) {
-          const children = mapIpcEntries(result.data as IpcFileEntry[], entry.indent + 1);
+          const children = mapIpcEntries(result.data as IpcFileEntry[], entry.indent + 1, showHidden);
           setFiles(current => insertAfter(current, entry, children));
         }
       } catch {
         // Silently fail — folder stays in expanded set but shows no children
       }
     }
-  }, [expandedFolders]);
+  }, [expandedFolders, showHidden]);
+
+  const handleToggleHidden = useCallback(() => {
+    setShowHidden(prev => {
+      const next = !prev;
+      window.api.app.getConfig().then((result: any) => {
+        window.api.app.saveConfig({ ...result?.data, showHiddenFiles: next });
+      }).catch(() => {});
+      return next;
+    });
+  }, []);
 
   const handleContextMenu = useCallback((entry: FileEntry, e: React.MouseEvent) => {
     e.preventDefault();
@@ -190,9 +208,28 @@ export function FilePanel({ projectCwd, onClose, onOpenFile }: FilePanelProps) {
               {getProjectName(projectCwd)}
             </span>
           </div>
-          <button className="file-panel__close" onClick={onClose}>
-            &#x2715;
-          </button>
+          <div className="file-panel__actions">
+            <button
+              className={`file-panel__toggle-hidden ${showHidden ? 'file-panel__toggle-hidden--active' : ''}`}
+              onClick={handleToggleHidden}
+              title={showHidden ? 'Hide dotfiles' : 'Show dotfiles'}
+            >
+              {showHidden ? (
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              )}
+            </button>
+            <button className="file-panel__close" onClick={onClose}>
+              &#x2715;
+            </button>
+          </div>
         </div>
 
         {/* File tree */}

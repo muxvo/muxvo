@@ -89,6 +89,7 @@ export function FileTempView({
     window.api.app.getConfig().then((result: any) => {
       if (result?.data?.ftvLeftWidth) setLeftWidth(result.data.ftvLeftWidth);
       if (result?.data?.ftvRightWidth) setRightWidth(result.data.ftvRightWidth);
+      if (result?.data?.showHiddenFiles) setShowHidden(true);
     }).catch(() => {});
   }, []);
 
@@ -98,6 +99,7 @@ export function FileTempView({
   // File tree state
   const [treeFiles, setTreeFiles] = useState<TreeEntry[]>([]);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [showHidden, setShowHidden] = useState(false);
 
   // Editing state
   const { t } = useI18n();
@@ -161,10 +163,10 @@ export function FileTempView({
     setExpandedFolders(new Set());
     window.api.fs.readDir(projectCwd).then((result: { success: boolean; data?: IpcFileEntry[] }) => {
       if (result?.success && result.data) {
-        setTreeFiles(mapIpcToTree(result.data, 0));
+        setTreeFiles(mapIpcToTree(result.data, 0, showHidden));
       }
     }).catch(() => {});
-  }, [projectCwd]);
+  }, [projectCwd, showHidden]);
 
   // Keyboard shortcuts: Cmd+S save, Cmd+/ toggle markdown preview, Esc close
   useEffect(() => {
@@ -252,7 +254,7 @@ export function FileTempView({
       try {
         const result = await window.api.fs.readDir(folderPath);
         if (result?.success && result.data) {
-          const children = mapIpcToTree(result.data as IpcFileEntry[], entry.indent + 1);
+          const children = mapIpcToTree(result.data as IpcFileEntry[], entry.indent + 1, showHidden);
           setTreeFiles(current => insertAfter(current, entry, children));
         }
       } catch {
