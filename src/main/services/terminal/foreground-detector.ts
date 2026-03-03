@@ -46,10 +46,35 @@ export function getProcessCwd(pid: number): string | null {
       timeout: 2000,
     });
     const match = output.match(/^n(.+)$/m);
-    return match ? match[1] : null;
+    return match ? decodeVisEncoding(match[1]) : null;
   } catch {
     return null;
   }
+}
+
+/**
+ * Decode vis(3) \xNN escape sequences back to UTF-8 string.
+ * macOS lsof encodes non-ASCII bytes (e.g. CJK characters) as \xNN sequences.
+ * e.g. "019_\xe5\xa9\x9a\xe7\xa4\xbc" → "019_婚礼"
+ */
+export function decodeVisEncoding(str: string): string {
+  if (!str.includes('\\x')) return str;
+
+  const parts: Buffer[] = [];
+  let i = 0;
+  while (i < str.length) {
+    if (str[i] === '\\' && str[i + 1] === 'x' && i + 3 < str.length) {
+      const hex = str.substring(i + 2, i + 4);
+      if (/^[0-9a-fA-F]{2}$/.test(hex)) {
+        parts.push(Buffer.from([parseInt(hex, 16)]));
+        i += 4;
+        continue;
+      }
+    }
+    parts.push(Buffer.from(str[i], 'utf-8'));
+    i++;
+  }
+  return Buffer.concat(parts).toString('utf-8');
 }
 
 export function isProcessRunning(pid: number): boolean {
