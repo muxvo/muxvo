@@ -92,6 +92,7 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
   const [loading, setLoading] = useState(false);
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [sessionsLoading, setSessionsLoading] = useState(true);
+  const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(
     () => localStorage.getItem('muxvo-archive-notice-dismissed') === 'true'
   );
@@ -280,18 +281,7 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
     if (!chatApi.showSessionMenu) return;
     const action = await chatApi.showSessionMenu(x, y);
     if (action === 'rename') {
-      const currentName = session.customTitle || session.title;
-      const newName = window.prompt('输入新的会话名称（留空恢复默认名称）:', currentName);
-      if (newName === null) return; // cancelled
-      try {
-        const trimmed = newName.trim();
-        await window.api.chat.setSessionName('', trimmed, session.sessionId);
-        setSessions(prev => prev.map(s =>
-          s.sessionId === session.sessionId
-            ? { ...s, customTitle: trimmed || undefined }
-            : s
-        ));
-      } catch { /* ignore */ }
+      setRenamingSessionId(session.sessionId);
     } else if (action === 'export') {
       try {
         const result = await window.api.chat.export(session.projectHash, session.sessionId, 'markdown', session.customTitle || session.title) as { outputPath?: string };
@@ -314,6 +304,22 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
       } catch { /* ignore */ }
     }
   }, [t, selectedSessionId]);
+
+  const handleRenameConfirm = useCallback(async (sessionId: string, newName: string) => {
+    setRenamingSessionId(null);
+    try {
+      await window.api.chat.setSessionName('', newName, sessionId);
+      setSessions(prev => prev.map(s =>
+        s.sessionId === sessionId
+          ? { ...s, customTitle: newName || undefined }
+          : s
+      ));
+    } catch { /* ignore */ }
+  }, []);
+
+  const handleRenameCancel = useCallback(() => {
+    setRenamingSessionId(null);
+  }, []);
 
   return (
     <div className="chat-history-panel">
@@ -363,6 +369,9 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
             selectedId={selectedSessionId}
             onSelect={setSelectedSessionId}
             onSessionContextMenu={handleSessionContextMenu}
+            renamingSessionId={renamingSessionId}
+            onRenameConfirm={handleRenameConfirm}
+            onRenameCancel={handleRenameCancel}
             projects={projects}
             showProjectName={selectedProjectHash === null}
             searchQuery={searchQuery}

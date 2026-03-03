@@ -289,3 +289,18 @@
   background: rgba(250, 204, 21, 0.45);
   color: #92400e;
 }
+
+/* Inline rename input in session card header */
+.session-card__rename-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--accent);
+  outline: none;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0 2px;
+  caret-color: var(--accent);
+}

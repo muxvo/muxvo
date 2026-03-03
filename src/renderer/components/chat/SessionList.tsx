@@ -37,6 +37,12 @@ interface SessionListProps {
   onNextMatch?: () => void;
   /** Number of matching sessions for search result count display */
   sessionResultCount?: number;
+  /** Session ID currently being renamed (null = no rename in progress) */
+  renamingSessionId?: string | null;
+  /** Called when rename is confirmed with the new name (trimmed). Empty string = clear custom title. */
+  onRenameConfirm?: (sessionId: string, newName: string) => void;
+  /** Called when rename is cancelled */
+  onRenameCancel?: () => void;
 }
 
 /**
@@ -118,9 +124,40 @@ function LoadMoreSentinel({ onVisible }: { onVisible: () => void }) {
   return <div ref={ref} style={{ height: 1 }} />;
 }
 
-export function SessionList({ sessions, titleMatchedSessions, contentMatchedSessions, selectedId, onSelect, onSessionContextMenu, projects, showProjectName, searchQuery = '', onSearchChange, searching, searchSnippets, matchCurrent, matchTotal, onPrevMatch, onNextMatch, sessionResultCount }: SessionListProps) {
+export function SessionList({ sessions, titleMatchedSessions, contentMatchedSessions, selectedId, onSelect, onSessionContextMenu, projects, showProjectName, searchQuery = '', onSearchChange, searching, searchSnippets, matchCurrent, matchTotal, onPrevMatch, onNextMatch, sessionResultCount, renamingSessionId, onRenameConfirm, onRenameCancel }: SessionListProps) {
   const { t } = useI18n();
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  // Inline rename state
+  const [renameValue, setRenameValue] = useState('');
+  const renameInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Initialize rename input when entering rename mode
+  useEffect(() => {
+    if (renamingSessionId) {
+      const session = sessions.find(s => s.sessionId === renamingSessionId);
+      if (session) {
+        setRenameValue(session.customTitle || session.title);
+      }
+      setTimeout(() => renameInputRef.current?.select(), 0);
+    }
+  }, [renamingSessionId, sessions]);
+
+  const handleRenameKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (renamingSessionId) onRenameConfirm?.(renamingSessionId, renameValue.trim());
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      onRenameCancel?.();
+    }
+  }, [renamingSessionId, renameValue, onRenameConfirm, onRenameCancel]);
+
+  const handleRenameBlur = useCallback(() => {
+    if (renamingSessionId) {
+      onRenameConfirm?.(renamingSessionId, renameValue.trim());
+    }
+  }, [renamingSessionId, renameValue, onRenameConfirm]);
 
   // Build projectHash → displayName lookup for "all projects" view
   const projectNameMap = useMemo(() => {
@@ -156,6 +193,7 @@ export function SessionList({ sessions, titleMatchedSessions, contentMatchedSess
 
   /** Render a single session card */
   const renderCard = (session: SessionSummary) => {
+    const isRenaming = session.sessionId === renamingSessionId;
     const displayTitle = session.customTitle || session.title;
     const title = displayTitle.slice(0, 50);
     const snippet = searchSnippets?.get(session.sessionId);
@@ -171,16 +209,29 @@ export function SessionList({ sessions, titleMatchedSessions, contentMatchedSess
       <div
         key={session.sessionId}
         className={`session-card ${isSelected ? 'session-card--selected' : ''}`}
-        onClick={() => onSelect(session.sessionId)}
+        onClick={() => { if (!isRenaming) onSelect(session.sessionId); }}
         onContextMenu={(e) => {
           e.preventDefault();
-          onSessionContextMenu?.(session, e.clientX, e.clientY);
+          if (!isRenaming) onSessionContextMenu?.(session, e.clientX, e.clientY);
         }}
       >
         <div className="session-card__header">
-          <span className="session-card__title" title={session.title}>
-            {searchQuery ? <HighlightText text={title} query={searchQuery} /> : title}
-          </span>
+          {isRenaming ? (
+            <input
+              ref={renameInputRef}
+              type="text"
+              className="session-card__rename-input"
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onKeyDown={handleRenameKeyDown}
+              onBlur={handleRenameBlur}
+              autoFocus
+            />
+          ) : (
+            <span className="session-card__title" title={session.title}>
+              {searchQuery ? <HighlightText text={title} query={searchQuery} /> : title}
+            </span>
+          )}
           <span className="session-card__time">{time}</span>
         </div>
 
