@@ -78,6 +78,30 @@
   color: var(--accent);
   font-family: var(--font-mono);
 }
+/* Toggle hidden files button in file tree header */
+.file-temp-view__toggle-hidden {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+.file-temp-view__toggle-hidden:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.file-temp-view__toggle-hidden--active {
+  color: var(--accent);
+  background: var(--accent-muted);
+  border-color: var(--accent-glow);
+}
+
 .file-temp-view__files-content {
   flex: 1;
   overflow-y: auto;
