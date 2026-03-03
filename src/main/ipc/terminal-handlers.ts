@@ -21,8 +21,8 @@ export function registerTerminalHandlers(
   onTerminalChange?: () => void,
 ): void {
   // terminal:create — invoke (R->M request-response)
-  ipcMain.handle(IPC_CHANNELS.TERMINAL.CREATE, async (_event, req: { cwd: string }) => {
-    const result = manager.spawn({ cwd: req.cwd });
+  ipcMain.handle(IPC_CHANNELS.TERMINAL.CREATE, async (_event, req: { cwd: string; cols?: number; rows?: number }) => {
+    const result = manager.spawn({ cwd: req.cwd, cols: req.cols, rows: req.rows });
     if (!result.success) {
       return { success: false, error: result.message };
     }

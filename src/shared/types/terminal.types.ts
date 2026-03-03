@@ -20,6 +20,8 @@ export enum TerminalState {
 /** terminal:create 请求参数 */
 export interface TerminalCreateRequest {
   cwd: string;
+  cols?: number;
+  rows?: number;
 }
 
 /** terminal:create 响应 */

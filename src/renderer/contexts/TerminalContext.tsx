@@ -19,6 +19,7 @@ import {
 import { trackEvent, trackError } from '../hooks/useAnalytics';
 import { ANALYTICS_EVENTS } from '@/shared/constants/analytics-events';
 import { termLog } from '../utils/term-debug-logger';
+import { getTerminalSizeCache } from '../utils/terminal-size-cache';
 import type { ChatSource } from '@/shared/types/chat.types';
 
 // ── State Shape ──
@@ -332,7 +333,8 @@ export function useTerminalActions() {
 
   const addTerminal = useCallback(async () => {
     const home = window.api.app.getHomePath();
-    const result = await window.api.terminal.create(home);
+    const { cols, rows } = getTerminalSizeCache();
+    const result = await window.api.terminal.create(home, cols, rows);
     if (result?.success && result.data) {
       dispatch({ type: 'ADD_TERMINAL', entry: { id: result.data.id, state: 'Running', cwd: home } });
       dispatch({ type: 'SET_SELECTED', id: result.data.id });
@@ -434,7 +436,8 @@ export function useTerminalActions() {
 
   const handleResumeSession = useCallback(async (info: { sessionId: string; cwd: string; source: ChatSource; customTitle?: string }) => {
     console.log('[resume-chat] creating terminal:', { cwd: info.cwd, sessionId: info.sessionId, source: info.source, customTitle: info.customTitle });
-    const result = await window.api.terminal.create(info.cwd);
+    const { cols: cachedCols, rows: cachedRows } = getTerminalSizeCache();
+    const result = await window.api.terminal.create(info.cwd, cachedCols, cachedRows);
     if (!result?.success || !result.data) {
       console.error('[resume-chat] terminal creation failed:', result);
       window.alert(`\u65E0\u6CD5\u521B\u5EFA\u7EC8\u7AEF\uFF1A${(result as any)?.error || '\u672A\u77E5\u9519\u8BEF'}\n\u76EE\u5F55: ${info.cwd}`);

@@ -15,6 +15,7 @@ import { shellEscapePaths } from '../../utils/shell-escape';
 import { stripPromptEolMark } from '@/shared/utils/strip-prompt-eol-mark';
 import { glyphLog } from '../../utils/glyph-logger';
 import { termLog } from '../../utils/term-debug-logger';
+import { updateTerminalSizeCache } from '../../utils/terminal-size-cache';
 import '@xterm/xterm/css/xterm.css';
 
 /** Minimum terminal dimensions to send to PTY. Prevents hard-wrapping damage
@@ -401,6 +402,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       } else {
         logResize(terminalId, cols, rows, 'IPC_SENT');
         window.api.terminal.resize(terminalId, cols, rows);
+        updateTerminalSizeCache(cols, rows);
       }
     });
 

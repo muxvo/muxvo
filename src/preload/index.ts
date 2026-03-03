@@ -17,8 +17,8 @@ import { IPC_CHANNELS } from '@/shared/constants/channels';
 const api = {
   // --- Terminal domain (A2 will wire real handlers) ---
   terminal: {
-    create: (cwd: string) =>
-      ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.CREATE, { cwd }),
+    create: (cwd: string, cols?: number, rows?: number) =>
+      ipcRenderer.invoke(IPC_CHANNELS.TERMINAL.CREATE, { cwd, cols, rows }),
     write: (id: string, data: string) =>
       ipcRenderer.send(IPC_CHANNELS.TERMINAL.WRITE, { id, data }),
     resize: (id: string, cols: number, rows: number) =>

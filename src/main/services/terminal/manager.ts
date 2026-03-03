@@ -35,6 +35,8 @@ export function isTerminalAutoResponse(data: string): boolean {
 
 interface SpawnOptions {
   cwd: string;
+  cols?: number;
+  rows?: number;
 }
 
 interface SpawnResult {
@@ -136,7 +138,9 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
 
       try {
         const shell = ptyAdapter.getDefaultShell();
-        const proc = ptyAdapter.spawn(shell, options.cwd, 80, 24);
+        const initialCols = options.cols && options.cols >= 10 ? options.cols : 80;
+        const initialRows = options.rows && options.rows >= 2 ? options.rows : 24;
+        const proc = ptyAdapter.spawn(shell, options.cwd, initialCols, initialRows);
         const id = `term-${proc.pid}`;
 
         machine.send('SPAWN_SUCCESS');
@@ -153,7 +157,24 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
 
           const existing = outputBuffers.get(id) ?? '';
           const updated = existing + data;
-          outputBuffers.set(id, updated.length > OUTPUT_BUFFER_MAX_BYTES ? updated.slice(updated.length - OUTPUT_BUFFER_MAX_BYTES) : updated);
+          if (updated.length > OUTPUT_BUFFER_MAX_BYTES) {
+            // Truncate from the front, but avoid splitting an ESC sequence.
+            // Scan backward from the cut point to find the nearest safe boundary
+            // (a position that is NOT inside an incomplete \x1b[...X sequence).
+            let start = updated.length - OUTPUT_BUFFER_MAX_BYTES;
+            // Search a small window before the cut point for a stray \x1b
+            const windowStart = Math.max(0, start - 32);
+            for (let i = start; i >= windowStart; i--) {
+              if (updated[i] === '\x1b') {
+                // Found an ESC — cut before it to avoid a partial sequence
+                start = i;
+                break;
+              }
+            }
+            outputBuffers.set(id, updated.slice(start));
+          } else {
+            outputBuffers.set(id, updated);
+          }
 
           const win = BrowserWindow.getAllWindows()[0];
           if (win) {
