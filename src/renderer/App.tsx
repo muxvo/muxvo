@@ -31,6 +31,7 @@ import { mapExtToFileType, toLocalFileUrl } from './utils/file-tree';
 import { trackEvent } from './hooks/useAnalytics';
 import { startRendererPerfLogger } from './utils/renderer-perf-logger';
 import { useGlobalZoom } from './hooks/useGlobalZoom';
+import { useCompositorGuard } from './hooks/useCompositorGuard';
 import { ANALYTICS_EVENTS } from '@/shared/constants/analytics-events';
 import type { ChatSource } from '@/shared/types/chat.types';
 import './App.css';
@@ -105,6 +106,7 @@ function AppContent({
   onToggleTheme: () => void;
 }): JSX.Element {
   const { state, dispatch } = usePanelContext();
+  useCompositorGuard(state);
   const { t } = useI18n();
 
   const terminalState = useTerminalState();
