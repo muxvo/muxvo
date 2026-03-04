@@ -344,6 +344,20 @@ export function useTerminalActions() {
     }
   }, [dispatch]);
 
+  // Cmd+T / Ctrl+T: create new terminal
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent): void {
+      if ((e.metaKey || e.ctrlKey) && e.key === 't') {
+        e.preventDefault();
+        if (state.terminals.length < MAX_TERMINALS) {
+          addTerminal();
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [state.terminals.length, addTerminal]);
+
   const removeTerminal = useCallback(async (id: string) => {
     const fgResult = await window.api.terminal.getForegroundProcess(id);
     if (fgResult?.success && fgResult.data && fgResult.data.name !== 'shell') {
