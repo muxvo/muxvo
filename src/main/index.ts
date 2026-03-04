@@ -38,6 +38,7 @@ import { registerFsWatcherHandlers } from './ipc/fs-watcher-handlers';
 import { registerFsImageHandlers } from './ipc/fs-image-handlers';
 import { registerAuthHandlers, getAuthManager, configureAuthManager } from './ipc/auth-handlers';
 import { registerAnalyticsHandlers } from './ipc/analytics-handlers';
+import { registerWorktreeHandlers } from './ipc/worktree-handlers';
 import type { AnalyticsTracker } from './services/analytics/tracker';
 import { getDeviceId } from './services/analytics/device-id';
 import { getDeviceInfo } from './services/analytics/device-info';
@@ -433,6 +434,7 @@ app.whenReady().then(() => {
   registerFsImageHandlers();
   registerAppHandlers();
   registerAuthHandlers();
+  registerWorktreeHandlers();
 
   // Create backend client for analytics upload
   const isProduction = app?.isPackaged ?? false;

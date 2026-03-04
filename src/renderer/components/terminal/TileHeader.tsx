@@ -3,9 +3,10 @@
  * Extracted from TerminalTile for single-responsibility.
  */
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useI18n } from '@/renderer/i18n';
 import { CwdPicker } from './CwdPicker';
+import { WorktreePopover } from './WorktreePopover';
 import { usePanelDispatch } from '@/renderer/contexts/PanelContext';
 import { shortenPath } from '@/renderer/utils/path-display';
 import type { UseNamingResult } from '@/renderer/hooks/useNaming';
@@ -28,6 +29,18 @@ function MaximizeIcon() {
       <polyline points="9 21 3 21 3 15" />
       <line x1="21" y1="3" x2="14" y2="10" />
       <line x1="3" y1="21" x2="10" y2="14" />
+    </svg>
+  );
+}
+
+/** Git branch icon SVG */
+function BranchIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="6" y1="3" x2="6" y2="15" />
+      <circle cx="18" cy="6" r="3" />
+      <circle cx="6" cy="18" r="3" />
+      <path d="M18 9a9 9 0 0 1-9 9" />
     </svg>
   );
 }
@@ -94,6 +107,32 @@ export function TileHeader({
   const [cwdPickerOpen, setCwdPickerOpen] = useState(false);
   const cwdRef = useRef<HTMLSpanElement>(null);
   const [cwdAnchorRect, setCwdAnchorRect] = useState<{ top: number; left: number } | null>(null);
+
+  // Worktree popover state
+  const [worktreeOpen, setWorktreeOpen] = useState(false);
+  const worktreeBtnRef = useRef<HTMLButtonElement>(null);
+  const [worktreeAnchorRect, setWorktreeAnchorRect] = useState<{ top: number; left: number } | null>(null);
+  const [isGitRepo, setIsGitRepo] = useState(false);
+
+  // Detect if cwd is inside a git repo (debounced on cwd change)
+  useEffect(() => {
+    let cancelled = false;
+    window.api.worktree.detectRepo(cwd).then((res: any) => {
+      if (!cancelled) setIsGitRepo(res.success && res.data?.isRepo);
+    }).catch(() => {
+      if (!cancelled) setIsGitRepo(false);
+    });
+    return () => { cancelled = true; };
+  }, [cwd]);
+
+  const handleWorktreeClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (worktreeBtnRef.current) {
+      const rect = worktreeBtnRef.current.getBoundingClientRect();
+      setWorktreeAnchorRect({ top: rect.bottom + 4, left: rect.left });
+      setWorktreeOpen(true);
+    }
+  }, []);
 
   const handleCwdClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -212,6 +251,18 @@ export function TileHeader({
           </>
         ) : (
           <>
+            {/* Worktree button (only in git repos) */}
+            {isGitRepo && (
+              <button
+                ref={worktreeBtnRef}
+                className="tile-worktree-btn"
+                onClick={handleWorktreeClick}
+                title="Worktree"
+              >
+                <BranchIcon />
+              </button>
+            )}
+
             {/* File button (amber pill) */}
             <button className="tile-file-btn" onClick={handleFileClick} title={t('terminal.file')}>
               <FolderIcon />
@@ -247,6 +298,16 @@ export function TileHeader({
           open={cwdPickerOpen}
           anchorRect={cwdAnchorRect}
           onClose={() => { setCwdPickerOpen(false); setCwdAnchorRect(null); }}
+        />
+      )}
+
+      {/* Worktree popover */}
+      {!compact && isGitRepo && (
+        <WorktreePopover
+          terminalCwd={cwd}
+          open={worktreeOpen}
+          anchorRect={worktreeAnchorRect}
+          onClose={() => { setWorktreeOpen(false); setWorktreeAnchorRect(null); }}
         />
       )}
     </>

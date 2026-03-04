@@ -278,6 +278,18 @@ const api = {
       ipcRenderer.send(IPC_CHANNELS.PERF.LOG, { message }),
   },
 
+  // --- Worktree domain ---
+  worktree: {
+    detectRepo: (path: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.WORKTREE.DETECT_REPO, { path }),
+    list: (repoPath: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.WORKTREE.LIST, { repoPath }),
+    create: (repoPath: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.WORKTREE.CREATE, { repoPath }),
+    remove: (worktreePath: string, force?: boolean) =>
+      ipcRenderer.invoke(IPC_CHANNELS.WORKTREE.REMOVE, { worktreePath, force }),
+  },
+
   // --- Glyph diagnostic log (writes to ~/.muxvo/logs/glyph-debug.log) ---
   glyphLog: (message: string) =>
     ipcRenderer.send('glyph:log', { message }),

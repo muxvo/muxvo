@@ -194,6 +194,43 @@
   padding: 0 2px;
 }
 
+/* Worktree/branch button (icon-only) */
+.tile-worktree-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 5px;
+  border-radius: 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #a6e3a1;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  z-index: 10;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.tile-worktree-btn:hover {
+  background: rgba(166, 227, 161, 0.15);
+  border-color: rgba(166, 227, 161, 0.3);
+  opacity: 1;
+}
+
+.tile-worktree-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+[data-theme="light"] .tile-worktree-btn {
+  color: #40a02b;
+}
+
+[data-theme="light"] .tile-worktree-btn:hover {
+  background: rgba(64, 160, 43, 0.12);
+  border-color: rgba(64, 160, 43, 0.25);
+}
+
 /* File/folder button (icon-only) */
 .tile-file-btn {
   display: flex;

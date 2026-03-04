@@ -121,4 +121,10 @@ export const IPC_CHANNELS = {
   PERF: {
     LOG: 'perf:log',
   },
+  WORKTREE: {
+    LIST: 'worktree:list',
+    CREATE: 'worktree:create',
+    REMOVE: 'worktree:remove',
+    DETECT_REPO: 'worktree:detect-repo',
+  },
 } as const;
