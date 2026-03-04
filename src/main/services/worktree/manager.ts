@@ -78,8 +78,8 @@ async function ensureGitignore(repoPath: string): Promise<void> {
 function nextWorktreeNumber(worktrees: WorktreeInfo[]): number {
   const existing = worktrees
     .map((wt) => wt.branch)
-    .filter((b) => /^worktree-\d+$/.test(b))
-    .map((b) => parseInt(b.replace('worktree-', ''), 10));
+    .filter((b) => /^(wt|worktree)-\d+$/.test(b))
+    .map((b) => parseInt(b.replace(/^(wt|worktree)-/, ''), 10));
 
   if (existing.length === 0) return 1;
   return Math.max(...existing) + 1;
@@ -158,7 +158,7 @@ export function createWorktreeManager() {
       // Determine next number
       const existing = await this.list(repoPath);
       const num = nextWorktreeNumber(existing);
-      const branch = `worktree-${num}`;
+      const branch = `wt-${num}`;
       const worktreePath = join(repoPath, '.worktrees', branch);
 
       // Create the worktree
@@ -209,7 +209,7 @@ export function createWorktreeManager() {
       await git(mainRepo, args);
 
       // Delete the branch (only auto-created worktree-N branches)
-      if (branch && /^worktree-\d+$/.test(branch)) {
+      if (branch && /^(wt|worktree)-\d+$/.test(branch)) {
         try {
           await git(mainRepo, ['branch', '-D', branch]);
         } catch {

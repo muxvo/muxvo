@@ -496,7 +496,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
         } else {
           // Parent project has no sessions — remap this worktree entry to parent
           ccProjects[i].projectHash = parentHash;
-          ccProjects[i].displayPath = ccProjects[i].displayPath.replace(/\/.worktrees\/worktree-\d+$/, '');
+          ccProjects[i].displayPath = ccProjects[i].displayPath.replace(/\/.worktrees\/(wt|worktree)-\d+$/, '');
           ccProjects[i].displayName = ccProjects[i].displayPath.split('/').filter(Boolean).pop() || ccProjects[i].displayName;
         }
       }
