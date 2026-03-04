@@ -129,13 +129,7 @@ export function WorktreePopover({
       const result = await window.api.worktree.create(repoPath);
       if (result.success && result.data) {
         const terminalId = await createTerminalAt(result.data.worktreePath);
-        // Auto-name: projectName/branchName
         if (terminalId) {
-          const projectName = repoPath!.split('/').pop() || 'project';
-          const autoName = `${projectName}/${result.data.branch}`;
-          terminalDispatch({ type: 'RENAME', id: terminalId, name: autoName });
-          window.api.terminal.setName(terminalId, autoName).catch(() => {});
-
           // Shell --login sources .zshrc which may cd elsewhere.
           // After shell init, cd back to worktree dir and clear screen.
           const wtPath = result.data.worktreePath;
