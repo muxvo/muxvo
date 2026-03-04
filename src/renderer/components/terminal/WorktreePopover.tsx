@@ -237,7 +237,6 @@ export function WorktreePopover({
                 >
                   <span className={`worktree-popover__dot${wt.isMain ? ' worktree-popover__dot--main' : ''}`} />
                   <span className="worktree-popover__branch">{wt.branch}</span>
-                  {wt.isMain && <span className="worktree-popover__badge">main</span>}
                   {isCurrent && <span className="worktree-popover__badge worktree-popover__badge--current">current</span>}
                   {wt.isMerged && !wt.isMain && (
                     <>

@@ -95,7 +95,18 @@ export function createWorktreeManager() {
       path: string
     ): Promise<{ isRepo: boolean; repoPath?: string; branch?: string }> {
       try {
-        const repoPath = await git(path, ['rev-parse', '--show-toplevel']);
+        let repoPath = await git(path, ['rev-parse', '--show-toplevel']);
+        // --show-toplevel from a worktree returns the worktree root, not the main repo.
+        // Use --git-common-dir to resolve the actual main repo path.
+        try {
+          const gitCommonDir = await git(path, ['rev-parse', '--git-common-dir']);
+          const { resolve } = await import('node:path');
+          const absGitDir = resolve(path, gitCommonDir);
+          const mainRepo = resolve(absGitDir, '..');
+          if (mainRepo !== repoPath) {
+            repoPath = mainRepo;
+          }
+        } catch { /* fallback to --show-toplevel result */ }
         let branch: string | undefined;
         try {
           branch = await git(path, ['rev-parse', '--abbrev-ref', 'HEAD']);
@@ -120,7 +131,7 @@ export function createWorktreeManager() {
           try {
             const merged = await git(repoPath, ['branch', '--merged', mainWt.branch]);
             const mergedBranches = merged.split('\n')
-              .map(b => b.replace(/^\*?\s+/, '').trim())
+              .map(b => b.replace(/^[*+]?\s+/, '').trim())
               .filter(Boolean);
             for (const wt of worktrees) {
               wt.isMerged = !wt.isMain && mergedBranches.includes(wt.branch);
