@@ -202,19 +202,53 @@
   color: var(--accent);
 }
 
-/* Keyboard shortcut badge */
+/* Shortcuts list */
+.settings-modal__shortcut-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.settings-modal__shortcut-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+}
+
+.settings-modal__shortcut-item + .settings-modal__shortcut-item {
+  border-top: 1px solid var(--border);
+}
+
+.settings-modal__shortcut-label {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
 .settings-modal__kbd {
   display: inline-flex;
   align-items: center;
-  padding: 3px 8px;
+  justify-content: center;
+  min-width: 28px;
+  padding: 2px 7px;
   font-family: system-ui, -apple-system, sans-serif;
   font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
-  background: var(--bg-card);
+  background: var(--bg-elevated);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 5px;
+  box-shadow: 0 1px 0 var(--border);
   white-space: nowrap;
+}
+
+.settings-modal__kbd-group {
+  display: flex;
+  gap: 4px;
 }
 
 /* Light theme adjustments */

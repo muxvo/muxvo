@@ -168,28 +168,32 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
                 </button>
               </div>
             </div>
-            <div className="settings-modal__row">
-              <div>
-                <div className="settings-modal__label">{t('settings.zoom')}</div>
-                <div className="settings-modal__desc">{t('settings.zoomDesc')}</div>
-              </div>
-            </div>
           </div>
 
           {/* Shortcuts Section */}
           <div className="settings-modal__section">
             <div className="settings-modal__section-title">{t('settings.shortcuts')}</div>
-            <div className="settings-modal__row">
-              <div className="settings-modal__label">{t('settings.shortcutNewTerminal')}</div>
-              <kbd className="settings-modal__kbd">⌘T</kbd>
-            </div>
-            <div className="settings-modal__row">
-              <div className="settings-modal__label">{t('settings.shortcutLineStart')}</div>
-              <kbd className="settings-modal__kbd">⌘←</kbd>
-            </div>
-            <div className="settings-modal__row">
-              <div className="settings-modal__label">{t('settings.shortcutLineEnd')}</div>
-              <kbd className="settings-modal__kbd">⌘→</kbd>
+            <div className="settings-modal__shortcut-list">
+              <div className="settings-modal__shortcut-item">
+                <span className="settings-modal__shortcut-label">{t('settings.shortcutNewTerminal')}</span>
+                <kbd className="settings-modal__kbd">⌘T</kbd>
+              </div>
+              <div className="settings-modal__shortcut-item">
+                <span className="settings-modal__shortcut-label">{t('settings.shortcutLineStart')}</span>
+                <kbd className="settings-modal__kbd">⌘←</kbd>
+              </div>
+              <div className="settings-modal__shortcut-item">
+                <span className="settings-modal__shortcut-label">{t('settings.shortcutLineEnd')}</span>
+                <kbd className="settings-modal__kbd">⌘→</kbd>
+              </div>
+              <div className="settings-modal__shortcut-item">
+                <span className="settings-modal__shortcut-label">{t('settings.zoom')}</span>
+                <div className="settings-modal__kbd-group">
+                  <kbd className="settings-modal__kbd">⌘+</kbd>
+                  <kbd className="settings-modal__kbd">⌘-</kbd>
+                  <kbd className="settings-modal__kbd">⌘0</kbd>
+                </div>
+              </div>
             </div>
           </div>
 
