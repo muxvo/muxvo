@@ -59,6 +59,8 @@ interface TerminalManagerDeps {
   pty?: PtyAdapter;
   perfLogger?: { track(event: string, terminalId?: string): void };
   debugLogger?: (line: string) => void;
+  /** 终端状态变化回调（用于 Dock 角标等外部监听） */
+  onStateChange?: (id: string, state: string) => void;
 }
 
 export function createTerminalManager(deps?: TerminalManagerDeps) {
@@ -89,6 +91,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
       if (win && !win.isDestroyed()) {
         win.webContents.send(IPC_CHANNELS.TERMINAL.STATE_CHANGE, { id, state, processName });
       }
+      deps?.onStateChange?.(id, state);
       return;
     }
 
@@ -98,6 +101,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
       if (win && !win.isDestroyed()) {
         win.webContents.send(IPC_CHANNELS.TERMINAL.STATE_CHANGE, { id, state, processName });
       }
+      deps?.onStateChange?.(id, state);
     }, STATE_CHANGE_DEBOUNCE_MS);
 
     pendingStateChanges.set(id, { state, processName, timer });

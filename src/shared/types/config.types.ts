@@ -84,6 +84,9 @@ export interface TerminalConfig {
   cursorBlink: boolean;
 }
 
+/** Dock 角标通知模式 */
+export type DockBadgeMode = 'off' | 'realtime' | 'timed';
+
 /** app:get-config 返回的 Muxvo 本地配置 */
 export interface MuxvoConfig {
   window: {
@@ -111,6 +114,10 @@ export interface MuxvoConfig {
   doubleClickToFocus?: boolean;
   /** 是否在文件面板显示隐藏文件（dotfiles），默认 false */
   showHiddenFiles?: boolean;
+  /** Dock 角标通知模式（默认 'off'） */
+  dockBadgeMode?: DockBadgeMode;
+  /** 定时模式检查间隔（分钟），默认 1，范围 1-30 */
+  dockBadgeIntervalMin?: number;
 }
 
 /** app:get-preferences 返回的用户偏好 */
