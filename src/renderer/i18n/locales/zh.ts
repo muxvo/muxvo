@@ -214,4 +214,8 @@ export const zh = {
   'settings.zoomDesc': '⌘+ 放大 · ⌘- 缩小 · ⌘0 重置',
   'settings.enabled': '启用',
   'settings.disabled': '关闭',
+  'settings.shortcuts': '快捷键',
+  'settings.shortcutNewTerminal': '新建终端',
+  'settings.shortcutLineStart': '跳转行首',
+  'settings.shortcutLineEnd': '跳转行尾',
 } as const;

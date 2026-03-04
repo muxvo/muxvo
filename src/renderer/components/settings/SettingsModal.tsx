@@ -176,6 +176,23 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
             </div>
           </div>
 
+          {/* Shortcuts Section */}
+          <div className="settings-modal__section">
+            <div className="settings-modal__section-title">{t('settings.shortcuts')}</div>
+            <div className="settings-modal__row">
+              <div className="settings-modal__label">{t('settings.shortcutNewTerminal')}</div>
+              <kbd className="settings-modal__kbd">⌘T</kbd>
+            </div>
+            <div className="settings-modal__row">
+              <div className="settings-modal__label">{t('settings.shortcutLineStart')}</div>
+              <kbd className="settings-modal__kbd">⌘←</kbd>
+            </div>
+            <div className="settings-modal__row">
+              <div className="settings-modal__label">{t('settings.shortcutLineEnd')}</div>
+              <kbd className="settings-modal__kbd">⌘→</kbd>
+            </div>
+          </div>
+
           {/* Language Section */}
           <div className="settings-modal__section">
             <div className="settings-modal__section-title">{t('settings.language')}</div>
