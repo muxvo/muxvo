@@ -154,7 +154,12 @@ export function WorktreePopover({
   }, [repoPath, creating, createTerminalAt, onClose]);
 
   const handleWorktreeClick = useCallback(async (wt: WorktreeInfo) => {
-    await createTerminalAt(wt.path);
+    const terminalId = await createTerminalAt(wt.path);
+    if (terminalId) {
+      setTimeout(() => {
+        window.api.terminal.write(terminalId, `cd ${shellQuote(wt.path)} && clear\r`);
+      }, 800);
+    }
     onClose();
   }, [createTerminalAt, onClose]);
 

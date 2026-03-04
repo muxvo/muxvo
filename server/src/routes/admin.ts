@@ -274,6 +274,163 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // =========================================================================
+  // GET /admin/analytics/retention — Retention rates + cohort matrix
+  // =========================================================================
+
+  app.get<{
+    Querystring: { granularity?: 'week' | 'month' };
+  }>('/analytics/retention', {
+    schema: {
+      querystring: {
+        type: 'object' as const,
+        properties: {
+          granularity: { type: 'string' as const, enum: ['week', 'month'], default: 'week' },
+        },
+        additionalProperties: false,
+      },
+    },
+  }, async (request) => {
+    const granularity = request.query.granularity ?? 'week';
+
+    // --- a) Overall retention rates (D1 / D7 / D30) ---
+    // Based on devices first seen in the last 60 days
+    const retentionResult = await query<{
+      period: string;
+      total_new: string;
+      retained: string;
+    }>(
+      `WITH new_devices AS (
+        SELECT device_id, DATE(first_seen_at) AS first_date
+        FROM devices
+        WHERE first_seen_at >= NOW() - INTERVAL '60 days'
+      ),
+      retention_check AS (
+        SELECT
+          nd.device_id,
+          nd.first_date,
+          CASE WHEN EXISTS (
+            SELECT 1 FROM analytics_events ae
+            WHERE ae.device_id = nd.device_id
+              AND ae.date = nd.first_date + 1
+          ) THEN 1 ELSE 0 END AS d1,
+          CASE WHEN EXISTS (
+            SELECT 1 FROM analytics_events ae
+            WHERE ae.device_id = nd.device_id
+              AND ae.date = nd.first_date + 7
+          ) THEN 1 ELSE 0 END AS d7,
+          CASE WHEN EXISTS (
+            SELECT 1 FROM analytics_events ae
+            WHERE ae.device_id = nd.device_id
+              AND ae.date = nd.first_date + 30
+          ) THEN 1 ELSE 0 END AS d30
+        FROM new_devices nd
+        WHERE nd.first_date <= CURRENT_DATE - 1
+      )
+      SELECT 'D1' AS period,
+             COUNT(*)::text AS total_new,
+             SUM(d1)::text AS retained
+      FROM retention_check
+      WHERE first_date <= CURRENT_DATE - 1
+      UNION ALL
+      SELECT 'D7',
+             COUNT(*)::text,
+             SUM(d7)::text
+      FROM retention_check
+      WHERE first_date <= CURRENT_DATE - 7
+      UNION ALL
+      SELECT 'D30',
+             COUNT(*)::text,
+             SUM(d30)::text
+      FROM retention_check
+      WHERE first_date <= CURRENT_DATE - 30`,
+    );
+
+    const rates: Record<string, { total: number; retained: number; rate: number }> = {};
+    for (const row of retentionResult.rows) {
+      const total = Number(row.total_new);
+      const retained = Number(row.retained);
+      rates[row.period] = {
+        total,
+        retained,
+        rate: total > 0 ? Math.round((retained / total) * 1000) / 10 : 0,
+      };
+    }
+
+    // --- b) Cohort matrix ---
+    const truncFn = granularity === 'week' ? `DATE_TRUNC('week', first_seen_at)` : `DATE_TRUNC('month', first_seen_at)`;
+    const intervalUnit = granularity === 'week' ? 'weeks' : 'months';
+    const maxPeriods = granularity === 'week' ? 12 : 6;
+
+    const cohortResult = await query<{
+      cohort: string;
+      cohort_size: string;
+      period_offset: string;
+      active_count: string;
+    }>(
+      `WITH cohorts AS (
+        SELECT
+          device_id,
+          ${truncFn}::date AS cohort
+        FROM devices
+        WHERE first_seen_at >= NOW() - INTERVAL '${maxPeriods} ${intervalUnit}'
+      ),
+      cohort_sizes AS (
+        SELECT cohort, COUNT(DISTINCT device_id) AS cohort_size
+        FROM cohorts
+        GROUP BY cohort
+      ),
+      periods AS (
+        SELECT generate_series(0, ${maxPeriods - 1}) AS period_offset
+      ),
+      activity AS (
+        SELECT
+          c.cohort,
+          p.period_offset,
+          COUNT(DISTINCT ae.device_id) AS active_count
+        FROM cohorts c
+        CROSS JOIN periods p
+        JOIN analytics_events ae ON ae.device_id = c.device_id
+          AND ae.date >= (c.cohort + (p.period_offset || ' ${intervalUnit}')::interval)::date
+          AND ae.date < (c.cohort + ((p.period_offset + 1) || ' ${intervalUnit}')::interval)::date
+        GROUP BY c.cohort, p.period_offset
+      )
+      SELECT
+        cs.cohort::text,
+        cs.cohort_size::text,
+        a.period_offset::text,
+        COALESCE(a.active_count, 0)::text AS active_count
+      FROM cohort_sizes cs
+      CROSS JOIN periods p
+      LEFT JOIN activity a ON a.cohort = cs.cohort AND a.period_offset = p.period_offset
+      ORDER BY cs.cohort, p.period_offset`,
+    );
+
+    // Group by cohort
+    const cohortMap = new Map<string, { size: number; retention: number[] }>();
+    for (const row of cohortResult.rows) {
+      if (!cohortMap.has(row.cohort)) {
+        cohortMap.set(row.cohort, {
+          size: Number(row.cohort_size),
+          retention: [],
+        });
+      }
+      const entry = cohortMap.get(row.cohort)!;
+      const activeCount = Number(row.active_count);
+      entry.retention.push(
+        entry.size > 0 ? Math.round((activeCount / entry.size) * 1000) / 10 : 0,
+      );
+    }
+
+    const cohorts = Array.from(cohortMap.entries()).map(([cohort, data]) => ({
+      cohort,
+      size: data.size,
+      retention: data.retention,
+    }));
+
+    return { rates, cohorts, granularity };
+  });
+
+  // =========================================================================
   // GET /admin/devices — Paginated device list with search
   // =========================================================================
 

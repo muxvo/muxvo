@@ -138,6 +138,12 @@ export const analyticsRoutes: FastifyPluginAsync = async (app) => {
       );
     }
 
+    // Piggyback: refresh device last_seen_at (~every 60s from tracker flush)
+    await query(
+      `UPDATE devices SET last_seen_at = NOW() WHERE device_id = $1`,
+      [deviceId],
+    );
+
     return { success: true, tracked: events.length };
   });
 
