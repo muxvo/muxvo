@@ -7,4 +7,6 @@ export interface WorktreeInfo {
   branch: string;
   /** Whether this is the main/primary worktree */
   isMain: boolean;
+  /** Whether this branch has been merged into the main branch */
+  isMerged: boolean;
 }

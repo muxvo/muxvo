@@ -153,6 +153,25 @@ export function WorktreePopover({
     }
   }, [repoPath, creating, createTerminalAt, onClose]);
 
+  const handleDeleteWorktree = useCallback(async (wt: WorktreeInfo) => {
+    if (!repoPath) return;
+    setError(null);
+    try {
+      const result = await window.api.worktree.remove(wt.path);
+      if (result.success) {
+        // Refresh list
+        const listResult = await window.api.worktree.list(repoPath);
+        if (listResult.success && listResult.data) {
+          setWorktrees(listResult.data);
+        }
+      } else {
+        setError(result.error?.message || 'Failed to delete worktree');
+      }
+    } catch (e) {
+      setError(String(e));
+    }
+  }, [repoPath]);
+
   const handleWorktreeClick = useCallback(async (wt: WorktreeInfo) => {
     const terminalId = await createTerminalAt(wt.path);
     if (terminalId) {
@@ -220,6 +239,17 @@ export function WorktreePopover({
                   <span className="worktree-popover__branch">{wt.branch}</span>
                   {wt.isMain && <span className="worktree-popover__badge">main</span>}
                   {isCurrent && <span className="worktree-popover__badge worktree-popover__badge--current">current</span>}
+                  {wt.isMerged && !wt.isMain && (
+                    <>
+                      <span className="worktree-popover__badge worktree-popover__badge--merged">merged</span>
+                      <span
+                        className="worktree-popover__delete"
+                        onClick={(e) => { e.stopPropagation(); handleDeleteWorktree(wt); }}
+                        title="Delete worktree"
+                        role="button"
+                      >✕</span>
+                    </>
+                  )}
                 </button>
               );
             })}

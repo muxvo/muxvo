@@ -48,6 +48,7 @@ function parseWorktreeList(output: string, repoPath: string): WorktreeInfo[] {
         path,
         branch: branch || '(unknown)',
         isMain: path === repoPath,
+        isMerged: false,
       });
     }
   }
@@ -111,7 +112,23 @@ export function createWorktreeManager() {
     async list(repoPath: string): Promise<WorktreeInfo[]> {
       try {
         const output = await git(repoPath, ['worktree', 'list', '--porcelain']);
-        return parseWorktreeList(output, repoPath);
+        const worktrees = parseWorktreeList(output, repoPath);
+
+        // Detect which branches have been merged into main
+        const mainWt = worktrees.find(wt => wt.isMain);
+        if (mainWt) {
+          try {
+            const merged = await git(repoPath, ['branch', '--merged', mainWt.branch]);
+            const mergedBranches = merged.split('\n')
+              .map(b => b.replace(/^\*?\s+/, '').trim())
+              .filter(Boolean);
+            for (const wt of worktrees) {
+              wt.isMerged = !wt.isMain && mergedBranches.includes(wt.branch);
+            }
+          } catch { /* ignore — e.g. no commits */ }
+        }
+
+        return worktrees;
       } catch {
         return [];
       }
