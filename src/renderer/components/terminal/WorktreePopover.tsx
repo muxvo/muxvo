@@ -22,6 +22,11 @@ interface Props {
   onClose: () => void;
 }
 
+/** Shell-safe single-quote a path (handles spaces, special chars) */
+function shellQuote(path: string): string {
+  return `'${path.replace(/'/g, "'\\''")}'`;
+}
+
 /** Get cached terminal size (same helper used by TerminalContext) */
 function getTerminalSizeCache(): { cols: number; rows: number } {
   try {
@@ -130,6 +135,13 @@ export function WorktreePopover({
           const autoName = `${projectName}/${result.data.branch}`;
           terminalDispatch({ type: 'RENAME', id: terminalId, name: autoName });
           window.api.terminal.setName(terminalId, autoName).catch(() => {});
+
+          // Shell --login sources .zshrc which may cd elsewhere.
+          // After shell init, cd back to worktree dir and clear screen.
+          const wtPath = result.data.worktreePath;
+          setTimeout(() => {
+            window.api.terminal.write(terminalId, `cd ${shellQuote(wtPath)} && clear\r`);
+          }, 800);
         }
         onClose();
         // Refresh list in background (for next open)

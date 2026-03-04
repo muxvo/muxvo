@@ -67,6 +67,13 @@ function getWorktreeInfo(cwd: string): { projectName: string } | null {
   return projectName ? { projectName } : null;
 }
 
+/** Fallback: extract worktree project info from custom name (format: "project/worktree-N") */
+function getWorktreeInfoFromName(name?: string): { projectName: string } | null {
+  if (!name) return null;
+  const match = name.match(/^(.+)\/(worktree-\d+)$/);
+  return match ? { projectName: match[1] } : null;
+}
+
 /** Grid/tiling icon SVG (4-square grid) */
 function GridIcon() {
   return (
@@ -112,7 +119,6 @@ export function TileHeader({
 }: TileHeaderProps): JSX.Element {
   const { t } = useI18n();
   const panelDispatch = usePanelDispatch();
-  const worktreeInfo = getWorktreeInfo(cwd);
 
   const {
     namingState,
@@ -125,6 +131,10 @@ export function TileHeader({
     handleInputKeyDown,
     handleInputBlur,
   } = naming;
+
+  // Worktree badge: detect from CWD path, fallback to custom name pattern
+  const worktreeInfo = getWorktreeInfo(cwd)
+    || getWorktreeInfoFromName(namingState === 'DisplayNamed' ? namingContext.displayText : undefined);
 
   // CwdPicker state
   const [cwdPickerOpen, setCwdPickerOpen] = useState(false);
