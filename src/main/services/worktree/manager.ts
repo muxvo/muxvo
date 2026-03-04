@@ -95,7 +95,10 @@ export function createWorktreeManager() {
     ): Promise<{ isRepo: boolean; repoPath?: string; branch?: string }> {
       try {
         const repoPath = await git(path, ['rev-parse', '--show-toplevel']);
-        const branch = await git(path, ['rev-parse', '--abbrev-ref', 'HEAD']);
+        let branch: string | undefined;
+        try {
+          branch = await git(path, ['rev-parse', '--abbrev-ref', 'HEAD']);
+        } catch { /* no commits yet — branch unknown */ }
         return { isRepo: true, repoPath, branch };
       } catch {
         return { isRepo: false };
