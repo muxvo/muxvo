@@ -24,6 +24,10 @@
   "dependencies": {
     "@electron-toolkit/utils": "^4.0.0",
     "@iarna/toml": "^2.2.5",
+    "@tiptap/extension-table": "^3.20.0",
+    "@tiptap/extension-table-cell": "^3.20.0",
+    "@tiptap/extension-table-header": "^3.20.0",
+    "@tiptap/extension-table-row": "^3.20.0",
     "@tiptap/markdown": "^3.20.0",
     "@tiptap/react": "^3.20.0",
     "@tiptap/starter-kit": "^3.20.0",

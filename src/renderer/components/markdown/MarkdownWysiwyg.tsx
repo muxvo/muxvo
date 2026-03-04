@@ -10,6 +10,10 @@ import React, { useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import CodeBlock from '@tiptap/extension-code-block';
+import Table from '@tiptap/extension-table';
+import TableRow from '@tiptap/extension-table-row';
+import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
 import { Markdown } from '@tiptap/markdown';
 import { renderMermaid } from '@/renderer/utils/mermaid-init';
 import './MarkdownWysiwyg.css';
@@ -80,6 +84,10 @@ export function MarkdownWysiwyg({ content, onChange }: MarkdownWysiwygProps) {
     extensions: [
       StarterKit.configure({ codeBlock: false }),
       MermaidCodeBlock,
+      Table,
+      TableRow,
+      TableCell,
+      TableHeader,
       Markdown,
     ],
     content,
