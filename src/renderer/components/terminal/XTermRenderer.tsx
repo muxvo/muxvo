@@ -235,6 +235,17 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
         window.dispatchEvent(new CustomEvent('muxvo:global-zoom-request', { detail: 'reset' }));
         return false;
       }
+      // Cmd+Left → line start (Ctrl+A), Cmd+Right → line end (Ctrl+E) on macOS
+      if (e.metaKey && e.type === 'keydown') {
+        if (e.key === 'ArrowLeft') {
+          window.api.terminal.write(terminalId, '\x01');
+          return false;
+        }
+        if (e.key === 'ArrowRight') {
+          window.api.terminal.write(terminalId, '\x05');
+          return false;
+        }
+      }
       return true;
     });
     // 延迟 fit，等待容器完成布局后再计算列宽行高
