@@ -29,6 +29,15 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
   const projectsCache = { data: null as ProjectInfo[] | null, expiry: 0 };
   const summaryCache = new Map<string, { data: SessionSummary; expiry: number }>();
 
+  // Worktree → parent project mapping (rebuilt on each getProjects scan)
+  let worktreeMap = new Map<string, string[]>();
+
+  /** Detect worktree projectHash and return parent hash. Returns null if not a worktree. */
+  function getParentProjectHash(hash: string): string | null {
+    const idx = hash.indexOf('-.worktrees-');
+    return idx > 0 ? hash.slice(0, idx) : null;
+  }
+
   function clearProjectsCache() {
     projectsCache.data = null;
     projectsCache.expiry = 0;
@@ -468,6 +477,31 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
         }
       }
 
+      // Merge worktree projects into their parent repo project
+      const worktreeChildren = new Map<string, string[]>();
+      for (let i = ccProjects.length - 1; i >= 0; i--) {
+        const parentHash = getParentProjectHash(ccProjects[i].projectHash);
+        if (!parentHash) continue;
+
+        const children = worktreeChildren.get(parentHash) || [];
+        children.push(ccProjects[i].projectHash);
+        worktreeChildren.set(parentHash, children);
+
+        const parent = ccProjects.find(p => p.projectHash === parentHash);
+        if (parent) {
+          parent.sessionCount += ccProjects[i].sessionCount;
+          parent.totalSize = (parent.totalSize || 0) + (ccProjects[i].totalSize || 0);
+          parent.lastActivity = Math.max(parent.lastActivity, ccProjects[i].lastActivity);
+          ccProjects.splice(i, 1);
+        } else {
+          // Parent project has no sessions — remap this worktree entry to parent
+          ccProjects[i].projectHash = parentHash;
+          ccProjects[i].displayPath = ccProjects[i].displayPath.replace(/\/.worktrees\/worktree-\d+$/, '');
+          ccProjects[i].displayName = ccProjects[i].displayPath.split('/').filter(Boolean).pop() || ccProjects[i].displayName;
+        }
+      }
+      worktreeMap = worktreeChildren;
+
       // Sort by lastActivity descending
       ccProjects.sort((a, b) => b.lastActivity - a.lastActivity);
 
@@ -494,6 +528,21 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
         filePath: join(ccProjectPath, s.fileName),
         mtime: s.mtime,
       }));
+
+      // Also include sessions from worktree project directories
+      const wtHashes = worktreeMap.get(projectHash) || [];
+      for (const wtHash of wtHashes) {
+        const wtPath = join(projectsDir, wtHash);
+        const wtStats = await scanSessionFilesFromDir(wtPath);
+        for (const s of wtStats) {
+          ccFiles.push({
+            projectHash,
+            fileName: s.fileName,
+            filePath: join(wtPath, s.fileName),
+            mtime: s.mtime,
+          });
+        }
+      }
 
       // Collect archive file entries
       let archiveFiles: FileEntry[] = [];

@@ -54,3 +54,4 @@ prototype-*.html
 
 # Pre-push blocklist (personal sensitive patterns)
 .commit-blocklist
+.worktrees/
