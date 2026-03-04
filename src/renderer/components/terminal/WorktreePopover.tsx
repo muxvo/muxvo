@@ -157,7 +157,7 @@ export function WorktreePopover({
     if (!repoPath) return;
     setError(null);
     try {
-      const result = await window.api.worktree.remove(wt.path);
+      const result = await window.api.worktree.remove(wt.path, true);
       if (result.success) {
         // Refresh list
         const listResult = await window.api.worktree.list(repoPath);
