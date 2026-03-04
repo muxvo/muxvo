@@ -101,8 +101,8 @@ export function WorktreePopover({
     return () => window.removeEventListener('mousedown', handleClick);
   }, [open, onClose]);
 
-  /** Create a terminal at the given cwd and sync with TerminalContext */
-  const createTerminalAt = useCallback(async (cwd: string) => {
+  /** Create a terminal at the given cwd and sync with TerminalContext. Returns terminal ID. */
+  const createTerminalAt = useCallback(async (cwd: string): Promise<string | null> => {
     const { cols, rows } = getTerminalSizeCache();
     const result = await window.api.terminal.create(cwd, cols, rows);
     if (result?.success && result.data) {
@@ -111,7 +111,9 @@ export function WorktreePopover({
         entry: { id: result.data.id, state: 'Running', cwd },
       });
       terminalDispatch({ type: 'SET_SELECTED', id: result.data.id });
+      return result.data.id;
     }
+    return null;
   }, [terminalDispatch]);
 
   const handleCreateWorktree = useCallback(async () => {
@@ -121,7 +123,14 @@ export function WorktreePopover({
     try {
       const result = await window.api.worktree.create(repoPath);
       if (result.success && result.data) {
-        await createTerminalAt(result.data.worktreePath);
+        const terminalId = await createTerminalAt(result.data.worktreePath);
+        // Auto-name: projectName/branchName
+        if (terminalId) {
+          const projectName = repoPath!.split('/').pop() || 'project';
+          const autoName = `${projectName}/${result.data.branch}`;
+          terminalDispatch({ type: 'RENAME', id: terminalId, name: autoName });
+          window.api.terminal.setName(terminalId, autoName).catch(() => {});
+        }
         onClose();
         // Refresh list in background (for next open)
         const listResult = await window.api.worktree.list(repoPath);

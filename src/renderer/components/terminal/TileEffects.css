@@ -194,6 +194,27 @@
   padding: 0 2px;
 }
 
+/* Worktree project badge (green, shown for worktree terminals) */
+.tile-worktree-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: rgba(166, 227, 161, 0.15);
+  color: #a6e3a1;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+[data-theme="light"] .tile-worktree-badge {
+  background: rgba(64, 160, 43, 0.12);
+  color: #40a02b;
+}
+
 /* Worktree/branch button (icon-only) */
 .tile-worktree-btn {
   display: flex;

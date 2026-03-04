@@ -45,6 +45,28 @@ function BranchIcon() {
   );
 }
 
+/** Small branch icon for worktree badge */
+function SmallBranchIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="6" y1="3" x2="6" y2="15" />
+      <circle cx="18" cy="6" r="3" />
+      <circle cx="6" cy="18" r="3" />
+      <path d="M18 9a9 9 0 0 1-9 9" />
+    </svg>
+  );
+}
+
+/** Extract worktree project info from cwd path */
+function getWorktreeInfo(cwd: string): { projectName: string } | null {
+  const marker = '/.worktrees/';
+  const idx = cwd.indexOf(marker);
+  if (idx < 0) return null;
+  const projectPath = cwd.substring(0, idx);
+  const projectName = projectPath.split('/').pop() || '';
+  return projectName ? { projectName } : null;
+}
+
 /** Grid/tiling icon SVG (4-square grid) */
 function GridIcon() {
   return (
@@ -90,6 +112,7 @@ export function TileHeader({
 }: TileHeaderProps): JSX.Element {
   const { t } = useI18n();
   const panelDispatch = usePanelDispatch();
+  const worktreeInfo = getWorktreeInfo(cwd);
 
   const {
     namingState,
@@ -174,6 +197,14 @@ export function TileHeader({
             'tile-status--idle'
           }`}
         />
+
+        {/* Worktree project badge (green, only for worktree terminals) */}
+        {worktreeInfo && (
+          <span className="tile-worktree-badge">
+            <SmallBranchIcon />
+            {worktreeInfo.projectName}
+          </span>
+        )}
 
         {/* Tile name area */}
         <div className="tile-name">
