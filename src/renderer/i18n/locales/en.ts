@@ -211,7 +211,10 @@ export const en = {
   'settings.doubleClickFocus': 'Double-click Focus',
   'settings.doubleClickFocusDesc': 'Double-click a terminal to enter focused mode',
   'settings.zoom': 'Zoom',
-  'settings.zoomDesc': '⌘+ Zoom In · ⌘- Zoom Out · ⌘0 Reset',
   'settings.enabled': 'On',
   'settings.disabled': 'Off',
+  'settings.shortcuts': 'Shortcuts',
+  'settings.shortcutNewTerminal': 'New Terminal',
+  'settings.shortcutLineStart': 'Jump to Line Start',
+  'settings.shortcutLineEnd': 'Jump to Line End',
 } as const;
