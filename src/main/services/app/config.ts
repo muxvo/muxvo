@@ -27,6 +27,7 @@ const DEFAULT_CONFIG: MuxvoConfig = {
   ftvLeftWidth: 250,
   ftvRightWidth: 300,
   startupTerminalCount: 1,
+  pinnedWorkspaces: [],
 };
 
 /** Minimal fs adapter interface for DI */

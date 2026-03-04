@@ -75,6 +75,69 @@
   background: var(--bg-hover);
 }
 
+/* Pinned workspaces */
+.cwd-picker-pinned {
+  margin-bottom: 12px;
+}
+
+.cwd-picker-pinned-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.cwd-picker-pinned-item {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cwd-picker-pin-remove {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.cwd-picker-pinned-row:hover .cwd-picker-pin-remove {
+  opacity: 1;
+}
+
+.cwd-picker-pin-remove:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.cwd-picker-pin-add {
+  margin-bottom: 12px;
+}
+
+.cwd-picker-pin-add-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px dashed var(--border);
+  padding: 6px 10px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 12px;
+  text-align: left;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.cwd-picker-pin-add-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
 .cwd-picker-browse {
   border-top: 1px solid var(--border);
   padding-top: 12px;

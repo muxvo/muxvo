@@ -84,6 +84,14 @@ export interface TerminalConfig {
   cursorBlink: boolean;
 }
 
+/** 固定工作区条目 */
+export interface PinnedWorkspace {
+  /** 绝对路径 */
+  path: string;
+  /** 显示名称（默认取 basename） */
+  name: string;
+}
+
 /** app:get-config 返回的 Muxvo 本地配置 */
 export interface MuxvoConfig {
   window: {
@@ -111,6 +119,8 @@ export interface MuxvoConfig {
   doubleClickToFocus?: boolean;
   /** 是否在文件面板显示隐藏文件（dotfiles），默认 false */
   showHiddenFiles?: boolean;
+  /** 固定工作区列表（最多 10 个） */
+  pinnedWorkspaces?: PinnedWorkspace[];
 }
 
 /** app:get-preferences 返回的用户偏好 */
