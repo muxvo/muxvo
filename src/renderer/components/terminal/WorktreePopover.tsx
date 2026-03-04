@@ -184,6 +184,9 @@ export function WorktreePopover({
     (wt) => terminalCwd === wt.path || terminalCwd.startsWith(wt.path + '/')
   );
 
+  // Hide "+ New Worktree" when already inside a worktree
+  const isInsideWorktree = terminalCwd.includes('/.worktrees/');
+
   return createPortal(
     <div className="worktree-popover-overlay" onClick={onClose}>
       <div
@@ -223,7 +226,7 @@ export function WorktreePopover({
           </div>
         )}
 
-        {!loading && !error && repoPath && (
+        {!loading && !error && repoPath && !isInsideWorktree && (
           <>
             <div className="worktree-popover__divider" />
             <button
