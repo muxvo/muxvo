@@ -31,8 +31,8 @@ interface FileTempViewProps {
 
 const DEFAULT_LEFT_WIDTH = 200;
 const DEFAULT_RIGHT_WIDTH = 280;
-const MIN_WIDTH = 150;
-const MAX_WIDTH = 500;
+const MIN_WIDTH = 80;
+const MAX_WIDTH = 700;
 
 /** Extract display name from path */
 function getDisplayName(path: string): string {
