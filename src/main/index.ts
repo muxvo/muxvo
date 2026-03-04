@@ -51,6 +51,7 @@ import { createMemoryPushTimer } from './services/perf/memory-push';
 import { createPerfLogger } from './services/perf/perf-logger';
 import { createSyncStatusPusher } from './services/chat-sync-push';
 import { initConfigDir, createConfigManager } from './services/app/config';
+import { calculateGridLayout } from '@/shared/utils/grid-layout';
 import { initPrefsDir, getPreferences, savePreferences } from './services/app/preferences';
 import { createUpdateLogger } from './services/app/update-logger';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
@@ -818,12 +819,17 @@ function saveTerminalConfig(configManager: ReturnType<typeof createConfigManager
   if (!terminalManager) return;
   const existing = configManager.loadConfig();
   const terminals = terminalManager.list();
+  const { cols, rows } = calculateGridLayout(terminals.length);
   configManager.saveConfig({
     ...existing,
     openTerminals: terminals.map((t) => ({
       cwd: t.cwd,
       customName: t.customName,
     })),
+    gridLayout: {
+      columnRatios: Array(cols).fill(1),
+      rowRatios: Array(rows).fill(1),
+    },
   });
 }
 
