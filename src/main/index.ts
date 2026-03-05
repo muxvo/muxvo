@@ -883,6 +883,7 @@ app.whenReady().then(() => {
           }).catch((err) => {
             console.warn('[MUXVO:auth] Session restore failed:', err);
           });
+
         }, 500);
       });
     }
