@@ -369,23 +369,27 @@ app.whenReady().then(() => {
 
   function restoreWorkspace(ws: SavedWorkspace): void {
     if (!terminalManager || !mainWindow) return;
-    const fs = require('fs');
-    const logFile = '/tmp/muxvo-workspace.log';
-    const log = (msg: string) => { fs.appendFileSync(logFile, msg + '\n'); console.log(msg); };
-    log('[WORKSPACE:restore] closing all terminals...');
     terminalManager.closeAll();
-    log('[WORKSPACE:restore] spawning ' + ws.terminals.length + ' terminals');
+    const spawnedIds: { id: string; cwd: string }[] = [];
     for (const t of ws.terminals) {
-      log('[WORKSPACE:restore] spawn cwd=' + t.cwd + ' customName=' + t.customName);
       const result = terminalManager.spawn({ cwd: t.cwd });
-      log('[WORKSPACE:restore] spawn result=' + JSON.stringify(result));
-      if (result.success && result.id && t.customName) {
-        terminalManager.setName(result.id, t.customName);
+      if (result.success && result.id) {
+        spawnedIds.push({ id: result.id, cwd: t.cwd });
+        if (t.customName) {
+          terminalManager.setName(result.id, t.customName);
+        }
       }
     }
+    // Force cd to correct cwd after shell initialization completes
+    // Login shell (--login) may reset cwd during init scripts
+    const tm = terminalManager;
+    setTimeout(() => {
+      for (const { id, cwd } of spawnedIds) {
+        tm.write(id, ` cd ${cwd.replace(/ /g, '\\ ')}\n`);
+      }
+    }, 1500);
     // Notify renderer to refresh terminal list
     const list = terminalManager.list();
-    log('[WORKSPACE:restore] final list=' + JSON.stringify(list.map(t => ({ id: t.id, cwd: t.cwd }))));
     mainWindow.webContents.send(IPC_CHANNELS.TERMINAL.LIST_UPDATED, list.map((t) => ({
       id: t.id, state: t.state, cwd: t.cwd, customName: t.customName,
     })));
