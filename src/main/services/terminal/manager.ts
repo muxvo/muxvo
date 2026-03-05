@@ -379,19 +379,19 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
       if (state !== 'Running' && state !== 'WaitingInput') continue;
 
       const childPid = getForegroundChildPid(terminal.process.pid);
-      if (!childPid) continue;
+      const targetPid = childPid ?? terminal.process.pid;
 
-      const childCwd = getProcessCwd(childPid);
-      if (!childCwd || childCwd === terminal.cwd) continue;
+      const targetCwd = getProcessCwd(targetPid);
+      if (!targetCwd || targetCwd === terminal.cwd) continue;
 
       // Grace period: ignore cwd changes during shell initialization
       const CWD_GRACE_MS = 3000;
       if (Date.now() - terminal.spawnedAt < CWD_GRACE_MS) continue;
 
-      terminal.cwd = childCwd;
+      terminal.cwd = targetCwd;
       const win = BrowserWindow.getAllWindows()[0];
       if (win && !win.isDestroyed()) {
-        win.webContents.send(IPC_CHANNELS.TERMINAL.CWD_CHANGED, { id, cwd: childCwd });
+        win.webContents.send(IPC_CHANNELS.TERMINAL.CWD_CHANGED, { id, cwd: targetCwd });
       }
     }
   }
