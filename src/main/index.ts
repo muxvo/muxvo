@@ -309,18 +309,12 @@ app.whenReady().then(() => {
         ? [
             { type: 'separator' as const },
             {
-              label: 'Manage',
-              submenu: workspaces.flatMap((ws) => [
-                {
-                  label: `Rename "${ws.name}"`,
-                  click: () => renameWorkspace(ws.name),
-                },
-                {
-                  label: `Remove "${ws.name}"`,
-                  click: () => removeWorkspace(ws.name),
-                },
-                { type: 'separator' as const },
-              ]).slice(0, -1), // remove trailing separator
+              label: 'Manage Workspaces...',
+              click: () => {
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                  mainWindow.webContents.send(IPC_CHANNELS.APP.OPEN_WORKSPACE_MANAGER);
+                }
+              },
             } as Electron.MenuItemConstructorOptions,
           ]
         : []),
@@ -427,20 +421,6 @@ app.whenReady().then(() => {
   function removeWorkspace(name: string): void {
     const config = configManager.loadConfig();
     const updated = (config.savedWorkspaces || []).filter((w) => w.name !== name);
-    configManager.saveConfig({ ...config, savedWorkspaces: updated });
-    buildAppMenu(updated);
-  }
-
-  async function renameWorkspace(oldName: string): Promise<void> {
-    if (!mainWindow) return;
-    const newName = await mainWindow.webContents.executeJavaScript(
-      `window.prompt('Rename workspace:', ${JSON.stringify(oldName)})`,
-    );
-    if (!newName || newName === oldName) return;
-    const config = configManager.loadConfig();
-    const updated = (config.savedWorkspaces || []).map((w) =>
-      w.name === oldName ? { ...w, name: newName } : w,
-    );
     configManager.saveConfig({ ...config, savedWorkspaces: updated });
     buildAppMenu(updated);
   }
@@ -622,6 +602,8 @@ app.whenReady().then(() => {
 
   ipcMain.handle(IPC_CHANNELS.APP.SAVE_CONFIG, async (_event, config) => {
     const result = configManager.saveConfig(config);
+    // Refresh menu so workspace list stays in sync
+    buildAppMenu(config.savedWorkspaces || []);
     return { success: true, data: result };
   });
 

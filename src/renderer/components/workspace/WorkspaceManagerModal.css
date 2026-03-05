@@ -1,0 +1,138 @@
+.ws-manager__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ws-manager {
+  width: 480px;
+  max-width: 90vw;
+  max-height: 70vh;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-dialog);
+  animation: wsManagerIn 0.2s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes wsManagerIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.ws-manager__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ws-manager__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ws-manager__close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  font-size: 18px;
+  line-height: 1;
+  transition: all 0.15s;
+}
+
+.ws-manager__close:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.ws-manager__body {
+  padding: 12px 20px 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.ws-manager__empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 24px 0;
+}
+
+.ws-manager__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-subtle, var(--border));
+}
+
+.ws-manager__item:last-child {
+  border-bottom: none;
+}
+
+.ws-manager__name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-manager__name:hover {
+  border-color: var(--border);
+  background: var(--bg-card);
+}
+
+.ws-manager__name-input {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-primary);
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--accent);
+  background: var(--bg-card);
+  outline: none;
+  min-width: 0;
+}
+
+.ws-manager__meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.ws-manager__delete {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+
+.ws-manager__delete:hover {
+  color: var(--danger, #e74c3c);
+  background: var(--bg-hover);
+}
