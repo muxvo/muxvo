@@ -11,7 +11,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { useTerminalDispatch } from '@/renderer/contexts/TerminalContext';
+import { useTerminalDispatch, useTerminalState } from '@/renderer/contexts/TerminalContext';
 import type { WorktreeInfo } from '@/shared/types/worktree.types';
 import './WorktreePopover.css';
 
@@ -43,6 +43,7 @@ export function WorktreePopover({
   onClose,
 }: Props) {
   const popupRef = useRef<HTMLDivElement>(null);
+  const terminalState = useTerminalState();
   const terminalDispatch = useTerminalDispatch();
   const [worktrees, setWorktrees] = useState<WorktreeInfo[]>([]);
   const [repoPath, setRepoPath] = useState<string | null>(null);
@@ -137,6 +138,18 @@ export function WorktreePopover({
             window.api.terminal.write(terminalId, `cd ${shellQuote(wtPath)} && clear\r`);
           }, 800);
         }
+
+        // Close the main terminal (non-worktree terminal in the same repo)
+        const mainTerminal = terminalState.terminals.find((t) => {
+          const isInRepo = t.cwd === repoPath || t.cwd.startsWith(repoPath + '/');
+          const isWorktree = t.cwd.includes('/.worktrees/');
+          return isInRepo && !isWorktree;
+        });
+        if (mainTerminal) {
+          window.api.terminal.close(mainTerminal.id);
+          terminalDispatch({ type: 'REMOVE_TERMINAL', id: mainTerminal.id });
+        }
+
         onClose();
         // Refresh list in background (for next open)
         const listResult = await window.api.worktree.list(repoPath);
@@ -151,7 +164,7 @@ export function WorktreePopover({
     } finally {
       setCreating(false);
     }
-  }, [repoPath, creating, createTerminalAt, onClose]);
+  }, [repoPath, creating, createTerminalAt, onClose, terminalState.terminals, terminalDispatch]);
 
   const handleDeleteWorktree = useCallback(async (wt: WorktreeInfo) => {
     if (!repoPath) return;
@@ -203,9 +216,6 @@ export function WorktreePopover({
     (wt) => terminalCwd === wt.path || terminalCwd.startsWith(wt.path + '/')
   );
 
-  // Hide "+ New Worktree" when already inside a worktree
-  const isInsideWorktree = terminalCwd.includes('/.worktrees/');
-
   return createPortal(
     <div className="worktree-popover-overlay" onClick={onClose}>
       <div
@@ -215,6 +225,20 @@ export function WorktreePopover({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="worktree-popover__header">Worktrees</div>
+
+        {/* "+ New Worktree" at the top, always visible */}
+        {!loading && !error && repoPath && (
+          <>
+            <button
+              className="worktree-popover__create"
+              onClick={handleCreateWorktree}
+              disabled={creating}
+            >
+              {creating ? 'Creating...' : '+ New Worktree (from main)'}
+            </button>
+            <div className="worktree-popover__divider" />
+          </>
+        )}
 
         {loading && (
           <div className="worktree-popover__loading">Loading...</div>
@@ -253,19 +277,6 @@ export function WorktreePopover({
               );
             })}
           </div>
-        )}
-
-        {!loading && !error && repoPath && !isInsideWorktree && (
-          <>
-            <div className="worktree-popover__divider" />
-            <button
-              className="worktree-popover__create"
-              onClick={handleCreateWorktree}
-              disabled={creating}
-            >
-              {creating ? 'Creating...' : '+ New Worktree'}
-            </button>
-          </>
         )}
       </div>
     </div>,
