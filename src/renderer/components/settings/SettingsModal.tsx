@@ -15,6 +15,7 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
   const [dblClickFocus, setDblClickFocus] = useState(false);
   const [dockBadgeMode, setDockBadgeMode] = useState<'off' | 'realtime' | 'timed'>('off');
   const [dockBadgeInterval, setDockBadgeInterval] = useState(1);
+  const [intervalInputValue, setIntervalInputValue] = useState('1');
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'up-to-date' | 'error'>('idle');
   const [newVersion, setNewVersion] = useState('');
 
@@ -27,7 +28,9 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
       }
       setDblClickFocus(result?.data?.doubleClickToFocus === true);
       setDockBadgeMode(result?.data?.dockBadgeMode ?? 'off');
-      setDockBadgeInterval(result?.data?.dockBadgeIntervalMin ?? 1);
+      const iv = result?.data?.dockBadgeIntervalMin ?? 1;
+      setDockBadgeInterval(iv);
+      setIntervalInputValue(String(iv));
     }).catch(() => {});
   }, [state.settingsModal.open]);
 
@@ -69,10 +72,22 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
 
   const handleDockBadgeIntervalChange = useCallback((val: number) => {
     setDockBadgeInterval(val);
+    setIntervalInputValue(String(val));
     window.api.app.getConfig().then((result: any) => {
       window.api.app.saveConfig({ ...result?.data, dockBadgeIntervalMin: val });
     }).catch(() => {});
   }, []);
+
+  const handleIntervalInputBlur = useCallback(() => {
+    const v = parseInt(intervalInputValue, 10);
+    if (isNaN(v) || v < 1) {
+      handleDockBadgeIntervalChange(1);
+    } else if (v > 30) {
+      handleDockBadgeIntervalChange(30);
+    } else {
+      handleDockBadgeIntervalChange(v);
+    }
+  }, [intervalInputValue, handleDockBadgeIntervalChange]);
 
   const isMac = navigator.platform.startsWith('Mac');
 
@@ -200,14 +215,12 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
                         >&#x2212;</button>
                         <input
                           className="settings-modal__stepper-input"
-                          type="number"
-                          min={1}
-                          max={30}
-                          value={dockBadgeInterval}
-                          onChange={(e) => {
-                            const v = parseInt(e.target.value, 10);
-                            if (!isNaN(v)) handleDockBadgeIntervalChange(Math.max(1, Math.min(30, v)));
-                          }}
+                          type="text"
+                          inputMode="numeric"
+                          value={intervalInputValue}
+                          onChange={(e) => setIntervalInputValue(e.target.value.replace(/[^\d]/g, ''))}
+                          onBlur={handleIntervalInputBlur}
+                          onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                         />
                         <button
                           className="settings-modal__stepper-btn"
