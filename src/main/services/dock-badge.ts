@@ -27,9 +27,9 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
     const win = BrowserWindow.getAllWindows()[0];
     dialog.showMessageBox(win ?? null as any, {
       type: 'info',
-      title: 'Dock 角标通知',
-      message: '请开启 Dock 角标权限',
-      detail: `前往「系统设置 → 通知 → ${appName}」，开启「标记 App 图标」即可在 Dock 图标上显示终端等待数量。`,
+      title: '开启通知提醒',
+      message: '开启通知后，终端等待处理时会提醒你',
+      detail: `前往「系统设置 → 通知 → ${appName}」，开启「标记 App 图标」即可。`,
       buttons: ['知道了'],
     }).catch(() => {});
 
