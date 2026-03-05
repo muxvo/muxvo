@@ -398,7 +398,6 @@ app.whenReady().then(() => {
   function saveCurrentAsWorkspace(): void {
     if (!terminalManager) return;
     const terminals = terminalManager.list();
-    console.log('[WORKSPACE:save] terminals=', terminals.map(t => ({ id: t.id, cwd: t.cwd, customName: t.customName })));
     if (terminals.length === 0) return;
 
     const now = new Date();
