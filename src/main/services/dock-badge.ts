@@ -1,4 +1,4 @@
-import { app, Notification } from 'electron';
+import { app, dialog, BrowserWindow, Notification } from 'electron';
 import type { DockBadgeMode } from '@/shared/types/config.types';
 
 interface DockBadgeDeps {
@@ -10,21 +10,30 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
   let timerHandle: ReturnType<typeof setInterval> | null = null;
   let badgePermissionNotified = false;
 
-  /** 首次启用时发一个通知，让 macOS 注册应用到通知中心（角标依赖此注册） */
+  /** 首次启用时注册通知中心 + 弹窗提示用户开权限 */
   function notifyBadgePermission(): void {
     if (badgePermissionNotified) return;
     badgePermissionNotified = true;
 
-    if (!Notification.isSupported()) return;
+    // 1. 发静默通知注册应用到 macOS 通知中心（角标依赖此注册）
+    if (Notification.isSupported()) {
+      const n = new Notification({ title: 'Muxvo', body: 'Dock 角标已启用', silent: true });
+      n.show();
+      setTimeout(() => n.close(), 200);
+    }
 
+    // 2. 弹原生对话框提示用户开启角标权限
     const appName = app.isPackaged ? 'Muxvo' : 'Electron';
-    const n = new Notification({
-      title: 'Dock 角标通知已启用',
-      body: `如未显示角标，请前往 系统设置 → 通知 → ${appName} → 开启「标记 App 图标」`,
-      silent: true,
-    });
-    n.show();
-    console.log('[DOCK-BADGE] permission notification sent');
+    const win = BrowserWindow.getAllWindows()[0];
+    dialog.showMessageBox(win ?? null as any, {
+      type: 'info',
+      title: 'Dock 角标通知',
+      message: '请开启 Dock 角标权限',
+      detail: `前往「系统设置 → 通知 → ${appName}」，开启「标记 App 图标」即可在 Dock 图标上显示终端等待数量。`,
+      buttons: ['知道了'],
+    }).catch(() => {});
+
+    console.log('[DOCK-BADGE] permission dialog shown');
   }
 
   function updateBadge(): void {
