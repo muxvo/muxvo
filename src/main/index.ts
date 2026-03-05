@@ -302,16 +302,16 @@ app.whenReady().then(() => {
       })),
       ...(workspaces.length > 0 ? [{ type: 'separator' as const }] : []),
       {
-        label: '保存当前为工作区',
+        label: 'Save Workspace',
         click: () => saveCurrentAsWorkspace(),
       },
       ...(workspaces.length > 0
         ? [
             { type: 'separator' as const },
             {
-              label: '管理工作区',
+              label: 'Manage',
               submenu: workspaces.map((ws) => ({
-                label: `移除「${ws.name}」`,
+                label: `Remove "${ws.name}"`,
                 click: () => removeWorkspace(ws.name),
               })),
             } as Electron.MenuItemConstructorOptions,
@@ -334,7 +334,7 @@ app.whenReady().then(() => {
         ],
       },
       {
-        label: '工作区',
+        label: 'Workspace',
         submenu: workspaceSubmenu,
       },
       {
@@ -402,7 +402,7 @@ app.whenReady().then(() => {
 
     const now = new Date();
     const timeStr = `${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    const name = `${terminals.length}个终端 - ${timeStr}`;
+    const name = `${terminals.length} terminals - ${timeStr}`;
 
     const ws: SavedWorkspace = {
       name,
