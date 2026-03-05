@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dock 角标通知 — 6 个设计方案</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&display=swap');
+
+  :root {
+    --accent: #c8956c;
+    --bg-page: #1a1a1e;
+    --bg-elevated: #242428;
+    --bg-card: #2a2a2e;
+    --bg-hover: #333338;
+    --border: #3a3a40;
+    --text-primary: #e8e8ec;
+    --text-secondary: #9a9aa0;
+    --text-muted: #6a6a70;
+    --shadow-dialog: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-page);
+    color: var(--text-primary);
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 48px;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: center;
+  }
+  h1 span { color: var(--accent); }
+
+  .scheme {
+    width: 420px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .scheme-header {
+    padding: 14px 20px 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .scheme-number {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+  .scheme-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .scheme-desc-text {
+    font-size: 11px;
+    color: var(--text-secondary);
+    padding: 0 20px 12px;
+  }
+
+  .scheme-body {
+    padding: 8px 20px 20px;
+  }
+
+  /* ===== Shared setting row styles (mimic Muxvo) ===== */
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+  }
+
+  .setting-label {
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+
+  .setting-desc {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  /* Toggle group (existing Muxvo style) */
+  .toggle-group {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2px;
+  }
+  .toggle-btn {
+    padding: 5px 14px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .toggle-btn:hover { color: var(--text-primary); }
+  .toggle-btn.active {
+    background: var(--accent);
+    color: #000;
+    font-weight: 600;
+  }
+
+  /* Stepper (existing Muxvo style) */
+  .stepper {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-card);
+  }
+  .stepper-btn {
+    width: 32px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+  }
+  .stepper-btn:hover { background: var(--bg-hover); color: var(--accent); }
+  .stepper-value {
+    width: 36px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    line-height: 30px;
+  }
+
+  /* Reference: other setting rows for context */
+  .context-row {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+    opacity: 0.4;
+  }
+
+  /* ===== Scheme 1: Inline segmented control ===== */
+  .s1-toggle {
+    display: flex;
+    gap: 3px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2px;
+    flex-shrink: 0;
+  }
+  .s1-toggle button {
+    padding: 5px 11px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .s1-toggle button:hover { color: var(--text-primary); }
+  .s1-toggle button.active {
+    background: var(--accent);
+    color: #000;
+    font-weight: 600;
+  }
+
+  .s1-interval {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 6px 0 0;
+  }
+  .s1-interval-label {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* ===== Scheme 2: Select dropdown ===== */
+  .s2-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 32px 6px 12px;
+    color: var(--text-primary);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239a9aa0' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    min-width: 120px;
+  }
+  .s2-select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  /* ===== Scheme 3: Radio pills with description ===== */
+  .s3-radios {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 8px;
+  }
+  .s3-radio {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .s3-radio:hover { border-color: var(--text-muted); }
+  .s3-radio.active {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 6%, var(--bg-card));
+  }
+  .s3-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .s3-radio.active .s3-dot {
+    border-color: var(--accent);
+  }
+  .s3-dot::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: transparent;
+    transition: all 0.15s;
+  }
+  .s3-radio.active .s3-dot::after {
+    background: var(--accent);
+  }
+  .s3-radio-content { flex: 1; }
+  .s3-radio-label {
+    font-size: 12px;
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+  .s3-radio-desc {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+  .s3-radio .stepper {
+    flex-shrink: 0;
+  }
+
+  /* ===== Scheme 4: Two-row with toggle + conditional ===== */
+  .s4-sub {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0 0;
+  }
+  .s4-sub-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .s4-sub-label::before {
+    content: '';
+    width: 12px;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ===== Scheme 5: Icon toggle cards ===== */
+  .s5-cards {
+    display: flex;
+    gap: 6px;
+    padding-top: 8px;
+  }
+  .s5-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 4px 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .s5-card:hover { border-color: var(--text-muted); }
+  .s5-card.active {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, var(--bg-card));
+  }
+  .s5-card-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--bg-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.15s;
+  }
+  .s5-card.active .s5-card-icon {
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+  .s5-card-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+  .s5-card.active .s5-card-label { color: var(--accent); }
+  .s5-card-desc {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .s5-interval {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding-top: 8px;
+  }
+  .s5-interval-label {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* ===== Scheme 6: Compact inline with tooltip hints ===== */
+  .s6-group {
+    display: flex;
+    gap: 3px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2px;
+    flex-shrink: 0;
+  }
+  .s6-btn-wrap {
+    position: relative;
+  }
+  .s6-btn {
+    padding: 5px 12px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .s6-btn:hover { color: var(--text-primary); }
+  .s6-btn.active {
+    background: var(--accent);
+    color: #000;
+    font-weight: 600;
+  }
+  .s6-hint {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 10px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 10;
+  }
+  .s6-hint::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-bottom-color: var(--border);
+  }
+  .s6-btn-wrap:hover .s6-hint { opacity: 1; }
+
+  .s6-timed-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0 0;
+    justify-content: flex-end;
+  }
+  .s6-timed-label {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .s6-stepper-mini {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--bg-card);
+  }
+  .s6-stepper-mini button {
+    width: 26px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+  }
+  .s6-stepper-mini button:hover { background: var(--bg-hover); color: var(--accent); }
+  .s6-stepper-mini span {
+    width: 28px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    line-height: 24px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Dock 角标通知 — <span>6 个设计方案</span></h1>
+
+<!-- ==================== Scheme 1 ==================== -->
+<div class="scheme">
+  <div class="scheme-header">
+    <span class="scheme-number">方案 1</span>
+    <span class="scheme-name">紧凑 Segmented Control</span>
+  </div>
+  <div class="scheme-desc-text">复用现有 toggle-group 样式，缩小按钮尺寸适配三选项。和「双击聚焦」风格完全统一。</div>
+  <div class="scheme-body">
+    <div class="section-title">通用</div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">启动终端数量</div><div class="setting-desc">每次打开 Muxvo 自动创建的终端数量</div></div>
+      <div class="stepper"><button class="stepper-btn">−</button><span class="stepper-value">1</span><button class="stepper-btn">+</button></div>
+    </div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">双击聚焦</div><div class="setting-desc">双击终端切换到全屏聚焦模式</div></div>
+      <div class="toggle-group"><button class="toggle-btn">启用</button><button class="toggle-btn active">关闭</button></div>
+    </div>
+    <!-- Dock Badge -->
+    <div class="setting-row">
+      <div><div class="setting-label">Dock 角标通知</div><div class="setting-desc">终端等待时显示 Dock 角标</div></div>
+      <div class="s1-toggle">
+        <button>关闭</button>
+        <button class="active">实时</button>
+        <button>定时</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scheme 1 variant: timed selected -->
+<div class="scheme">
+  <div class="scheme-header">
+    <span class="scheme-number">方案 1</span>
+    <span class="scheme-name">紧凑 Segmented Control — 定时态</span>
+  </div>
+  <div class="scheme-desc-text">选中「定时」后，下方出现间隔设置行，缩进对齐右侧。</div>
+  <div class="scheme-body">
+    <div class="section-title">通用</div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">启动终端数量</div><div class="setting-desc">每次打开 Muxvo 自动创建的终端数量</div></div>
+      <div class="stepper"><button class="stepper-btn">−</button><span class="stepper-value">1</span><button class="stepper-btn">+</button></div>
+    </div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">双击聚焦</div><div class="setting-desc">双击终端切换到全屏聚焦模式</div></div>
+      <div class="toggle-group"><button class="toggle-btn">启用</button><button class="toggle-btn active">关闭</button></div>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Dock 角标通知</div><div class="setting-desc">终端等待时显示 Dock 角标</div></div>
+      <div class="s1-toggle">
+        <button>关闭</button>
+        <button>实时</button>
+        <button class="active">定时</button>
+      </div>
+    </div>
+    <div class="s1-interval">
+      <span class="s1-interval-label">检查间隔</span>
+      <div class="stepper"><button class="stepper-btn">−</button><span class="stepper-value">1</span><button class="stepper-btn">+</button></div>
+      <span class="s1-interval-label">分钟</span>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== Scheme 2 ==================== -->
+<div class="scheme">
+  <div class="scheme-header">
+    <span class="scheme-number">方案 2</span>
+    <span class="scheme-name">下拉选择器</span>
+  </div>
+  <div class="scheme-desc-text">用 native select 下拉框，最省空间。选项文字可以更长，自带描述。定时模式下右侧追加 stepper。</div>
+  <div class="scheme-body">
+    <div class="section-title">通用</div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">启动终端数量</div><div class="setting-desc">每次打开 Muxvo 自动创建的终端数量</div></div>
+      <div class="stepper"><button class="stepper-btn">−</button><span class="stepper-value">1</span><button class="stepper-btn">+</button></div>
+    </div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">双击聚焦</div><div class="setting-desc">双击终端切换到全屏聚焦模式</div></div>
+      <div class="toggle-group"><button class="toggle-btn">启用</button><button class="toggle-btn active">关闭</button></div>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Dock 角标通知</div><div class="setting-desc">终端等待时显示 Dock 角标</div></div>
+      <select class="s2-select">
+        <option>关闭 — 不提醒</option>
+        <option selected>实时 — 立即更新</option>
+        <option>定时 — 定期检查</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- Scheme 2 variant: timed -->
+<div class="scheme">
+  <div class="scheme-header">
+    <span class="scheme-number">方案 2</span>
+    <span class="scheme-name">下拉选择器 — 定时态</span>
+  </div>
+  <div class="scheme-desc-text">选「定时」后下方出现间隔行。下拉里自带描述文字，无需额外说明。</div>
+  <div class="scheme-body">
+    <div class="section-title">通用</div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">启动终端数量</div><div class="setting-desc">每次打开 Muxvo 自动创建的终端数量</div></div>
+      <div class="stepper"><button class="stepper-btn">−</button><span class="stepper-value">1</span><button class="stepper-btn">+</button></div>
+    </div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">双击聚焦</div><div class="setting-desc">双击终端切换到全屏聚焦模式</div></div>
+      <div class="toggle-group"><button class="toggle-btn">启用</button><button class="toggle-btn active">关闭</button></div>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Dock 角标通知</div><div class="setting-desc">终端等待时显示 Dock 角标</div></div>
+      <select class="s2-select">
+        <option>关闭 — 不提醒</option>
+        <option>实时 — 立即更新</option>
+        <option selected>定时 — 定期检查</option>
+      </select>
+    </div>
+    <div class="s4-sub">
+      <div class="s4-sub-label">检查间隔</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="stepper"><button class="stepper-btn">−</button><span class="stepper-value">1</span><button class="stepper-btn">+</button></div>
+        <span style="font-size:11px;color:var(--text-muted)">分钟</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== Scheme 3 ==================== -->
+<div class="scheme">
+  <div class="scheme-header">
+    <span class="scheme-number">方案 3</span>
+    <span class="scheme-name">Radio 列表</span>
+  </div>
+  <div class="scheme-desc-text">每个选项独占一行，带 radio 圆点和描述文字。信息量最大，最适合不熟悉功能的用户。</div>
+  <div class="scheme-body">
+    <div class="section-title">通用</div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">启动终端数量</div><div class="setting-desc">每次打开 Muxvo 自动创建的终端数量</div></div>
+      <div class="stepper"><button class="stepper-btn">−</button><span class="stepper-value">1</span><button class="stepper-btn">+</button></div>
+    </div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">双击聚焦</div><div class="setting-desc">双击终端切换到全屏聚焦模式</div></div>
+      <div class="toggle-group"><button class="toggle-btn">启用</button><button class="toggle-btn active">关闭</button></div>
+    </div>
+    <div style="padding:8px 0 0">
+      <div class="setting-label">Dock 角标通知</div>
+      <div class="setting-desc">终端等待输入时在 Dock 图标上显示数字角标</div>
+    </div>
+    <div class="s3-radios">
+      <div class="s3-radio">
+        <div class="s3-dot"></div>
+        <div class="s3-radio-content">
+          <div class="s3-radio-label">关闭</div>
+          <div class="s3-radio-desc">不显示 Dock 角标</div>
+        </div>
+      </div>
+      <div class="s3-radio active">
+        <div class="s3-dot"></div>
+        <div class="s3-radio-content">
+          <div class="s3-radio-label">实时</div>
+          <div class="s3-radio-desc">终端状态变化时立即更新角标</div>
+        </div>
+      </div>
+      <div class="s3-radio">
+        <div class="s3-dot"></div>
+        <div class="s3-radio-content">
+          <div class="s3-radio-label">定时</div>
+          <div class="s3-radio-desc">每隔一段时间检查一次</div>
+        </div>
+        <div class="stepper" style="opacity:0.3;pointer-events:none"><button class="stepper-btn">−</button><span class="stepper-value">1</span><button class="stepper-btn">+</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scheme 3 variant: timed -->
+<div class="scheme">
+  <div class="scheme-header">
+    <span class="scheme-number">方案 3</span>
+    <span class="scheme-name">Radio 列表 — 定时态</span>
+  </div>
+  <div class="scheme-desc-text">选中「定时」后 stepper 激活，直接内嵌在该行右侧。</div>
+  <div class="scheme-body">
+    <div class="section-title">通用</div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">启动终端数量</div><div class="setting-desc">每次打开 Muxvo 自动创建的终端数量</div></div>
+      <div class="stepper"><button class="stepper-btn">−</button><span class="stepper-value">1</span><button class="stepper-btn">+</button></div>
+    </div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">双击聚焦</div><div class="setting-desc">双击终端切换到全屏聚焦模式</div></div>
+      <div class="toggle-group"><button class="toggle-btn">启用</button><button class="toggle-btn active">关闭</button></div>
+    </div>
+    <div style="padding:8px 0 0">
+      <div class="setting-label">Dock 角标通知</div>
+      <div class="setting-desc">终端等待输入时在 Dock 图标上显示数字角标</div>
+    </div>
+    <div class="s3-radios">
+      <div class="s3-radio">
+        <div class="s3-dot"></div>
+        <div class="s3-radio-content">
+          <div class="s3-radio-label">关闭</div>
+          <div class="s3-radio-desc">不显示 Dock 角标</div>
+        </div>
+      </div>
+      <div class="s3-radio">
+        <div class="s3-dot"></div>
+        <div class="s3-radio-content">
+          <div class="s3-radio-label">实时</div>
+          <div class="s3-radio-desc">终端状态变化时立即更新角标</div>
+        </div>
+      </div>
+      <div class="s3-radio active">
+        <div class="s3-dot"></div>
+        <div class="s3-radio-content">
+          <div class="s3-radio-label">定时</div>
+          <div class="s3-radio-desc">每隔一段时间检查一次</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+          <div class="stepper"><button class="stepper-btn">−</button><span class="stepper-value">1</span><button class="stepper-btn">+</button></div>
+          <span style="font-size:10px;color:var(--text-muted)">分钟</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== Scheme 4 ==================== -->
+<div class="scheme">
+  <div class="scheme-header">
+    <span class="scheme-number">方案 4</span>
+    <span class="scheme-name">双行展开式</span>
+  </div>
+  <div class="scheme-desc-text">第一行：标签 + toggle-group（和双击聚焦完全一致）。选「定时」后第二行缩进展开间隔设置。最朴素稳健。</div>
+  <div class="scheme-body">
+    <div class="section-title">通用</div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">启动终端数量</div><div class="setting-desc">每次打开 Muxvo 自动创建的终端数量</div></div>
+      <div class="stepper"><button class="stepper-btn">−</button><span class="stepper-value">1</span><button class="stepper-btn">+</button></div>
+    </div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">双击聚焦</div><div class="setting-desc">双击终端切换到全屏聚焦模式</div></div>
+      <div class="toggle-group"><button class="toggle-btn">启用</button><button class="toggle-btn active">关闭</button></div>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Dock 角标通知</div><div class="setting-desc">终端等待时显示 Dock 角标</div></div>
+      <div class="toggle-group">
+        <button class="toggle-btn">关闭</button>
+        <button class="toggle-btn">实时</button>
+        <button class="toggle-btn active">定时</button>
+      </div>
+    </div>
+    <div class="s4-sub">
+      <div class="s4-sub-label">检查间隔</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="stepper"><button class="stepper-btn">−</button><span class="stepper-value">1</span><button class="stepper-btn">+</button></div>
+        <span style="font-size:11px;color:var(--text-muted)">分钟</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== Scheme 5 ==================== -->
+<div class="scheme">
+  <div class="scheme-header">
+    <span class="scheme-number">方案 5</span>
+    <span class="scheme-name">图标卡片</span>
+  </div>
+  <div class="scheme-desc-text">三个带图标的小卡片，视觉区分度高但紧凑。图标传达语义，减少阅读负担。</div>
+  <div class="scheme-body">
+    <div class="section-title">通用</div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">启动终端数量</div><div class="setting-desc">每次打开 Muxvo 自动创建的终端数量</div></div>
+      <div class="stepper"><button class="stepper-btn">−</button><span class="stepper-value">1</span><button class="stepper-btn">+</button></div>
+    </div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">双击聚焦</div><div class="setting-desc">双击终端切换到全屏聚焦模式</div></div>
+      <div class="toggle-group"><button class="toggle-btn">启用</button><button class="toggle-btn active">关闭</button></div>
+    </div>
+    <div style="padding:8px 0 0">
+      <div class="setting-label">Dock 角标通知</div>
+      <div class="setting-desc">终端等待输入时在 Dock 图标上显示数字角标</div>
+    </div>
+    <div class="s5-cards">
+      <div class="s5-card">
+        <div class="s5-card-icon">🔕</div>
+        <div class="s5-card-label">关闭</div>
+      </div>
+      <div class="s5-card active">
+        <div class="s5-card-icon">⚡</div>
+        <div class="s5-card-label">实时</div>
+      </div>
+      <div class="s5-card">
+        <div class="s5-card-icon">⏱</div>
+        <div class="s5-card-label">定时</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scheme 5 variant: timed -->
+<div class="scheme">
+  <div class="scheme-header">
+    <span class="scheme-number">方案 5</span>
+    <span class="scheme-name">图标卡片 — 定时态</span>
+  </div>
+  <div class="scheme-desc-text">选中定时后，卡片下方居中出现间隔设置。</div>
+  <div class="scheme-body">
+    <div class="section-title">通用</div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">启动终端数量</div><div class="setting-desc">每次打开 Muxvo 自动创建的终端数量</div></div>
+      <div class="stepper"><button class="stepper-btn">−</button><span class="stepper-value">1</span><button class="stepper-btn">+</button></div>
+    </div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">双击聚焦</div><div class="setting-desc">双击终端切换到全屏聚焦模式</div></div>
+      <div class="toggle-group"><button class="toggle-btn">启用</button><button class="toggle-btn active">关闭</button></div>
+    </div>
+    <div style="padding:8px 0 0">
+      <div class="setting-label">Dock 角标通知</div>
+      <div class="setting-desc">终端等待输入时在 Dock 图标上显示数字角标</div>
+    </div>
+    <div class="s5-cards">
+      <div class="s5-card">
+        <div class="s5-card-icon">🔕</div>
+        <div class="s5-card-label">关闭</div>
+      </div>
+      <div class="s5-card">
+        <div class="s5-card-icon">⚡</div>
+        <div class="s5-card-label">实时</div>
+      </div>
+      <div class="s5-card active">
+        <div class="s5-card-icon">⏱</div>
+        <div class="s5-card-label">定时</div>
+      </div>
+    </div>
+    <div class="s5-interval">
+      <span class="s5-interval-label">每</span>
+      <div class="stepper"><button class="stepper-btn">−</button><span class="stepper-value">1</span><button class="stepper-btn">+</button></div>
+      <span class="s5-interval-label">分钟检查一次</span>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== Scheme 6 ==================== -->
+<div class="scheme">
+  <div class="scheme-header">
+    <span class="scheme-number">方案 6</span>
+    <span class="scheme-name">Hover 提示式</span>
+  </div>
+  <div class="scheme-desc-text">和方案1类似的紧凑 toggle，但鼠标悬停时显示 tooltip 描述。最省空间，信息按需展示。</div>
+  <div class="scheme-body">
+    <div class="section-title">通用</div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">启动终端数量</div><div class="setting-desc">每次打开 Muxvo 自动创建的终端数量</div></div>
+      <div class="stepper"><button class="stepper-btn">−</button><span class="stepper-value">1</span><button class="stepper-btn">+</button></div>
+    </div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">双击聚焦</div><div class="setting-desc">双击终端切换到全屏聚焦模式</div></div>
+      <div class="toggle-group"><button class="toggle-btn">启用</button><button class="toggle-btn active">关闭</button></div>
+    </div>
+    <div class="setting-row" style="position:relative">
+      <div><div class="setting-label">Dock 角标通知</div><div class="setting-desc">终端等待时显示 Dock 角标</div></div>
+      <div class="s6-group">
+        <div class="s6-btn-wrap">
+          <button class="s6-btn">关闭</button>
+          <div class="s6-hint">不显示角标</div>
+        </div>
+        <div class="s6-btn-wrap">
+          <button class="s6-btn active">实时</button>
+          <div class="s6-hint">状态变化时立即更新</div>
+        </div>
+        <div class="s6-btn-wrap">
+          <button class="s6-btn">定时</button>
+          <div class="s6-hint">每隔 N 分钟检查</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scheme 6 variant: timed with inline stepper -->
+<div class="scheme">
+  <div class="scheme-header">
+    <span class="scheme-number">方案 6</span>
+    <span class="scheme-name">Hover 提示式 — 定时态</span>
+  </div>
+  <div class="scheme-desc-text">选中定时后，toggle 右侧直接展开 mini stepper，全部在同一行。极致紧凑。</div>
+  <div class="scheme-body">
+    <div class="section-title">通用</div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">启动终端数量</div><div class="setting-desc">每次打开 Muxvo 自动创建的终端数量</div></div>
+      <div class="stepper"><button class="stepper-btn">−</button><span class="stepper-value">1</span><button class="stepper-btn">+</button></div>
+    </div>
+    <div class="setting-row context-row">
+      <div><div class="setting-label">双击聚焦</div><div class="setting-desc">双击终端切换到全屏聚焦模式</div></div>
+      <div class="toggle-group"><button class="toggle-btn">启用</button><button class="toggle-btn active">关闭</button></div>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Dock 角标</div><div class="setting-desc" style="white-space:nowrap">每 1 分钟检查</div></div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="s6-group">
+          <div class="s6-btn-wrap"><button class="s6-btn">关闭</button></div>
+          <div class="s6-btn-wrap"><button class="s6-btn">实时</button></div>
+          <div class="s6-btn-wrap"><button class="s6-btn active">定时</button></div>
+        </div>
+        <div class="s6-stepper-mini">
+          <button>−</button>
+          <span>1</span>
+          <button>+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
