@@ -447,6 +447,11 @@ export function useTerminalActions() {
     if (terminal?.cwd) {
       window.api.chat.setSessionName(terminal.cwd, name || '').catch(() => {});
     }
+
+    // If terminal is in a worktree, sync rename to git branch
+    if (name && terminal?.cwd?.includes('/.worktrees/')) {
+      window.api.worktree.rename(terminal.cwd, name).catch(() => {});
+    }
   }, [dispatch]);
 
   const handleResumeSession = useCallback(async (info: { sessionId: string; cwd: string; source: ChatSource; customTitle?: string }) => {

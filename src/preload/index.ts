@@ -293,6 +293,8 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.WORKTREE.CREATE, { repoPath }),
     remove: (worktreePath: string, force?: boolean) =>
       ipcRenderer.invoke(IPC_CHANNELS.WORKTREE.REMOVE, { worktreePath, force }),
+    rename: (worktreePath: string, newBranchName: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.WORKTREE.RENAME, { worktreePath, newBranchName }),
   },
 
   // --- Glyph diagnostic log (writes to ~/.muxvo/logs/glyph-debug.log) ---

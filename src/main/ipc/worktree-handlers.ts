@@ -39,6 +39,16 @@ export function createWorktreeHandlers(manager?: WorktreeManager) {
       }
     },
 
+    async rename(params: { worktreePath: string; newBranchName: string }) {
+      try {
+        await mgr.rename(params.worktreePath, params.newBranchName);
+        return { success: true };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return { success: false, error: { code: 'WORKTREE_RENAME_ERROR', message } };
+      }
+    },
+
     async remove(params: { worktreePath: string; force?: boolean }) {
       try {
         await mgr.remove(params.worktreePath, params.force);
@@ -62,6 +72,9 @@ export function registerWorktreeHandlers(manager?: WorktreeManager): void {
   );
   ipcMain.handle(IPC_CHANNELS.WORKTREE.CREATE, (_event, params) =>
     h.create(params)
+  );
+  ipcMain.handle(IPC_CHANNELS.WORKTREE.RENAME, (_event, params) =>
+    h.rename(params)
   );
   ipcMain.handle(IPC_CHANNELS.WORKTREE.REMOVE, (_event, params) =>
     h.remove(params)
