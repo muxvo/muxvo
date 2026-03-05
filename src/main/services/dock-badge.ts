@@ -22,13 +22,17 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
       app.dock.setBadge('');
       return;
     }
-    const count = countWaiting();
-    app.dock.setBadge(count > 0 ? String(count) : '');
+    const terminals = deps.listTerminals();
+    const count = terminals.filter((t) => t.state === 'WaitingInput').length;
+    const badge = count > 0 ? String(count) : '';
+    console.log(`[DOCK-BADGE] mode=${mode} terminals=${terminals.length} states=[${terminals.map(t => t.state).join(',')}] waiting=${count} badge="${badge}"`);
+    app.dock.setBadge(badge);
   }
 
   /** 终端状态变化时调用（实时模式下立即更新角标） */
   function onStateChange(): void {
     const { mode } = deps.getConfig();
+    console.log(`[DOCK-BADGE] onStateChange called, mode=${mode}`);
     if (mode === 'realtime') {
       updateBadge();
     }
