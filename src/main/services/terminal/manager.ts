@@ -53,6 +53,7 @@ interface ManagedTerminal {
   cwd: string;
   customName?: string;
   machine: ReturnType<typeof createTerminalMachine>;
+  spawnedAt: number;
 }
 
 interface TerminalManagerDeps {
@@ -145,7 +146,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
 
         machine.send('SPAWN_SUCCESS');
 
-        terminals.set(id, { id, process: proc, cwd: options.cwd, machine });
+        terminals.set(id, { id, process: proc, cwd: options.cwd, machine, spawnedAt: Date.now() });
         startCwdPolling();
         debugLog(`[TERM:spawn] id=${id} pid=${proc.pid} cwd=${options.cwd}`);
 
@@ -191,10 +192,17 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
             const newCwd = decodeURIComponent(osc7Match[1]);
             const terminal = terminals.get(id);
             if (terminal && terminal.cwd !== newCwd) {
-              terminal.cwd = newCwd;
-              const cwdWin = BrowserWindow.getAllWindows()[0];
-              if (cwdWin && !cwdWin.isDestroyed()) {
-                cwdWin.webContents.send(IPC_CHANNELS.TERMINAL.CWD_CHANGED, { id, cwd: newCwd });
+              // Grace period: ignore OSC 7 cwd changes during shell initialization
+              // to prevent login shell scripts from overriding the spawn cwd
+              const CWD_GRACE_MS = 3000;
+              if (Date.now() - terminal.spawnedAt < CWD_GRACE_MS) {
+                debugLog(`[TERM:osc7] id=${id} ignoring cwd=${newCwd} (grace period, spawn cwd=${terminal.cwd})`);
+              } else {
+                terminal.cwd = newCwd;
+                const cwdWin = BrowserWindow.getAllWindows()[0];
+                if (cwdWin && !cwdWin.isDestroyed()) {
+                  cwdWin.webContents.send(IPC_CHANNELS.TERMINAL.CWD_CHANGED, { id, cwd: newCwd });
+                }
               }
             }
           }
@@ -371,6 +379,10 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
 
       const childCwd = getProcessCwd(childPid);
       if (!childCwd || childCwd === terminal.cwd) continue;
+
+      // Grace period: ignore cwd changes during shell initialization
+      const CWD_GRACE_MS = 3000;
+      if (Date.now() - terminal.spawnedAt < CWD_GRACE_MS) continue;
 
       terminal.cwd = childCwd;
       const win = BrowserWindow.getAllWindows()[0];
