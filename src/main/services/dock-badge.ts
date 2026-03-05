@@ -4,16 +4,16 @@ import type { DockBadgeMode } from '@/shared/types/config.types';
 interface DockBadgeDeps {
   listTerminals: () => Array<{ state: string }>;
   getConfig: () => { mode: DockBadgeMode; intervalMin: number };
+  getPermissionNotified: () => boolean;
+  setPermissionNotified: () => void;
 }
 
 export function createDockBadgeService(deps: DockBadgeDeps) {
   let timerHandle: ReturnType<typeof setInterval> | null = null;
-  let badgePermissionNotified = false;
-
   /** 首次启用时注册通知中心 + 弹窗提示用户开权限 */
   function notifyBadgePermission(): void {
-    if (badgePermissionNotified) return;
-    badgePermissionNotified = true;
+    if (deps.getPermissionNotified()) return;
+    deps.setPermissionNotified();
 
     // 1. 发静默通知注册应用到 macOS 通知中心（角标依赖此注册）
     if (Notification.isSupported()) {
