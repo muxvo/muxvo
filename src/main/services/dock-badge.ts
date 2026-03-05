@@ -16,11 +16,19 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
     deps.setPermissionNotified();
 
     if (Notification.isSupported()) {
-      const appName = app.isPackaged ? 'Muxvo' : 'Electron';
       const n = new Notification({
         title: '开启通知提醒',
-        body: `前往「系统设置 → 通知 → ${appName}」，开启通知提醒，终端等待处理时会及时提醒你。点击此通知可直接前往设置。`,
+        body: '开启后终端等待处理时会提醒你',
         silent: true,
+        actions: [
+          { type: 'button' as const, text: '前往设置' },
+          { type: 'button' as const, text: '稍后' },
+        ],
+      });
+      n.on('action', (_e: Electron.Event, index: number) => {
+        if (index === 0) {
+          shell.openExternal('x-apple.systempreferences:com.apple.Notifications-Settings.extension');
+        }
       });
       n.on('click', () => {
         shell.openExternal('x-apple.systempreferences:com.apple.Notifications-Settings.extension');
