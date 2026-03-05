@@ -152,6 +152,15 @@ function AppContent({
     await actions.addTerminal();
   }, [dispatch, actions.addTerminal]);
 
+  // Listen for workspace terminal creation from native menu bar
+  useEffect(() => {
+    const unsub = window.api.app.onOpenWorkspaceTerminal((data: { cwd: string }) => {
+      dispatch({ type: 'CLOSE_ALL' });
+      actions.addTerminal(data.cwd);
+    });
+    return () => { unsub(); };
+  }, [dispatch, actions.addTerminal]);
+
   // Wrap handleResumeSession to close all panels first
   const handleResumeSession = useCallback(async (info: { sessionId: string; cwd: string; source: ChatSource }) => {
     dispatch({ type: 'CLOSE_ALL' });

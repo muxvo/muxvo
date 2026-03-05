@@ -126,6 +126,11 @@ const api = {
     },
     confirmClose: () => ipcRenderer.invoke(IPC_CHANNELS.APP.CONFIRM_CLOSE),
     cancelClose: () => ipcRenderer.invoke(IPC_CHANNELS.APP.CANCEL_CLOSE),
+    onOpenWorkspaceTerminal: (callback: (data: { cwd: string }) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: { cwd: string }) => callback(data);
+      ipcRenderer.on(IPC_CHANNELS.APP.OPEN_WORKSPACE_TERMINAL, handler);
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.APP.OPEN_WORKSPACE_TERMINAL, handler);
+    },
   },
 
   // --- FS domain ---

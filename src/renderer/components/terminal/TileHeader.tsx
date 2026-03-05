@@ -10,7 +10,6 @@ import { WorktreePopover } from './WorktreePopover';
 import { usePanelDispatch } from '@/renderer/contexts/PanelContext';
 import { shortenPath } from '@/renderer/utils/path-display';
 import type { UseNamingResult } from '@/renderer/hooks/useNaming';
-import type { PinnedWorkspace } from '@/shared/types/config.types';
 
 /** Folder icon SVG (inline, with translucent fill) */
 function FolderIcon() {
@@ -147,32 +146,6 @@ export function TileHeader({
   const worktreeBtnRef = useRef<HTMLButtonElement>(null);
   const [worktreeAnchorRect, setWorktreeAnchorRect] = useState<{ top: number; left: number } | null>(null);
   const [isGitRepo, setIsGitRepo] = useState(false);
-
-  // Pinned workspaces state
-  const [pinnedWorkspaces, setPinnedWorkspaces] = useState<PinnedWorkspace[]>([]);
-
-  useEffect(() => {
-    window.api.app.getConfig().then((result: any) => {
-      setPinnedWorkspaces(result?.data?.pinnedWorkspaces ?? []);
-    }).catch(() => {});
-  }, []);
-
-  const handlePinAdd = useCallback((path: string) => {
-    const name = path.split('/').pop() || path;
-    const newPins = [...pinnedWorkspaces, { path, name }].slice(0, 10);
-    setPinnedWorkspaces(newPins);
-    window.api.app.getConfig().then((result: any) => {
-      window.api.app.saveConfig({ ...result?.data, pinnedWorkspaces: newPins });
-    }).catch(() => {});
-  }, [pinnedWorkspaces]);
-
-  const handlePinRemove = useCallback((path: string) => {
-    const newPins = pinnedWorkspaces.filter(p => p.path !== path);
-    setPinnedWorkspaces(newPins);
-    window.api.app.getConfig().then((result: any) => {
-      window.api.app.saveConfig({ ...result?.data, pinnedWorkspaces: newPins });
-    }).catch(() => {});
-  }, [pinnedWorkspaces]);
 
   // Detect if cwd is inside a git repo (debounced on cwd change)
   useEffect(() => {
@@ -366,9 +339,6 @@ export function TileHeader({
           open={cwdPickerOpen}
           anchorRect={cwdAnchorRect}
           onClose={() => { setCwdPickerOpen(false); setCwdAnchorRect(null); }}
-          pinnedWorkspaces={pinnedWorkspaces}
-          onPinAdd={handlePinAdd}
-          onPinRemove={handlePinRemove}
         />
       )}
 

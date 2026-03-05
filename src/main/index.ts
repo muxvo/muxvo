@@ -12,7 +12,7 @@
  */
 
 import { app, BrowserWindow, ipcMain, shell, protocol, net, Menu, dialog } from 'electron';
-import { join } from 'path';
+import { join, basename } from 'path';
 import { pathToFileURL } from 'url';
 import { is } from '@electron-toolkit/utils';
 
@@ -51,6 +51,7 @@ import { createMemoryPushTimer } from './services/perf/memory-push';
 import { createPerfLogger } from './services/perf/perf-logger';
 import { createSyncStatusPusher } from './services/chat-sync-push';
 import { initConfigDir, createConfigManager } from './services/app/config';
+import type { PinnedWorkspace } from '@/shared/types/config.types';
 import { calculateGridLayout } from '@/shared/utils/grid-layout';
 import { initPrefsDir, getPreferences, savePreferences } from './services/app/preferences';
 import { createUpdateLogger } from './services/app/update-logger';
@@ -277,49 +278,7 @@ app.whenReady().then(() => {
     pendingDeepLinkUrl = null;
   }
 
-  // Set application menu with Edit menu for copy/paste/select-all shortcuts
-  const template: Electron.MenuItemConstructorOptions[] = [
-    { role: 'appMenu' },
-    {
-      label: 'Edit',
-      submenu: [
-        { role: 'undo' },
-        { role: 'redo' },
-        { type: 'separator' },
-        { role: 'cut' },
-        { role: 'copy' },
-        { role: 'paste' },
-        { role: 'selectAll' },
-      ],
-    },
-    {
-      label: 'View',
-      submenu: [
-        {
-          label: 'Zoom In',
-          accelerator: 'CommandOrControl+=',
-          click: () => {
-            BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.APP.ZOOM, 'in');
-          },
-        },
-        {
-          label: 'Zoom Out',
-          accelerator: 'CommandOrControl+-',
-          click: () => {
-            BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.APP.ZOOM, 'out');
-          },
-        },
-        {
-          label: 'Reset Zoom',
-          accelerator: 'CommandOrControl+0',
-          click: () => {
-            BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.APP.ZOOM, 'reset');
-          },
-        },
-      ],
-    },
-  ];
-  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+  // Application menu is built after configManager is initialized (see buildAppMenu below)
 
   // Handle local-file:// protocol for serving local images/files to renderer
   protocol.handle('local-file', (request) => {
@@ -332,6 +291,104 @@ app.whenReady().then(() => {
   initPrefsDir(app.getPath('userData'));
   const configManager = createConfigManager();
   const savedConfig = configManager.loadConfig();
+
+  // ── Workspace menu helpers ──
+
+  function buildAppMenu(workspaces: PinnedWorkspace[]): void {
+    const workspaceSubmenu: Electron.MenuItemConstructorOptions[] = [
+      ...workspaces.map((ws) => ({
+        label: ws.name,
+        sublabel: ws.path,
+        click: () => pushToAllWindows(IPC_CHANNELS.APP.OPEN_WORKSPACE_TERMINAL, { cwd: ws.path }),
+      })),
+      ...(workspaces.length > 0 ? [{ type: 'separator' as const }] : []),
+      {
+        label: '添加工作区...',
+        click: async () => {
+          const result = await dialog.showOpenDialog({ properties: ['openDirectory'] });
+          if (!result.canceled && result.filePaths[0]) {
+            addWorkspace(result.filePaths[0]);
+          }
+        },
+      },
+      ...(workspaces.length > 0
+        ? [{
+            label: '管理工作区',
+            submenu: workspaces.map((ws) => ({
+              label: `移除 ${ws.name}`,
+              click: () => removeWorkspace(ws.path),
+            })),
+          } as Electron.MenuItemConstructorOptions]
+        : []),
+    ];
+
+    const template: Electron.MenuItemConstructorOptions[] = [
+      { role: 'appMenu' },
+      {
+        label: 'Edit',
+        submenu: [
+          { role: 'undo' },
+          { role: 'redo' },
+          { type: 'separator' },
+          { role: 'cut' },
+          { role: 'copy' },
+          { role: 'paste' },
+          { role: 'selectAll' },
+        ],
+      },
+      {
+        label: '工作区',
+        submenu: workspaceSubmenu,
+      },
+      {
+        label: 'View',
+        submenu: [
+          {
+            label: 'Zoom In',
+            accelerator: 'CommandOrControl+=',
+            click: () => {
+              BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.APP.ZOOM, 'in');
+            },
+          },
+          {
+            label: 'Zoom Out',
+            accelerator: 'CommandOrControl+-',
+            click: () => {
+              BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.APP.ZOOM, 'out');
+            },
+          },
+          {
+            label: 'Reset Zoom',
+            accelerator: 'CommandOrControl+0',
+            click: () => {
+              BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.APP.ZOOM, 'reset');
+            },
+          },
+        ],
+      },
+    ];
+    Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+  }
+
+  function addWorkspace(dirPath: string): void {
+    const config = configManager.loadConfig();
+    const existing = config.pinnedWorkspaces || [];
+    if (existing.some((w) => w.path === dirPath)) return;
+    const name = basename(dirPath);
+    const updated = [...existing, { path: dirPath, name }].slice(0, 10);
+    configManager.saveConfig({ ...config, pinnedWorkspaces: updated });
+    buildAppMenu(updated);
+  }
+
+  function removeWorkspace(dirPath: string): void {
+    const config = configManager.loadConfig();
+    const updated = (config.pinnedWorkspaces || []).filter((w) => w.path !== dirPath);
+    configManager.saveConfig({ ...config, pinnedWorkspaces: updated });
+    buildAppMenu(updated);
+  }
+
+  // Build initial menu with saved workspaces
+  buildAppMenu(savedConfig.pinnedWorkspaces || []);
 
   // Performance logger (writes to ~/.muxvo/logs/perf.log on anomalies)
   perfLogger = createPerfLogger();

@@ -331,14 +331,15 @@ export function useTerminalActions() {
     return () => window.removeEventListener('muxvo:config-changed', loadConfig);
   }, []);
 
-  const addTerminal = useCallback(async () => {
+  const addTerminal = useCallback(async (cwd?: string) => {
     const home = window.api.app.getHomePath();
+    const targetCwd = cwd ?? home;
     const { cols, rows } = getTerminalSizeCache();
-    const result = await window.api.terminal.create(home, cols, rows);
+    const result = await window.api.terminal.create(targetCwd, cols, rows);
     if (result?.success && result.data) {
-      dispatch({ type: 'ADD_TERMINAL', entry: { id: result.data.id, state: 'Running', cwd: home } });
+      dispatch({ type: 'ADD_TERMINAL', entry: { id: result.data.id, state: 'Running', cwd: targetCwd } });
       dispatch({ type: 'SET_SELECTED', id: result.data.id });
-      trackEvent(ANALYTICS_EVENTS.TERMINAL.CREATE, { cwd: home });
+      trackEvent(ANALYTICS_EVENTS.TERMINAL.CREATE, { cwd: targetCwd });
     } else {
       trackError('terminal', { type: 'spawn_fail' });
     }

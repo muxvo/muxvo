@@ -83,6 +83,7 @@ export const IPC_CHANNELS = {
     CLOSE_REQUESTED: 'app:close-requested',
     CONFIRM_CLOSE: 'app:confirm-close',
     CANCEL_CLOSE: 'app:cancel-close',
+    OPEN_WORKSPACE_TERMINAL: 'app:open-workspace-terminal',
   },
   DISCOVERY: {
     FETCH: 'discovery:fetch',

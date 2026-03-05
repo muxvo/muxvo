@@ -14,7 +14,6 @@ import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { isShellProcess } from '@/shared/utils/shell-detect';
 import { useI18n } from '@/renderer/i18n';
-import type { PinnedWorkspace } from '@/shared/types/config.types';
 import './CwdPicker.css';
 
 interface Props {
@@ -24,9 +23,6 @@ interface Props {
   anchorRect: { top: number; left: number } | null;
   onClose: () => void;
   onConfirmExit?: (processName: string, targetCwd: string) => void;
-  pinnedWorkspaces?: PinnedWorkspace[];
-  onPinAdd?: (path: string) => void;
-  onPinRemove?: (path: string) => void;
 }
 
 // Helper: Escape shell path with backslash before spaces and special chars
@@ -41,9 +37,6 @@ export function CwdPicker({
   anchorRect,
   onClose,
   onConfirmExit,
-  pinnedWorkspaces,
-  onPinAdd,
-  onPinRemove,
 }: Props) {
   const { t } = useI18n();
   const popupRef = useRef<HTMLDivElement>(null);
@@ -154,44 +147,6 @@ export function CwdPicker({
             </button>
           ))}
         </div>
-        {/* Pinned workspaces section */}
-        {pinnedWorkspaces && pinnedWorkspaces.length > 0 && (
-          <div className="cwd-picker-pinned">
-            <div className="cwd-picker-section-title">{t('cwd.pinned')}</div>
-            {pinnedWorkspaces.map((ws) => (
-              <div key={ws.path} className="cwd-picker-pinned-row">
-                <button
-                  className="cwd-picker-item cwd-picker-pinned-item"
-                  onClick={() => handleSelectPath(ws.path)}
-                  title={ws.path}
-                >
-                  {ws.name}
-                </button>
-                <button
-                  className="cwd-picker-pin-remove"
-                  onClick={(e) => { e.stopPropagation(); onPinRemove?.(ws.path); }}
-                  title={t('cwd.unpin')}
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Pin current directory button */}
-        {onPinAdd && (!pinnedWorkspaces || pinnedWorkspaces.length < 10) &&
-          !pinnedWorkspaces?.some(w => w.path === currentCwd) && (
-          <div className="cwd-picker-pin-add">
-            <button
-              className="cwd-picker-pin-add-btn"
-              onClick={() => onPinAdd(currentCwd)}
-            >
-              + {t('cwd.pinCurrent')}
-            </button>
-          </div>
-        )}
-
         <div className="cwd-picker-browse">
           <button className="cwd-picker-browse-btn" onClick={handleBrowse}>
             {t('cwd.browse')}
