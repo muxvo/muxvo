@@ -167,52 +167,44 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
               </div>
             </div>
             {isMac && (
-              <div style={{ padding: '8px 0' }}>
-                <div className="settings-modal__label">{t('settings.dockBadge')}</div>
-                <div className="settings-modal__desc">{t('settings.dockBadgeDesc')}</div>
-                <div className="settings-modal__badge-options">
-                  <div
-                    className={`settings-modal__badge-option${dockBadgeMode === 'off' ? ' settings-modal__badge-option--active' : ''}`}
-                    onClick={() => handleDockBadgeChange('off')}
-                  >
-                    <span className="settings-modal__badge-option-label">{t('settings.dockBadgeOff')}</span>
-                    <span className="settings-modal__badge-option-desc">{t('settings.dockBadgeOffDesc')}</span>
+              <>
+                <div className="settings-modal__row">
+                  <div>
+                    <div className="settings-modal__label">{t('settings.dockBadge')}</div>
+                    <div className="settings-modal__desc">{t('settings.dockBadgeDesc')}</div>
                   </div>
-                  <div
-                    className={`settings-modal__badge-option${dockBadgeMode === 'realtime' ? ' settings-modal__badge-option--active' : ''}`}
-                    onClick={() => handleDockBadgeChange('realtime')}
+                  <select
+                    className="settings-modal__select"
+                    value={dockBadgeMode}
+                    onChange={(e) => handleDockBadgeChange(e.target.value as 'off' | 'realtime' | 'timed')}
                   >
-                    <span className="settings-modal__badge-option-label">{t('settings.dockBadgeRealtime')}</span>
-                    <span className="settings-modal__badge-option-desc">{t('settings.dockBadgeRealtimeDesc')}</span>
-                  </div>
-                  <div
-                    className={`settings-modal__badge-option${dockBadgeMode === 'timed' ? ' settings-modal__badge-option--active' : ''}`}
-                    onClick={() => handleDockBadgeChange('timed')}
-                  >
-                    <span className="settings-modal__badge-option-label">{t('settings.dockBadgeTimed')}</span>
-                    <span className="settings-modal__badge-option-desc">{t('settings.dockBadgeTimedDesc')}</span>
-                  </div>
+                    <option value="off">{t('settings.dockBadgeOff')} — {t('settings.dockBadgeOffDesc')}</option>
+                    <option value="realtime">{t('settings.dockBadgeRealtime')} — {t('settings.dockBadgeRealtimeDesc')}</option>
+                    <option value="timed">{t('settings.dockBadgeTimed')} — {t('settings.dockBadgeTimedDesc')}</option>
+                  </select>
                 </div>
                 {dockBadgeMode === 'timed' && (
-                  <div className="settings-modal__badge-interval">
-                    <span className="settings-modal__badge-interval-label">{t('settings.dockBadgeInterval')}</span>
-                    <div className="settings-modal__stepper">
-                      <button
-                        className="settings-modal__stepper-btn"
-                        onClick={() => handleDockBadgeIntervalChange(Math.max(1, dockBadgeInterval - 1))}
-                        disabled={dockBadgeInterval <= 1}
-                      >&#x2212;</button>
-                      <span className="settings-modal__stepper-value">{dockBadgeInterval}</span>
-                      <button
-                        className="settings-modal__stepper-btn"
-                        onClick={() => handleDockBadgeIntervalChange(Math.min(30, dockBadgeInterval + 1))}
-                        disabled={dockBadgeInterval >= 30}
-                      >&#x2b;</button>
+                  <div className="settings-modal__badge-sub-row">
+                    <div className="settings-modal__badge-sub-label">{t('settings.dockBadgeInterval')}</div>
+                    <div className="settings-modal__badge-sub-controls">
+                      <div className="settings-modal__stepper">
+                        <button
+                          className="settings-modal__stepper-btn"
+                          onClick={() => handleDockBadgeIntervalChange(Math.max(1, dockBadgeInterval - 1))}
+                          disabled={dockBadgeInterval <= 1}
+                        >&#x2212;</button>
+                        <span className="settings-modal__stepper-value">{dockBadgeInterval}</span>
+                        <button
+                          className="settings-modal__stepper-btn"
+                          onClick={() => handleDockBadgeIntervalChange(Math.min(30, dockBadgeInterval + 1))}
+                          disabled={dockBadgeInterval >= 30}
+                        >&#x2b;</button>
+                      </div>
+                      <span className="settings-modal__badge-sub-unit">{t('settings.dockBadgeIntervalUnit')}</span>
                     </div>
-                    <span className="settings-modal__badge-interval-label">{t('settings.dockBadgeIntervalUnit')}</span>
                   </div>
                 )}
-              </div>
+              </>
             )}
           </div>
 
