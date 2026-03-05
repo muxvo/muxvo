@@ -20,7 +20,8 @@ import { createTerminalMachine } from '@/shared/machines/terminal-process';
 
 const MAX_TERMINALS = 20;
 const GRACEFUL_CLOSE_TIMEOUT = 5000;
-const CWD_POLL_INTERVAL_MS = 3000;
+const CWD_POLL_INTERVAL_MS = 1000;
+const CWD_GRACE_MS = 1000;
 
 /** Terminal emulator auto-responses that should NOT trigger USER_INPUT */
 export function isTerminalAutoResponse(data: string): boolean {
@@ -197,8 +198,6 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
             const terminal = terminals.get(id);
             if (terminal && terminal.cwd !== newCwd) {
               // Grace period: ignore OSC 7 cwd changes during shell initialization
-              // to prevent login shell scripts from overriding the spawn cwd
-              const CWD_GRACE_MS = 3000;
               if (Date.now() - terminal.spawnedAt < CWD_GRACE_MS) {
                 debugLog(`[TERM:osc7] id=${id} ignoring cwd=${newCwd} (grace period, spawn cwd=${terminal.cwd})`);
               } else {
@@ -385,7 +384,6 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
       if (!targetCwd || targetCwd === terminal.cwd) continue;
 
       // Grace period: ignore cwd changes during shell initialization
-      const CWD_GRACE_MS = 3000;
       if (Date.now() - terminal.spawnedAt < CWD_GRACE_MS) continue;
 
       terminal.cwd = targetCwd;
