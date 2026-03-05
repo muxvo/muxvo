@@ -168,6 +168,20 @@ export function createWorktreeManager() {
     },
 
     /**
+     * Rename the git branch of a worktree.
+     * Validates the new name with git check-ref-format before renaming.
+     */
+    async rename(worktreePath: string, newBranchName: string): Promise<void> {
+      // Validate new branch name
+      await git(worktreePath, ['check-ref-format', '--branch', newBranchName]);
+      // Get current branch name
+      const oldBranch = await git(worktreePath, ['rev-parse', '--abbrev-ref', 'HEAD']);
+      if (oldBranch === newBranchName) return; // no-op
+      // Rename
+      await git(worktreePath, ['branch', '-m', oldBranch, newBranchName]);
+    },
+
+    /**
      * Remove a worktree and its branch.
      * @param force — remove even if there are uncommitted changes
      */

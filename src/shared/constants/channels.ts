@@ -126,6 +126,7 @@ export const IPC_CHANNELS = {
     LIST: 'worktree:list',
     CREATE: 'worktree:create',
     REMOVE: 'worktree:remove',
+    RENAME: 'worktree:rename',
     DETECT_REPO: 'worktree:detect-repo',
   },
 } as const;
