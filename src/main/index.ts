@@ -479,9 +479,10 @@ app.whenReady().then(() => {
   const ptyAdapter = createRealPtyAdapter();
   terminalManager = createTerminalManager({ pty: ptyAdapter, perfLogger, debugLogger: termDebugLogWriter });
 
-  // Register terminal IPC handlers (with config save on terminal change)
+  // Register terminal IPC handlers (with config save + workspace menu rebuild on terminal change)
   registerTerminalHandlers(terminalManager, () => {
-    saveTerminalConfig(configManager);
+    const workspaces = saveTerminalConfig(configManager);
+    buildAppMenu(workspaces);
   });
 
   // Register chat IPC handlers
@@ -871,12 +872,24 @@ app.whenReady().then(() => {
   });
 });
 
-/** Save terminal list to config (called on terminal create/close) */
-function saveTerminalConfig(configManager: ReturnType<typeof createConfigManager>): void {
-  if (!terminalManager) return;
+/** Save terminal list to config (called on terminal create/close).
+ *  Also auto-collects terminal cwds into pinnedWorkspaces for the workspace menu.
+ *  Returns the updated pinnedWorkspaces list (caller can use it to rebuild menu). */
+function saveTerminalConfig(configManager: ReturnType<typeof createConfigManager>): PinnedWorkspace[] {
+  if (!terminalManager) return [];
   const existing = configManager.loadConfig();
   const terminals = terminalManager.list();
   const { cols, rows } = calculateGridLayout(terminals.length);
+
+  // Auto-collect terminal cwds into workspace list (dedupe, exclude $HOME, cap at 20)
+  const home = app.getPath('home');
+  const existingPinned = existing.pinnedWorkspaces || [];
+  const existingPaths = new Set(existingPinned.map((w) => w.path));
+  const newWorkspaces = terminals
+    .filter((t) => t.cwd && t.cwd !== home && !existingPaths.has(t.cwd))
+    .map((t) => ({ path: t.cwd, name: basename(t.cwd) }));
+  const mergedWorkspaces = [...existingPinned, ...newWorkspaces].slice(0, 20);
+
   configManager.saveConfig({
     ...existing,
     openTerminals: terminals.map((t) => ({
@@ -887,7 +900,10 @@ function saveTerminalConfig(configManager: ReturnType<typeof createConfigManager
       columnRatios: Array(cols).fill(1),
       rowRatios: Array(rows).fill(1),
     },
+    pinnedWorkspaces: mergedWorkspaces,
   });
+
+  return mergedWorkspaces;
 }
 
 /** Save window bounds and clear terminal list on normal close.
