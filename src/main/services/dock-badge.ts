@@ -20,6 +20,7 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
     const { mode } = deps.getConfig();
     if (mode === 'off') {
       app.dock.setBadge('');
+      app.setBadgeCount(0);
       return;
     }
     const terminals = deps.listTerminals();
@@ -27,6 +28,7 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
     const badge = count > 0 ? String(count) : '';
     console.log(`[DOCK-BADGE] mode=${mode} terminals=${terminals.length} states=[${terminals.map(t => t.state).join(',')}] waiting=${count} badge="${badge}"`);
     app.dock.setBadge(badge);
+    app.setBadgeCount(count);
   }
 
   /** 终端状态变化时调用（实时模式下立即更新角标） */
@@ -58,7 +60,7 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
     const { mode } = deps.getConfig();
     stopTimer();
     if (mode === 'off') {
-      if (process.platform === 'darwin') app.dock.setBadge('');
+      if (process.platform === 'darwin') { app.dock.setBadge(''); app.setBadgeCount(0); }
     } else if (mode === 'timed') {
       startTimer();
       updateBadge();
@@ -70,7 +72,7 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
   /** 应用退出时清理 */
   function dispose(): void {
     stopTimer();
-    if (process.platform === 'darwin') app.dock.setBadge('');
+    if (process.platform === 'darwin') { app.dock.setBadge(''); app.setBadgeCount(0); }
   }
 
   return { onStateChange, reconfigure, dispose };
