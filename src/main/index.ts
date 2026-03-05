@@ -52,6 +52,7 @@ import { createMemoryPushTimer } from './services/perf/memory-push';
 import { createPerfLogger } from './services/perf/perf-logger';
 import { createSyncStatusPusher } from './services/chat-sync-push';
 import { initConfigDir, createConfigManager } from './services/app/config';
+import type { SavedWorkspace } from '@/shared/types/config.types';
 import { calculateGridLayout } from '@/shared/utils/grid-layout';
 import { initPrefsDir, getPreferences, savePreferences } from './services/app/preferences';
 import { createUpdateLogger } from './services/app/update-logger';
@@ -279,49 +280,7 @@ app.whenReady().then(() => {
     pendingDeepLinkUrl = null;
   }
 
-  // Set application menu with Edit menu for copy/paste/select-all shortcuts
-  const template: Electron.MenuItemConstructorOptions[] = [
-    { role: 'appMenu' },
-    {
-      label: 'Edit',
-      submenu: [
-        { role: 'undo' },
-        { role: 'redo' },
-        { type: 'separator' },
-        { role: 'cut' },
-        { role: 'copy' },
-        { role: 'paste' },
-        { role: 'selectAll' },
-      ],
-    },
-    {
-      label: 'View',
-      submenu: [
-        {
-          label: 'Zoom In',
-          accelerator: 'CommandOrControl+=',
-          click: () => {
-            BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.APP.ZOOM, 'in');
-          },
-        },
-        {
-          label: 'Zoom Out',
-          accelerator: 'CommandOrControl+-',
-          click: () => {
-            BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.APP.ZOOM, 'out');
-          },
-        },
-        {
-          label: 'Reset Zoom',
-          accelerator: 'CommandOrControl+0',
-          click: () => {
-            BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.APP.ZOOM, 'reset');
-          },
-        },
-      ],
-    },
-  ];
-  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+  // Application menu is built after configManager is initialized (see buildAppMenu below)
 
   // Handle local-file:// protocol for serving local images/files to renderer
   protocol.handle('local-file', (request) => {
@@ -334,6 +293,141 @@ app.whenReady().then(() => {
   initPrefsDir(app.getPath('userData'));
   const configManager = createConfigManager();
   const savedConfig = configManager.loadConfig();
+
+  // ── Workspace menu (save/restore terminal groups) ──
+
+  function buildAppMenu(workspaces: SavedWorkspace[]): void {
+    const workspaceSubmenu: Electron.MenuItemConstructorOptions[] = [
+      ...workspaces.map((ws) => ({
+        label: `${ws.name}  (${ws.terminals.length})`,
+        click: () => restoreWorkspace(ws),
+      })),
+      ...(workspaces.length > 0 ? [{ type: 'separator' as const }] : []),
+      {
+        label: 'Save Workspace',
+        click: () => saveCurrentAsWorkspace(),
+      },
+      ...(workspaces.length > 0
+        ? [
+            { type: 'separator' as const },
+            {
+              label: 'Manage',
+              submenu: workspaces.map((ws) => ({
+                label: `Remove "${ws.name}"`,
+                click: () => removeWorkspace(ws.name),
+              })),
+            } as Electron.MenuItemConstructorOptions,
+          ]
+        : []),
+    ];
+
+    const template: Electron.MenuItemConstructorOptions[] = [
+      { role: 'appMenu' },
+      {
+        label: 'Edit',
+        submenu: [
+          { role: 'undo' },
+          { role: 'redo' },
+          { type: 'separator' },
+          { role: 'cut' },
+          { role: 'copy' },
+          { role: 'paste' },
+          { role: 'selectAll' },
+        ],
+      },
+      {
+        label: 'Workspace',
+        submenu: workspaceSubmenu,
+      },
+      {
+        label: 'View',
+        submenu: [
+          {
+            label: 'Zoom In',
+            accelerator: 'CommandOrControl+=',
+            click: () => {
+              BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.APP.ZOOM, 'in');
+            },
+          },
+          {
+            label: 'Zoom Out',
+            accelerator: 'CommandOrControl+-',
+            click: () => {
+              BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.APP.ZOOM, 'out');
+            },
+          },
+          {
+            label: 'Reset Zoom',
+            accelerator: 'CommandOrControl+0',
+            click: () => {
+              BrowserWindow.getFocusedWindow()?.webContents.send(IPC_CHANNELS.APP.ZOOM, 'reset');
+            },
+          },
+        ],
+      },
+    ];
+    Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+  }
+
+  function restoreWorkspace(ws: SavedWorkspace): void {
+    if (!terminalManager || !mainWindow) return;
+    terminalManager.closeAll();
+    const spawnedIds: { id: string; cwd: string }[] = [];
+    for (const t of ws.terminals) {
+      const result = terminalManager.spawn({ cwd: t.cwd });
+      if (result.success && result.id) {
+        spawnedIds.push({ id: result.id, cwd: t.cwd });
+        if (t.customName) {
+          terminalManager.setName(result.id, t.customName);
+        }
+      }
+    }
+    // Force cd to correct cwd after shell initialization completes
+    // Login shell (--login) may reset cwd during init scripts
+    const tm = terminalManager;
+    setTimeout(() => {
+      for (const { id, cwd } of spawnedIds) {
+        tm.write(id, ` cd ${cwd.replace(/ /g, '\\ ')}\n`);
+      }
+    }, 1500);
+    // Notify renderer to refresh terminal list
+    const list = terminalManager.list();
+    mainWindow.webContents.send(IPC_CHANNELS.TERMINAL.LIST_UPDATED, list.map((t) => ({
+      id: t.id, state: t.state, cwd: t.cwd, customName: t.customName,
+    })));
+  }
+
+  function saveCurrentAsWorkspace(): void {
+    if (!terminalManager) return;
+    const terminals = terminalManager.list();
+    if (terminals.length === 0) return;
+
+    const now = new Date();
+    const timeStr = `${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const name = `${terminals.length} terminals - ${timeStr}`;
+
+    const ws: SavedWorkspace = {
+      name,
+      terminals: terminals.map((t) => ({ cwd: t.cwd, customName: t.customName })),
+      savedAt: now.toISOString(),
+    };
+
+    const config = configManager.loadConfig();
+    const existing = config.savedWorkspaces || [];
+    const updated = [ws, ...existing].slice(0, 10);
+    configManager.saveConfig({ ...config, savedWorkspaces: updated });
+    buildAppMenu(updated);
+  }
+
+  function removeWorkspace(name: string): void {
+    const config = configManager.loadConfig();
+    const updated = (config.savedWorkspaces || []).filter((w) => w.name !== name);
+    configManager.saveConfig({ ...config, savedWorkspaces: updated });
+    buildAppMenu(updated);
+  }
+
+  // Build initial menu with saved workspaces
+  buildAppMenu(savedConfig.savedWorkspaces || []);
 
   // Performance logger (writes to ~/.muxvo/logs/perf.log on anomalies)
   perfLogger = createPerfLogger();

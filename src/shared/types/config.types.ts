@@ -87,6 +87,16 @@ export interface TerminalConfig {
 /** Dock 角标通知模式 */
 export type DockBadgeMode = 'off' | 'realtime' | 'timed';
 
+/** 保存的工作区（一组终端快照） */
+export interface SavedWorkspace {
+  /** 工作区名称 */
+  name: string;
+  /** 终端列表 */
+  terminals: OpenTerminalConfig[];
+  /** 保存时间（ISO8601） */
+  savedAt: string;
+}
+
 /** app:get-config 返回的 Muxvo 本地配置 */
 export interface MuxvoConfig {
   window: {
@@ -118,6 +128,8 @@ export interface MuxvoConfig {
   dockBadgeMode?: DockBadgeMode;
   /** 定时模式检查间隔（分钟），默认 1，最小 1 */
   dockBadgeIntervalMin?: number;
+  /** 保存的工作区列表（最多 10 个） */
+  savedWorkspaces?: SavedWorkspace[];
 }
 
 /** app:get-preferences 返回的用户偏好 */
