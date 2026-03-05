@@ -15,20 +15,22 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
     if (deps.getPermissionNotified()) return;
     deps.setPermissionNotified();
 
-    // 对话框引导用户开启通知
-    const appName = app.isPackaged ? 'Muxvo' : 'Electron';
-    const win = BrowserWindow.getAllWindows()[0];
-    dialog.showMessageBox(win ?? null as any, {
-      type: 'info',
-      message: '开启通知提醒',
-      detail: '终端等待处理时会及时提醒你。',
-      buttons: ['前往设置', '稍后'],
-      defaultId: 0,
-    }).then((result) => {
-      if (result.response === 0) {
-        shell.openExternal('x-apple.systempreferences:com.apple.Notifications-Settings.extension');
-      }
-    }).catch(() => {});
+    // 延迟到下一事件循环，确保对话框能正确附着到主窗口
+    setTimeout(() => {
+      const appName = app.isPackaged ? 'Muxvo' : 'Electron';
+      const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0];
+      dialog.showMessageBox(win ?? null as any, {
+        type: 'info',
+        message: '开启通知提醒',
+        detail: '终端等待处理时会及时提醒你。',
+        buttons: ['前往设置', '稍后'],
+        defaultId: 0,
+      }).then((result) => {
+        if (result.response === 0) {
+          shell.openExternal('x-apple.systempreferences:com.apple.Notifications-Settings.extension');
+        }
+      }).catch(() => {});
+    }, 0);
 
     console.log('[DOCK-BADGE] permission dialog shown');
   }
