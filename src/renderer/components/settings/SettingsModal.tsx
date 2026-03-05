@@ -82,8 +82,6 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
     const v = parseInt(intervalInputValue, 10);
     if (isNaN(v) || v < 1) {
       handleDockBadgeIntervalChange(1);
-    } else if (v > 30) {
-      handleDockBadgeIntervalChange(30);
     } else {
       handleDockBadgeIntervalChange(v);
     }
@@ -224,8 +222,7 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
                         />
                         <button
                           className="settings-modal__stepper-btn"
-                          onClick={() => handleDockBadgeIntervalChange(Math.min(30, dockBadgeInterval + 1))}
-                          disabled={dockBadgeInterval >= 30}
+                          onClick={() => handleDockBadgeIntervalChange(dockBadgeInterval + 1)}
                         >&#x2b;</button>
                       </div>
                       <span className="settings-modal__badge-sub-unit">{t('settings.dockBadgeIntervalUnit')}</span>

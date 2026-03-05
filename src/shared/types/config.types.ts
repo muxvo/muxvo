@@ -116,7 +116,7 @@ export interface MuxvoConfig {
   showHiddenFiles?: boolean;
   /** Dock 角标通知模式（默认 'off'） */
   dockBadgeMode?: DockBadgeMode;
-  /** 定时模式检查间隔（分钟），默认 1，范围 1-30 */
+  /** 定时模式检查间隔（分钟），默认 1，最小 1 */
   dockBadgeIntervalMin?: number;
 }
 
