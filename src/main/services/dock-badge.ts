@@ -1,4 +1,4 @@
-import { app, shell, Notification } from 'electron';
+import { app, dialog, shell, BrowserWindow, Notification } from 'electron';
 import type { DockBadgeMode } from '@/shared/types/config.types';
 
 interface DockBadgeDeps {
@@ -15,19 +15,29 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
     if (deps.getPermissionNotified()) return;
     deps.setPermissionNotified();
 
+    // 静默通知注册应用到 macOS 通知中心（角标依赖此注册）
     if (Notification.isSupported()) {
-      const n = new Notification({
-        title: '开启通知提醒',
-        body: '终端等待处理时会及时提醒你',
-        silent: true,
-      });
-      n.on('click', () => {
-        shell.openExternal('x-apple.systempreferences:com.apple.Notifications-Settings.extension');
-      });
+      const n = new Notification({ title: 'Muxvo', body: '', silent: true });
       n.show();
+      setTimeout(() => n.close(), 200);
     }
 
-    console.log('[DOCK-BADGE] permission notification shown');
+    // 对话框引导用户开启通知
+    const appName = app.isPackaged ? 'Muxvo' : 'Electron';
+    const win = BrowserWindow.getAllWindows()[0];
+    dialog.showMessageBox(win ?? null as any, {
+      type: 'info',
+      message: '开启通知提醒',
+      detail: '终端等待处理时会及时提醒你。',
+      buttons: ['前往设置', '稍后'],
+      defaultId: 0,
+    }).then((result) => {
+      if (result.response === 0) {
+        shell.openExternal('x-apple.systempreferences:com.apple.Notifications-Settings.extension');
+      }
+    }).catch(() => {});
+
+    console.log('[DOCK-BADGE] permission dialog shown');
   }
 
   function updateBadge(): void {
