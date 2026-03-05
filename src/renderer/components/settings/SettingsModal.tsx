@@ -13,6 +13,9 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
   const { t, locale, setLocale } = useI18n();
   const [startupCount, setStartupCount] = useState(1);
   const [dblClickFocus, setDblClickFocus] = useState(false);
+  const [dockBadgeMode, setDockBadgeMode] = useState<'off' | 'realtime' | 'timed'>('off');
+  const [dockBadgeInterval, setDockBadgeInterval] = useState(1);
+  const [intervalInputValue, setIntervalInputValue] = useState('1');
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'up-to-date' | 'error'>('idle');
   const [newVersion, setNewVersion] = useState('');
 
@@ -24,6 +27,10 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
         setStartupCount(Math.max(1, Math.min(20, result.data.startupTerminalCount)));
       }
       setDblClickFocus(result?.data?.doubleClickToFocus === true);
+      setDockBadgeMode(result?.data?.dockBadgeMode ?? 'off');
+      const iv = result?.data?.dockBadgeIntervalMin ?? 1;
+      setDockBadgeInterval(iv);
+      setIntervalInputValue(String(iv));
     }).catch(() => {});
   }, [state.settingsModal.open]);
 
@@ -55,6 +62,32 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
       window.dispatchEvent(new CustomEvent('muxvo:config-changed'));
     }).catch(() => {});
   }, []);
+
+  const handleDockBadgeChange = useCallback((mode: 'off' | 'realtime' | 'timed') => {
+    setDockBadgeMode(mode);
+    window.api.app.getConfig().then((result: any) => {
+      window.api.app.saveConfig({ ...result?.data, dockBadgeMode: mode });
+    }).catch(() => {});
+  }, []);
+
+  const handleDockBadgeIntervalChange = useCallback((val: number) => {
+    setDockBadgeInterval(val);
+    setIntervalInputValue(String(val));
+    window.api.app.getConfig().then((result: any) => {
+      window.api.app.saveConfig({ ...result?.data, dockBadgeIntervalMin: val });
+    }).catch(() => {});
+  }, []);
+
+  const handleIntervalInputBlur = useCallback(() => {
+    const v = parseInt(intervalInputValue, 10);
+    if (isNaN(v) || v < 1) {
+      handleDockBadgeIntervalChange(1);
+    } else {
+      handleDockBadgeIntervalChange(v);
+    }
+  }, [intervalInputValue, handleDockBadgeIntervalChange]);
+
+  const isMac = navigator.platform.startsWith('Mac');
 
   const handleRestartTour = useCallback(() => {
     dispatch({ type: 'CLOSE_SETTINGS' });
@@ -146,6 +179,59 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
                 </button>
               </div>
             </div>
+            {isMac && (
+              <>
+                <div className="settings-modal__row">
+                  <div>
+                    <div className="settings-modal__label">{t('settings.dockBadge')}</div>
+                    <div className="settings-modal__desc">{t('settings.dockBadgeDesc')}</div>
+                  </div>
+                  <div className="settings-modal__badge-toggle">
+                    <button
+                      className={`settings-modal__badge-toggle-btn${dockBadgeMode === 'off' ? ' settings-modal__badge-toggle-btn--active' : ''}`}
+                      onClick={() => handleDockBadgeChange('off')}
+                    >{t('settings.dockBadgeOff')}</button>
+                    <button
+                      className={`settings-modal__badge-toggle-btn${dockBadgeMode === 'realtime' ? ' settings-modal__badge-toggle-btn--active' : ''}`}
+                      onClick={() => handleDockBadgeChange('realtime')}
+                    >{t('settings.dockBadgeRealtime')}</button>
+                    <button
+                      className={`settings-modal__badge-toggle-btn${dockBadgeMode === 'timed' ? ' settings-modal__badge-toggle-btn--active' : ''}`}
+                      onClick={() => handleDockBadgeChange('timed')}
+                    >{t('settings.dockBadgeTimed')}</button>
+                  </div>
+                </div>
+                {dockBadgeMode === 'timed' && (
+                  <div className="settings-modal__badge-sub-row">
+                    <div className="settings-modal__badge-sub-label">{t('settings.dockBadgeInterval')}</div>
+                    <div className="settings-modal__badge-sub-controls">
+                      <div className="settings-modal__stepper">
+                        <button
+                          className="settings-modal__stepper-btn"
+                          onClick={() => handleDockBadgeIntervalChange(Math.max(1, dockBadgeInterval - 1))}
+                          disabled={dockBadgeInterval <= 1}
+                        >&#x2212;</button>
+                        <input
+                          className="settings-modal__stepper-input"
+                          type="text"
+                          inputMode="numeric"
+                          value={intervalInputValue}
+                          size={Math.max(1, intervalInputValue.length)}
+                          onChange={(e) => setIntervalInputValue(e.target.value.replace(/[^\d]/g, ''))}
+                          onBlur={handleIntervalInputBlur}
+                          onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                        />
+                        <button
+                          className="settings-modal__stepper-btn"
+                          onClick={() => handleDockBadgeIntervalChange(dockBadgeInterval + 1)}
+                        >&#x2b;</button>
+                      </div>
+                      <span className="settings-modal__badge-sub-unit">{t('settings.dockBadgeIntervalUnit')}</span>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           {/* Appearance Section */}

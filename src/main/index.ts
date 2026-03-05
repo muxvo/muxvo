@@ -28,6 +28,7 @@ protocol.registerSchemesAsPrivileged([
 app.commandLine.appendSwitch('force-gpu-mem-available-mb', '4096');
 
 import { createTerminalManager } from './services/terminal/manager';
+import { createDockBadgeService } from './services/dock-badge';
 import { createRealPtyAdapter } from './services/terminal/pty-adapter';
 import { registerTerminalHandlers } from './ipc/terminal-handlers';
 import { registerChatHandlers, registerChatArchiveHandlers } from './ipc/chat-handlers';
@@ -260,6 +261,7 @@ function createWindow(windowConfig?: WindowConfig): void {
 }
 
 let terminalManager: ReturnType<typeof createTerminalManager> | null = null;
+let dockBadge: ReturnType<typeof createDockBadgeService> | null = null;
 let chatWatcher: ReturnType<typeof createChatWatcher> | null = null;
 let chatArchive: ReturnType<typeof createChatArchiveManager> | null = null;
 let configWatcher: ReturnType<typeof createConfigWatcher> | null = null;
@@ -420,7 +422,25 @@ app.whenReady().then(() => {
 
   // Initialize PTY adapter and terminal manager
   const ptyAdapter = createRealPtyAdapter();
-  terminalManager = createTerminalManager({ pty: ptyAdapter, perfLogger, debugLogger: termDebugLogWriter });
+  terminalManager = createTerminalManager({
+    pty: ptyAdapter,
+    perfLogger,
+    debugLogger: termDebugLogWriter,
+    onStateChange: () => dockBadge?.onStateChange(),
+  });
+
+  // Initialize Dock badge service (macOS dock icon badge for WaitingInput)
+  dockBadge = createDockBadgeService({
+    listTerminals: () => terminalManager!.list(),
+    getConfig: () => {
+      const cfg = configManager.loadConfig();
+      return {
+        mode: cfg.dockBadgeMode ?? 'off',
+        intervalMin: cfg.dockBadgeIntervalMin ?? 1,
+      };
+    },
+  });
+  dockBadge.reconfigure();
 
   // Register terminal IPC handlers (with config save on terminal change)
   registerTerminalHandlers(terminalManager, () => {
@@ -507,6 +527,7 @@ app.whenReady().then(() => {
 
   ipcMain.handle(IPC_CHANNELS.APP.SAVE_CONFIG, async (_event, config) => {
     const result = configManager.saveConfig(config);
+    dockBadge?.reconfigure();
     return { success: true, data: result };
   });
 
@@ -869,6 +890,7 @@ app.on('window-all-closed', () => {
   if (terminalManager) {
     terminalManager.closeAll();
   }
+  dockBadge?.dispose();
 
   if (process.platform !== 'darwin') {
     // Non-macOS: full cleanup and quit
