@@ -172,17 +172,13 @@ export function createWorktreeManager() {
      * Validates the new name with git check-ref-format before renaming.
      */
     async rename(worktreePath: string, newBranchName: string): Promise<void> {
-      console.log('[worktree-rename] called:', { worktreePath, newBranchName });
       // Validate new branch name
       await git(worktreePath, ['check-ref-format', '--branch', newBranchName]);
-      console.log('[worktree-rename] check-ref-format passed');
       // Get current branch name
       const oldBranch = await git(worktreePath, ['rev-parse', '--abbrev-ref', 'HEAD']);
-      console.log('[worktree-rename] old branch:', oldBranch);
       if (oldBranch === newBranchName) return; // no-op
       // Rename
       await git(worktreePath, ['branch', '-m', oldBranch, newBranchName]);
-      console.log('[worktree-rename] renamed OK:', oldBranch, '→', newBranchName);
     },
 
     /**

@@ -450,9 +450,7 @@ export function useTerminalActions() {
 
     // If terminal is in a worktree, sync rename to git branch
     if (name && terminal?.cwd?.includes('/.worktrees/')) {
-      window.api.worktree.rename(terminal.cwd, name).then((r: any) => {
-        if (!r?.success) console.error('[worktree-rename] failed:', r?.error);
-      }).catch((e: any) => console.error('[worktree-rename] error:', e));
+      window.api.worktree.rename(terminal.cwd, name).catch(() => {});
     }
   }, [dispatch]);
 
