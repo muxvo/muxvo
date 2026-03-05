@@ -10,27 +10,36 @@ interface DockBadgeDeps {
 
 export function createDockBadgeService(deps: DockBadgeDeps) {
   let timerHandle: ReturnType<typeof setInterval> | null = null;
-  /** 首次启用时注册通知中心 + 弹窗提示用户开权限 */
+  /** 首次启用时弹窗提示用户开启通知权限 */
   function notifyBadgePermission(): void {
     if (deps.getPermissionNotified()) return;
     deps.setPermissionNotified();
 
-    const appName = app.isPackaged ? 'Muxvo' : 'Electron';
-    const win = BrowserWindow.getAllWindows()[0];
-    if (!win || win.isDestroyed()) return;
-    dialog.showMessageBox(win, {
-      type: 'info',
-      message: '开启通知提醒',
-      detail: '终端等待处理时会及时提醒你。',
-      buttons: ['前往设置', '稍后'],
-      defaultId: 0,
-    }).then((result) => {
-      if (result.response === 0) {
-        shell.openExternal('x-apple.systempreferences:com.apple.Notifications-Settings.extension');
-      }
-    }).catch(() => {});
+    function showDialog(win: BrowserWindow): void {
+      dialog.showMessageBox(win, {
+        type: 'info',
+        message: '开启通知提醒',
+        detail: '终端等待处理时会及时提醒你。',
+        buttons: ['前往设置', '稍后'],
+        defaultId: 0,
+      }).then((result) => {
+        if (result.response === 0) {
+          shell.openExternal('x-apple.systempreferences:com.apple.Notifications-Settings.extension');
+        }
+      }).catch(() => {});
+    }
 
-    console.log('[DOCK-BADGE] permission dialog shown');
+    const win = BrowserWindow.getFocusedWindow();
+    if (win && !win.isDestroyed()) {
+      showDialog(win);
+    } else {
+      // 窗口尚未就绪（启动阶段），等窗口获得焦点后再弹 sheet
+      app.once('browser-window-focus', (_event, focusedWin) => {
+        if (!focusedWin.isDestroyed()) {
+          showDialog(focusedWin);
+        }
+      });
+    }
   }
 
   function updateBadge(): void {
