@@ -311,11 +311,12 @@ app.whenReady().then(() => {
         ? [
             { type: 'separator' as const },
             {
-              label: 'Manage',
-              submenu: workspaces.map((ws) => ({
-                label: `Remove "${ws.name}"`,
-                click: () => removeWorkspace(ws.name),
-              })),
+              label: 'Manage Workspaces...',
+              click: () => {
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                  mainWindow.webContents.send(IPC_CHANNELS.APP.OPEN_WORKSPACE_MANAGER);
+                }
+              },
             } as Electron.MenuItemConstructorOptions,
           ]
         : []),
@@ -622,6 +623,8 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC_CHANNELS.APP.SAVE_CONFIG, async (_event, config) => {
     const result = configManager.saveConfig(config);
     dockBadge?.reconfigure();
+    // Refresh menu so workspace list stays in sync
+    buildAppMenu(config.savedWorkspaces || []);
     return { success: true, data: result };
   });
 

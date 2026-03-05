@@ -22,6 +22,7 @@ import { TourOverlay } from './components/tour/TourOverlay';
 import { WaitingInputNotification } from './components/terminal/WaitingInputNotification';
 import { LoginModal } from './components/auth/LoginModal';
 import { SettingsModal } from './components/settings/SettingsModal';
+import { WorkspaceManagerModal } from './components/workspace/WorkspaceManagerModal';
 import { AppCloseConfirmDialog } from './components/app/AppCloseConfirmDialog';
 import { PanelProvider, usePanelContext } from './contexts/PanelContext';
 import { TerminalProvider, useTerminalState, useOrderedTerminals, useTerminalActions } from './contexts/TerminalContext';
@@ -126,6 +127,14 @@ function AppContent({
     });
     return () => { unsub(); };
   }, []);
+
+  // Listen for workspace manager open from native menu
+  useEffect(() => {
+    const unsub = (window.api.app as any).onOpenWorkspaceManager?.(() => {
+      dispatch({ type: 'OPEN_WORKSPACE_MANAGER' });
+    });
+    return () => { unsub?.(); };
+  }, [dispatch]);
 
   const handleCloseConfirm = useCallback(() => {
     setCloseRequested({ open: false, terminalCount: 0 });
@@ -303,6 +312,7 @@ function AppContent({
       />
 
       <SettingsModal uiTheme={uiTheme} onToggleTheme={onToggleTheme} />
+      <WorkspaceManagerModal />
       <LoginModal />
       <WaitingInputNotification
         waitingCount={terminals.filter(t => t.state === 'WaitingInput').length}

@@ -19,6 +19,7 @@ export interface PanelState {
   menuDropdown: { open: boolean; type: 'mcp' | null };
   tour: { active: boolean; welcomeVisible: boolean };
   settingsModal: { open: boolean };
+  workspaceManager: { open: boolean };
 }
 
 export const initialState: PanelState = {
@@ -32,6 +33,7 @@ export const initialState: PanelState = {
   menuDropdown: { open: false, type: null },
   tour: { active: false, welcomeVisible: false },
   settingsModal: { open: false },
+  workspaceManager: { open: false },
 };
 
 // ── Actions ──
@@ -58,6 +60,8 @@ type PanelAction =
   | { type: 'COMPLETE_TOUR' }
   | { type: 'OPEN_SETTINGS' }
   | { type: 'CLOSE_SETTINGS' }
+  | { type: 'OPEN_WORKSPACE_MANAGER' }
+  | { type: 'CLOSE_WORKSPACE_MANAGER' }
   | { type: 'CLOSE_ALL' };
 
 // ── Reducer ──
@@ -157,6 +161,10 @@ export function panelReducer(state: PanelState, action: PanelAction): PanelState
       return { ...initialState, settingsModal: { open: true } };
     case 'CLOSE_SETTINGS':
       return { ...state, settingsModal: { open: false } };
+    case 'OPEN_WORKSPACE_MANAGER':
+      return { ...initialState, workspaceManager: { open: true } };
+    case 'CLOSE_WORKSPACE_MANAGER':
+      return { ...state, workspaceManager: { open: false } };
     case 'CLOSE_ALL':
       return { ...initialState, tour: state.tour };
     default:

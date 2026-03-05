@@ -126,6 +126,11 @@ const api = {
     },
     confirmClose: () => ipcRenderer.invoke(IPC_CHANNELS.APP.CONFIRM_CLOSE),
     cancelClose: () => ipcRenderer.invoke(IPC_CHANNELS.APP.CANCEL_CLOSE),
+    onOpenWorkspaceManager: (callback: () => void) => {
+      const handler = () => callback();
+      ipcRenderer.on(IPC_CHANNELS.APP.OPEN_WORKSPACE_MANAGER, handler);
+      return () => { ipcRenderer.removeListener(IPC_CHANNELS.APP.OPEN_WORKSPACE_MANAGER, handler); };
+    },
   },
 
   // --- FS domain ---
