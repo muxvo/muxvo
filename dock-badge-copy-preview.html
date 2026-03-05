@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>macOS 对话框文案方案预览</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    background: #f0f0f0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 50px;
+    padding: 50px 30px;
+  }
+  h1 {
+    width: 100%;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 500;
+    color: #666;
+    margin-bottom: 0;
+  }
+  .card { width: 320px; }
+  .label {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #888;
+    margin-bottom: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  /* macOS Sequoia style dialog */
+  .dialog {
+    background: #ececec;
+    border-radius: 12px;
+    padding: 24px 20px 16px;
+    box-shadow:
+      0 0 0 0.5px rgba(0,0,0,0.12),
+      0 8px 32px rgba(0,0,0,0.14),
+      0 2px 8px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+  .icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(160deg, #1c1c30, #0e1525);
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    font-size: 26px;
+    font-weight: 700;
+    color: #c8a44e;
+    letter-spacing: -1px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+  .msg {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.4;
+    color: #1d1d1f;
+    margin-bottom: 6px;
+  }
+  .detail {
+    font-size: 11px;
+    line-height: 1.5;
+    color: #6e6e73;
+    margin-bottom: 16px;
+  }
+  .btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 7px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+  }
+  .btn-primary {
+    background: #0066cc;
+    color: #fff;
+  }
+  .btn-secondary {
+    background: rgba(0,0,0,0.06);
+    color: #1d1d1f;
+  }
+
+  .current .dialog { opacity: 0.7; }
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .tag-old { background: #ffcdd2; color: #c62828; }
+  .tag-new { background: #c8e6c9; color: #2e7d32; }
+</style>
+</head>
+<body>
+
+<h1>macOS 原生对话框预览 — 选一个方案</h1>
+
+<!-- 当前版本 -->
+<div class="card current">
+  <div class="label">当前 <span class="tag tag-old">问题：没标题</span></div>
+  <div class="dialog">
+    <div class="icon">nv</div>
+    <div class="msg">前往「系统设置 → 通知 → Electron」，开启通知提醒。</div>
+    <div class="btn-group">
+      <button class="btn btn-primary">知道了</button>
+    </div>
+  </div>
+</div>
+
+<!-- 方案 A -->
+<div class="card">
+  <div class="label">方案 A <span class="tag tag-new">推荐</span></div>
+  <div class="dialog">
+    <div class="icon">nv</div>
+    <div class="msg">开启通知提醒</div>
+    <div class="detail">前往「系统设置 → 通知 → Muxvo」，开启通知提醒，终端等待处理时会及时提醒你。</div>
+    <div class="btn-group">
+      <button class="btn btn-primary">知道了</button>
+    </div>
+  </div>
+</div>
+
+<!-- 方案 B -->
+<div class="card">
+  <div class="label">方案 B</div>
+  <div class="dialog">
+    <div class="icon">nv</div>
+    <div class="msg">开启通知提醒</div>
+    <div class="detail">前往「系统设置 → 通知 → Muxvo」，开启通知提醒即可。</div>
+    <div class="btn-group">
+      <button class="btn btn-primary">知道了</button>
+    </div>
+  </div>
+</div>
+
+<!-- 方案 C -->
+<div class="card">
+  <div class="label">方案 C</div>
+  <div class="dialog">
+    <div class="icon">nv</div>
+    <div class="msg">开启通知提醒</div>
+    <div class="detail">请前往「系统设置 → 通知 → Muxvo」开启通知，方便在忙碌时收到终端提醒。</div>
+    <div class="btn-group">
+      <button class="btn btn-primary">好的</button>
+    </div>
+  </div>
+</div>
+
+<!-- 方案 D -->
+<div class="card">
+  <div class="label">方案 D</div>
+  <div class="dialog">
+    <div class="icon">nv</div>
+    <div class="msg">Muxvo 需要通知权限</div>
+    <div class="detail">请前往「系统设置 → 通知 → Muxvo」开启通知提醒。</div>
+    <div class="btn-group">
+      <button class="btn btn-primary">知道了</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
