@@ -194,6 +194,7 @@ function createWindow(windowConfig?: WindowConfig): void {
 
   mainWindow.on('ready-to-show', () => {
     mainWindow?.show();
+    dockBadge?.reconfigure();
   });
 
   // Intercept close to show custom confirmation dialog in renderer
@@ -540,8 +541,6 @@ app.whenReady().then(() => {
       configManager.saveConfig({ ...cfg, dockBadgePermissionNotified: true });
     },
   });
-  dockBadge.reconfigure();
-
   // Register terminal IPC handlers (with config save on terminal change)
   registerTerminalHandlers(terminalManager, () => {
     saveTerminalConfig(configManager);

@@ -15,38 +15,22 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
     if (deps.getPermissionNotified()) return;
     deps.setPermissionNotified();
 
-    const showDialog = (): void => {
-      const appName = app.isPackaged ? 'Muxvo' : 'Electron';
-      const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0];
-      if (!win || win.isDestroyed()) return;
-      dialog.showMessageBox(win, {
-        type: 'info',
-        message: '开启通知提醒',
-        detail: '终端等待处理时会及时提醒你。',
-        buttons: ['前往设置', '稍后'],
-        defaultId: 0,
-      }).then((result) => {
-        if (result.response === 0) {
-          shell.openExternal('x-apple.systempreferences:com.apple.Notifications-Settings.extension');
-        }
-      }).catch(() => {});
-    };
-
-    // 确保窗口存在且可见后再弹对话框
+    const appName = app.isPackaged ? 'Muxvo' : 'Electron';
     const win = BrowserWindow.getAllWindows()[0];
-    if (win && win.isVisible()) {
-      // 窗口已可见（如模式切换），延迟一帧确保脱离 IPC handler 上下文
-      setImmediate(showDialog);
-    } else {
-      // 窗口还没创建或没显示（如启动时），监听窗口就绪
-      app.once('browser-window-created', (_e, newWin) => {
-        newWin.once('ready-to-show', () => {
-          setImmediate(showDialog);
-        });
-      });
-    }
+    if (!win || win.isDestroyed()) return;
+    dialog.showMessageBox(win, {
+      type: 'info',
+      message: '开启通知提醒',
+      detail: '终端等待处理时会及时提醒你。',
+      buttons: ['前往设置', '稍后'],
+      defaultId: 0,
+    }).then((result) => {
+      if (result.response === 0) {
+        shell.openExternal('x-apple.systempreferences:com.apple.Notifications-Settings.extension');
+      }
+    }).catch(() => {});
 
-    console.log('[DOCK-BADGE] permission dialog scheduled');
+    console.log('[DOCK-BADGE] permission dialog shown');
   }
 
   function updateBadge(): void {
