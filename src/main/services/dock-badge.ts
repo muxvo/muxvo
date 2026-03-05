@@ -59,7 +59,7 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
     stopTimer();
     const { mode, intervalMin } = deps.getConfig();
     if (mode !== 'timed') return;
-    const ms = Math.max(1, Math.min(30, intervalMin)) * 60 * 1000;
+    const ms = Math.max(1, intervalMin) * 60 * 1000;
     timerHandle = setInterval(updateBadge, ms);
   }
 
