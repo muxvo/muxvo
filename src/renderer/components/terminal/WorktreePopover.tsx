@@ -234,7 +234,7 @@ export function WorktreePopover({
               onClick={handleCreateWorktree}
               disabled={creating}
             >
-              {creating ? 'Creating...' : '+ New Worktree (from main)'}
+              {creating ? 'Creating...' : `+ New Worktree (from ${worktrees.find(wt => wt.isMain)?.branch || 'main'})`}
             </button>
             <div className="worktree-popover__divider" />
           </>
