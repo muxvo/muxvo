@@ -85,7 +85,11 @@ export function createFsHandlers() {
       try {
         // Atomic write: write to tmp file then rename
         const tmpPath = `${resolved}.muxvo-tmp-${Date.now()}`;
-        await fsp.writeFile(tmpPath, params.content, 'utf-8');
+        if (params.encoding === 'base64') {
+          await fsp.writeFile(tmpPath, Buffer.from(params.content, 'base64'));
+        } else {
+          await fsp.writeFile(tmpPath, params.content, 'utf-8');
+        }
         await fsp.rename(tmpPath, resolved);
         return { success: true };
       } catch (err: unknown) {

@@ -12,7 +12,7 @@ import { MarkdownWysiwyg } from '@/renderer/components/markdown/MarkdownWysiwyg'
 import { TerminalSidebar } from '@/renderer/components/terminal/TerminalSidebar';
 import { UnsavedPromptDialog } from './UnsavedPromptDialog';
 import { FileItem } from './FileItem';
-import { SpreadsheetView } from './SpreadsheetView';
+import { SpreadsheetView, type SpreadsheetHandle } from './SpreadsheetView';
 import { type TreeEntry, mapIpcToTree, insertAfter, removeChildren } from '@/renderer/utils/file-tree';
 import type { FileEntry as IpcFileEntry } from '@/shared/types/fs.types';
 import './FileTempView.css';
@@ -121,6 +121,7 @@ export function FileTempView({
   const [sourceMode, setSourceMode] = useState(false); // false=WYSIWYG, true=raw source textarea
   const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
   const pendingActionRef = useRef<(() => void) | null>(null);
+  const spreadsheetRef = useRef<SpreadsheetHandle>(null);
 
   // Sync content prop to editContent when file changes
   useEffect(() => {
@@ -139,11 +140,17 @@ export function FileTempView({
   // Save handler
   const handleSave = useCallback(async () => {
     if (!isDirty) return;
-    const result = await window.api.fs.writeFile(filePath, editContent);
+    let result;
+    if (fileType === 'spreadsheet' && spreadsheetRef.current) {
+      const base64 = spreadsheetRef.current.getBase64();
+      result = await window.api.fs.writeFile(filePath, base64, 'base64');
+    } else {
+      result = await window.api.fs.writeFile(filePath, editContent);
+    }
     if (result?.success) {
       setIsDirty(false);
     }
-  }, [filePath, editContent, isDirty]);
+  }, [filePath, editContent, isDirty, fileType]);
 
   // Close with unsaved check
   const handleCloseRequest = useCallback(() => {
@@ -434,7 +441,7 @@ export function FileTempView({
             )
           )}
           {fileType === 'spreadsheet' && content && (
-            <SpreadsheetView content={content} />
+            <SpreadsheetView ref={spreadsheetRef} content={content} onChange={() => setIsDirty(true)} />
           )}
           {(fileType === 'code' || fileType === 'text') && (
             <textarea
