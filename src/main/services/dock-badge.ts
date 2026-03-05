@@ -1,4 +1,4 @@
-import { app, dialog, BrowserWindow, Notification } from 'electron';
+import { app, shell, Notification } from 'electron';
 import type { DockBadgeMode } from '@/shared/types/config.types';
 
 interface DockBadgeDeps {
@@ -15,25 +15,20 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
     if (deps.getPermissionNotified()) return;
     deps.setPermissionNotified();
 
-    // 1. 发静默通知注册应用到 macOS 通知中心（角标依赖此注册）
     if (Notification.isSupported()) {
-      const n = new Notification({ title: 'Muxvo', body: '请开启通知提醒', silent: true });
+      const appName = app.isPackaged ? 'Muxvo' : 'Electron';
+      const n = new Notification({
+        title: '开启通知提醒',
+        body: `前往「系统设置 → 通知 → ${appName}」，开启通知提醒，终端等待处理时会及时提醒你。点击此通知可直接前往设置。`,
+        silent: true,
+      });
+      n.on('click', () => {
+        shell.openExternal('x-apple.systempreferences:com.apple.Notifications-Settings.extension');
+      });
       n.show();
-      setTimeout(() => n.close(), 200);
     }
 
-    // 2. 弹原生对话框提示用户开启角标权限
-    const appName = app.isPackaged ? 'Muxvo' : 'Electron';
-    const win = BrowserWindow.getAllWindows()[0];
-    dialog.showMessageBox(win ?? null as any, {
-      type: 'info',
-      title: '开启通知提醒',
-      message: '开启通知提醒',
-      detail: `前往「系统设置 → 通知 → ${appName}」，开启通知提醒，终端等待处理时会及时提醒你。`,
-      buttons: ['知道了'],
-    }).catch(() => {});
-
-    console.log('[DOCK-BADGE] permission dialog shown');
+    console.log('[DOCK-BADGE] permission notification shown');
   }
 
   function updateBadge(): void {
