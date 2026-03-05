@@ -48,6 +48,8 @@ export interface SessionSummary {
   cwd?: string;
   /** true 表示此 session 仅在 archive 中，CC 已删除原文件，无法 resume */
   archiveOnly?: boolean;
+  /** worktree 来源标签，如 "wt-1"、"worktree-10" */
+  worktreeLabel?: string;
 }
 
 /** 消息中的内容块（user 和 assistant 共用） */

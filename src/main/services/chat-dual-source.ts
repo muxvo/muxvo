@@ -34,7 +34,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
 
   /** Detect worktree projectHash and return parent hash. Returns null if not a worktree. */
   function getParentProjectHash(hash: string): string | null {
-    const idx = hash.indexOf('-.worktrees-');
+    const idx = hash.indexOf('--worktrees-');
     return idx > 0 ? hash.slice(0, idx) : null;
   }
 
@@ -378,6 +378,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
     filePath: string;
     mtime: number;
     archiveOnly?: boolean;
+    worktreeLabel?: string;
   }
 
   /**
@@ -408,11 +409,14 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
         const cacheKey = file.projectHash + '/' + file.fileName;
         const cached = summaryCache.get(cacheKey);
         if (cached && Date.now() < cached.expiry) {
-          return cached.data.title ? cached.data : null;
+          const s = cached.data;
+          if (file.worktreeLabel) s.worktreeLabel = file.worktreeLabel;
+          return s.title ? s : null;
         }
         try {
           const summary = await extractSessionSummary(file.projectHash, file.filePath, file.fileName);
           if (file.archiveOnly) summary.archiveOnly = true;
+          if (file.worktreeLabel) summary.worktreeLabel = file.worktreeLabel;
           summaryCache.set(cacheKey, { data: summary, expiry: Date.now() + CACHE_TTL });
           return summary.title ? summary : null;
         } catch {
@@ -530,8 +534,10 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
       }));
 
       // Also include sessions from worktree project directories
+      const WORKTREE_MARKER = '--worktrees-';
       const wtHashes = worktreeMap.get(projectHash) || [];
       for (const wtHash of wtHashes) {
+        const wtName = wtHash.slice(wtHash.lastIndexOf(WORKTREE_MARKER) + WORKTREE_MARKER.length);
         const wtPath = join(projectsDir, wtHash);
         const wtStats = await scanSessionFilesFromDir(wtPath);
         for (const s of wtStats) {
@@ -540,6 +546,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
             fileName: s.fileName,
             filePath: join(wtPath, s.fileName),
             mtime: s.mtime,
+            worktreeLabel: wtName,
           });
         }
       }
@@ -584,11 +591,17 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
               batch.map(async (dir) => {
                 const projectPath = join(baseDir, dir.name);
                 const stats = await scanSessionFilesFromDir(projectPath);
+                const parentHash = getParentProjectHash(dir.name);
+                const wtMarker = '--worktrees-';
+                const wtLabel = parentHash
+                  ? dir.name.slice(dir.name.lastIndexOf(wtMarker) + wtMarker.length)
+                  : undefined;
                 return stats.map(s => ({
-                  projectHash: dir.name,
+                  projectHash: parentHash || dir.name,
                   fileName: s.fileName,
                   filePath: join(projectPath, s.fileName),
                   mtime: s.mtime,
+                  worktreeLabel: wtLabel,
                 }));
               })
             );

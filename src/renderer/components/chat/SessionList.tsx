@@ -195,7 +195,8 @@ export function SessionList({ sessions, titleMatchedSessions, contentMatchedSess
   const renderCard = (session: SessionSummary) => {
     const isRenaming = session.sessionId === renamingSessionId;
     const displayTitle = session.customTitle || session.title;
-    const title = displayTitle.slice(0, 50);
+    const wtPrefix = session.worktreeLabel ? `[${session.worktreeLabel}] ` : '';
+    const title = (wtPrefix + displayTitle).slice(0, 50);
     const snippet = searchSnippets?.get(session.sessionId);
     const rawPreview = session.title.slice(0, 100);
     const preview = searchQuery && snippet && !rawPreview.toLowerCase().includes(searchQuery.toLowerCase())
