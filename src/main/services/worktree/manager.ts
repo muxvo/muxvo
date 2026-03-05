@@ -74,15 +74,20 @@ async function ensureGitignore(repoPath: string): Promise<void> {
   }
 }
 
-/** Find the next available worktree number */
-function nextWorktreeNumber(worktrees: WorktreeInfo[]): number {
-  const existing = worktrees
+/** Find the next available worktree number (checks both worktree list and git branches) */
+function nextWorktreeNumber(worktrees: WorktreeInfo[], gitBranches: string[] = []): number {
+  const fromWorktrees = worktrees
     .map((wt) => wt.branch)
     .filter((b) => /^(wt|worktree)-\d+$/.test(b))
     .map((b) => parseInt(b.replace(/^(wt|worktree)-/, ''), 10));
 
-  if (existing.length === 0) return 1;
-  return Math.max(...existing) + 1;
+  const fromGit = gitBranches
+    .filter((b) => /^(wt|worktree)-\d+$/.test(b))
+    .map((b) => parseInt(b.replace(/^(wt|worktree)-/, ''), 10));
+
+  const all = [...new Set([...fromWorktrees, ...fromGit])];
+  if (all.length === 0) return 1;
+  return Math.max(...all) + 1;
 }
 
 export function createWorktreeManager() {
@@ -155,9 +160,16 @@ export function createWorktreeManager() {
       // Ensure .worktrees/ is gitignored
       await ensureGitignore(repoPath);
 
-      // Determine next number
+      // Determine next number (check both worktree list and existing git branches)
       const existing = await this.list(repoPath);
-      const num = nextWorktreeNumber(existing);
+      let gitBranches: string[] = [];
+      try {
+        const branchOutput = await git(repoPath, ['branch', '--list', 'wt-*']);
+        gitBranches = branchOutput.split('\n')
+          .map(b => b.replace(/^[*+]?\s+/, '').trim())
+          .filter(Boolean);
+      } catch { /* ignore */ }
+      const num = nextWorktreeNumber(existing, gitBranches);
       const branch = `wt-${num}`;
       const worktreePath = join(repoPath, '.worktrees', branch);
 
