@@ -222,12 +222,12 @@ export function createWorktreeManager() {
       if (force) args.push('--force');
       await git(mainRepo, args);
 
-      // Delete the branch (only auto-created worktree-N branches)
-      if (branch && /^(wt|worktree)-\d+$/.test(branch)) {
+      // Delete the branch (-d: safe delete, only removes if merged)
+      if (branch) {
         try {
-          await git(mainRepo, ['branch', '-D', branch]);
+          await git(mainRepo, ['branch', '-d', branch]);
         } catch {
-          // Branch may already be deleted or merged — ignore
+          // -d fails if branch has unmerged commits — safe to ignore
         }
       }
     },
