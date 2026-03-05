@@ -15,7 +15,7 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
     if (deps.getPermissionNotified()) return;
     deps.setPermissionNotified();
 
-    // 延迟到下一事件循环，确保对话框能正确附着到主窗口
+    // 延迟确保窗口完全就绪并获得焦点，对话框才能正确附着显示为 sheet
     setTimeout(() => {
       const appName = app.isPackaged ? 'Muxvo' : 'Electron';
       const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0];
@@ -30,7 +30,7 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
           shell.openExternal('x-apple.systempreferences:com.apple.Notifications-Settings.extension');
         }
       }).catch(() => {});
-    }, 0);
+    }, 500);
 
     console.log('[DOCK-BADGE] permission dialog shown');
   }
