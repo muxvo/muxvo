@@ -17,7 +17,7 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
 
     // 1. 发静默通知注册应用到 macOS 通知中心（角标依赖此注册）
     if (Notification.isSupported()) {
-      const n = new Notification({ title: 'Muxvo', body: 'Dock 角标已启用', silent: true });
+      const n = new Notification({ title: 'Muxvo', body: '请开启通知提醒', silent: true });
       n.show();
       setTimeout(() => n.close(), 200);
     }
