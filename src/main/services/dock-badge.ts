@@ -18,17 +18,8 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
     if (Notification.isSupported()) {
       const n = new Notification({
         title: '开启通知提醒',
-        body: '开启后终端等待处理时会提醒你',
+        body: '终端等待处理时会及时提醒你',
         silent: true,
-        actions: [
-          { type: 'button' as const, text: '前往设置' },
-          { type: 'button' as const, text: '稍后' },
-        ],
-      });
-      n.on('action', (_e: Electron.Event, index: number) => {
-        if (index === 0) {
-          shell.openExternal('x-apple.systempreferences:com.apple.Notifications-Settings.extension');
-        }
       });
       n.on('click', () => {
         shell.openExternal('x-apple.systempreferences:com.apple.Notifications-Settings.extension');
