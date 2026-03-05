@@ -28,7 +28,8 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
     dialog.showMessageBox(win ?? null as any, {
       type: 'info',
       title: '开启通知提醒',
-      message: `前往「系统设置 → 通知 → ${appName}」，开启通知提醒。`,
+      message: '开启通知提醒',
+      detail: `前往「系统设置 → 通知 → ${appName}」，开启通知提醒，终端等待处理时会及时提醒你。`,
       buttons: ['知道了'],
     }).catch(() => {});
 
