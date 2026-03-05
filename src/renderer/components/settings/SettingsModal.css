@@ -251,29 +251,42 @@
   gap: 4px;
 }
 
-/* Select dropdown */
-.settings-modal__select {
-  appearance: none;
-  -webkit-appearance: none;
+/* Dock badge compact toggle */
+.settings-modal__badge-toggle {
+  display: flex;
+  gap: 3px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 6px 32px 6px 12px;
-  color: var(--text-primary);
-  font-size: 12px;
-  font-family: inherit;
-  cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239a9aa0' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  min-width: 120px;
+  padding: 2px;
   flex-shrink: 0;
-  transition: border-color 0.15s;
 }
 
-.settings-modal__select:focus {
-  outline: none;
-  border-color: var(--accent);
+.settings-modal__badge-toggle-btn {
+  padding: 5px 11px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.settings-modal__badge-toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.settings-modal__badge-toggle-btn--active {
+  background: var(--accent);
+  color: #000;
+  font-weight: 600;
+}
+
+[data-theme="light"] .settings-modal__badge-toggle-btn--active {
+  color: #fff;
 }
 
 /* Dock badge interval sub-row */

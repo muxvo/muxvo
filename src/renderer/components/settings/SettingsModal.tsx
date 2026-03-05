@@ -173,15 +173,20 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
                     <div className="settings-modal__label">{t('settings.dockBadge')}</div>
                     <div className="settings-modal__desc">{t('settings.dockBadgeDesc')}</div>
                   </div>
-                  <select
-                    className="settings-modal__select"
-                    value={dockBadgeMode}
-                    onChange={(e) => handleDockBadgeChange(e.target.value as 'off' | 'realtime' | 'timed')}
-                  >
-                    <option value="off">{t('settings.dockBadgeOff')} — {t('settings.dockBadgeOffDesc')}</option>
-                    <option value="realtime">{t('settings.dockBadgeRealtime')} — {t('settings.dockBadgeRealtimeDesc')}</option>
-                    <option value="timed">{t('settings.dockBadgeTimed')} — {t('settings.dockBadgeTimedDesc')}</option>
-                  </select>
+                  <div className="settings-modal__badge-toggle">
+                    <button
+                      className={`settings-modal__badge-toggle-btn${dockBadgeMode === 'off' ? ' settings-modal__badge-toggle-btn--active' : ''}`}
+                      onClick={() => handleDockBadgeChange('off')}
+                    >{t('settings.dockBadgeOff')}</button>
+                    <button
+                      className={`settings-modal__badge-toggle-btn${dockBadgeMode === 'realtime' ? ' settings-modal__badge-toggle-btn--active' : ''}`}
+                      onClick={() => handleDockBadgeChange('realtime')}
+                    >{t('settings.dockBadgeRealtime')}</button>
+                    <button
+                      className={`settings-modal__badge-toggle-btn${dockBadgeMode === 'timed' ? ' settings-modal__badge-toggle-btn--active' : ''}`}
+                      onClick={() => handleDockBadgeChange('timed')}
+                    >{t('settings.dockBadgeTimed')}</button>
+                  </div>
                 </div>
                 {dockBadgeMode === 'timed' && (
                   <div className="settings-modal__badge-sub-row">
