@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>macOS 通知样式预览</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    background: #2c2c2e;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 50px;
+    padding: 50px 30px;
+  }
+  h1 {
+    width: 100%;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 500;
+    color: #999;
+  }
+  .card { width: 380px; }
+  .label {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #888;
+    margin-bottom: 14px;
+    letter-spacing: 2px;
+  }
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+    background: #c8e6c9;
+    color: #2e7d32;
+  }
+
+  /* macOS notification banner style */
+  .notif {
+    background: rgba(50, 50, 52, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 14px 16px;
+    box-shadow:
+      0 0 0 0.5px rgba(255,255,255,0.08),
+      0 8px 32px rgba(0,0,0,0.4);
+    color: #fff;
+  }
+  .notif-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .notif-icon {
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(160deg, #1c1c30, #0e1525);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    color: #c8a44e;
+    flex-shrink: 0;
+  }
+  .notif-app {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+  }
+  .notif-time {
+    font-size: 12px;
+    color: rgba(255,255,255,0.35);
+    margin-left: auto;
+  }
+  .notif-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.95);
+    margin-bottom: 2px;
+    padding-left: 30px;
+  }
+  .notif-body {
+    font-size: 12px;
+    line-height: 1.45;
+    color: rgba(255,255,255,0.6);
+    padding-left: 30px;
+  }
+
+  /* Expanded notification with actions */
+  .notif-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-left: 30px;
+  }
+  .notif-btn {
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+  }
+  .notif-btn-primary {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+  }
+  .notif-btn-secondary {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.6);
+  }
+
+  .desc {
+    margin-top: 12px;
+    font-size: 11px;
+    color: #777;
+    text-align: center;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<h1>macOS 右上角通知样式 — 点击「前往设置」跳转通知权限页</h1>
+
+<!-- 方案 A -->
+<div class="card">
+  <div class="label">方案 A <span class="tag">推荐</span></div>
+  <div class="notif">
+    <div class="notif-header">
+      <div class="notif-icon">nv</div>
+      <span class="notif-app">Muxvo</span>
+      <span class="notif-time">现在</span>
+    </div>
+    <div class="notif-title">开启通知提醒</div>
+    <div class="notif-body">终端等待处理时会及时提醒你</div>
+    <div class="notif-actions">
+      <button class="notif-btn notif-btn-primary">前往设置</button>
+    </div>
+  </div>
+  <div class="desc">标题简洁 + body 说明价值 + 一个按钮跳转</div>
+</div>
+
+<!-- 方案 B -->
+<div class="card">
+  <div class="label">方案 B</div>
+  <div class="notif">
+    <div class="notif-header">
+      <div class="notif-icon">nv</div>
+      <span class="notif-app">Muxvo</span>
+      <span class="notif-time">现在</span>
+    </div>
+    <div class="notif-title">开启通知提醒</div>
+    <div class="notif-body">开启后终端等待处理时会提醒你</div>
+    <div class="notif-actions">
+      <button class="notif-btn notif-btn-primary">前往设置</button>
+      <button class="notif-btn notif-btn-secondary">稍后</button>
+    </div>
+  </div>
+  <div class="desc">两个按钮：前往设置 + 稍后</div>
+</div>
+
+<!-- 方案 C -->
+<div class="card">
+  <div class="label">方案 C</div>
+  <div class="notif">
+    <div class="notif-header">
+      <div class="notif-icon">nv</div>
+      <span class="notif-app">Muxvo</span>
+      <span class="notif-time">现在</span>
+    </div>
+    <div class="notif-title">请开启通知权限</div>
+    <div class="notif-body">前往「系统设置 → 通知」开启提醒，终端等待时会通知你</div>
+    <div class="notif-actions">
+      <button class="notif-btn notif-btn-primary">去开启</button>
+    </div>
+  </div>
+  <div class="desc">直接告诉用户操作路径 + 行动按钮</div>
+</div>
+
+<!-- 方案 D -->
+<div class="card">
+  <div class="label">方案 D</div>
+  <div class="notif">
+    <div class="notif-header">
+      <div class="notif-icon">nv</div>
+      <span class="notif-app">Muxvo</span>
+      <span class="notif-time">现在</span>
+    </div>
+    <div class="notif-title">别错过终端提醒</div>
+    <div class="notif-body">开启通知后，终端等待处理时 Muxvo 会提醒你</div>
+    <div class="notif-actions">
+      <button class="notif-btn notif-btn-primary">前往设置</button>
+    </div>
+  </div>
+  <div class="desc">场景驱动标题 + 说明 + 跳转按钮</div>
+</div>
+
+</body>
+</html>
