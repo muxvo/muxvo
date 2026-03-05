@@ -11,24 +11,51 @@ interface DockBadgeDeps {
 export function createDockBadgeService(deps: DockBadgeDeps) {
   let timerHandle: ReturnType<typeof setInterval> | null = null;
 
-  function countWaiting(): number {
-    return deps.listTerminals().filter((t) => t.state === 'WaitingInput').length;
-  }
-
   function updateBadge(): void {
-    if (process.platform !== 'darwin') return;
+    if (process.platform !== 'darwin') {
+      console.log('[DOCK-BADGE] skip: not darwin, platform=' + process.platform);
+      return;
+    }
     const { mode } = deps.getConfig();
     if (mode === 'off') {
-      app.dock.setBadge('');
-      app.setBadgeCount(0);
+      clearBadge();
       return;
     }
     const terminals = deps.listTerminals();
     const count = terminals.filter((t) => t.state === 'WaitingInput').length;
     const badge = count > 0 ? String(count) : '';
-    console.log(`[DOCK-BADGE] mode=${mode} terminals=${terminals.length} states=[${terminals.map(t => t.state).join(',')}] waiting=${count} badge="${badge}"`);
-    app.dock.setBadge(badge);
-    app.setBadgeCount(count);
+    console.log(`[DOCK-BADGE] updateBadge: mode=${mode} terminals=${terminals.length} states=[${terminals.map(t => t.state).join(',')}] waiting=${count} badge="${badge}"`);
+    console.log(`[DOCK-BADGE] app.dock exists=${!!app.dock} app.dock.setBadge type=${typeof app.dock?.setBadge} app.setBadgeCount type=${typeof app.setBadgeCount}`);
+
+    try {
+      const result1 = app.dock.setBadge(badge);
+      console.log(`[DOCK-BADGE] app.dock.setBadge("${badge}") returned:`, result1);
+    } catch (err) {
+      console.error('[DOCK-BADGE] app.dock.setBadge ERROR:', err);
+    }
+
+    try {
+      const result2 = app.setBadgeCount(count);
+      console.log(`[DOCK-BADGE] app.setBadgeCount(${count}) returned:`, result2);
+    } catch (err) {
+      console.error('[DOCK-BADGE] app.setBadgeCount ERROR:', err);
+    }
+
+    // 额外尝试：直接用 dock.setBadge 设置一个固定值验证
+    try {
+      console.log(`[DOCK-BADGE] current badge from getBadge(): "${app.dock.getBadge()}"`);
+    } catch (err) {
+      console.error('[DOCK-BADGE] getBadge ERROR:', err);
+    }
+  }
+
+  function clearBadge(): void {
+    try {
+      app.dock.setBadge('');
+      app.setBadgeCount(0);
+    } catch (err) {
+      console.error('[DOCK-BADGE] clearBadge ERROR:', err);
+    }
   }
 
   /** 终端状态变化时调用（实时模式下立即更新角标） */
@@ -58,9 +85,10 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
   /** 配置变化时重新初始化模式 */
   function reconfigure(): void {
     const { mode } = deps.getConfig();
+    console.log(`[DOCK-BADGE] reconfigure: mode=${mode}`);
     stopTimer();
     if (mode === 'off') {
-      if (process.platform === 'darwin') { app.dock.setBadge(''); app.setBadgeCount(0); }
+      clearBadge();
     } else if (mode === 'timed') {
       startTimer();
       updateBadge();
@@ -72,7 +100,7 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
   /** 应用退出时清理 */
   function dispose(): void {
     stopTimer();
-    if (process.platform === 'darwin') { app.dock.setBadge(''); app.setBadgeCount(0); }
+    clearBadge();
   }
 
   return { onStateChange, reconfigure, dispose };
