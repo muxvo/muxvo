@@ -12,6 +12,7 @@ import { MarkdownWysiwyg } from '@/renderer/components/markdown/MarkdownWysiwyg'
 import { TerminalSidebar } from '@/renderer/components/terminal/TerminalSidebar';
 import { UnsavedPromptDialog } from './UnsavedPromptDialog';
 import { FileItem } from './FileItem';
+import { SpreadsheetView } from './SpreadsheetView';
 import { type TreeEntry, mapIpcToTree, insertAfter, removeChildren } from '@/renderer/utils/file-tree';
 import type { FileEntry as IpcFileEntry } from '@/shared/types/fs.types';
 import './FileTempView.css';
@@ -20,7 +21,7 @@ interface FileTempViewProps {
   projectCwd: string;
   filePath: string;
   content: string;
-  fileType: 'markdown' | 'code' | 'text' | 'image';
+  fileType: 'markdown' | 'code' | 'text' | 'image' | 'spreadsheet';
   terminals: Array<{ id: string; state: string; cwd: string }>;
   sourceTerminalId: string;
   onClose: () => void;
@@ -39,7 +40,7 @@ function getDisplayName(path: string): string {
   return path.split('/').pop() || '~';
 }
 
-function getTagLabel(fileType: 'markdown' | 'code' | 'text' | 'image'): string {
+function getTagLabel(fileType: 'markdown' | 'code' | 'text' | 'image' | 'spreadsheet'): string {
   switch (fileType) {
     case 'markdown':
       return 'MD';
@@ -47,6 +48,8 @@ function getTagLabel(fileType: 'markdown' | 'code' | 'text' | 'image'): string {
       return 'CODE';
     case 'image':
       return 'IMG';
+    case 'spreadsheet':
+      return 'XLS';
     case 'text':
       return 'TXT';
   }
@@ -429,6 +432,9 @@ export function FileTempView({
                 }}
               />
             )
+          )}
+          {fileType === 'spreadsheet' && content && (
+            <SpreadsheetView content={content} />
           )}
           {(fileType === 'code' || fileType === 'text') && (
             <textarea

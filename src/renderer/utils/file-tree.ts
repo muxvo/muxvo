@@ -17,6 +17,9 @@ export interface TreeEntry {
 /** Image file extensions */
 const IMAGE_EXTS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico'];
 
+/** Spreadsheet file extensions */
+const SPREADSHEET_EXTS = ['xlsx', 'xls'];
+
 /** Code file extensions */
 const CODE_EXTS = [
   'ts', 'tsx', 'js', 'jsx', 'json', 'css', 'html', 'py', 'swift',
@@ -25,9 +28,10 @@ const CODE_EXTS = [
 ];
 
 /** Map file extension to display type */
-export function mapExtToFileType(ext: string): 'markdown' | 'code' | 'text' | 'image' {
+export function mapExtToFileType(ext: string): 'markdown' | 'code' | 'text' | 'image' | 'spreadsheet' {
   if (['md', 'mdx', 'markdown'].includes(ext)) return 'markdown';
   if (IMAGE_EXTS.includes(ext)) return 'image';
+  if (SPREADSHEET_EXTS.includes(ext)) return 'spreadsheet';
   if (CODE_EXTS.includes(ext)) return 'code';
   return 'text';
 }

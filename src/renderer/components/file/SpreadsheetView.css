@@ -1,0 +1,71 @@
+.spreadsheet-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.spreadsheet-view__tabs {
+  display: flex;
+  gap: 2px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.spreadsheet-view__tab {
+  padding: 4px 12px;
+  font-size: 12px;
+  border-radius: 4px 4px 0 0;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.spreadsheet-view__tab:hover {
+  color: var(--text-primary);
+}
+
+.spreadsheet-view__tab--active {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--border);
+  border-bottom-color: var(--bg-surface);
+}
+
+.spreadsheet-view__table-wrap {
+  flex: 1;
+  overflow: auto;
+}
+
+.spreadsheet-view__table {
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.spreadsheet-view__table td {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spreadsheet-view__row-num {
+  color: var(--text-muted);
+  text-align: right;
+  user-select: none;
+  background: var(--bg-deep);
+  min-width: 40px;
+}
+
+.spreadsheet-view__empty,
+.spreadsheet-view__truncated {
+  padding: 16px;
+  color: var(--text-muted);
+  text-align: center;
+  font-size: 13px;
+}
