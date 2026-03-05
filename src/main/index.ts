@@ -193,7 +193,14 @@ function createWindow(windowConfig?: WindowConfig): void {
   mainWindow = new BrowserWindow(opts);
 
   mainWindow.on('ready-to-show', () => {
+    console.log('[DOCK-BADGE-DEBUG] ready-to-show fired, calling show()');
     mainWindow?.show();
+    console.log('[DOCK-BADGE-DEBUG] show() done, isVisible:', mainWindow?.isVisible(), 'isFocused:', mainWindow?.isFocused());
+  });
+
+  // 等窗口获得 macOS focus 后再弹权限对话框，确保 sheet 样式
+  mainWindow.once('focus', () => {
+    console.log('[DOCK-BADGE-DEBUG] focus event fired, isVisible:', mainWindow?.isVisible(), 'isFocused:', mainWindow?.isFocused());
     dockBadge?.reconfigure();
   });
 
