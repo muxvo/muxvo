@@ -12,7 +12,7 @@
  */
 
 import { app, BrowserWindow, ipcMain, shell, protocol, net, Menu, dialog } from 'electron';
-import { join, basename } from 'path';
+import { join } from 'path';
 import { pathToFileURL } from 'url';
 import { is } from '@electron-toolkit/utils';
 
@@ -51,7 +51,7 @@ import { createMemoryPushTimer } from './services/perf/memory-push';
 import { createPerfLogger } from './services/perf/perf-logger';
 import { createSyncStatusPusher } from './services/chat-sync-push';
 import { initConfigDir, createConfigManager } from './services/app/config';
-import type { PinnedWorkspace } from '@/shared/types/config.types';
+import type { SavedWorkspace } from '@/shared/types/config.types';
 import { calculateGridLayout } from '@/shared/utils/grid-layout';
 import { initPrefsDir, getPreferences, savePreferences } from './services/app/preferences';
 import { createUpdateLogger } from './services/app/update-logger';
@@ -292,33 +292,30 @@ app.whenReady().then(() => {
   const configManager = createConfigManager();
   const savedConfig = configManager.loadConfig();
 
-  // ── Workspace menu helpers ──
+  // ── Workspace menu (save/restore terminal groups) ──
 
-  function buildAppMenu(workspaces: PinnedWorkspace[]): void {
+  function buildAppMenu(workspaces: SavedWorkspace[]): void {
     const workspaceSubmenu: Electron.MenuItemConstructorOptions[] = [
       ...workspaces.map((ws) => ({
-        label: ws.name,
-        sublabel: ws.path,
-        click: () => pushToAllWindows(IPC_CHANNELS.APP.OPEN_WORKSPACE_TERMINAL, { cwd: ws.path }),
+        label: `${ws.name}  (${ws.terminals.length})`,
+        click: () => restoreWorkspace(ws),
       })),
       ...(workspaces.length > 0 ? [{ type: 'separator' as const }] : []),
       {
-        label: '添加工作区...',
-        click: async () => {
-          const result = await dialog.showOpenDialog({ properties: ['openDirectory'] });
-          if (!result.canceled && result.filePaths[0]) {
-            addWorkspace(result.filePaths[0]);
-          }
-        },
+        label: '保存当前为工作区',
+        click: () => saveCurrentAsWorkspace(),
       },
       ...(workspaces.length > 0
-        ? [{
-            label: '管理工作区',
-            submenu: workspaces.map((ws) => ({
-              label: `移除 ${ws.name}`,
-              click: () => removeWorkspace(ws.path),
-            })),
-          } as Electron.MenuItemConstructorOptions]
+        ? [
+            { type: 'separator' as const },
+            {
+              label: '管理工作区',
+              submenu: workspaces.map((ws) => ({
+                label: `移除「${ws.name}」`,
+                click: () => removeWorkspace(ws.name),
+              })),
+            } as Electron.MenuItemConstructorOptions,
+          ]
         : []),
     ];
 
@@ -370,25 +367,53 @@ app.whenReady().then(() => {
     Menu.setApplicationMenu(Menu.buildFromTemplate(template));
   }
 
-  function addWorkspace(dirPath: string): void {
+  function restoreWorkspace(ws: SavedWorkspace): void {
+    if (!terminalManager || !mainWindow) return;
+    terminalManager.closeAll();
+    for (const t of ws.terminals) {
+      const result = terminalManager.spawn({ cwd: t.cwd });
+      if (result.success && result.id && t.customName) {
+        terminalManager.setName(result.id, t.customName);
+      }
+    }
+    // Notify renderer to refresh terminal list
+    const list = terminalManager.list();
+    mainWindow.webContents.send(IPC_CHANNELS.TERMINAL.LIST_UPDATED, list.map((t) => ({
+      id: t.id, state: t.state, cwd: t.cwd, customName: t.customName,
+    })));
+  }
+
+  function saveCurrentAsWorkspace(): void {
+    if (!terminalManager) return;
+    const terminals = terminalManager.list();
+    if (terminals.length === 0) return;
+
+    const now = new Date();
+    const timeStr = `${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const name = `${terminals.length}个终端 - ${timeStr}`;
+
+    const ws: SavedWorkspace = {
+      name,
+      terminals: terminals.map((t) => ({ cwd: t.cwd, customName: t.customName })),
+      savedAt: now.toISOString(),
+    };
+
     const config = configManager.loadConfig();
-    const existing = config.pinnedWorkspaces || [];
-    if (existing.some((w) => w.path === dirPath)) return;
-    const name = basename(dirPath);
-    const updated = [...existing, { path: dirPath, name }].slice(0, 10);
-    configManager.saveConfig({ ...config, pinnedWorkspaces: updated });
+    const existing = config.savedWorkspaces || [];
+    const updated = [ws, ...existing].slice(0, 10);
+    configManager.saveConfig({ ...config, savedWorkspaces: updated });
     buildAppMenu(updated);
   }
 
-  function removeWorkspace(dirPath: string): void {
+  function removeWorkspace(name: string): void {
     const config = configManager.loadConfig();
-    const updated = (config.pinnedWorkspaces || []).filter((w) => w.path !== dirPath);
-    configManager.saveConfig({ ...config, pinnedWorkspaces: updated });
+    const updated = (config.savedWorkspaces || []).filter((w) => w.name !== name);
+    configManager.saveConfig({ ...config, savedWorkspaces: updated });
     buildAppMenu(updated);
   }
 
   // Build initial menu with saved workspaces
-  buildAppMenu(savedConfig.pinnedWorkspaces || []);
+  buildAppMenu(savedConfig.savedWorkspaces || []);
 
   // Performance logger (writes to ~/.muxvo/logs/perf.log on anomalies)
   perfLogger = createPerfLogger();
@@ -479,10 +504,9 @@ app.whenReady().then(() => {
   const ptyAdapter = createRealPtyAdapter();
   terminalManager = createTerminalManager({ pty: ptyAdapter, perfLogger, debugLogger: termDebugLogWriter });
 
-  // Register terminal IPC handlers (with config save + workspace menu rebuild on terminal change)
+  // Register terminal IPC handlers (with config save on terminal change)
   registerTerminalHandlers(terminalManager, () => {
-    const workspaces = saveTerminalConfig(configManager);
-    buildAppMenu(workspaces);
+    saveTerminalConfig(configManager);
   });
 
   // Register chat IPC handlers
@@ -872,24 +896,12 @@ app.whenReady().then(() => {
   });
 });
 
-/** Save terminal list to config (called on terminal create/close).
- *  Also auto-collects terminal cwds into pinnedWorkspaces for the workspace menu.
- *  Returns the updated pinnedWorkspaces list (caller can use it to rebuild menu). */
-function saveTerminalConfig(configManager: ReturnType<typeof createConfigManager>): PinnedWorkspace[] {
-  if (!terminalManager) return [];
+/** Save terminal list to config (called on terminal create/close) */
+function saveTerminalConfig(configManager: ReturnType<typeof createConfigManager>): void {
+  if (!terminalManager) return;
   const existing = configManager.loadConfig();
   const terminals = terminalManager.list();
   const { cols, rows } = calculateGridLayout(terminals.length);
-
-  // Auto-collect terminal cwds into workspace list (dedupe, exclude $HOME, cap at 20)
-  const home = app.getPath('home');
-  const existingPinned = existing.pinnedWorkspaces || [];
-  const existingPaths = new Set(existingPinned.map((w) => w.path));
-  const newWorkspaces = terminals
-    .filter((t) => t.cwd && t.cwd !== home && !existingPaths.has(t.cwd))
-    .map((t) => ({ path: t.cwd, name: basename(t.cwd) }));
-  const mergedWorkspaces = [...existingPinned, ...newWorkspaces].slice(0, 20);
-
   configManager.saveConfig({
     ...existing,
     openTerminals: terminals.map((t) => ({
@@ -900,10 +912,7 @@ function saveTerminalConfig(configManager: ReturnType<typeof createConfigManager
       columnRatios: Array(cols).fill(1),
       rowRatios: Array(rows).fill(1),
     },
-    pinnedWorkspaces: mergedWorkspaces,
   });
-
-  return mergedWorkspaces;
 }
 
 /** Save window bounds and clear terminal list on normal close.
