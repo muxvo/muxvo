@@ -1,4 +1,4 @@
-import { app, dialog, shell, BrowserWindow, Notification } from 'electron';
+import { app, dialog, shell, BrowserWindow } from 'electron';
 import type { DockBadgeMode } from '@/shared/types/config.types';
 
 interface DockBadgeDeps {
@@ -14,13 +14,6 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
   function notifyBadgePermission(): void {
     if (deps.getPermissionNotified()) return;
     deps.setPermissionNotified();
-
-    // 静默通知注册应用到 macOS 通知中心（角标依赖此注册）
-    if (Notification.isSupported()) {
-      const n = new Notification({ title: 'Muxvo', body: ' ', silent: true });
-      n.show();
-      n.close();
-    }
 
     // 对话框引导用户开启通知
     const appName = app.isPackaged ? 'Muxvo' : 'Electron';
