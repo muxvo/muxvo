@@ -10,6 +10,25 @@ interface DockBadgeDeps {
 
 export function createDockBadgeService(deps: DockBadgeDeps) {
   let timerHandle: ReturnType<typeof setInterval> | null = null;
+  let notificationRegistered = false;
+
+  /** macOS 要求应用先发过通知才能显示 Dock 角标，发一次静默通知完成注册 */
+  function ensureNotificationRegistered(): void {
+    if (notificationRegistered) return;
+    notificationRegistered = true;
+    try {
+      const { Notification } = require('electron');
+      if (Notification.isSupported()) {
+        const n = new Notification({ title: 'Muxvo', body: '角标通知已启用', silent: true });
+        n.show();
+        // 立即关闭，用户几乎看不到
+        setTimeout(() => n.close(), 100);
+        console.log('[DOCK-BADGE] notification registered for badge support');
+      }
+    } catch (err) {
+      console.error('[DOCK-BADGE] ensureNotificationRegistered ERROR:', err);
+    }
+  }
 
   function updateBadge(): void {
     if (process.platform !== 'darwin') {
@@ -25,27 +44,14 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
     const count = terminals.filter((t) => t.state === 'WaitingInput').length;
     const badge = count > 0 ? String(count) : '';
     console.log(`[DOCK-BADGE] updateBadge: mode=${mode} terminals=${terminals.length} states=[${terminals.map(t => t.state).join(',')}] waiting=${count} badge="${badge}"`);
-    console.log(`[DOCK-BADGE] app.dock exists=${!!app.dock} app.dock.setBadge type=${typeof app.dock?.setBadge} app.setBadgeCount type=${typeof app.setBadgeCount}`);
+    if (count > 0) ensureNotificationRegistered();
 
     try {
-      const result1 = app.dock.setBadge(badge);
-      console.log(`[DOCK-BADGE] app.dock.setBadge("${badge}") returned:`, result1);
+      app.dock.setBadge(badge);
+      app.setBadgeCount(count);
+      console.log(`[DOCK-BADGE] badge set, getBadge()="${app.dock.getBadge()}"`);
     } catch (err) {
-      console.error('[DOCK-BADGE] app.dock.setBadge ERROR:', err);
-    }
-
-    try {
-      const result2 = app.setBadgeCount(count);
-      console.log(`[DOCK-BADGE] app.setBadgeCount(${count}) returned:`, result2);
-    } catch (err) {
-      console.error('[DOCK-BADGE] app.setBadgeCount ERROR:', err);
-    }
-
-    // 额外尝试：直接用 dock.setBadge 设置一个固定值验证
-    try {
-      console.log(`[DOCK-BADGE] current badge from getBadge(): "${app.dock.getBadge()}"`);
-    } catch (err) {
-      console.error('[DOCK-BADGE] getBadge ERROR:', err);
+      console.error('[DOCK-BADGE] setBadge ERROR:', err);
     }
   }
 
