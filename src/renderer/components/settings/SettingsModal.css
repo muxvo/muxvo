@@ -323,6 +323,29 @@
   color: var(--text-muted);
 }
 
+/* Stepper editable input */
+.settings-modal__stepper-input {
+  width: 36px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  line-height: 30px;
+  font-family: inherit;
+  -moz-appearance: textfield;
+  outline: none;
+}
+
+.settings-modal__stepper-input::-webkit-inner-spin-button,
+.settings-modal__stepper-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 /* Light theme adjustments */
 [data-theme="light"] .settings-modal__toggle-btn--active {
   color: #fff;
