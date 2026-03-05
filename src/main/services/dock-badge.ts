@@ -15,10 +15,9 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
   /** 获取原始图标（懒加载并缓存） */
   function getOriginalIcon(): Electron.NativeImage {
     if (!originalIcon) {
-      // dev 模式用 build/icon.icns，打包后用 app 自带图标
       const iconPath = app.isPackaged
-        ? join(process.resourcesPath, 'icon.icns')
-        : join(app.getAppPath(), 'build', 'icon.icns');
+        ? join(process.resourcesPath, 'icon.png')
+        : join(app.getAppPath(), 'build', 'icon.png');
       originalIcon = nativeImage.createFromPath(iconPath);
       console.log('[DOCK-BADGE] loaded icon from', iconPath, 'empty=', originalIcon.isEmpty());
     }
