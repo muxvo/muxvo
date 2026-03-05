@@ -13,33 +13,22 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
   /** 首次启用时弹窗提示用户开启通知权限 */
   function notifyBadgePermission(): void {
     if (deps.getPermissionNotified()) return;
-    deps.setPermissionNotified();
-
-    function showDialog(win: BrowserWindow): void {
-      dialog.showMessageBox(win, {
-        type: 'info',
-        message: '开启通知提醒',
-        detail: '终端等待处理时会及时提醒你。',
-        buttons: ['前往设置', '稍后'],
-        defaultId: 0,
-      }).then((result) => {
-        if (result.response === 0) {
-          shell.openExternal('x-apple.systempreferences:com.apple.Notifications-Settings.extension');
-        }
-      }).catch(() => {});
-    }
 
     const win = BrowserWindow.getFocusedWindow();
-    if (win && !win.isDestroyed()) {
-      showDialog(win);
-    } else {
-      // 窗口尚未就绪（启动阶段），等窗口获得焦点后再弹 sheet
-      app.once('browser-window-focus', (_event, focusedWin) => {
-        if (!focusedWin.isDestroyed()) {
-          showDialog(focusedWin);
-        }
-      });
-    }
+    if (!win || win.isDestroyed()) return; // 无窗口→跳过，不设 flag，下次 reconfigure 重试
+
+    deps.setPermissionNotified();
+    dialog.showMessageBox(win, {
+      type: 'info',
+      message: '开启通知提醒',
+      detail: '终端等待处理时会及时提醒你。',
+      buttons: ['前往设置', '稍后'],
+      defaultId: 0,
+    }).then((result) => {
+      if (result.response === 0) {
+        shell.openExternal('x-apple.systempreferences:com.apple.Notifications-Settings.extension');
+      }
+    }).catch(() => {});
   }
 
   function updateBadge(): void {

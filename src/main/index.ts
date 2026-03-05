@@ -883,6 +883,9 @@ app.whenReady().then(() => {
           }).catch((err) => {
             console.warn('[MUXVO:auth] Session restore failed:', err);
           });
+
+          // 窗口完全就绪后重试 dock badge 权限对话框（确保 sheet 样式）
+          dockBadge?.reconfigure();
         }, 500);
       });
     }
