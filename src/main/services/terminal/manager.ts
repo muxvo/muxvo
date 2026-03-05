@@ -191,6 +191,8 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
           if (osc7Match) {
             const newCwd = decodeURIComponent(osc7Match[1]);
             const terminal = terminals.get(id);
+            // Log all OSC 7 events to file for debugging
+            try { require('fs').appendFileSync('/tmp/muxvo-workspace.log', `[OSC7] id=${id} newCwd=${newCwd} termCwd=${terminal?.cwd} age=${terminal ? Date.now() - terminal.spawnedAt : 'N/A'}ms\n`); } catch {}
             if (terminal && terminal.cwd !== newCwd) {
               // Grace period: ignore OSC 7 cwd changes during shell initialization
               // to prevent login shell scripts from overriding the spawn cwd

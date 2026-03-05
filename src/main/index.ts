@@ -369,20 +369,23 @@ app.whenReady().then(() => {
 
   function restoreWorkspace(ws: SavedWorkspace): void {
     if (!terminalManager || !mainWindow) return;
-    console.log('[WORKSPACE:restore] closing all terminals...');
+    const fs = require('fs');
+    const logFile = '/tmp/muxvo-workspace.log';
+    const log = (msg: string) => { fs.appendFileSync(logFile, msg + '\n'); console.log(msg); };
+    log('[WORKSPACE:restore] closing all terminals...');
     terminalManager.closeAll();
-    console.log('[WORKSPACE:restore] spawning', ws.terminals.length, 'terminals');
+    log('[WORKSPACE:restore] spawning ' + ws.terminals.length + ' terminals');
     for (const t of ws.terminals) {
-      console.log('[WORKSPACE:restore] spawn cwd=', t.cwd, 'customName=', t.customName);
+      log('[WORKSPACE:restore] spawn cwd=' + t.cwd + ' customName=' + t.customName);
       const result = terminalManager.spawn({ cwd: t.cwd });
-      console.log('[WORKSPACE:restore] spawn result=', JSON.stringify(result));
+      log('[WORKSPACE:restore] spawn result=' + JSON.stringify(result));
       if (result.success && result.id && t.customName) {
         terminalManager.setName(result.id, t.customName);
       }
     }
     // Notify renderer to refresh terminal list
     const list = terminalManager.list();
-    console.log('[WORKSPACE:restore] final list=', list.map(t => ({ id: t.id, cwd: t.cwd })));
+    log('[WORKSPACE:restore] final list=' + JSON.stringify(list.map(t => ({ id: t.id, cwd: t.cwd }))));
     mainWindow.webContents.send(IPC_CHANNELS.TERMINAL.LIST_UPDATED, list.map((t) => ({
       id: t.id, state: t.state, cwd: t.cwd, customName: t.customName,
     })));
