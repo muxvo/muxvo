@@ -25,7 +25,7 @@ export function SkillsPanel(): JSX.Element {
   const [fileContent, setFileContent] = useState('');
   const [editContent, setEditContent] = useState('');
   const [isDirty, setIsDirty] = useState(false);
-  const [fileType, setFileType] = useState<'markdown' | 'code' | 'text' | 'image'>('text');
+  const [fileType, setFileType] = useState<'markdown' | 'code' | 'text' | 'image' | 'spreadsheet'>('text');
   const [sourceMode, setSourceMode] = useState(false);
   const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
   const [leftWidth, setLeftWidth] = useState(240);

@@ -39,6 +39,7 @@ export interface ReadFileResponse {
 export interface WriteFileRequest {
   path: string;
   content: string;
+  encoding?: 'utf-8' | 'base64';
 }
 
 /** fs:watch-start 请求参数 */

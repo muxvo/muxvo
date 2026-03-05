@@ -12,6 +12,7 @@ import { MarkdownWysiwyg } from '@/renderer/components/markdown/MarkdownWysiwyg'
 import { TerminalSidebar } from '@/renderer/components/terminal/TerminalSidebar';
 import { UnsavedPromptDialog } from './UnsavedPromptDialog';
 import { FileItem } from './FileItem';
+import { SpreadsheetView, type SpreadsheetHandle } from './SpreadsheetView';
 import { type TreeEntry, mapIpcToTree, insertAfter, removeChildren } from '@/renderer/utils/file-tree';
 import type { FileEntry as IpcFileEntry } from '@/shared/types/fs.types';
 import './FileTempView.css';
@@ -20,7 +21,7 @@ interface FileTempViewProps {
   projectCwd: string;
   filePath: string;
   content: string;
-  fileType: 'markdown' | 'code' | 'text' | 'image';
+  fileType: 'markdown' | 'code' | 'text' | 'image' | 'spreadsheet';
   terminals: Array<{ id: string; state: string; cwd: string }>;
   sourceTerminalId: string;
   onClose: () => void;
@@ -39,7 +40,7 @@ function getDisplayName(path: string): string {
   return path.split('/').pop() || '~';
 }
 
-function getTagLabel(fileType: 'markdown' | 'code' | 'text' | 'image'): string {
+function getTagLabel(fileType: 'markdown' | 'code' | 'text' | 'image' | 'spreadsheet'): string {
   switch (fileType) {
     case 'markdown':
       return 'MD';
@@ -47,6 +48,8 @@ function getTagLabel(fileType: 'markdown' | 'code' | 'text' | 'image'): string {
       return 'CODE';
     case 'image':
       return 'IMG';
+    case 'spreadsheet':
+      return 'XLS';
     case 'text':
       return 'TXT';
   }
@@ -118,6 +121,7 @@ export function FileTempView({
   const [sourceMode, setSourceMode] = useState(false); // false=WYSIWYG, true=raw source textarea
   const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
   const pendingActionRef = useRef<(() => void) | null>(null);
+  const spreadsheetRef = useRef<SpreadsheetHandle>(null);
 
   // Sync content prop to editContent when file changes
   useEffect(() => {
@@ -136,11 +140,17 @@ export function FileTempView({
   // Save handler
   const handleSave = useCallback(async () => {
     if (!isDirty) return;
-    const result = await window.api.fs.writeFile(filePath, editContent);
+    let result;
+    if (fileType === 'spreadsheet' && spreadsheetRef.current) {
+      const base64 = spreadsheetRef.current.getBase64();
+      result = await window.api.fs.writeFile(filePath, base64, 'base64');
+    } else {
+      result = await window.api.fs.writeFile(filePath, editContent);
+    }
     if (result?.success) {
       setIsDirty(false);
     }
-  }, [filePath, editContent, isDirty]);
+  }, [filePath, editContent, isDirty, fileType]);
 
   // Close with unsaved check
   const handleCloseRequest = useCallback(() => {
@@ -429,6 +439,9 @@ export function FileTempView({
                 }}
               />
             )
+          )}
+          {fileType === 'spreadsheet' && content && (
+            <SpreadsheetView ref={spreadsheetRef} content={content} onChange={() => setIsDirty(true)} />
           )}
           {(fileType === 'code' || fileType === 'text') && (
             <textarea
