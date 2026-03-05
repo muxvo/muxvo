@@ -325,7 +325,7 @@
 
 /* Stepper editable input */
 .settings-modal__stepper-input {
-  width: 36px;
+  min-width: 36px;
   text-align: center;
   font-size: 13px;
   font-weight: 600;
@@ -338,6 +338,7 @@
   font-family: inherit;
   -moz-appearance: textfield;
   outline: none;
+  padding: 0 4px;
 }
 
 .settings-modal__stepper-input::-webkit-inner-spin-button,

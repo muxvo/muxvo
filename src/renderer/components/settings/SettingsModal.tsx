@@ -216,6 +216,7 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
                           type="text"
                           inputMode="numeric"
                           value={intervalInputValue}
+                          size={Math.max(1, intervalInputValue.length)}
                           onChange={(e) => setIntervalInputValue(e.target.value.replace(/[^\d]/g, ''))}
                           onBlur={handleIntervalInputBlur}
                           onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
