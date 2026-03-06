@@ -70,7 +70,7 @@ const dauQuerySchema = {
     properties: {
       from: { type: 'string' as const },
       to: { type: 'string' as const },
-      source: { type: 'string' as const, enum: ['web', 'app'] },
+      source: { type: 'string' as const, enum: ['app', 'web', 'all'] },
     },
     additionalProperties: false,
   },
@@ -83,7 +83,7 @@ const eventsQuerySchema = {
       from: { type: 'string' as const },
       to: { type: 'string' as const },
       metric: { type: 'string' as const },
-      source: { type: 'string' as const, enum: ['web', 'app'] },
+      source: { type: 'string' as const, enum: ['app', 'web', 'all'] },
     },
     additionalProperties: false,
   },
@@ -152,14 +152,14 @@ export const analyticsRoutes: FastifyPluginAsync = async (app) => {
   // =========================================================================
 
   app.get<{
-    Querystring: { from?: string; to?: string; source?: 'web' | 'app' };
+    Querystring: { from?: string; to?: string; source?: 'web' | 'app' | 'all' };
   }>('/dau', { schema: dauQuerySchema, preHandler: [authenticate] }, async (request) => {
     const {
       from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
         .toISOString()
         .slice(0, 10),
       to = new Date().toISOString().slice(0, 10),
-      source,
+      source = 'app',
     } = request.query;
 
     let sql = `SELECT date,
@@ -169,11 +169,12 @@ export const analyticsRoutes: FastifyPluginAsync = async (app) => {
        WHERE date >= $1 AND date <= $2`;
     const params: unknown[] = [from, to];
 
-    if (source === 'web') {
-      sql += ` AND metric LIKE 'web:%'`;
-    } else if (source === 'app') {
+    if (source === 'app') {
       sql += ` AND metric NOT LIKE 'web:%'`;
+    } else if (source === 'web') {
+      sql += ` AND metric LIKE 'web:%'`;
     }
+    // source === 'all': no filter
 
     sql += ` GROUP BY date ORDER BY date`;
 
@@ -199,7 +200,7 @@ export const analyticsRoutes: FastifyPluginAsync = async (app) => {
   // =========================================================================
 
   app.get<{
-    Querystring: { from?: string; to?: string; metric?: string; source?: 'web' | 'app' };
+    Querystring: { from?: string; to?: string; metric?: string; source?: 'web' | 'app' | 'all' };
   }>('/events', { schema: eventsQuerySchema, preHandler: [authenticate] }, async (request) => {
     const {
       from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
@@ -207,7 +208,7 @@ export const analyticsRoutes: FastifyPluginAsync = async (app) => {
         .slice(0, 10),
       to = new Date().toISOString().slice(0, 10),
       metric,
-      source,
+      source = 'app',
     } = request.query;
 
     let sql = `SELECT date, metric, SUM(value) AS total
@@ -215,11 +216,12 @@ export const analyticsRoutes: FastifyPluginAsync = async (app) => {
                WHERE date >= $1 AND date <= $2`;
     const params: unknown[] = [from, to];
 
-    if (source === 'web') {
-      sql += ` AND metric LIKE 'web:%'`;
-    } else if (source === 'app') {
+    if (source === 'app') {
       sql += ` AND metric NOT LIKE 'web:%'`;
+    } else if (source === 'web') {
+      sql += ` AND metric LIKE 'web:%'`;
     }
+    // source === 'all': no filter
 
     if (metric) {
       sql += ` AND metric = $${params.length + 1}`;
