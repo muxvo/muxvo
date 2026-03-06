@@ -217,10 +217,6 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
 
     // Cmd/Ctrl+F toggles terminal search bar
     term.attachCustomKeyEventHandler((e: KeyboardEvent) => {
-      // DEBUG: log all Cmd+key events to terminal-debug.log
-      if (e.metaKey && e.type === 'keydown') {
-        termLog('cmdKey', `key=${e.key} meta=${e.metaKey} id=${terminalId}`);
-      }
       const isMod = navigator.platform.includes('Mac') ? e.metaKey : e.ctrlKey;
       if (isMod && e.key === 'f' && e.type === 'keydown') {
         setSearchVisible((prev) => !prev);
@@ -239,16 +235,16 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
         window.dispatchEvent(new CustomEvent('muxvo:global-zoom-request', { detail: 'reset' }));
         return false;
       }
-      // Cmd+Left → line start (Ctrl+A), Cmd+Right → line end (Ctrl+E) on macOS
+      // Cmd+Left → Home (line start), Cmd+Right → End (line end) on macOS
       if (e.metaKey && e.type === 'keydown') {
         if (e.key === 'ArrowLeft') {
           e.preventDefault();
-          window.api.terminal.write(terminalId, '\x01');
+          window.api.terminal.write(terminalId, '\x1b[H');
           return false;
         }
         if (e.key === 'ArrowRight') {
           e.preventDefault();
-          window.api.terminal.write(terminalId, '\x05');
+          window.api.terminal.write(terminalId, '\x1b[F');
           return false;
         }
       }

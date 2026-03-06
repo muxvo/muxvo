@@ -55,6 +55,8 @@ interface ManagedTerminal {
   customName?: string;
   machine: ReturnType<typeof createTerminalMachine>;
   spawnedAt: number;
+  /** Whether shell init keybindings (Home/End) have been injected */
+  shellInitDone?: boolean;
 }
 
 interface TerminalManagerDeps {
@@ -226,6 +228,20 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
                 pushStateChange(id, machine.state);
               }
             }
+          }
+
+          // On first WaitingInput: inject Home/End keybindings for zsh (all keymaps).
+          // This ensures Cmd+Left/Right works regardless of vi/emacs mode.
+          const terminal = terminals.get(id);
+          if (machine.state === 'WaitingInput' && terminal && !terminal.shellInitDone) {
+            terminal.shellInitDone = true;
+            proc.write(
+              " bindkey '\\e[H' beginning-of-line 2>/dev/null;" +
+              " bindkey '\\e[F' end-of-line 2>/dev/null;" +
+              " bindkey -M vicmd '\\e[H' beginning-of-line 2>/dev/null;" +
+              " bindkey -M vicmd '\\e[F' end-of-line 2>/dev/null;" +
+              " clear\r"
+            );
           }
         });
 
