@@ -240,17 +240,18 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
         return false;
       }
       // Cmd+Left → Home (line start), Cmd+Right → End (line end) on macOS
-      // Use ESC O H / ESC O F (application mode Home/End) — works in zsh/bash
-      // regardless of readline Ctrl+A/Ctrl+E rebinding.
+      // Use CSI H/F (xterm-256color terminfo Home/End sequences)
       if (e.metaKey && e.type === 'keydown') {
         if (e.key === 'ArrowLeft') {
           e.preventDefault();
-          window.api.terminal.write(terminalId, '\x1bOH');
+          termLog('cmdArrow', `WRITE Home to ${terminalId}`);
+          window.api.terminal.write(terminalId, '\x1b[H');
           return false;
         }
         if (e.key === 'ArrowRight') {
           e.preventDefault();
-          window.api.terminal.write(terminalId, '\x1bOF');
+          termLog('cmdArrow', `WRITE End to ${terminalId}`);
+          window.api.terminal.write(terminalId, '\x1b[F');
           return false;
         }
       }
