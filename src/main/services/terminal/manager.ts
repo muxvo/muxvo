@@ -230,22 +230,25 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
             }
           }
 
-          // On first WaitingInput: inject Home/End keybindings for zsh (all keymaps).
+          // On first PTY output: schedule keybinding injection for zsh (all keymaps).
           // This ensures Cmd+Left/Right works regardless of vi/emacs mode.
-          const terminal = terminals.get(id);
-          if (machine.state === 'WaitingInput' && terminal && !terminal.shellInitDone) {
-            terminal.shellInitDone = true;
-            debugLog(`[TERM:shellInit] id=${id} injecting Home/End keybindings`);
-            // Delay: avoid writing to PTY master from within onData callback
-            setTimeout(() => {
-              proc.write(
-                " bindkey '\\e[H' beginning-of-line 2>/dev/null;" +
-                " bindkey '\\e[F' end-of-line 2>/dev/null;" +
-                " bindkey -M vicmd '\\e[H' beginning-of-line 2>/dev/null;" +
-                " bindkey -M vicmd '\\e[F' end-of-line 2>/dev/null;" +
-                " clear\r"
-              );
-            }, 100);
+          // We inject on first output (not WaitingInput) because WaitingInput only
+          // detects CC/interactive prompts, not regular shell prompts.
+          {
+            const terminal = terminals.get(id);
+            if (terminal && !terminal.shellInitDone) {
+              terminal.shellInitDone = true;
+              debugLog(`[TERM:shellInit] id=${id} scheduling keybinding injection`);
+              setTimeout(() => {
+                proc.write(
+                  " bindkey '\\e[H' beginning-of-line 2>/dev/null;" +
+                  " bindkey '\\e[F' end-of-line 2>/dev/null;" +
+                  " bindkey -M vicmd '\\e[H' beginning-of-line 2>/dev/null;" +
+                  " bindkey -M vicmd '\\e[F' end-of-line 2>/dev/null;" +
+                  " clear\r"
+                );
+              }, 500);
+            }
           }
         });
 
