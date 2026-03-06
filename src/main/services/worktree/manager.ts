@@ -75,7 +75,7 @@ async function ensureGitignore(repoPath: string): Promise<void> {
 }
 
 /** Find the next available worktree number (checks both worktree list and git branches) */
-function nextWorktreeNumber(worktrees: WorktreeInfo[], gitBranches: string[] = []): number {
+function nextWorktreeNumber(worktrees: WorktreeInfo[], gitBranches: string[] = [], existingDirs: string[] = []): number {
   const fromWorktrees = worktrees
     .map((wt) => wt.branch)
     .filter((b) => /^(wt|worktree)-\d+$/.test(b))
@@ -85,7 +85,11 @@ function nextWorktreeNumber(worktrees: WorktreeInfo[], gitBranches: string[] = [
     .filter((b) => /^(wt|worktree)-\d+$/.test(b))
     .map((b) => parseInt(b.replace(/^(wt|worktree)-/, ''), 10));
 
-  const all = [...new Set([...fromWorktrees, ...fromGit])];
+  const fromDirs = existingDirs
+    .filter((d) => /^(wt|worktree)-\d+$/.test(d))
+    .map((d) => parseInt(d.replace(/^(wt|worktree)-/, ''), 10));
+
+  const all = [...new Set([...fromWorktrees, ...fromGit, ...fromDirs])];
   if (all.length === 0) return 1;
   return Math.max(...all) + 1;
 }
@@ -160,7 +164,12 @@ export function createWorktreeManager() {
       // Ensure .worktrees/ is gitignored
       await ensureGitignore(repoPath);
 
-      // Determine next number (check both worktree list and existing git branches)
+      // Prune stale worktree references before creating
+      try {
+        await git(repoPath, ['worktree', 'prune']);
+      } catch { /* ignore */ }
+
+      // Determine next number (check worktree list, git branches, AND existing directories)
       const existing = await this.list(repoPath);
       let gitBranches: string[] = [];
       try {
@@ -169,7 +178,17 @@ export function createWorktreeManager() {
           .map(b => b.replace(/^[*+]?\s+/, '').trim())
           .filter(Boolean);
       } catch { /* ignore */ }
-      const num = nextWorktreeNumber(existing, gitBranches);
+
+      // Scan .worktrees/ directory for existing subdirectories (may be orphaned)
+      const worktreesDir = join(repoPath, '.worktrees');
+      let existingDirs: string[] = [];
+      try {
+        const { readdir } = await import('node:fs/promises');
+        const entries = await readdir(worktreesDir, { withFileTypes: true });
+        existingDirs = entries.filter(e => e.isDirectory()).map(e => e.name);
+      } catch { /* directory may not exist yet */ }
+
+      const num = nextWorktreeNumber(existing, gitBranches, existingDirs);
       const branch = `wt-${num}`;
       const worktreePath = join(repoPath, '.worktrees', branch);
 
