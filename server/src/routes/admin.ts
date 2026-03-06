@@ -488,6 +488,40 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // =========================================================================
+  // GET /admin/analytics/churn — Churned (inactive) device stats
+  // =========================================================================
+
+  app.get('/analytics/churn', async () => {
+    const result = await query<{
+      churn_7d: string;
+      churn_14d: string;
+      churn_30d: string;
+      total_devices: string;
+    }>(
+      `SELECT
+         COUNT(*) FILTER (WHERE last_seen_at < NOW() - INTERVAL '7 days')::text AS churn_7d,
+         COUNT(*) FILTER (WHERE last_seen_at < NOW() - INTERVAL '14 days')::text AS churn_14d,
+         COUNT(*) FILTER (WHERE last_seen_at < NOW() - INTERVAL '30 days')::text AS churn_30d,
+         COUNT(*)::text AS total_devices
+       FROM devices
+       WHERE first_seen_at < NOW() - INTERVAL '7 days'`,
+    );
+
+    const row = result.rows[0];
+    const total = Number(row.total_devices);
+    const churn7d = Number(row.churn_7d);
+    const churn14d = Number(row.churn_14d);
+    const churn30d = Number(row.churn_30d);
+
+    return {
+      total_devices: total,
+      churn_7d: { count: churn7d, rate: total > 0 ? Math.round((churn7d / total) * 1000) / 10 : 0 },
+      churn_14d: { count: churn14d, rate: total > 0 ? Math.round((churn14d / total) * 1000) / 10 : 0 },
+      churn_30d: { count: churn30d, rate: total > 0 ? Math.round((churn30d / total) * 1000) / 10 : 0 },
+    };
+  });
+
+  // =========================================================================
   // GET /admin/devices — Paginated device list with search
   // =========================================================================
 
