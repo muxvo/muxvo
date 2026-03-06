@@ -235,13 +235,17 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
           const terminal = terminals.get(id);
           if (machine.state === 'WaitingInput' && terminal && !terminal.shellInitDone) {
             terminal.shellInitDone = true;
-            proc.write(
-              " bindkey '\\e[H' beginning-of-line 2>/dev/null;" +
-              " bindkey '\\e[F' end-of-line 2>/dev/null;" +
-              " bindkey -M vicmd '\\e[H' beginning-of-line 2>/dev/null;" +
-              " bindkey -M vicmd '\\e[F' end-of-line 2>/dev/null;" +
-              " clear\r"
-            );
+            debugLog(`[TERM:shellInit] id=${id} injecting Home/End keybindings`);
+            // Delay: avoid writing to PTY master from within onData callback
+            setTimeout(() => {
+              proc.write(
+                " bindkey '\\e[H' beginning-of-line 2>/dev/null;" +
+                " bindkey '\\e[F' end-of-line 2>/dev/null;" +
+                " bindkey -M vicmd '\\e[H' beginning-of-line 2>/dev/null;" +
+                " bindkey -M vicmd '\\e[F' end-of-line 2>/dev/null;" +
+                " clear\r"
+              );
+            }, 100);
           }
         });
 
