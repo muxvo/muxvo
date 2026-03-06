@@ -239,16 +239,16 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
         window.dispatchEvent(new CustomEvent('muxvo:global-zoom-request', { detail: 'reset' }));
         return false;
       }
-      // Cmd+Left / Cmd+Right — DEBUG: send visible char to test IPC write path
+      // Cmd+Left → line start (Ctrl+A), Cmd+Right → line end (Ctrl+E) on macOS
       if (e.metaKey && e.type === 'keydown') {
         if (e.key === 'ArrowLeft') {
           e.preventDefault();
-          window.api.terminal.write(terminalId, 'X');
+          window.api.terminal.write(terminalId, '\x01');
           return false;
         }
         if (e.key === 'ArrowRight') {
           e.preventDefault();
-          window.api.terminal.write(terminalId, 'Y');
+          window.api.terminal.write(terminalId, '\x05');
           return false;
         }
       }
