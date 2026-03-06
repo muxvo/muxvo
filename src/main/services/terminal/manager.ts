@@ -238,7 +238,6 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
             const terminal = terminals.get(id);
             if (terminal && !terminal.shellInitDone) {
               terminal.shellInitDone = true;
-              debugLog(`[TERM:shellInit] id=${id} scheduling keybinding injection`);
               setTimeout(() => {
                 proc.write(
                   " bindkey '\\e[H' beginning-of-line 2>/dev/null;" +
