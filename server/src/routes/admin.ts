@@ -274,6 +274,63 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // =========================================================================
+  // GET /admin/analytics/usage-duration — Average daily usage duration
+  // =========================================================================
+
+  app.get<{
+    Querystring: { from?: string; to?: string };
+  }>('/analytics/usage-duration', {
+    schema: {
+      querystring: {
+        type: 'object' as const,
+        properties: {
+          from: { type: 'string' as const },
+          to: { type: 'string' as const },
+        },
+        additionalProperties: false,
+      },
+    },
+  }, async (request) => {
+    const from = request.query.from
+      ?? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const to = request.query.to
+      ?? new Date().toISOString().slice(0, 10);
+
+    const result = await query<{
+      date: string;
+      active_devices: string;
+      avg_minutes: string;
+      total_minutes: string;
+    }>(
+      `SELECT date,
+              COUNT(DISTINCT device_id)::text AS active_devices,
+              ROUND(AVG(heartbeat_count) * 30)::text AS avg_minutes,
+              SUM(heartbeat_count)::text AS total_minutes
+       FROM (
+         SELECT date, device_id, COUNT(*) * 30 AS heartbeat_count
+         FROM analytics_events
+         WHERE metric = 'session.heartbeat'
+           AND date >= $1 AND date <= $2
+         GROUP BY date, device_id
+       ) sub
+       GROUP BY date
+       ORDER BY date`,
+      [from, to],
+    );
+
+    return {
+      from,
+      to,
+      data: result.rows.map(r => ({
+        date: r.date,
+        active_devices: Number(r.active_devices),
+        avg_minutes: Number(r.avg_minutes),
+        total_minutes: Number(r.total_minutes),
+      })),
+    };
+  });
+
+  // =========================================================================
   // GET /admin/analytics/retention — Retention rates + cohort matrix
   // =========================================================================
 
