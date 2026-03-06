@@ -239,19 +239,24 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
         window.dispatchEvent(new CustomEvent('muxvo:global-zoom-request', { detail: 'reset' }));
         return false;
       }
-      // Cmd+Left → Home (line start), Cmd+Right → End (line end) on macOS
-      // Use CSI H/F (xterm-256color terminfo Home/End sequences)
+      // Cmd+Left → Home, Cmd+Right → End on macOS
+      // Dispatch synthetic Home/End KeyboardEvent to xterm's textarea so xterm.js
+      // handles mode detection (application vs normal cursor keys) and sends the
+      // correct escape sequence through its normal onData path.
       if (e.metaKey && e.type === 'keydown') {
-        if (e.key === 'ArrowLeft') {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
           e.preventDefault();
-          termLog('cmdArrow', `WRITE Home to ${terminalId}`);
-          window.api.terminal.write(terminalId, '\x1b[H');
-          return false;
-        }
-        if (e.key === 'ArrowRight') {
-          e.preventDefault();
-          termLog('cmdArrow', `WRITE End to ${terminalId}`);
-          window.api.terminal.write(terminalId, '\x1b[F');
+          const syntheticKey = e.key === 'ArrowLeft' ? 'Home' : 'End';
+          const textarea = containerRef.current?.querySelector('textarea.xterm-helper-textarea');
+          if (textarea) {
+            textarea.dispatchEvent(new KeyboardEvent('keydown', {
+              key: syntheticKey,
+              code: syntheticKey,
+              keyCode: syntheticKey === 'Home' ? 36 : 35,
+              bubbles: true,
+              cancelable: true,
+            }));
+          }
           return false;
         }
       }
