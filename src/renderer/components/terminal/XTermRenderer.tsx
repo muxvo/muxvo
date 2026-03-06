@@ -217,6 +217,10 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
 
     // Cmd/Ctrl+F toggles terminal search bar
     term.attachCustomKeyEventHandler((e: KeyboardEvent) => {
+      // DEBUG: log all Cmd+key events to terminal-debug.log
+      if (e.metaKey && e.type === 'keydown') {
+        termLog('cmdKey', `key=${e.key} meta=${e.metaKey} id=${terminalId}`);
+      }
       const isMod = navigator.platform.includes('Mac') ? e.metaKey : e.ctrlKey;
       if (isMod && e.key === 'f' && e.type === 'keydown') {
         setSearchVisible((prev) => !prev);
