@@ -73,6 +73,7 @@ let updateDownloaded = false;
 let forceClose = false;
 let isQuitting = false;
 const sessionStartTime = Date.now();
+let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
 interface WindowConfig {
   width: number;
@@ -897,6 +898,14 @@ app.whenReady().then(() => {
     params: { version: app.getVersion(), platform: process.platform, restored_count: 0 },
   });
 
+  // Analytics: session heartbeat every 30 minutes (usage duration + cross-day DAU)
+  heartbeatTimer = setInterval(() => {
+    tracker?.track({
+      event: 'session.heartbeat',
+      params: { uptime_sec: Math.floor((Date.now() - sessionStartTime) / 1000) },
+    });
+  }, 30 * 60 * 1000);
+
   // Device heartbeat: register device info and check blocked status
   (async () => {
     try {
@@ -979,6 +988,12 @@ function saveWindowBoundsAndClearTerminals(): void {
 }
 
 app.on('window-all-closed', () => {
+  // Clear heartbeat timer
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+  }
+
   // Analytics: track session end
   tracker?.track({
     event: 'session.end',

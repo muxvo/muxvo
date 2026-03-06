@@ -274,6 +274,63 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // =========================================================================
+  // GET /admin/analytics/usage-duration — Average daily usage duration
+  // =========================================================================
+
+  app.get<{
+    Querystring: { from?: string; to?: string };
+  }>('/analytics/usage-duration', {
+    schema: {
+      querystring: {
+        type: 'object' as const,
+        properties: {
+          from: { type: 'string' as const },
+          to: { type: 'string' as const },
+        },
+        additionalProperties: false,
+      },
+    },
+  }, async (request) => {
+    const from = request.query.from
+      ?? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const to = request.query.to
+      ?? new Date().toISOString().slice(0, 10);
+
+    const result = await query<{
+      date: string;
+      active_devices: string;
+      avg_minutes: string;
+      total_minutes: string;
+    }>(
+      `SELECT date,
+              COUNT(DISTINCT device_id)::text AS active_devices,
+              ROUND(AVG(heartbeat_count) * 30)::text AS avg_minutes,
+              SUM(heartbeat_count)::text AS total_minutes
+       FROM (
+         SELECT date, device_id, COUNT(*) * 30 AS heartbeat_count
+         FROM analytics_events
+         WHERE metric = 'session.heartbeat'
+           AND date >= $1 AND date <= $2
+         GROUP BY date, device_id
+       ) sub
+       GROUP BY date
+       ORDER BY date`,
+      [from, to],
+    );
+
+    return {
+      from,
+      to,
+      data: result.rows.map(r => ({
+        date: r.date,
+        active_devices: Number(r.active_devices),
+        avg_minutes: Number(r.avg_minutes),
+        total_minutes: Number(r.total_minutes),
+      })),
+    };
+  });
+
+  // =========================================================================
   // GET /admin/analytics/retention — Retention rates + cohort matrix
   // =========================================================================
 
@@ -428,6 +485,40 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
     }));
 
     return { rates, cohorts, granularity };
+  });
+
+  // =========================================================================
+  // GET /admin/analytics/churn — Churned (inactive) device stats
+  // =========================================================================
+
+  app.get('/analytics/churn', async () => {
+    const result = await query<{
+      churn_7d: string;
+      churn_14d: string;
+      churn_30d: string;
+      total_devices: string;
+    }>(
+      `SELECT
+         COUNT(*) FILTER (WHERE last_seen_at < NOW() - INTERVAL '7 days')::text AS churn_7d,
+         COUNT(*) FILTER (WHERE last_seen_at < NOW() - INTERVAL '14 days')::text AS churn_14d,
+         COUNT(*) FILTER (WHERE last_seen_at < NOW() - INTERVAL '30 days')::text AS churn_30d,
+         COUNT(*)::text AS total_devices
+       FROM devices
+       WHERE first_seen_at < NOW() - INTERVAL '7 days'`,
+    );
+
+    const row = result.rows[0];
+    const total = Number(row.total_devices);
+    const churn7d = Number(row.churn_7d);
+    const churn14d = Number(row.churn_14d);
+    const churn30d = Number(row.churn_30d);
+
+    return {
+      total_devices: total,
+      churn_7d: { count: churn7d, rate: total > 0 ? Math.round((churn7d / total) * 1000) / 10 : 0 },
+      churn_14d: { count: churn14d, rate: total > 0 ? Math.round((churn14d / total) * 1000) / 10 : 0 },
+      churn_30d: { count: churn30d, rate: total > 0 ? Math.round((churn30d / total) * 1000) / 10 : 0 },
+    };
   });
 
   // =========================================================================

@@ -14,6 +14,8 @@ export const ANALYTICS_EVENTS = {
     START: 'session.start',
     /** 应用退出前 | params: {duration_sec, terminal_count, features_used: string[]} */
     END: 'session.end',
+    /** 定时心跳（30min）| params: {uptime_sec} — 用于使用时长统计 + 跨天 DAU */
+    HEARTBEAT: 'session.heartbeat',
   },
 
   // ── Layer 2: 屏幕/面板打开 → Q2 功能使用分布 ──
