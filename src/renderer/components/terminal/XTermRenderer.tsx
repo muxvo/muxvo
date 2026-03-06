@@ -239,16 +239,18 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
         window.dispatchEvent(new CustomEvent('muxvo:global-zoom-request', { detail: 'reset' }));
         return false;
       }
-      // Cmd+Left → line start (Ctrl+A), Cmd+Right → line end (Ctrl+E) on macOS
+      // Cmd+Left → Home (line start), Cmd+Right → End (line end) on macOS
+      // Use ESC O H / ESC O F (application mode Home/End) — works in zsh/bash
+      // regardless of readline Ctrl+A/Ctrl+E rebinding.
       if (e.metaKey && e.type === 'keydown') {
         if (e.key === 'ArrowLeft') {
           e.preventDefault();
-          window.api.terminal.write(terminalId, '\x01');
+          window.api.terminal.write(terminalId, '\x1bOH');
           return false;
         }
         if (e.key === 'ArrowRight') {
           e.preventDefault();
-          window.api.terminal.write(terminalId, '\x05');
+          window.api.terminal.write(terminalId, '\x1bOF');
           return false;
         }
       }
