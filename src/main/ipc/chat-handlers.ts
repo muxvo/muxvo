@@ -68,11 +68,32 @@ export function createChatHandlers() {
       // Apply custom session titles from config (per-session naming)
       const cm = createConfigManager();
       const config = cm.loadConfig();
-      const titles = config.sessionCustomTitles || {};
-      if (Object.keys(titles).length > 0) {
+      const sessionTitles = config.sessionCustomTitles || {};
+      const projectTitles = config.projectCustomTitles || {};
+      const hasSessionTitles = Object.keys(sessionTitles).length > 0;
+      const hasProjectTitles = Object.keys(projectTitles).length > 0;
+
+      if (hasSessionTitles || hasProjectTitles) {
+        // Sessions are already sorted by lastModified desc from readers
+        const projectAssigned = new Set<string>();
         sessions = sessions.map(s => {
-          const customName = titles[s.sessionId];
-          return customName ? { ...s, customTitle: customName } : s;
+          // Session-level title takes priority
+          if (hasSessionTitles) {
+            const sessionName = sessionTitles[s.sessionId];
+            if (sessionName) {
+              projectAssigned.add(s.projectHash);
+              return { ...s, customTitle: sessionName };
+            }
+          }
+          // Project-level title: apply to the most recent session per project only
+          if (hasProjectTitles && !projectAssigned.has(s.projectHash)) {
+            projectAssigned.add(s.projectHash);
+            const projectName = projectTitles[s.projectHash];
+            if (projectName) {
+              return { ...s, customTitle: projectName };
+            }
+          }
+          return s;
         });
       }
 
@@ -93,34 +114,52 @@ export function createChatHandlers() {
     async setSessionName(params: { cwd?: string; customName: string; sessionId?: string }) {
       const { cwd, customName, sessionId: directSessionId } = params;
 
-      let sessionId: string;
+      const cm = createConfigManager();
+      const config = cm.loadConfig();
+      const sessionTitles = { ...(config.sessionCustomTitles || {}) };
+      const projectTitles = { ...(config.projectCustomTitles || {}) };
 
       if (directSessionId) {
         // Direct rename by sessionId (from chat history context menu)
-        sessionId = directSessionId;
+        if (customName) {
+          sessionTitles[directSessionId] = customName;
+        } else {
+          delete sessionTitles[directSessionId];
+        }
+        cm.saveConfig({ ...config, sessionCustomTitles: sessionTitles, projectCustomTitles: projectTitles });
+        return { success: true, sessionId: directSessionId };
       } else if (cwd) {
-        // Legacy: find most recent session by cwd (from terminal rename)
+        // Terminal rename: store project-level title + best-effort session-level title
         const projectHash = encodeProjectHash(cwd);
         if (!projectHash) return { success: false };
-        const sessions = await reader.getSessionsForProject(projectHash, 1);
-        if (sessions.length === 0) return { success: false };
-        sessionId = sessions[0].sessionId;
+
+        // Normalize worktree hash to parent (UI merges worktree sessions under parent)
+        const wtIdx = projectHash.indexOf('--worktrees-');
+        const effectiveHash = wtIdx > 0 ? projectHash.slice(0, wtIdx) : projectHash;
+
+        // Update project-level title
+        if (customName) {
+          projectTitles[effectiveHash] = customName;
+        } else {
+          // Clear project-level only; keep existing session-level titles
+          delete projectTitles[effectiveHash];
+        }
+
+        // Best-effort: also update the most recent session (for immediate display)
+        let sessionId: string | undefined;
+        if (customName) {
+          const sessions = await reader.getSessionsForProject(projectHash, 1);
+          if (sessions.length > 0) {
+            sessionId = sessions[0].sessionId;
+            sessionTitles[sessionId] = customName;
+          }
+        }
+
+        cm.saveConfig({ ...config, sessionCustomTitles: sessionTitles, projectCustomTitles: projectTitles });
+        return { success: true, sessionId };
       } else {
         return { success: false };
       }
-
-      const cm = createConfigManager();
-      const config = cm.loadConfig();
-      const titles = { ...(config.sessionCustomTitles || {}) };
-
-      if (customName) {
-        titles[sessionId] = customName;
-      } else {
-        delete titles[sessionId];
-      }
-
-      cm.saveConfig({ ...config, sessionCustomTitles: titles });
-      return { success: true, sessionId };
     },
 
     async export(params: { projectHash: string; sessionId: string; format: string; title?: string }) {
