@@ -183,6 +183,12 @@ async function extractCwdFromGeminiProject(projectDir: string): Promise<string |
 /**
  * Discover all known project cwds from ~/.claude/projects/, ~/.codex/sessions/, and ~/.gemini/tmp/
  */
+/** Normalize worktree path to parent repo path, e.g. /repo/.worktrees/wt-21 → /repo */
+function normalizeWorktreePath(cwd: string): string {
+  const match = cwd.match(/^(.+?)\/\.worktrees\/(?:wt|worktree)-\d+$/);
+  return match ? match[1] : cwd;
+}
+
 async function discoverProjectCwds(): Promise<string[]> {
   const now = Date.now();
   if (_projectCwdCache.length > 0 && now - _projectCwdCacheTime < PROJECT_CWD_CACHE_TTL) {
@@ -198,7 +204,7 @@ async function discoverProjectCwds(): Promise<string[]> {
     const dirs = entries.filter((e) => e.isDirectory()).map((e) => join(projectsDir, e.name));
     const ccCwds = await Promise.all(dirs.map((d) => extractCwdFromProject(d)));
     for (const cwd of ccCwds) {
-      if (cwd) cwdSet.add(cwd);
+      if (cwd) cwdSet.add(normalizeWorktreePath(cwd));
     }
   } catch {
     // No CC projects
@@ -210,7 +216,7 @@ async function discoverProjectCwds(): Promise<string[]> {
     const jsonlFiles = await findJsonlFiles(codexSessionsDir);
     const cxCwds = await Promise.all(jsonlFiles.map((f) => extractCwdFromCodexSession(f)));
     for (const cwd of cxCwds) {
-      if (cwd) cwdSet.add(cwd);
+      if (cwd) cwdSet.add(normalizeWorktreePath(cwd));
     }
   } catch {
     // No Codex sessions
@@ -223,7 +229,7 @@ async function discoverProjectCwds(): Promise<string[]> {
     const dirs = entries.filter((e) => e.isDirectory()).map((e) => join(geminiTmpDir, e.name));
     const gmCwds = await Promise.all(dirs.map((d) => extractCwdFromGeminiProject(d)));
     for (const cwd of gmCwds) {
-      if (cwd) cwdSet.add(cwd);
+      if (cwd) cwdSet.add(normalizeWorktreePath(cwd));
     }
   } catch {
     // No Gemini sessions
