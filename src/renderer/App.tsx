@@ -169,7 +169,7 @@ function AppContent({
 
   // File content loading for FileTempView
   const [fileContent, setFileContent] = useState('');
-  const [fileType, setFileType] = useState<'markdown' | 'code' | 'text' | 'image' | 'spreadsheet'>('text');
+  const [fileType, setFileType] = useState<'markdown' | 'code' | 'text' | 'image' | 'spreadsheet' | 'pdf'>('text');
 
   useEffect(() => {
     if (!state.tempView.active || !state.tempView.contentKey) return;
@@ -182,6 +182,9 @@ function AppContent({
     if (detectedType === 'image') {
       // Use custom local-file:// protocol to serve image directly
       setFileContent(toLocalFileUrl(filePath));
+    } else if (detectedType === 'pdf') {
+      // Pass file path directly; PdfPreview reads via pdfjs-dist
+      setFileContent(filePath);
     } else if (detectedType === 'spreadsheet') {
       // Read binary spreadsheet as base64 for SheetJS parsing
       window.api.fs.readFile(filePath, 'base64').then((result: { success: boolean; data?: { content: string } }) => {
