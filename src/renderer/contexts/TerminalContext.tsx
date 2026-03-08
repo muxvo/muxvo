@@ -365,6 +365,14 @@ export function useTerminalActions() {
       dispatch({ type: 'OPEN_CLOSE_CONFIRM', terminalId: id, processName: fgResult.data.name });
       return;
     }
+    // Clear project-level title if this terminal had a custom name
+    const customName = stateRef.current.terminalNames[id];
+    if (customName) {
+      const terminal = stateRef.current.terminals.find(t => t.id === id);
+      if (terminal?.cwd) {
+        window.api.chat.setSessionName(terminal.cwd, '').catch(() => {});
+      }
+    }
     await window.api.terminal.close(id);
     trackEvent(ANALYTICS_EVENTS.TERMINAL.CLOSE, { had_process: false });
     dispatch({ type: 'REMOVE_TERMINAL', id });
@@ -372,6 +380,14 @@ export function useTerminalActions() {
 
   const handleCloseConfirm = useCallback(async () => {
     const { terminalId } = stateRef.current.closeConfirm;
+    // Clear project-level title if this terminal had a custom name
+    const customName = stateRef.current.terminalNames[terminalId];
+    if (customName) {
+      const terminal = stateRef.current.terminals.find(t => t.id === terminalId);
+      if (terminal?.cwd) {
+        window.api.chat.setSessionName(terminal.cwd, '').catch(() => {});
+      }
+    }
     dispatch({ type: 'CLOSE_CLOSE_CONFIRM' });
     await window.api.terminal.close(terminalId, true);
     trackEvent(ANALYTICS_EVENTS.TERMINAL.CLOSE, { had_process: true });
