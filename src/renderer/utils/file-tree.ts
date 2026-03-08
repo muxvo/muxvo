@@ -28,10 +28,11 @@ const CODE_EXTS = [
 ];
 
 /** Map file extension to display type */
-export function mapExtToFileType(ext: string): 'markdown' | 'code' | 'text' | 'image' | 'spreadsheet' {
+export function mapExtToFileType(ext: string): 'markdown' | 'code' | 'text' | 'image' | 'spreadsheet' | 'pdf' {
   if (['md', 'mdx', 'markdown'].includes(ext)) return 'markdown';
   if (IMAGE_EXTS.includes(ext)) return 'image';
   if (SPREADSHEET_EXTS.includes(ext)) return 'spreadsheet';
+  if (ext === 'pdf') return 'pdf';
   if (CODE_EXTS.includes(ext)) return 'code';
   return 'text';
 }
