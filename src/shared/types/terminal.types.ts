@@ -57,6 +57,7 @@ export interface TerminalInfo {
   state: TerminalState;
   processName?: string;
   customName?: string;
+  sessionId?: string;
 }
 
 /** terminal:output 事件数据（M->R 推送） */

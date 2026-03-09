@@ -409,7 +409,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
         const cacheKey = file.projectHash + '/' + file.fileName;
         const cached = summaryCache.get(cacheKey);
         if (cached && Date.now() < cached.expiry) {
-          const s = cached.data;
+          const s = { ...cached.data, lastModified: file.mtime };
           if (file.worktreeLabel) s.worktreeLabel = file.worktreeLabel;
           return s.title ? s : null;
         }

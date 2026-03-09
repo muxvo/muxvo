@@ -30,6 +30,7 @@ export interface TerminalEntry {
   id: string;
   state: string;
   cwd: string;
+  sessionId?: string;
 }
 
 export interface CloseConfirmState {
@@ -365,14 +366,6 @@ export function useTerminalActions() {
       dispatch({ type: 'OPEN_CLOSE_CONFIRM', terminalId: id, processName: fgResult.data.name });
       return;
     }
-    // Clear project-level title if this terminal had a custom name
-    const customName = stateRef.current.terminalNames[id];
-    if (customName) {
-      const terminal = stateRef.current.terminals.find(t => t.id === id);
-      if (terminal?.cwd) {
-        window.api.chat.setSessionName(terminal.cwd, '').catch(() => {});
-      }
-    }
     await window.api.terminal.close(id);
     trackEvent(ANALYTICS_EVENTS.TERMINAL.CLOSE, { had_process: false });
     dispatch({ type: 'REMOVE_TERMINAL', id });
@@ -380,14 +373,6 @@ export function useTerminalActions() {
 
   const handleCloseConfirm = useCallback(async () => {
     const { terminalId } = stateRef.current.closeConfirm;
-    // Clear project-level title if this terminal had a custom name
-    const customName = stateRef.current.terminalNames[terminalId];
-    if (customName) {
-      const terminal = stateRef.current.terminals.find(t => t.id === terminalId);
-      if (terminal?.cwd) {
-        window.api.chat.setSessionName(terminal.cwd, '').catch(() => {});
-      }
-    }
     dispatch({ type: 'CLOSE_CLOSE_CONFIRM' });
     await window.api.terminal.close(terminalId, true);
     trackEvent(ANALYTICS_EVENTS.TERMINAL.CLOSE, { had_process: true });
@@ -458,10 +443,12 @@ export function useTerminalActions() {
     // Persist custom name in main process terminal manager (for crash recovery)
     window.api.terminal.setName(id, name || '').catch(() => {});
 
-    // Propagate name to chat session associated with this terminal's cwd
+    // Propagate name to chat session: use sessionId if known, CWD as fallback
     const terminal = stateRef.current.terminals.find((t) => t.id === id);
-    if (terminal?.cwd) {
-      window.api.chat.setSessionName(terminal.cwd, name || '').catch(() => {});
+    if (terminal?.sessionId) {
+      window.api.chat.setSessionName(name || '', terminal.sessionId).catch(() => {});
+    } else if (terminal?.cwd) {
+      window.api.chat.setSessionName(name || '', undefined, terminal.cwd).catch(() => {});
     }
 
     // If terminal is in a worktree, sync rename to git branch
@@ -480,7 +467,7 @@ export function useTerminalActions() {
       return;
     }
     const newId = result.data.id;
-    dispatch({ type: 'ADD_TERMINAL', entry: { id: newId, state: 'Running', cwd: info.cwd } });
+    dispatch({ type: 'ADD_TERMINAL', entry: { id: newId, state: 'Running', cwd: info.cwd, sessionId: info.sessionId } });
     dispatch({ type: 'SET_SELECTED', id: newId });
 
     // Restore custom name from chat session

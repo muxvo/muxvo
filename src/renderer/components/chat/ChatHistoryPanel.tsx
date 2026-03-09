@@ -311,7 +311,7 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
   const handleRenameConfirm = useCallback(async (sessionId: string, newName: string) => {
     setRenamingSessionId(null);
     try {
-      await window.api.chat.setSessionName('', newName, sessionId);
+      await window.api.chat.setSessionName(newName, sessionId);
       setSessions(prev => prev.map(s =>
         s.sessionId === sessionId
           ? { ...s, customTitle: newName || undefined }

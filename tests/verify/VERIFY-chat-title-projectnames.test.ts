@@ -1,14 +1,13 @@
 /**
- * VERIFY: Chat title uses sessionCustomTitles AND projectCustomTitles
+ * VERIFY: Chat title uses sessionCustomTitles only
  *
  * Verifies:
- * 1. setSessionName (CWD mode) stores both projectCustomTitles and sessionCustomTitles
- * 2. setSessionName (CWD mode) succeeds even when no sessions exist (stores project-level title)
- * 3. getSessions applies session-level customTitle by sessionId (priority)
- * 4. getSessions applies project-level customTitle to the most recent session when no session-level title
- * 5. Session-level title takes priority over project-level title
- * 6. Clearing customName via CWD only removes projectCustomTitles, keeps sessionCustomTitles
- * 7. setSessionName (sessionId mode) only updates sessionCustomTitles, not projectCustomTitles
+ * 1. setSessionName (sessionId mode) stores sessionCustomTitles by sessionId
+ * 2. setSessionName (CWD fallback) finds most recent session and stores sessionCustomTitles
+ * 3. setSessionName (CWD fallback) returns failure when no sessions exist
+ * 4. getSessions applies customTitle from sessionCustomTitles
+ * 5. Clearing customName via sessionId removes sessionCustomTitles entry
+ * 6. Clearing customName via CWD removes sessionCustomTitles for that session
  */
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtempSync, readFileSync, rmSync } from 'fs';
@@ -52,16 +51,6 @@ vi.mock('@/main/services/chat-multi-source', () => ({
           fileSize: 100,
         }];
       }
-      if (hash === '-Users-test-my-project--worktrees-wt-1') {
-        return [{
-          sessionId: 'session-wt1',
-          projectHash: '-Users-test-my-project',
-          title: 'Worktree session',
-          startedAt: '2024-01-02T00:00:00Z',
-          lastModified: 1700100000000,
-          fileSize: 50,
-        }];
-      }
       return [];
     },
     getAllRecentSessions: async () => [
@@ -87,7 +76,7 @@ vi.mock('@/main/services/chat-multi-source', () => ({
   })),
 }));
 
-describe('VERIFY: chat title uses sessionCustomTitles + projectCustomTitles', () => {
+describe('VERIFY: chat title uses sessionCustomTitles only', () => {
   let tempDir: string;
 
   beforeEach(async () => {
@@ -101,7 +90,26 @@ describe('VERIFY: chat title uses sessionCustomTitles + projectCustomTitles', ()
     rmSync(tempDir, { recursive: true, force: true });
   });
 
-  test('setSessionName (CWD) stores both projectCustomTitles and sessionCustomTitles', async () => {
+  test('setSessionName (sessionId mode) stores sessionCustomTitles by sessionId', async () => {
+    const { createChatHandlers } = await import('@/main/ipc/chat-handlers');
+    const handlers = createChatHandlers();
+
+    const result = await handlers.setSessionName({
+      sessionId: 'session-xyz',
+      customName: 'Direct Rename',
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.sessionId).toBe('session-xyz');
+
+    const configPath = join(tempDir, 'config.json');
+    const saved = JSON.parse(readFileSync(configPath, 'utf-8'));
+    expect(saved.sessionCustomTitles['session-xyz']).toBe('Direct Rename');
+    // No projectCustomTitles should exist
+    expect(saved.projectCustomTitles).toBeUndefined();
+  });
+
+  test('setSessionName (CWD fallback) finds most recent session and stores sessionCustomTitles', async () => {
     const { createChatHandlers } = await import('@/main/ipc/chat-handlers');
     const handlers = createChatHandlers();
 
@@ -111,40 +119,36 @@ describe('VERIFY: chat title uses sessionCustomTitles + projectCustomTitles', ()
     });
 
     expect(result.success).toBe(true);
+    expect(result.sessionId).toBe('session-abc');
 
     const configPath = join(tempDir, 'config.json');
     const saved = JSON.parse(readFileSync(configPath, 'utf-8'));
     // Session-level title stored
     expect(saved.sessionCustomTitles['session-abc']).toBe('My Custom Title');
-    // Project-level title also stored
-    expect(saved.projectCustomTitles['-Users-test-my-project']).toBe('My Custom Title');
+    // No projectCustomTitles
+    expect(saved.projectCustomTitles).toBeUndefined();
   });
 
-  test('setSessionName (CWD) succeeds even when no sessions exist (stores project-level title)', async () => {
+  test('setSessionName (CWD fallback) returns failure when no sessions exist', async () => {
     const { createChatHandlers } = await import('@/main/ipc/chat-handlers');
     const handlers = createChatHandlers();
 
     const result = await handlers.setSessionName({
       cwd: '/nonexistent/fake/project/12345',
-      customName: 'Project Title Without Sessions',
+      customName: 'No Sessions Here',
     });
 
-    // Should succeed — project-level title is stored even without sessions
-    expect(result.success).toBe(true);
-
-    const configPath = join(tempDir, 'config.json');
-    const saved = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(saved.projectCustomTitles['-nonexistent-fake-project-12345']).toBe('Project Title Without Sessions');
-    // No session-level title (no sessions found)
-    expect(saved.sessionCustomTitles).toEqual({});
+    // Should fail — no sessions found for this project
+    expect(result.success).toBe(false);
   });
 
-  test('getSessions applies session-level customTitle by sessionId', async () => {
+  test('getSessions applies customTitle from sessionCustomTitles', async () => {
     const { createChatHandlers } = await import('@/main/ipc/chat-handlers');
     const handlers = createChatHandlers();
 
+    // Set name via sessionId mode
     await handlers.setSessionName({
-      cwd: '/Users/test/my-project',
+      sessionId: 'session-abc',
       customName: 'Renamed Session',
     });
 
@@ -155,100 +159,40 @@ describe('VERIFY: chat title uses sessionCustomTitles + projectCustomTitles', ()
     expect(sessions[0].title).toBe('Default title from first message');
   });
 
-  test('getSessions applies project-level title to latest session when no session-level title', async () => {
-    const { createChatHandlers } = await import('@/main/ipc/chat-handlers');
-    const handlers = createChatHandlers();
-
-    // Manually write project-level title without session-level title
-    const { createConfigManager } = await import('@/main/services/app/config');
-    const cm = createConfigManager();
-    cm.saveConfig({
-      projectCustomTitles: { '-Users-test-my-project': 'Terminal Name' },
-      sessionCustomTitles: {},
-    });
-
-    // getAllRecentSessions returns session-new (newer) and session-abc (older)
-    const { sessions } = await handlers.getSessions({ projectHash: '__all__' });
-
-    // The most recent session should get the project-level title
-    const newest = sessions.find(s => s.sessionId === 'session-new');
-    const older = sessions.find(s => s.sessionId === 'session-abc');
-    expect(newest?.customTitle).toBe('Terminal Name');
-    // Older session in same project should NOT get the title (only latest gets it)
-    expect(older?.customTitle).toBeUndefined();
-  });
-
-  test('session-level title takes priority over project-level title', async () => {
-    const { createChatHandlers } = await import('@/main/ipc/chat-handlers');
-    const handlers = createChatHandlers();
-
-    const { createConfigManager } = await import('@/main/services/app/config');
-    const cm = createConfigManager();
-    cm.saveConfig({
-      projectCustomTitles: { '-Users-test-my-project': 'Project Level Name' },
-      sessionCustomTitles: { 'session-new': 'Session Level Name' },
-    });
-
-    const { sessions } = await handlers.getSessions({ projectHash: '__all__' });
-
-    const newest = sessions.find(s => s.sessionId === 'session-new');
-    // Session-level wins
-    expect(newest?.customTitle).toBe('Session Level Name');
-  });
-
-  test('clearing customName via CWD removes projectCustomTitles but keeps sessionCustomTitles', async () => {
+  test('clearing customName via sessionId removes sessionCustomTitles entry', async () => {
     const { createChatHandlers } = await import('@/main/ipc/chat-handlers');
     const handlers = createChatHandlers();
 
     // Set a name first
-    await handlers.setSessionName({ cwd: '/Users/test/my-project', customName: 'Temp Name' });
+    await handlers.setSessionName({ sessionId: 'session-abc', customName: 'Temp Name' });
+
+    // Verify it's set
+    let configPath = join(tempDir, 'config.json');
+    let saved = JSON.parse(readFileSync(configPath, 'utf-8'));
+    expect(saved.sessionCustomTitles['session-abc']).toBe('Temp Name');
 
     // Clear the name
+    await handlers.setSessionName({ sessionId: 'session-abc', customName: '' });
+
+    saved = JSON.parse(readFileSync(configPath, 'utf-8'));
+    expect(saved.sessionCustomTitles['session-abc']).toBeUndefined();
+  });
+
+  test('clearing customName via CWD removes sessionCustomTitles for that session', async () => {
+    const { createChatHandlers } = await import('@/main/ipc/chat-handlers');
+    const handlers = createChatHandlers();
+
+    // Set a name via CWD
+    await handlers.setSessionName({ cwd: '/Users/test/my-project', customName: 'CWD Name' });
+
+    let configPath = join(tempDir, 'config.json');
+    let saved = JSON.parse(readFileSync(configPath, 'utf-8'));
+    expect(saved.sessionCustomTitles['session-abc']).toBe('CWD Name');
+
+    // Clear via CWD
     await handlers.setSessionName({ cwd: '/Users/test/my-project', customName: '' });
 
-    const configPath = join(tempDir, 'config.json');
-    const saved = JSON.parse(readFileSync(configPath, 'utf-8'));
-
-    // Project-level title should be cleared
-    expect(saved.projectCustomTitles['-Users-test-my-project']).toBeUndefined();
-    // Session-level title should be preserved (was set during the first call)
-    expect(saved.sessionCustomTitles['session-abc']).toBe('Temp Name');
-  });
-
-  test('setSessionName (sessionId mode) only updates sessionCustomTitles', async () => {
-    const { createChatHandlers } = await import('@/main/ipc/chat-handlers');
-    const handlers = createChatHandlers();
-
-    const result = await handlers.setSessionName({
-      sessionId: 'session-xyz',
-      customName: 'Direct Rename',
-    });
-
-    expect(result.success).toBe(true);
-
-    const configPath = join(tempDir, 'config.json');
-    const saved = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(saved.sessionCustomTitles['session-xyz']).toBe('Direct Rename');
-    // No project-level title should be created
-    expect(saved.projectCustomTitles).toEqual({});
-  });
-
-  test('worktree CWD stores project title under parent hash', async () => {
-    const { createChatHandlers } = await import('@/main/ipc/chat-handlers');
-    const handlers = createChatHandlers();
-
-    const result = await handlers.setSessionName({
-      cwd: '/Users/test/my-project/.worktrees/wt-1',
-      customName: 'Worktree Task',
-    });
-
-    expect(result.success).toBe(true);
-
-    const configPath = join(tempDir, 'config.json');
-    const saved = JSON.parse(readFileSync(configPath, 'utf-8'));
-    // Project-level title stored under PARENT hash (not worktree hash)
-    expect(saved.projectCustomTitles['-Users-test-my-project']).toBe('Worktree Task');
-    // Session-level title stored for the worktree session
-    expect(saved.sessionCustomTitles['session-wt1']).toBe('Worktree Task');
+    saved = JSON.parse(readFileSync(configPath, 'utf-8'));
+    expect(saved.sessionCustomTitles['session-abc']).toBeUndefined();
   });
 });
