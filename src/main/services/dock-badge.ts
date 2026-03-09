@@ -45,9 +45,8 @@ export function createDockBadgeService(deps: DockBadgeDeps) {
 
   function onStateChange(): void {
     const { mode } = deps.getConfig();
-    if (mode === 'realtime') {
-      updateBadge();
-    }
+    if (mode === 'off') return;
+    updateBadge();
   }
 
   function startTimer(): void {
