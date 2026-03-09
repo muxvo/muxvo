@@ -269,8 +269,17 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
         } else {
           const contentStr = typeof normalizedContent === 'string' ? normalizedContent : '';
           const trimmedContent = contentStr.trimStart();
-          if (
-            trimmedContent.startsWith('<system-reminder>') ||
+          if (trimmedContent.startsWith('<system-reminder>')) {
+            // User interruption messages: extract actual user text, keep as 'user'
+            const interruptMatch = trimmedContent.match(
+              /<system-reminder>\s*\n?\s*The user sent a new message[^\n]*:\s*\n([\s\S]*?)(?:\n\nIMPORTANT:[\s\S]*)?<\/system-reminder>/
+            );
+            if (interruptMatch) {
+              normalizedContent = interruptMatch[1].trim();
+            } else {
+              resolvedType = 'system';
+            }
+          } else if (
             trimmedContent.startsWith('<task-notification>') ||
             trimmedContent.startsWith('<command-message>') ||
             trimmedContent.startsWith('<command-name>')
@@ -636,6 +645,19 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
       // Determine which file to read: stat doubles as existence check (1 syscall instead of access+stat)
       let filePath = ccFilePath;
       let resolvedStat = await fsp.stat(ccFilePath).catch(() => null);
+      // Worktree fallback: sessions listed under parent hash may live in worktree dirs
+      if (!resolvedStat) {
+        const wtHashes = worktreeMap.get(projectHash) || [];
+        for (const wtHash of wtHashes) {
+          const wtFilePath = join(projectsDir, wtHash, `${sessionId}.jsonl`);
+          const wtStat = await fsp.stat(wtFilePath).catch(() => null);
+          if (wtStat) {
+            filePath = wtFilePath;
+            resolvedStat = wtStat;
+            break;
+          }
+        }
+      }
       if (!resolvedStat) {
         if (archiveProjectsDir) {
           const archiveFilePath = join(archiveProjectsDir, projectHash, `${sessionId}.jsonl`);

@@ -249,7 +249,10 @@ export function ChatHistoryPanel(props: ChatHistoryPanelProps) {
     if (!projectHash) {
       projectHash = searchResultsRef.current.find(r => r.sessionId === selectedSessionId)?.projectHash;
     }
-    if (!projectHash) return;
+    if (!projectHash) {
+      setMessages([]);
+      return;
+    }
 
     setLoading(true);
     window.api.chat.getSession(projectHash, selectedSessionId)
