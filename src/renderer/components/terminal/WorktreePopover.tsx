@@ -193,7 +193,7 @@ export function WorktreePopover({
       }, 800);
     }
     onClose();
-  }, [createTerminalAt, onClose, terminalDispatch]);
+  }, [createTerminalAt, onClose]);
 
   if (!open || !anchorRect) return null;
 
