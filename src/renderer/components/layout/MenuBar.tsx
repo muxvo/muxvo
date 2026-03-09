@@ -9,11 +9,13 @@
  */
 
 import { usePanelContext } from '@/renderer/contexts/PanelContext';
+import { useTerminalDispatch, useTerminalState } from '@/renderer/contexts/TerminalContext';
 import { useI18n } from '@/renderer/i18n';
 import { AuthButton } from '@/renderer/components/auth/AuthButton';
 import { UpdateProgress } from './UpdateProgress';
 import { trackEvent } from '@/renderer/hooks/useAnalytics';
 import { ANALYTICS_EVENTS } from '@/shared/constants/analytics-events';
+import { getTerminalSizeCache } from '@/renderer/utils/terminal-size-cache';
 import './MenuBar.css';
 
 type TabId = 'terminals' | 'skills' | 'mcp' | 'hooks' | 'plugins' | 'chat';
@@ -26,6 +28,8 @@ interface Props {
 
 export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0 }: Props): JSX.Element {
   const { state, dispatch } = usePanelContext();
+  const terminalDispatch = useTerminalDispatch();
+  const terminalState = useTerminalState();
   const { t, locale, setLocale } = useI18n();
 
   const chatOpen = state.chatHistory.open;
@@ -106,6 +110,25 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0
     }
   }
 
+  async function handleHelp() {
+    if (terminalState.terminals.length >= 20) return;
+    const home = window.api.app.getHomePath();
+    const { cols, rows } = getTerminalSizeCache();
+    const result = await window.api.terminal.create(home, cols, rows);
+    if (!result?.success || !result.data) return;
+    const newId = result.data.id;
+    terminalDispatch({ type: 'ADD_TERMINAL', entry: { id: newId, state: 'Running', cwd: home } });
+    terminalDispatch({ type: 'SET_SELECTED', id: newId });
+    closeAllPanels();
+    const guidePath = `${home}/.muxvo/guide.md`;
+    setTimeout(() => {
+      window.api.terminal.write(
+        newId,
+        `claude "请读取 ${guidePath} 这份 Muxvo 操作指南，然后等待我的问题。我会问你关于 Muxvo 的使用方法，请基于文档内容回答。"\n`
+      );
+    }, 500);
+  }
+
   return (
     <header className="menu-bar">
       <div className="menu-bar__drag-region" />
@@ -154,6 +177,17 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0
       <div className="menu-bar__right-group">
         <UpdateProgress />
         <AuthButton />
+        <button
+          className="menu-bar__icon-btn"
+          onClick={handleHelp}
+          title={t('menu.help')}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        </button>
         <button
           className="menu-bar__icon-btn"
           onClick={() => {

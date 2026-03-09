@@ -43,7 +43,9 @@ files:
   - node_modules/node-pty/**/*
   - node_modules/@electron-toolkit/utils/**/*
 
-extraResources: []
+extraResources:
+  - from: docs/muxvo-guide.md
+    to: muxvo-guide.md
 
 npmRebuild: true
 
