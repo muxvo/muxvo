@@ -47,7 +47,6 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-virtuoso": "^4.18.1",
-    "ws": "^8.19.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
@@ -61,6 +60,7 @@
     "electron-builder": "^25.1.8",
     "electron-vite": "^2.3.0",
     "tsx": "^4.21.0",
+    "ws": "^8.19.0",
     "typescript": "^5.9.3",
     "vitest": "^3.0.0"
   }
