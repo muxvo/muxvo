@@ -13,7 +13,7 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
   const { t, locale, setLocale } = useI18n();
   const [startupCount, setStartupCount] = useState(1);
   const [dblClickFocus, setDblClickFocus] = useState(false);
-  const [dockBadgeMode, setDockBadgeMode] = useState<'off' | 'realtime' | 'timed'>('off');
+  const [dockBadgeMode, setDockBadgeMode] = useState<'off' | 'realtime' | 'timed'>('realtime');
   const [dockBadgeInterval, setDockBadgeInterval] = useState(1);
   const [intervalInputValue, setIntervalInputValue] = useState('1');
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'up-to-date' | 'error'>('idle');
@@ -27,7 +27,7 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
         setStartupCount(Math.max(1, Math.min(20, result.data.startupTerminalCount)));
       }
       setDblClickFocus(result?.data?.doubleClickToFocus === true);
-      setDockBadgeMode(result?.data?.dockBadgeMode ?? 'off');
+      setDockBadgeMode(result?.data?.dockBadgeMode ?? 'realtime');
       const iv = result?.data?.dockBadgeIntervalMin ?? 1;
       setDockBadgeInterval(iv);
       setIntervalInputValue(String(iv));
