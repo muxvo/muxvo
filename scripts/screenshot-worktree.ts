@@ -1,150 +1,152 @@
 /**
- * screenshot-worktree.ts — Playwright E2E script to capture Worktree feature screenshots.
+ * screenshot-worktree.ts — Capture Worktree feature screenshots.
  *
- * Prerequisites: `npx electron-vite dev` must be running (Vite on port 5173).
+ * Uses macOS screencapture + Python/Quartz for UI interaction.
+ * Prerequisites: Muxvo must be running via `npx electron-vite dev`.
  *
  * Usage: npx tsx scripts/screenshot-worktree.ts
  */
 
-import { _electron, type ElectronApplication, type Page } from '@playwright/test';
+import { execSync, execFileSync } from 'child_process';
 import { resolve } from 'path';
-import { mkdirSync, mkdtempSync } from 'fs';
-import { tmpdir } from 'os';
+import { mkdirSync } from 'fs';
 
 const PROJECT = resolve(__dirname, '..');
 const OUT_DIR = resolve(PROJECT, 'docs/screenshots/worktree');
-const TEMP_USER_DATA = mkdtempSync(resolve(tmpdir(), 'muxvo-screenshot-'));
-
 mkdirSync(OUT_DIR, { recursive: true });
 
-async function sleep(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
+function sleep(ms: number) {
+  execSync(`sleep ${ms / 1000}`);
 }
 
-async function main() {
-  console.log('Launching Electron...');
-  const app: ElectronApplication = await _electron.launch({
-    args: [resolve(PROJECT, 'out/main/index.js')],
-    cwd: PROJECT,
-    env: {
-      ...process.env,
-      ELECTRON_RENDERER_URL: 'http://localhost:5173',
-    },
-  });
-
-  const window: Page = await app.firstWindow();
-
-  // Wait for React to mount
-  console.log('Waiting for React mount...');
-  await window.waitForTimeout(8000);
-  await window.waitForLoadState('networkidle');
-
-  // If no terminal tiles yet (empty state), click the "+" FAB to create one
-  const hasTile = await window.locator('.tile-header').isVisible().catch(() => false);
-  if (!hasTile) {
-    console.log('No terminal yet, clicking + button...');
-    // The FAB button is the large "+" in bottom-right corner
-    const fab = window.locator('.terminal-grid__fab').first();
-    if (await fab.isVisible().catch(() => false)) {
-      await fab.click();
-      await sleep(4000);
-    }
-  }
-  await window.waitForSelector('.tile-header', { timeout: 20000 });
-  console.log('Terminal tile found.');
-
-  // ── Shot 1: Full window showing terminal with branch icon ──
-  console.log('Taking shot-01: full window with branch icon...');
-  await window.screenshot({
-    path: resolve(OUT_DIR, 'shot-01-full-window.png'),
-  });
-
-  // Find and click the worktree button (branch icon)
-  const worktreeBtn = window.locator('.tile-worktree-btn').first();
-  const hasBranchBtn = await worktreeBtn.isVisible().catch(() => false);
-
-  if (!hasBranchBtn) {
-    console.warn('No worktree button visible — terminal may not be in a git repo.');
-    console.warn('Skipping interactive screenshots.');
-    await app.close();
-    return;
-  }
-
-  // ── Shot 2: Click branch icon → Worktree popover (initial, only main) ──
-  console.log('Taking shot-02: worktree popover...');
-  await worktreeBtn.click();
-  await sleep(800);
-
-  // Screenshot the popover element
-  const popover = window.locator('.worktree-popover');
-  await popover.waitFor({ state: 'visible', timeout: 5000 });
-
-  await window.screenshot({
-    path: resolve(OUT_DIR, 'shot-02-popover-initial.png'),
-  });
-
-  // Also capture just the popover
-  await popover.screenshot({
-    path: resolve(OUT_DIR, 'shot-02-popover-closeup.png'),
-  });
-
-  // ── Shot 3: Create a new worktree ──
-  console.log('Creating new worktree...');
-  const createBtn = window.locator('.worktree-popover__create');
-  if (await createBtn.isVisible()) {
-    await createBtn.click();
-
-    // Wait for new terminal to appear and settle
-    await sleep(3000);
-
-    console.log('Taking shot-03: after creating worktree...');
-    await window.screenshot({
-      path: resolve(OUT_DIR, 'shot-03-after-create.png'),
-    });
-
-    // ── Shot 5: Worktree badge close-up ──
-    const badge = window.locator('.tile-worktree-badge').first();
-    if (await badge.isVisible().catch(() => false)) {
-      console.log('Taking shot-05: worktree badge...');
-      // Get bounding box and capture with some surrounding context
-      const header = window.locator('.tile-header').first();
-      await header.screenshot({
-        path: resolve(OUT_DIR, 'shot-05-worktree-badge.png'),
-      });
-    }
-
-    // ── Shot 4: Open popover again to show list with current badge ──
-    console.log('Taking shot-04: popover with worktree list...');
-    const worktreeBtn2 = window.locator('.tile-worktree-btn').first();
-    if (await worktreeBtn2.isVisible().catch(() => false)) {
-      await worktreeBtn2.click();
-      await sleep(800);
-
-      const popover2 = window.locator('.worktree-popover');
-      await popover2.waitFor({ state: 'visible', timeout: 5000 });
-
-      await window.screenshot({
-        path: resolve(OUT_DIR, 'shot-04-popover-list.png'),
-      });
-
-      await popover2.screenshot({
-        path: resolve(OUT_DIR, 'shot-04-popover-list-closeup.png'),
-      });
-
-      // Close popover
-      await window.keyboard.press('Escape');
-      await sleep(300);
-    }
-  } else {
-    console.warn('Create button not visible, skipping create/list screenshots.');
-  }
-
-  console.log('All screenshots saved to:', OUT_DIR);
-  console.log('Done! Closing Electron...');
-  await app.close();
+function osascript(...lines: string[]): string {
+  const args = lines.flatMap((l) => ['-e', l]);
+  return execFileSync('osascript', args, { encoding: 'utf-8' }).trim();
 }
 
-main().catch((err) => {
-  console.error('Screenshot script failed:', err);
-  process.exit(1);
-});
+/** Get the Muxvo window ID from CoreGraphics */
+function getWindowId(): number {
+  const py = `
+import Quartz
+windows = Quartz.CGWindowListCopyWindowInfo(Quartz.kCGWindowListOptionOnScreenOnly, Quartz.kCGNullWindowID)
+for w in windows:
+    if w.get('kCGWindowOwnerName','') == 'Electron' and w.get('kCGWindowName','') == 'Muxvo':
+        print(w.get('kCGWindowNumber', 0))
+        break
+`;
+  const result = execFileSync('python3', ['-c', py], { encoding: 'utf-8' }).trim();
+  const wid = parseInt(result);
+  if (!wid) throw new Error('Could not find Muxvo window. Is electron-vite dev running?');
+  return wid;
+}
+
+/** Capture window screenshot */
+function capture(windowId: number, filename: string): void {
+  const filepath = resolve(OUT_DIR, filename);
+  execSync(`screencapture -l ${windowId} "${filepath}"`);
+  console.log(`  📸 ${filename}`);
+}
+
+/** Get window position and size */
+function getWindowRect(): { x: number; y: number; w: number; h: number } {
+  const pos = osascript(
+    'tell application "System Events"',
+    '  tell process "Electron"',
+    '    set p to position of window 1',
+    '    set s to size of window 1',
+    '    return (item 1 of p as text) & "," & (item 2 of p as text) & "," & (item 1 of s as text) & "," & (item 2 of s as text)',
+    '  end tell',
+    'end tell',
+  );
+  const [x, y, w, h] = pos.split(',').map(Number);
+  return { x, y, w, h };
+}
+
+/** Click at (x, y) relative to window origin using Quartz events */
+function clickAt(relX: number, relY: number): void {
+  const { x, y } = getWindowRect();
+  const absX = x + relX;
+  const absY = y + relY;
+  const py = `
+import Quartz, time
+p = Quartz.CGPointMake(${absX}, ${absY})
+d = Quartz.CGEventCreateMouseEvent(None, Quartz.kCGEventLeftMouseDown, p, Quartz.kCGMouseButtonLeft)
+u = Quartz.CGEventCreateMouseEvent(None, Quartz.kCGEventLeftMouseUp, p, Quartz.kCGMouseButtonLeft)
+Quartz.CGEventPost(Quartz.kCGHIDEventTap, d)
+time.sleep(0.05)
+Quartz.CGEventPost(Quartz.kCGHIDEventTap, u)
+`;
+  execFileSync('python3', ['-c', py]);
+}
+
+/** Press Escape key */
+function pressEscape(): void {
+  osascript(
+    'tell application "System Events"',
+    '  key code 53',
+    'end tell',
+  );
+}
+
+/** Bring window to front */
+function focusWindow(): void {
+  osascript(
+    'tell application "System Events"',
+    '  tell process "Electron"',
+    '    set frontmost to true',
+    '  end tell',
+    'end tell',
+  );
+  sleep(500);
+}
+
+function main() {
+  console.log('Finding Muxvo window...');
+  const windowId = getWindowId();
+  const rect = getWindowRect();
+  console.log(`Window ID: ${windowId}, Pos: (${rect.x},${rect.y}), Size: ${rect.w}x${rect.h}`);
+
+  focusWindow();
+
+  // Step 1: Click "+" FAB to create a terminal (bottom-right corner)
+  console.log('\nStep 1: Creating terminal...');
+  clickAt(rect.w - 40, rect.h - 40);
+  sleep(4000);
+
+  // Step 2: Full window with terminal
+  console.log('Step 2: Full window screenshot...');
+  capture(windowId, 'shot-01-full-window.png');
+
+  // Step 3: Click worktree branch icon in tile header
+  // The header is about 60px from top, action buttons are on the right side
+  // Button order from right: [close ~20px] [max ~50px] [file ~80px] [worktree ~115px]
+  console.log('Step 3: Opening Worktree popover...');
+  clickAt(rect.w - 115, 60);
+  sleep(1200);
+  capture(windowId, 'shot-02-popover-initial.png');
+
+  // Step 4: Click "+ New Worktree" in the popover
+  // The popover header "Worktrees" is about 25px, then the create button
+  console.log('Step 4: Creating new worktree...');
+  clickAt(rect.w - 115, 60 + 55); // Create button position in popover
+  sleep(6000);
+  capture(windowId, 'shot-03-after-create.png');
+
+  // Step 5: Open popover again to show worktree list
+  console.log('Step 5: Showing worktree list...');
+  clickAt(rect.w - 115, 60);
+  sleep(1200);
+  capture(windowId, 'shot-04-popover-list.png');
+
+  // Close popover
+  pressEscape();
+  sleep(500);
+
+  // Step 6: Header close-up (full window, can crop later)
+  console.log('Step 6: Badge close-up...');
+  capture(windowId, 'shot-05-worktree-badge.png');
+
+  console.log('\nAll screenshots saved to:', OUT_DIR);
+}
+
+main();
