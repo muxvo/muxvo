@@ -38,6 +38,7 @@ interface SpawnOptions {
   cwd: string;
   cols?: number;
   rows?: number;
+  skipShellInit?: boolean;
 }
 
 interface SpawnResult {
@@ -153,7 +154,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
 
         machine.send('SPAWN_SUCCESS');
 
-        terminals.set(id, { id, process: proc, cwd: options.cwd, machine, spawnedAt: Date.now() });
+        terminals.set(id, { id, process: proc, cwd: options.cwd, machine, spawnedAt: Date.now(), shellInitDone: !!options.skipShellInit });
         startCwdPolling();
         debugLog(`[TERM:spawn] id=${id} pid=${proc.pid} cwd=${options.cwd}`);
 
