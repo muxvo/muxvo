@@ -188,12 +188,14 @@ export function WorktreePopover({
   const handleWorktreeClick = useCallback(async (wt: WorktreeInfo) => {
     const terminalId = await createTerminalAt(wt.path);
     if (terminalId) {
+      terminalDispatch({ type: 'RENAME', id: terminalId, name: wt.branch });
+      window.api.terminal.setName(terminalId, wt.branch).catch(() => {});
       setTimeout(() => {
         window.api.terminal.write(terminalId, `cd ${shellQuote(wt.path)} && clear\r`);
       }, 800);
     }
     onClose();
-  }, [createTerminalAt, onClose]);
+  }, [createTerminalAt, onClose, terminalDispatch]);
 
   if (!open || !anchorRect) return null;
 
