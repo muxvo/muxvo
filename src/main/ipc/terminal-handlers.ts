@@ -37,6 +37,11 @@ export function registerTerminalHandlers(
 
   // terminal:resize — one-way (R->M fire-and-forget)
   ipcMain.on(IPC_CHANNELS.TERMINAL.RESIZE, (_event, req: { id: string; cols: number; rows: number }) => {
+    // Defense-in-depth: reject invalid/tiny dimensions at IPC boundary
+    if (!req.cols || !req.rows || req.cols < 10 || req.rows < 2) {
+      console.warn(`[IPC:resize] BLOCKED id=${req.id} cols=${req.cols} rows=${req.rows} (min:10x2)`);
+      return;
+    }
     manager.resize(req.id, req.cols, req.rows);
   });
 

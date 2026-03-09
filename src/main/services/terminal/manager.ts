@@ -304,9 +304,13 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
 
   function resize(id: string, cols: number, rows: number): void {
     const terminal = terminals.get(id);
-    if (terminal) {
-      terminal.process.resize(cols, rows);
+    if (!terminal) return;
+    // Defense-in-depth: reject tiny dimensions that would damage shell output
+    if (cols < 10 || rows < 2) {
+      debugLog(`[TERM:resize] id=${id} cols=${cols} rows=${rows} BLOCKED(min:10x2)`);
+      return;
     }
+    terminal.process.resize(cols, rows);
   }
 
   async function close(id: string, force?: boolean): Promise<{ success: boolean }> {
