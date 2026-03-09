@@ -258,8 +258,8 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
       let resolvedType: 'user' | 'assistant' | 'system' = type as 'user' | 'assistant';
 
       if (type === 'queue-operation') {
-        // queue-operation is always a system message
-        resolvedType = 'system';
+        // queue-operation: user interruption message sent while Claude is working
+        resolvedType = 'user';
       } else if (type === 'user') {
         // Check for system message markers on user-type entries
         if (entry.isCompactSummary === true) {
@@ -636,6 +636,19 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
       // Determine which file to read: stat doubles as existence check (1 syscall instead of access+stat)
       let filePath = ccFilePath;
       let resolvedStat = await fsp.stat(ccFilePath).catch(() => null);
+      // Worktree fallback: sessions listed under parent hash may live in worktree dirs
+      if (!resolvedStat) {
+        const wtHashes = worktreeMap.get(projectHash) || [];
+        for (const wtHash of wtHashes) {
+          const wtFilePath = join(projectsDir, wtHash, `${sessionId}.jsonl`);
+          const wtStat = await fsp.stat(wtFilePath).catch(() => null);
+          if (wtStat) {
+            filePath = wtFilePath;
+            resolvedStat = wtStat;
+            break;
+          }
+        }
+      }
       if (!resolvedStat) {
         if (archiveProjectsDir) {
           const archiveFilePath = join(archiveProjectsDir, projectHash, `${sessionId}.jsonl`);
