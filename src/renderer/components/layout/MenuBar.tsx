@@ -9,7 +9,7 @@
  */
 
 import { usePanelContext } from '@/renderer/contexts/PanelContext';
-import { useTerminalDispatch } from '@/renderer/contexts/TerminalContext';
+import { useTerminalDispatch, useTerminalState } from '@/renderer/contexts/TerminalContext';
 import { useI18n } from '@/renderer/i18n';
 import { AuthButton } from '@/renderer/components/auth/AuthButton';
 import { UpdateProgress } from './UpdateProgress';
@@ -29,6 +29,7 @@ interface Props {
 export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0 }: Props): JSX.Element {
   const { state, dispatch } = usePanelContext();
   const terminalDispatch = useTerminalDispatch();
+  const terminalState = useTerminalState();
   const { t, locale, setLocale } = useI18n();
 
   const chatOpen = state.chatHistory.open;
@@ -110,6 +111,7 @@ export function MenuBar({ viewMode = 'Tiling', onBackToTiling, terminalCount = 0
   }
 
   async function handleHelp() {
+    if (terminalState.terminals.length >= 20) return;
     const home = window.api.app.getHomePath();
     const { cols, rows } = getTerminalSizeCache();
     const result = await window.api.terminal.create(home, cols, rows);
