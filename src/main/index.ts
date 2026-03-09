@@ -531,7 +531,7 @@ app.whenReady().then(() => {
     getConfig: () => {
       const cfg = configManager.loadConfig();
       return {
-        mode: cfg.dockBadgeMode ?? 'off',
+        mode: cfg.dockBadgeMode ?? 'realtime',
         intervalMin: cfg.dockBadgeIntervalMin ?? 1,
       };
     },
