@@ -159,6 +159,17 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     // Scroll restoration is deferred to next frame because xterm.js v6
     // processes buffer rewrap asynchronously after fit().
     let fitSeq = 0;
+
+    /** Guarded fit: skip when container is too small to produce meaningful dimensions.
+     *  ALL fit triggers should go through this single entry point. */
+    function safeFit(source: string): void {
+      if (!isContainerReady(containerRef.current)) {
+        logFit(terminalId, source, containerRef.current, term.cols, term.rows, 'SKIPPED(notReady)');
+        return;
+      }
+      fitPreservingScroll(source);
+    }
+
     function fitPreservingScroll(source: string = 'unknown'): void {
       const seq = ++fitSeq;
       const prevCols = term.cols;
@@ -251,33 +262,18 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       return true;
     });
     // 延迟 fit，等待容器完成布局后再计算列宽行高
-    // Guards: skip if disposed, suppressResize (compact/sidebar), or container too small
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         if (disposed) return;
-        if (!isContainerReady(containerRef.current)) {
-          logFit(terminalId, 'initialFit', containerRef.current, term.cols, term.rows, 'SKIPPED(notReady)');
-          return;
-        }
-        const prevCols = term.cols;
-        fitAddon.fit();
-        logFit(terminalId, 'initialFit', containerRef.current, term.cols, term.rows,
-          `${prevCols}x${term.rows}→${term.cols}x${term.rows}`);
+        safeFit('initialFit');
       });
     });
     // Safety-net: retry fit after a generous delay to catch cases where the
     // initial double-RAF was too early (e.g. CSS Grid not fully settled).
-    // fitAddon.fit() is a no-op when dimensions haven't changed.
+    // safeFit is a no-op when container isn't ready or dimensions haven't changed.
     const safetyTimer = setTimeout(() => {
       if (disposed) return;
-      if (!isContainerReady(containerRef.current)) {
-        logFit(terminalId, 'safetyNet', containerRef.current, term.cols, term.rows, 'SKIPPED(notReady)');
-        return;
-      }
-      const prevCols = term.cols;
-      fitAddon.fit();
-      logFit(terminalId, 'safetyNet', containerRef.current, term.cols, term.rows,
-        `${prevCols}x${term.rows}→${term.cols}x${term.rows}`);
+      safeFit('safetyNet');
     }, 200);
     termRef.current = term;
 
@@ -292,9 +288,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
         term.options.cursorStyle = cfg.cursorStyle;
         term.options.cursorBlink = cfg.cursorBlink;
         requestAnimationFrame(() => {
-          if (!disposed && isContainerReady(containerRef.current)) {
-            fitPreservingScroll('configApply');
-          }
+          if (!disposed) safeFit('configApply');
         });
       }
     }).catch(() => { /* use defaults on error */ });
@@ -357,16 +351,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       // buffer 写入完成后重新 fit + scrollToBottom，确保列宽与内容匹配且 viewport 显示最新内容
       requestAnimationFrame(() => {
         if (!disposed) {
-          const ready = isContainerReady(containerRef.current);
-          termLog('postBufFit', `id=${terminalId} containerReady=${ready} cols=${term.cols} rows=${term.rows}`);
-          if (ready) {
-            const prevCols = term.cols;
-            fitAddon.fit();
-            logFit(terminalId, 'bufferReplay', containerRef.current, term.cols, term.rows,
-              `${prevCols}x${term.rows}→${term.cols}x${term.rows}`);
-          } else {
-            logFit(terminalId, 'bufferReplay', containerRef.current, term.cols, term.rows, 'SKIPPED(notReady)');
-          }
+          safeFit('bufferReplay');
           const beforeVY = term.buffer.active.viewportY;
           term.scrollToBottom();
           termLog('bufScrollBottom', `id=${terminalId} beforeVY=${beforeVY} afterVY=${term.buffer.active.viewportY} baseY=${term.buffer.active.baseY}`);
@@ -381,25 +366,19 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
       }
     });
 
-    // Resize observer -> fit terminal (skip when container is too small, e.g. during layout transition)
+    // Resize observer -> fit terminal via safeFit (skips when container too small).
     // Called synchronously (no rAF) so fitAddon.fit() runs before paint —
     // eliminates 1-frame gap where container is resized but canvas hasn't been fitted yet.
     // ResizeObserver already batches observations per frame, so no extra debouncing needed.
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (!entry || disposed) return;
-      const { width, height } = entry.contentRect;
-      if (width < 10 || height < 10) {
-        if (RESIZE_DEBUG) console.log(`[XTERM:resizeObs] id=${terminalId.slice(0, 5)} w=${Math.round(width)} h=${Math.round(height)} → SKIP(tooSmall)`);
-        termLog('resizeSkip', `id=${terminalId} w=${Math.round(width)} h=${Math.round(height)} viewportY=${term.buffer.active.viewportY} baseY=${term.buffer.active.baseY}`);
-        return;
-      }
-      // Log scroll state at resize trigger point (before fitPreservingScroll modifies it)
       if (RESIZE_DEBUG) {
+        const { width, height } = entry.contentRect;
         const buf = term.buffer.active;
         console.log(`[XTERM:resizeObs] id=${terminalId.slice(0, 5)} w=${Math.round(width)} h=${Math.round(height)} viewportY=${buf.viewportY} baseY=${buf.baseY}`);
       }
-      fitPreservingScroll('resizeObs');
+      safeFit('resizeObs');
       trackRenderer('resizeObs');
     });
     observer.observe(containerRef.current);
@@ -429,7 +408,7 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
 
     // Refit after global zoom changes (webFrame.setZoomFactor alters viewport dimensions)
     const onGlobalZoom = () => {
-      requestAnimationFrame(() => { if (!disposed) fitPreservingScroll('globalZoom'); });
+      requestAnimationFrame(() => { if (!disposed) safeFit('globalZoom'); });
     };
     window.addEventListener('muxvo:global-zoom', onGlobalZoom);
 
@@ -437,9 +416,19 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     const onRefit = () => {
       if (!disposed) {
         glyphLog('refit', `id=${terminalId.slice(0, 5)} cols=${term.cols} rows=${term.rows}`);
-        fitPreservingScroll('forceRefit');
-        // Force re-send dimensions even if cols/rows unchanged
-        window.api.terminal.resize(terminalId, term.cols, term.rows);
+        const prevCols = term.cols;
+        const prevRows = term.rows;
+        safeFit('forceRefit');
+        // If fit didn't change dimensions, force re-send to PTY (overlay close may
+        // have left PTY out of sync). But respect suppressResize + MIN_COLS guards.
+        if (term.cols === prevCols && term.rows === prevRows) {
+          if (!suppressResizeRef.current && term.cols >= MIN_COLS_FOR_RESIZE && term.rows >= MIN_ROWS_FOR_RESIZE) {
+            logResize(terminalId, term.cols, term.rows, 'FORCE_RESYNC');
+            window.api.terminal.resize(terminalId, term.cols, term.rows);
+          }
+        }
+        // If dimensions changed, safeFit → fitAddon.fit() → term.onResize fires
+        // through the normal guarded path (suppressResize + MIN_COLS check)
       }
     };
     window.addEventListener('muxvo:terminal-refit', onRefit);
