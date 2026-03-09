@@ -54,6 +54,7 @@ interface ManagedTerminal {
   process: PtyProcess;
   cwd: string;
   customName?: string;
+  sessionId?: string;
   machine: ReturnType<typeof createTerminalMachine>;
   spawnedAt: number;
   /** Whether shell init keybindings (Home/End) have been injected */
@@ -364,6 +365,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
       pid: t.process.pid,
       cwd: t.cwd,
       customName: t.customName,
+      sessionId: t.sessionId,
       state: t.machine.state as TerminalState,
     }));
   }
@@ -372,6 +374,13 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
     const terminal = terminals.get(id);
     if (!terminal) return false;
     terminal.customName = name || undefined;
+    return true;
+  }
+
+  function setSessionId(id: string, sessionId: string): boolean {
+    const terminal = terminals.get(id);
+    if (!terminal) return false;
+    terminal.sessionId = sessionId || undefined;
     return true;
   }
 
@@ -467,7 +476,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
     }
   }
 
-  return { spawn, write, resize, close, list, getState, getForegroundProcess, closeAll, getBuffer, updateCwd, acknowledgeWaiting, setName };
+  return { spawn, write, resize, close, list, getState, getForegroundProcess, closeAll, getBuffer, updateCwd, acknowledgeWaiting, setName, setSessionId };
 }
 
 function isValidCwd(cwd: string): boolean {

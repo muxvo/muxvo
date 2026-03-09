@@ -182,8 +182,8 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.DELETE_SESSION, { projectHash, sessionId }),
     revealFile: (filePath: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.REVEAL_FILE, { filePath }),
-    setSessionName: (cwd: string, customName: string, sessionId?: string) =>
-      ipcRenderer.invoke(IPC_CHANNELS.CHAT.SET_SESSION_NAME, { cwd, customName, sessionId }),
+    setSessionName: (customName: string, sessionId?: string, cwd?: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CHAT.SET_SESSION_NAME, { customName, sessionId, cwd }),
     restoreSession: (projectHash: string, sessionId: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.CHAT.RESTORE_SESSION, { projectHash, sessionId }),
     onSessionUpdate: (callback: (data: { projectHash: string; sessionId: string }) => void) => {

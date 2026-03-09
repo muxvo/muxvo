@@ -116,10 +116,8 @@ export interface MuxvoConfig {
   terminal?: TerminalConfig;
   /** 启动时自动创建的终端数量 (1-5) */
   startupTerminalCount?: number;
-  /** Custom session titles: sessionId -> displayName (from terminal rename) */
+  /** Custom session titles: sessionId -> displayName (from terminal rename or history panel rename) */
   sessionCustomTitles?: Record<string, string>;
-  /** Project-level custom titles: projectHash -> displayName (from terminal rename, applied to latest session) */
-  projectCustomTitles?: Record<string, string>;
   /** 全局缩放级别（0=100%，每±1步=10%缩放，范围 -5~+10） */
   zoomLevel?: number;
   /** 双击终端 tile 是否切换到聚焦模式（默认 false） */
