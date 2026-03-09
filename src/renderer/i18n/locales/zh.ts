@@ -3,6 +3,7 @@ export const zh = {
   'menu.chatHistory': '历史聊天',
   'menu.backToTiling': '← 回到平铺',
   'menu.newTerminal': '新建终端',
+  'menu.help': '帮助',
   'app.backToTiling': '回到平铺',
   'terminal.namePlaceholder': '命名...',
   'terminal.file': '文件',

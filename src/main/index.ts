@@ -434,6 +434,18 @@ app.whenReady().then(() => {
   // Performance logger (writes to ~/.muxvo/logs/perf.log on anomalies)
   perfLogger = createPerfLogger();
 
+  // Copy muxvo-guide.md to ~/.muxvo/guide.md for help button access
+  {
+    const { copyFile, mkdir: mkdirGuide } = require('fs/promises');
+    const guideDest = require('path').join(require('os').homedir(), '.muxvo', 'guide.md');
+    const guideSrc = is.dev
+      ? require('path').join(app.getAppPath(), 'docs', 'muxvo-guide.md')
+      : require('path').join(process.resourcesPath, 'muxvo-guide.md');
+    mkdirGuide(require('path').join(require('os').homedir(), '.muxvo'), { recursive: true })
+      .then(() => copyFile(guideSrc, guideDest))
+      .catch(() => {});
+  }
+
   // Glyph debug log: renderer sends diagnostic data → main writes to glyph-debug.log
   // Used to diagnose intermittent text garbling (CJK glyph corruption).
   // Users send this file when reporting rendering issues.

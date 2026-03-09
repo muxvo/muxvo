@@ -3,6 +3,7 @@ export const en = {
   'menu.chatHistory': 'Chat History',
   'menu.backToTiling': '← Back to Tiling',
   'menu.newTerminal': 'New Terminal',
+  'menu.help': 'Help',
   'app.backToTiling': 'Back to Tiling',
   'terminal.namePlaceholder': 'Name...',
   'terminal.file': 'File',
