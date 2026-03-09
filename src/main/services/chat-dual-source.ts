@@ -770,7 +770,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
 
           for (const dir of dirs) {
             if (!dir.isDirectory()) continue;
-            const projectHash = dir.name;
+            const projectHash = getParentProjectHash(dir.name) || dir.name;
             const projectPath = join(baseDir, projectHash);
 
             try {
