@@ -258,8 +258,8 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
       let resolvedType: 'user' | 'assistant' | 'system' = type as 'user' | 'assistant';
 
       if (type === 'queue-operation') {
-        // queue-operation is always a system message
-        resolvedType = 'system';
+        // queue-operation: user interruption message sent while Claude is working
+        resolvedType = 'user';
       } else if (type === 'user') {
         // Check for system message markers on user-type entries
         if (entry.isCompactSummary === true) {
@@ -269,17 +269,8 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
         } else {
           const contentStr = typeof normalizedContent === 'string' ? normalizedContent : '';
           const trimmedContent = contentStr.trimStart();
-          if (trimmedContent.startsWith('<system-reminder>')) {
-            // User interruption messages: extract actual user text, keep as 'user'
-            const interruptMatch = trimmedContent.match(
-              /<system-reminder>\s*\n?\s*The user sent a new message[^\n]*:\s*\n([\s\S]*?)(?:\n\nIMPORTANT:[\s\S]*)?<\/system-reminder>/
-            );
-            if (interruptMatch) {
-              normalizedContent = interruptMatch[1].trim();
-            } else {
-              resolvedType = 'system';
-            }
-          } else if (
+          if (
+            trimmedContent.startsWith('<system-reminder>') ||
             trimmedContent.startsWith('<task-notification>') ||
             trimmedContent.startsWith('<command-message>') ||
             trimmedContent.startsWith('<command-name>')
