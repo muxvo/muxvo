@@ -246,7 +246,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
                   " bindkey -M vicmd '\\e[F' end-of-line 2>/dev/null;" +
                   " clear\r"
                 );
-              }, 500);
+              }, 100);
             }
           }
         });
