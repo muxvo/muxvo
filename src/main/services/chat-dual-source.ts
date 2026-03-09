@@ -771,7 +771,7 @@ export function createChatProjectReader(opts: ChatProjectReaderOpts) {
           for (const dir of dirs) {
             if (!dir.isDirectory()) continue;
             const projectHash = getParentProjectHash(dir.name) || dir.name;
-            const projectPath = join(baseDir, projectHash);
+            const projectPath = join(baseDir, dir.name);
 
             try {
               const files = await fsp.readdir(projectPath);
