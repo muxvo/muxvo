@@ -473,7 +473,7 @@ export function useTerminalActions() {
   const handleResumeSession = useCallback(async (info: { sessionId: string; cwd: string; source: ChatSource; customTitle?: string }) => {
     console.log('[resume-chat] creating terminal:', { cwd: info.cwd, sessionId: info.sessionId, source: info.source, customTitle: info.customTitle });
     const { cols: cachedCols, rows: cachedRows } = getTerminalSizeCache();
-    const result = await window.api.terminal.create(info.cwd, cachedCols, cachedRows);
+    const result = await window.api.terminal.create(info.cwd, cachedCols, cachedRows, true);
     if (!result?.success || !result.data) {
       console.error('[resume-chat] terminal creation failed:', result);
       window.alert(`\u65E0\u6CD5\u521B\u5EFA\u7EC8\u7AEF\uFF1A${(result as any)?.error || '\u672A\u77E5\u9519\u8BEF'}\n\u76EE\u5F55: ${info.cwd}`);
