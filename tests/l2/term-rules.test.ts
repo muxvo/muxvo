@@ -161,7 +161,7 @@ describe('TERM L2 -- 业务规则测试', () => {
       });
 
       // Simulate mousedown on column gap + mousemove
-      manager.startColResize(0, { clientX: 500 });
+      manager.startColResize(0, 0, { clientX: 500 });
       manager.moveResize({ clientX: 600 });
       manager.endResize();
 
@@ -200,7 +200,7 @@ describe('TERM L2 -- 业务规则测试', () => {
       });
 
       // Double-click on column gap should reset to equal split
-      manager.doubleClickColGap(0);
+      manager.doubleClickColGap(0, 0);
       expect(manager.columnRatios).toEqual([1, 1]);
     });
 
@@ -231,7 +231,7 @@ describe('TERM L2 -- 业务规则测试', () => {
       });
 
       // Attempt to start resize in Focused mode
-      const started = manager.startColResize(0, { clientX: 500 });
+      const started = manager.startColResize(0, 0, { clientX: 500 });
       expect(started).toBe(false);
       expect(manager.cursor).not.toBe('col-resize');
     });
@@ -377,7 +377,7 @@ describe('TERM L2 -- 业务规则测试', () => {
       });
 
       // Adjust ratios
-      manager.startColResize(0, { clientX: 500 });
+      manager.startColResize(0, 0, { clientX: 500 });
       manager.moveResize({ clientX: 600 });
       manager.endResize();
 
@@ -476,7 +476,7 @@ describe('TERM L2 -- 业务规则测试', () => {
       });
 
       // With containerSize=1000, each col is 500px. Drag right 100px
-      manager.startColResize(0, { clientX: 500 }, 1000);
+      manager.startColResize(0, 0, { clientX: 500 }, 1000);
       manager.moveResize({ clientX: 600 });
       manager.endResize();
 
@@ -497,7 +497,7 @@ describe('TERM L2 -- 业务规则测试', () => {
       });
 
       // Without containerSize, uses fallback totalPx=1000
-      manager.startColResize(0, { clientX: 500 });
+      manager.startColResize(0, 0, { clientX: 500 });
       manager.moveResize({ clientX: 600 });
       manager.endResize();
 

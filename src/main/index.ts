@@ -964,7 +964,8 @@ function saveTerminalConfig(configManager: ReturnType<typeof createConfigManager
   if (!terminalManager) return;
   const existing = configManager.loadConfig();
   const terminals = terminalManager.list();
-  const { cols, rows } = calculateGridLayout(terminals.length);
+  const layout = calculateGridLayout(terminals.length);
+  const distribution = layout.distribution || layout.rowPattern || [terminals.length];
   configManager.saveConfig({
     ...existing,
     openTerminals: terminals.map((t) => ({
@@ -972,8 +973,9 @@ function saveTerminalConfig(configManager: ReturnType<typeof createConfigManager
       customName: t.customName,
     })),
     gridLayout: {
-      columnRatios: Array(cols).fill(1),
-      rowRatios: Array(rows).fill(1),
+      columnRatios: Array(Math.max(...distribution)).fill(1),
+      perRowColumnRatios: distribution.map((count) => Array(count).fill(1)),
+      rowRatios: Array(layout.rows).fill(1),
     },
   });
 }

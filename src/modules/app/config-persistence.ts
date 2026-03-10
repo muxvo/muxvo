@@ -6,6 +6,7 @@ interface ConfigData {
   openTerminals: string[];
   gridLayout: {
     columnRatios: number[];
+    perRowColumnRatios?: number[][];
     rowRatios: number[];
   };
 }
