@@ -4,8 +4,8 @@
  * DEV-PLAN B1: Focused mode layout (75% main + 25% sidebar)
  *
  * Supports:
- * - Tiling mode with dynamic grid layout (rowPattern/spanRow for centering)
- * - Resize handles between columns/rows via grid-resize manager
+ * - Tiling mode with nested row grids (per-row independent column widths)
+ * - Resize handles between columns (per-row) and rows
  * - Drag & drop reordering via TerminalTile drag props
  * - Focused mode with sidebar (max 3 visible, scrollable)
  */
@@ -89,69 +89,15 @@ export function TerminalGrid({ terminals, viewMode = 'Tiling', focusedId, select
   );
 }
 
-/** Compute grid placement for each tile based on layout result */
-export function computeTilePlacements(layout: GridLayoutResult, count: number): Array<{ gridRow: string; gridColumn: string }> {
-  const { cols, rowPattern, spanRow, distribution, lastRowCentered } = layout;
-  const placements: Array<{ gridRow: string; gridColumn: string }> = [];
-
-  if (rowPattern && spanRow) {
-    // Explicit rowPattern mode (e.g. 5 terminals: [3,2] with spans {0:2, 1:3})
-    let tileIdx = 0;
-    for (let rowIdx = 0; rowIdx < rowPattern.length; rowIdx++) {
-      const rowCount = rowPattern[rowIdx];
-      const span = spanRow[rowIdx] || 1;
-      // Center tiles: startCol = floor((cols - rowCount*span) / 2) + 1 (1-indexed)
-      const totalSpan = rowCount * span;
-      const startOffset = Math.floor((cols - totalSpan) / 2);
-      for (let colIdx = 0; colIdx < rowCount; colIdx++) {
-        const colStart = startOffset + colIdx * span + 1;
-        placements.push({
-          gridRow: `${rowIdx + 1}`,
-          gridColumn: span > 1 ? `${colStart} / span ${span}` : `${colStart}`,
-        });
-        tileIdx++;
-      }
-    }
-  } else if (distribution) {
-    // Distribution mode: each row has a known count, items fill from left
-    let tileIdx = 0;
-    for (let rowIdx = 0; rowIdx < distribution.length; rowIdx++) {
-      const rowCount = distribution[rowIdx];
-      const isLastRow = rowIdx === distribution.length - 1;
-      for (let colIdx = 0; colIdx < rowCount; colIdx++) {
-        if (isLastRow && lastRowCentered && rowCount < cols) {
-          // Center last row items using span to fill evenly
-          // For last row with fewer items, each item spans floor(cols/rowCount) cols
-          const spanSize = Math.floor(cols / rowCount);
-          const totalUsed = spanSize * rowCount;
-          const offset = Math.floor((cols - totalUsed) / 2);
-          const colStart = offset + colIdx * spanSize + 1;
-          placements.push({
-            gridRow: `${rowIdx + 1}`,
-            gridColumn: `${colStart} / span ${spanSize}`,
-          });
-        } else {
-          placements.push({
-            gridRow: `${rowIdx + 1}`,
-            gridColumn: `${colIdx + 1}`,
-          });
-        }
-        tileIdx++;
-      }
-    }
-  } else {
-    // Simple grid: fill left-to-right, top-to-bottom
-    for (let i = 0; i < count; i++) {
-      const row = Math.floor(i / cols) + 1;
-      const col = (i % cols) + 1;
-      placements.push({
-        gridRow: `${row}`,
-        gridColumn: `${col}`,
-      });
-    }
+/** Split terminals into rows based on distribution */
+function splitTerminalsIntoRows(terminals: TerminalInfo[], distribution: number[]): TerminalInfo[][] {
+  const rows: TerminalInfo[][] = [];
+  let offset = 0;
+  for (const count of distribution) {
+    rows.push(terminals.slice(offset, offset + count));
+    offset += count;
   }
-
-  return placements;
+  return rows;
 }
 
 interface TilingGridProps {
@@ -176,12 +122,21 @@ interface TilingGridProps {
 function TilingGrid({ terminals, selectedId, focusedId, activeSidebarId, onDoubleClick, onFocusTerminal, onSidebarClick, onSidebarActivate, onSidebarDeactivate, onClick, onClose, onReorder, onRename, onAddTerminal, maxReached, onBackToTiling }: TilingGridProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const layout = calculateGridLayout(terminals.length);
-  const { cols, rows } = layout;
+  const { rows } = layout;
+
+  // Build distribution: how many terminals per row
+  const distribution = useMemo(() => {
+    if (layout.distribution) return layout.distribution;
+    if (layout.rowPattern) return layout.rowPattern;
+    // Single row
+    return [terminals.length];
+  }, [layout, terminals.length]);
 
   // Resize manager — recreate when grid shape changes
   const resizeManager = useMemo(
-    () => createGridResizeManager({ cols, rows }),
-    [cols, rows],
+    () => createGridResizeManager({ cols: Math.max(...distribution), rows, distribution }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rows, distribution.join(',')],
   );
 
   // Force re-render when ratios change during resize
@@ -203,16 +158,11 @@ function TilingGrid({ terminals, selectedId, focusedId, activeSidebarId, onDoubl
     forceUpdate((n) => n + 1);
   }, [resizeManager]);
 
-  // Compute grid template strings from ratios
-  const gridTemplateColumns = resizeManager.columnRatios.map((r) => `${r}fr`).join(' ');
-  const gridTemplateRows = resizeManager.rowRatios.map((r) => `${r}fr`).join(' ');
-
-  // Compute tile placements
-  const placements = computeTilePlacements(layout, terminals.length);
-
-  // Resize handle positions: compute cumulative percentages for positioning
-  const colHandlePositions = computeHandlePositions(resizeManager.columnRatios);
-  const rowHandlePositions = computeHandlePositions(resizeManager.rowRatios);
+  // Split terminals into rows
+  const terminalRows = useMemo(
+    () => splitTerminalsIntoRows(terminals, distribution),
+    [terminals, distribution],
+  );
 
   // Drag handlers
   const handleDragStart = useCallback((id: string) => {
@@ -251,209 +201,201 @@ function TilingGrid({ terminals, selectedId, focusedId, activeSidebarId, onDoubl
     ? terminals.filter((t) => t.id !== focusedId)
     : [];
 
-  const gridStyle: React.CSSProperties = {
-    display: 'grid',
-    gridTemplateColumns,
-    gridTemplateRows,
+  const isMultiRow = rows > 1;
+
+  // Row resize handle positions
+  const rowHandlePositions = computeHandlePositions(resizeManager.rowRatios);
+
+  // --- Single row layout (1-3 terminals) ---
+  if (!isMultiRow) {
+    const gridTemplateColumns = resizeManager.perRowColumnRatios[0]?.map((r) => `${r}fr`).join(' ') || '1fr';
+    const colHandlePositions = computeHandlePositions(resizeManager.perRowColumnRatios[0] || []);
+
+    const gridStyle: React.CSSProperties = {
+      display: 'grid',
+      gridTemplateColumns,
+      gridTemplateRows: '1fr',
+      gap: '6px',
+      padding: '0',
+      width: '100%',
+      height: '100%',
+      position: 'relative',
+      cursor: isFocusedMode ? 'default' : resizeManager.cursor,
+    };
+
+    return (
+      <div
+        ref={containerRef}
+        style={gridStyle}
+        onMouseMove={isFocusedMode ? undefined : handleMouseMove}
+        onMouseUp={isFocusedMode ? undefined : handleMouseUp}
+      >
+        {terminals.map((t, i) => {
+          const isFocused = isFocusedMode && focusedId === t.id;
+          const ds: 'none' | 'dragging' | 'drag-over' =
+            t.id === draggingId ? 'dragging' :
+            t.id === dragOverId ? 'drag-over' : 'none';
+
+          const cellStyle: React.CSSProperties = isFocusedMode
+            ? (isFocused
+              ? { position: 'absolute', top: 0, left: 0, right: nonFocusedTerminals.length > 0 ? '25%' : 0, bottom: 0, zIndex: 10, overflow: 'hidden' }
+              : { position: 'absolute', width: 0, height: 0, overflow: 'hidden', opacity: 0, pointerEvents: 'none' })
+            : { gridColumn: `${i + 1}`, minWidth: 0, minHeight: 0, height: '100%', overflow: 'hidden' };
+
+          return (
+            <div key={t.id} style={cellStyle} onClick={isFocused ? () => onSidebarDeactivate?.() : undefined}>
+              <TerminalTile
+                id={t.id} state={t.state} cwd={t.cwd} customName={t.customName}
+                onRename={onRename} selected={!isFocusedMode && t.id === selectedId}
+                focused={isFocused} compact={isFocusedMode && !isFocused} staggerIndex={i}
+                draggable={!isFocusedMode}
+                onDragStart={!isFocusedMode ? handleDragStart : undefined}
+                onDragEnd={!isFocusedMode ? handleDragEnd : undefined}
+                onDragOver={!isFocusedMode ? handleDragOver : undefined}
+                onDrop={!isFocusedMode ? handleDrop : undefined}
+                onDragLeave={!isFocusedMode ? handleDragLeave : undefined}
+                dragState={!isFocusedMode ? ds : 'none'}
+                onDoubleClick={() => onDoubleClick?.(t.id)}
+                onFocus={() => onFocusTerminal?.(t.id)}
+                onClick={() => onClick?.(t.id)}
+                onClose={onClose}
+                onBackToTiling={isFocused ? onBackToTiling : undefined}
+              />
+            </div>
+          );
+        })}
+
+        {/* Column resize handles */}
+        {!isFocusedMode && distribution[0] > 1 && colHandlePositions.map((pct, idx) => (
+          <ResizeHandle
+            key={`col-0-${idx}`}
+            type="col"
+            index={idx}
+            style={{ left: `${pct}%` }}
+            onMouseDown={(e) => {
+              const containerWidth = containerRef.current?.clientWidth ?? 0;
+              resizeManager.startColResize(0, idx, { clientX: e.clientX }, containerWidth);
+              forceUpdate((n) => n + 1);
+            }}
+            onDoubleClick={() => {
+              resizeManager.doubleClickColGap(0, idx);
+              forceUpdate((n) => n + 1);
+            }}
+          />
+        ))}
+
+        {/* Focused mode sidebar */}
+        {renderFocusedSidebar(isFocusedMode, nonFocusedTerminals, activeSidebarId, onSidebarClick, onSidebarActivate, onSidebarDeactivate, onClose)}
+
+        {/* FAB */}
+        {onAddTerminal && (
+          <button className="terminal-grid__fab" onClick={onAddTerminal} disabled={maxReached}>+</button>
+        )}
+      </div>
+    );
+  }
+
+  // --- Multi-row layout (4+ terminals): nested flex-column + per-row grids ---
+  const outerStyle: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
     gap: '6px',
-    padding: '0',
     width: '100%',
     height: '100%',
     position: 'relative',
     cursor: isFocusedMode ? 'default' : resizeManager.cursor,
   };
 
+  // Track cumulative terminal index for staggerIndex
+  let globalTileIdx = 0;
+
   return (
     <div
       ref={containerRef}
-      style={gridStyle}
+      style={outerStyle}
       onMouseMove={isFocusedMode ? undefined : handleMouseMove}
       onMouseUp={isFocusedMode ? undefined : handleMouseUp}
     >
-      {/* Single terminals.map() — mode switching only changes CSS, never unmounts */}
-      {terminals.map((t, i) => {
-        const isFocused = isFocusedMode && focusedId === t.id;
-        const placement = placements[i];
-        const ds: 'none' | 'dragging' | 'drag-over' =
-          t.id === draggingId ? 'dragging' :
-          t.id === dragOverId ? 'drag-over' : 'none';
+      {terminalRows.map((rowTerminals, rowIdx) => {
+        const rowRatios = resizeManager.perRowColumnRatios[rowIdx] || [];
+        const gridTemplateColumns = rowRatios.map((r) => `${r}fr`).join(' ') || '1fr';
+        const colHandlePositions = computeHandlePositions(rowRatios);
+        const rowFlex = resizeManager.rowRatios[rowIdx] ?? 1;
 
-        let cellStyle: React.CSSProperties;
+        const rowStyle: React.CSSProperties = {
+          display: 'grid',
+          gridTemplateColumns,
+          gap: '6px',
+          flex: rowFlex,
+          position: 'relative',
+          minHeight: 0,
+        };
 
-        if (isFocusedMode && isFocused) {
-          // Focused terminal: left 75% (or 100% if no sidebar)
-          cellStyle = {
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: nonFocusedTerminals.length > 0 ? '25%' : 0,
-            bottom: 0,
-            zIndex: 10,
-            overflow: 'hidden',
-          };
-        } else if (isFocusedMode) {
-          // Hidden but alive — keeps xterm instance for seamless focus switching.
-          // Visual sidebar is rendered separately in a CSS scroll container below.
-          cellStyle = {
-            position: 'absolute',
-            width: 0,
-            height: 0,
-            overflow: 'hidden',
-            opacity: 0,
-            pointerEvents: 'none',
-          };
-        } else {
-          // Tiling mode: normal grid placement
-          cellStyle = {
-            gridRow: placement?.gridRow,
-            gridColumn: placement?.gridColumn,
-            minWidth: 0,
-            minHeight: 0,
-            height: '100%',
-            overflow: 'hidden',
-          };
-        }
+        const startIdx = globalTileIdx;
+        globalTileIdx += rowTerminals.length;
 
         return (
-          <div
-            key={t.id}
-            style={cellStyle}
-            onClick={isFocused ? () => onSidebarDeactivate?.() : undefined}
-          >
-            <TerminalTile
-              id={t.id}
-              state={t.state}
-              cwd={t.cwd}
-              customName={t.customName}
-              onRename={onRename}
-              selected={!isFocusedMode && t.id === selectedId}
-              focused={isFocused}
-              compact={isFocusedMode && !isFocused}
-              staggerIndex={i}
-              draggable={!isFocusedMode}
-              onDragStart={!isFocusedMode ? handleDragStart : undefined}
-              onDragEnd={!isFocusedMode ? handleDragEnd : undefined}
-              onDragOver={!isFocusedMode ? handleDragOver : undefined}
-              onDrop={!isFocusedMode ? handleDrop : undefined}
-              onDragLeave={!isFocusedMode ? handleDragLeave : undefined}
-              dragState={!isFocusedMode ? ds : 'none'}
-              onDoubleClick={() => onDoubleClick?.(t.id)}
-              onFocus={() => onFocusTerminal?.(t.id)}
-              onClick={() => onClick?.(t.id)}
-              onClose={onClose}
-              onBackToTiling={isFocused ? onBackToTiling : undefined}
-            />
+          <div key={`row-${rowIdx}`} style={rowStyle}>
+            {rowTerminals.map((t, colIdx) => {
+              const tileIdx = startIdx + colIdx;
+              const isFocused = isFocusedMode && focusedId === t.id;
+              const ds: 'none' | 'dragging' | 'drag-over' =
+                t.id === draggingId ? 'dragging' :
+                t.id === dragOverId ? 'drag-over' : 'none';
+
+              const cellStyle: React.CSSProperties = isFocusedMode
+                ? (isFocused
+                  ? { position: 'fixed', top: 0, left: 0, right: nonFocusedTerminals.length > 0 ? '25%' : 0, bottom: 0, zIndex: 10, overflow: 'hidden' }
+                  : { position: 'absolute', width: 0, height: 0, overflow: 'hidden', opacity: 0, pointerEvents: 'none' })
+                : { gridColumn: `${colIdx + 1}`, minWidth: 0, minHeight: 0, height: '100%', overflow: 'hidden' };
+
+              return (
+                <div key={t.id} style={cellStyle} onClick={isFocused ? () => onSidebarDeactivate?.() : undefined}>
+                  <TerminalTile
+                    id={t.id} state={t.state} cwd={t.cwd} customName={t.customName}
+                    onRename={onRename} selected={!isFocusedMode && t.id === selectedId}
+                    focused={isFocused} compact={isFocusedMode && !isFocused} staggerIndex={tileIdx}
+                    draggable={!isFocusedMode}
+                    onDragStart={!isFocusedMode ? handleDragStart : undefined}
+                    onDragEnd={!isFocusedMode ? handleDragEnd : undefined}
+                    onDragOver={!isFocusedMode ? handleDragOver : undefined}
+                    onDrop={!isFocusedMode ? handleDrop : undefined}
+                    onDragLeave={!isFocusedMode ? handleDragLeave : undefined}
+                    dragState={!isFocusedMode ? ds : 'none'}
+                    onDoubleClick={() => onDoubleClick?.(t.id)}
+                    onFocus={() => onFocusTerminal?.(t.id)}
+                    onClick={() => onClick?.(t.id)}
+                    onClose={onClose}
+                    onBackToTiling={isFocused ? onBackToTiling : undefined}
+                  />
+                </div>
+              );
+            })}
+
+            {/* Per-row column resize handles */}
+            {!isFocusedMode && rowTerminals.length > 1 && colHandlePositions.map((pct, idx) => (
+              <ResizeHandle
+                key={`col-${rowIdx}-${idx}`}
+                type="col"
+                index={idx}
+                style={{ left: `${pct}%` }}
+                onMouseDown={(e) => {
+                  const rowEl = e.currentTarget.parentElement;
+                  const containerWidth = rowEl?.clientWidth ?? 0;
+                  resizeManager.startColResize(rowIdx, idx, { clientX: e.clientX }, containerWidth);
+                  forceUpdate((n) => n + 1);
+                }}
+                onDoubleClick={() => {
+                  resizeManager.doubleClickColGap(rowIdx, idx);
+                  forceUpdate((n) => n + 1);
+                }}
+              />
+            ))}
           </div>
         );
       })}
 
-      {/* Focused mode sidebar: CSS scroll container with smart overlay */}
-      {isFocusedMode && nonFocusedTerminals.length > 0 && (
-        <div
-          style={{
-            position: 'absolute',
-            right: 0,
-            width: '25%',
-            top: 0,
-            bottom: 0,
-            overflowY: 'auto',
-            zIndex: 11,
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-          onClick={(e) => {
-            // Click on sidebar container background → deactivate
-            if (e.target === e.currentTarget) onSidebarDeactivate?.();
-          }}
-        >
-          {nonFocusedTerminals.map((t) => {
-            const isActivated = activeSidebarId === t.id;
-            const visibleCount = Math.min(nonFocusedTerminals.length, MAX_SIDEBAR_VISIBLE);
-            return (
-              <div
-                key={t.id}
-                className={isActivated ? 'sidebar-tile--active' : undefined}
-                style={{
-                  height: `${100 / visibleCount}%`,
-                  minHeight: '150px',
-                  flexShrink: 0,
-                  position: 'relative',
-                  borderLeft: isActivated ? '2px solid var(--accent)' : '1px solid var(--border)',
-                  overflow: 'hidden',
-                }}
-              >
-                <TerminalTile
-                  id={t.id}
-                  state={t.state}
-                  cwd={t.cwd}
-                  customName={t.customName}
-                  compact
-                  onClose={onClose}
-                  onSidebarSwitch={() => onSidebarClick?.(t.id)}
-                />
-                {/* Smart overlay: always present, behavior varies by activation state */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    zIndex: 1,
-                    pointerEvents: 'auto',
-                    cursor: isActivated ? 'text' : 'default',
-                    background: isActivated ? 'transparent' : 'rgba(0,0,0,0.03)',
-                    transition: 'background 150ms ease',
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (isActivated) {
-                      // Already active: re-focus xterm (in case focus was lost)
-                      window.dispatchEvent(new CustomEvent('muxvo:terminal-focus', { detail: t.id }));
-                    } else {
-                      // Activate this sidebar terminal
-                      onSidebarActivate?.(t.id);
-                    }
-                  }}
-                  onDoubleClick={(e) => {
-                    e.stopPropagation();
-                    // Double-click: switch to focused terminal
-                    onSidebarClick?.(t.id);
-                  }}
-                  onWheel={(e) => {
-                    if (isActivated) {
-                      // Activated: forward scroll to xterm
-                      e.stopPropagation();
-                      window.dispatchEvent(new CustomEvent('muxvo:terminal-scroll', {
-                        detail: { id: t.id, deltaY: e.deltaY },
-                      }));
-                    }
-                    // Not activated: wheel bubbles to sidebar container for list scrolling
-                  }}
-                />
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Column resize handles (tiling mode only) */}
-      {!isFocusedMode && cols > 1 && colHandlePositions.map((pct, idx) => (
-        <ResizeHandle
-          key={`col-${idx}`}
-          type="col"
-          index={idx}
-          style={{ left: `${pct}%` }}
-          onMouseDown={(e) => {
-            const containerWidth = containerRef.current?.clientWidth ?? 0;
-            resizeManager.startColResize(idx, { clientX: e.clientX }, containerWidth);
-            forceUpdate((n) => n + 1);
-          }}
-          onDoubleClick={() => {
-            resizeManager.doubleClickColGap(idx);
-            forceUpdate((n) => n + 1);
-          }}
-        />
-      ))}
-
-      {/* Row resize handles (tiling mode only) */}
+      {/* Row resize handles (between rows) */}
       {!isFocusedMode && rows > 1 && rowHandlePositions.map((pct, idx) => (
         <ResizeHandle
           key={`row-${idx}`}
@@ -472,12 +414,167 @@ function TilingGrid({ terminals, selectedId, focusedId, activeSidebarId, onDoubl
         />
       ))}
 
-      {/* FAB: Add terminal */}
+      {/* Focused mode sidebar */}
+      {renderFocusedSidebar(isFocusedMode, nonFocusedTerminals, activeSidebarId, onSidebarClick, onSidebarActivate, onSidebarDeactivate, onClose)}
+
+      {/* FAB */}
       {onAddTerminal && (
         <button className="terminal-grid__fab" onClick={onAddTerminal} disabled={maxReached}>+</button>
       )}
     </div>
   );
+}
+
+/** Render focused mode sidebar (shared between single-row and multi-row) */
+function renderFocusedSidebar(
+  isFocusedMode: boolean,
+  nonFocusedTerminals: TerminalInfo[],
+  activeSidebarId: string | null | undefined,
+  onSidebarClick?: (id: string) => void,
+  onSidebarActivate?: (id: string) => void,
+  onSidebarDeactivate?: () => void,
+  onClose?: (id: string) => void,
+): JSX.Element | null {
+  if (!isFocusedMode || nonFocusedTerminals.length === 0) return null;
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        right: 0,
+        width: '25%',
+        top: 0,
+        bottom: 0,
+        overflowY: 'auto',
+        zIndex: 11,
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onSidebarDeactivate?.();
+      }}
+    >
+      {nonFocusedTerminals.map((t) => {
+        const isActivated = activeSidebarId === t.id;
+        const visibleCount = Math.min(nonFocusedTerminals.length, MAX_SIDEBAR_VISIBLE);
+        return (
+          <div
+            key={t.id}
+            className={isActivated ? 'sidebar-tile--active' : undefined}
+            style={{
+              height: `${100 / visibleCount}%`,
+              minHeight: '150px',
+              flexShrink: 0,
+              position: 'relative',
+              borderLeft: isActivated ? '2px solid var(--accent)' : '1px solid var(--border)',
+              overflow: 'hidden',
+            }}
+          >
+            <TerminalTile
+              id={t.id}
+              state={t.state}
+              cwd={t.cwd}
+              customName={t.customName}
+              compact
+              onClose={onClose}
+              onSidebarSwitch={() => onSidebarClick?.(t.id)}
+            />
+            {/* Smart overlay: always present, behavior varies by activation state */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: 1,
+                pointerEvents: 'auto',
+                cursor: isActivated ? 'text' : 'default',
+                background: isActivated ? 'transparent' : 'rgba(0,0,0,0.03)',
+                transition: 'background 150ms ease',
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isActivated) {
+                  window.dispatchEvent(new CustomEvent('muxvo:terminal-focus', { detail: t.id }));
+                } else {
+                  onSidebarActivate?.(t.id);
+                }
+              }}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                onSidebarClick?.(t.id);
+              }}
+              onWheel={(e) => {
+                if (isActivated) {
+                  e.stopPropagation();
+                  window.dispatchEvent(new CustomEvent('muxvo:terminal-scroll', {
+                    detail: { id: t.id, deltaY: e.deltaY },
+                  }));
+                }
+              }}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Compute grid placement for each tile based on layout result (kept for test compatibility) */
+export function computeTilePlacements(layout: GridLayoutResult, count: number): Array<{ gridRow: string; gridColumn: string }> {
+  const { cols, rowPattern, spanRow, distribution, lastRowCentered } = layout;
+  const placements: Array<{ gridRow: string; gridColumn: string }> = [];
+
+  if (rowPattern && spanRow) {
+    let tileIdx = 0;
+    for (let rowIdx = 0; rowIdx < rowPattern.length; rowIdx++) {
+      const rowCount = rowPattern[rowIdx];
+      const span = spanRow[rowIdx] || 1;
+      const totalSpan = rowCount * span;
+      const startOffset = Math.floor((cols - totalSpan) / 2);
+      for (let colIdx = 0; colIdx < rowCount; colIdx++) {
+        const colStart = startOffset + colIdx * span + 1;
+        placements.push({
+          gridRow: `${rowIdx + 1}`,
+          gridColumn: span > 1 ? `${colStart} / span ${span}` : `${colStart}`,
+        });
+        tileIdx++;
+      }
+    }
+  } else if (distribution) {
+    let tileIdx = 0;
+    for (let rowIdx = 0; rowIdx < distribution.length; rowIdx++) {
+      const rowCount = distribution[rowIdx];
+      const isLastRow = rowIdx === distribution.length - 1;
+      for (let colIdx = 0; colIdx < rowCount; colIdx++) {
+        if (isLastRow && lastRowCentered && rowCount < cols) {
+          const spanSize = Math.floor(cols / rowCount);
+          const totalUsed = spanSize * rowCount;
+          const offset = Math.floor((cols - totalUsed) / 2);
+          const colStart = offset + colIdx * spanSize + 1;
+          placements.push({
+            gridRow: `${rowIdx + 1}`,
+            gridColumn: `${colStart} / span ${spanSize}`,
+          });
+        } else {
+          placements.push({
+            gridRow: `${rowIdx + 1}`,
+            gridColumn: `${colIdx + 1}`,
+          });
+        }
+        tileIdx++;
+      }
+    }
+  } else {
+    for (let i = 0; i < count; i++) {
+      const row = Math.floor(i / cols) + 1;
+      const col = (i % cols) + 1;
+      placements.push({
+        gridRow: `${row}`,
+        gridColumn: `${col}`,
+      });
+    }
+  }
+
+  return placements;
 }
 
 /** Compute handle positions as percentages (between adjacent items) */

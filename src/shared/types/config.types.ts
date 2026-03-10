@@ -66,6 +66,8 @@ export interface OpenTerminalConfig {
 /** Grid 布局配置 */
 export interface GridLayout {
   columnRatios: number[];
+  /** Per-row independent column ratios (new format) */
+  perRowColumnRatios?: number[][];
   rowRatios: number[];
 }
 

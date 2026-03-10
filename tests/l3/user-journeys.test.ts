@@ -597,9 +597,9 @@ describe('L3 -- 跨模块联动', () => {
     expect(layout4.cols).toBe(2);
     expect(layout4.rows).toBe(2);
 
-    // Resize columns with precise container size
-    const rm = createGridResizeManager({ cols: 2, rows: 2 });
-    rm.startColResize(0, { clientX: 500 }, 1000);
+    // Resize columns with precise container size (row 0)
+    const rm = createGridResizeManager({ cols: 2, rows: 2, distribution: [2, 2] });
+    rm.startColResize(0, 0, { clientX: 500 }, 1000);
     rm.moveResize({ clientX: 600 });
     rm.endResize();
     expect(rm.columnRatios[0]).not.toBe(1);
@@ -610,9 +610,10 @@ describe('L3 -- 跨模块联动', () => {
     expect(layout5.cols).toBe(6);
     expect(layout5.rows).toBe(2);
 
-    // New resize manager for new shape has fresh equal ratios
-    const rm2 = createGridResizeManager({ cols: 6, rows: 2 });
-    expect(rm2.columnRatios).toEqual([1, 1, 1, 1, 1, 1]);
+    // New resize manager for new shape has fresh equal ratios (per-row)
+    const rm2 = createGridResizeManager({ cols: 3, rows: 2, distribution: [3, 2] });
+    expect(rm2.perRowColumnRatios[0]).toEqual([1, 1, 1]);
+    expect(rm2.perRowColumnRatios[1]).toEqual([1, 1]);
     expect(rm2.rowRatios).toEqual([1, 1]);
   });
 });

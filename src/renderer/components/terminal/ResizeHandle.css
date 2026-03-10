@@ -7,11 +7,12 @@
   transition: background 0.15s ease;
 }
 
-/* Column handle: vertical bar */
+/* Column handle: vertical bar (fills parent row height) */
 .resize-handle--col {
   width: 8px;
   top: 0;
   bottom: 0;
+  height: 100%;
   cursor: col-resize;
   transform: translateX(-50%);
 }
