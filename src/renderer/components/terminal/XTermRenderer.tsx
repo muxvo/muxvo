@@ -246,7 +246,8 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
         window.dispatchEvent(new CustomEvent('muxvo:global-zoom-request', { detail: 'reset' }));
         return false;
       }
-      // Cmd+Left → Home (line start), Cmd+Right → End (line end) on macOS
+      // Cmd+Left → Home (beginning-of-line via bindkey \e[H)
+      // Cmd+Right → End (end-of-line via bindkey \e[F)
       if (e.metaKey && e.type === 'keydown') {
         if (e.key === 'ArrowLeft') {
           e.preventDefault();
@@ -322,12 +323,10 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
     });
 
     // Fetch buffered output (captures anything from before subscription)
-    console.log(`[MUXVO:restore] XTermRenderer mounted for id=${terminalId}`);
     window.api.terminal.getBuffer(terminalId).then((result: { success: boolean; data?: string }) => {
       if (disposed) return; // Component unmounted — discard
       termLog('bufReplay', `id=${terminalId} bufBytes=${result?.data?.length ?? 0} success=${result?.success}`);
       if (result?.success && result.data) {
-        console.log(`[MUXVO:restore] buffer received for id=${terminalId} bytes=${result.data.length}`);
         term.write(stripPromptEolMark(result.data));
       }
       // Flush any live data that arrived during getBuffer round-trip
@@ -358,10 +357,8 @@ export function XTermRenderer({ terminalId, suppressResize }: Props): JSX.Elemen
         }
       });
 
-      // Self-verification
-      const lines = term.buffer.active.length;
-      console.log(`[MUXVO:restore] xterm lines after buffer replay: ${lines} for id=${terminalId}`);
-      if (lines <= 1) {
+      // Self-verification: warn if terminal may still be blank
+      if (term.buffer.active.length <= 1) {
         console.warn(`[MUXVO:restore] WARNING: terminal ${terminalId} may still be blank after buffer replay`);
       }
     });

@@ -453,10 +453,14 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
   }
 
   function getBuffer(id: string): string {
-    const bytes = (outputBuffers.get(id) ?? '').length;
-    console.log(`[MUXVO:restore] getBuffer id=${id} bytes=${bytes}`);
-    debugLog(`[TERM:getBuffer] id=${id} bytes=${bytes}`);
-    return outputBuffers.get(id) ?? '';
+    const buf = outputBuffers.get(id) ?? '';
+    // Strip shell init artifacts (bindkey echo): return only content after last screen clear
+    const clearSeq = '\x1b[2J';
+    const lastClear = buf.lastIndexOf(clearSeq);
+    if (lastClear >= 0) {
+      return buf.slice(lastClear + clearSeq.length);
+    }
+    return buf;
   }
 
   function updateCwd(id: string, newCwd: string): boolean {
