@@ -252,7 +252,7 @@ export function WorktreePopover({
 
         {!loading && !error && (
           <div className="worktree-popover__list">
-            {worktrees.map((wt) => {
+            {[...worktrees.filter(wt => wt.isMain), ...worktrees.filter(wt => !wt.isMain).reverse()].map((wt) => {
               const isCurrent = currentWorktree?.path === wt.path;
               return (
                 <button
