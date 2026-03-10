@@ -3,11 +3,11 @@
  *
  * Verifies:
  * 1. setSessionName (sessionId mode) stores sessionCustomTitles by sessionId
- * 2. setSessionName (CWD fallback) finds most recent session and stores sessionCustomTitles
+ * 2. setSessionName (CWD fallback) returns false — naming delegated to chatWatcher
  * 3. setSessionName (CWD fallback) returns failure when no sessions exist
  * 4. getSessions applies customTitle from sessionCustomTitles
  * 5. Clearing customName via sessionId removes sessionCustomTitles entry
- * 6. Clearing customName via CWD removes sessionCustomTitles for that session
+ * 6. Clearing customName via CWD returns false — CWD mode never writes config
  */
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtempSync, readFileSync, rmSync } from 'fs';
@@ -109,7 +109,7 @@ describe('VERIFY: chat title uses sessionCustomTitles only', () => {
     expect(saved.projectCustomTitles).toBeUndefined();
   });
 
-  test('setSessionName (CWD fallback) finds most recent session and stores sessionCustomTitles', async () => {
+  test('setSessionName (CWD fallback) returns false — naming delegated to chatWatcher', async () => {
     const { createChatHandlers } = await import('@/main/ipc/chat-handlers');
     const handlers = createChatHandlers();
 
@@ -118,15 +118,9 @@ describe('VERIFY: chat title uses sessionCustomTitles only', () => {
       customName: 'My Custom Title',
     });
 
-    expect(result.success).toBe(true);
-    expect(result.sessionId).toBe('session-abc');
-
-    const configPath = join(tempDir, 'config.json');
-    const saved = JSON.parse(readFileSync(configPath, 'utf-8'));
-    // Session-level title stored
-    expect(saved.sessionCustomTitles['session-abc']).toBe('My Custom Title');
-    // No projectCustomTitles
-    expect(saved.projectCustomTitles).toBeUndefined();
+    // CWD fallback no longer writes to config directly.
+    // The terminal's customName is persisted by chatWatcher.onSessionUpdate.
+    expect(result.success).toBe(false);
   });
 
   test('setSessionName (CWD fallback) returns failure when no sessions exist', async () => {
@@ -178,21 +172,12 @@ describe('VERIFY: chat title uses sessionCustomTitles only', () => {
     expect(saved.sessionCustomTitles['session-abc']).toBeUndefined();
   });
 
-  test('clearing customName via CWD removes sessionCustomTitles for that session', async () => {
+  test('clearing customName via CWD returns false — CWD mode never writes config', async () => {
     const { createChatHandlers } = await import('@/main/ipc/chat-handlers');
     const handlers = createChatHandlers();
 
-    // Set a name via CWD
-    await handlers.setSessionName({ cwd: '/Users/test/my-project', customName: 'CWD Name' });
-
-    let configPath = join(tempDir, 'config.json');
-    let saved = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(saved.sessionCustomTitles['session-abc']).toBe('CWD Name');
-
-    // Clear via CWD
-    await handlers.setSessionName({ cwd: '/Users/test/my-project', customName: '' });
-
-    saved = JSON.parse(readFileSync(configPath, 'utf-8'));
-    expect(saved.sessionCustomTitles['session-abc']).toBeUndefined();
+    // CWD fallback always returns false (naming delegated to chatWatcher)
+    const result = await handlers.setSessionName({ cwd: '/Users/test/my-project', customName: '' });
+    expect(result.success).toBe(false);
   });
 });

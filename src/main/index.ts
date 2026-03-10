@@ -395,7 +395,7 @@ app.whenReady().then(() => {
     // Notify renderer to refresh terminal list
     const list = terminalManager.list();
     mainWindow.webContents.send(IPC_CHANNELS.TERMINAL.LIST_UPDATED, list.map((t) => ({
-      id: t.id, state: t.state, cwd: t.cwd, customName: t.customName,
+      id: t.id, state: t.state, cwd: t.cwd, customName: t.customName, sessionId: t.sessionId,
     })));
   }
 
@@ -608,6 +608,51 @@ app.whenReady().then(() => {
   registerChatArchiveHandlers(chatArchive);
   chatWatcher.onSessionUpdate((projectHash, sessionId) => {
     chatArchive?.onSessionUpdate(projectHash, sessionId);
+
+    // Auto-bind CC sessions to terminals with matching CWD
+    if (!terminalManager) return;
+    const terminals = terminalManager.list();
+
+    // Already bound to a terminal? Skip.
+    if (terminals.some(t => t.sessionId === sessionId)) return;
+
+    // Find best match: prefer terminal without sessionId, fallback to one with stale sessionId
+    let bestMatch: typeof terminals[0] | null = null;
+    for (const t of terminals) {
+      if (!t.cwd) continue;
+      const termHash = t.cwd.replace(/[^a-zA-Z0-9-]/g, '-');
+      if (termHash !== projectHash) continue;
+      if (!t.sessionId) {
+        bestMatch = t; // Perfect: no sessionId yet
+        break;
+      }
+      if (!bestMatch) {
+        bestMatch = t; // Fallback: has stale sessionId, can be updated
+      }
+    }
+
+    if (bestMatch) {
+      terminalManager.setSessionId(bestMatch.id, sessionId);
+      // If terminal has a custom name, persist to sessionCustomTitles
+      if (bestMatch.customName) {
+        const cm = createConfigManager();
+        const config = cm.loadConfig();
+        const titles = { ...(config.sessionCustomTitles || {}) };
+        if (!titles[sessionId]) {
+          titles[sessionId] = bestMatch.customName;
+          cm.saveConfig({ ...config, sessionCustomTitles: titles });
+        }
+      }
+      // Push to renderer so it gets the new sessionId
+      const updatedList = terminalManager.list();
+      BrowserWindow.getAllWindows().forEach((win) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send(IPC_CHANNELS.TERMINAL.LIST_UPDATED, updatedList.map((u) => ({
+            id: u.id, state: u.state, cwd: u.cwd, customName: u.customName, sessionId: u.sessionId,
+          })));
+        }
+      });
+    }
   });
   chatWatcher.start();
   let lastProgressPush = 0;
@@ -872,7 +917,7 @@ app.whenReady().then(() => {
           if (win) {
             const list = terminalManager.list();
             win.webContents.send(IPC_CHANNELS.TERMINAL.LIST_UPDATED, list.map((t) => ({
-              id: t.id, state: t.state, cwd: t.cwd, customName: t.customName,
+              id: t.id, state: t.state, cwd: t.cwd, customName: t.customName, sessionId: t.sessionId,
             })));
           }
 

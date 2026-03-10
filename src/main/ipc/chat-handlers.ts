@@ -17,12 +17,6 @@ import { createChatMultiSource } from '../services/chat-multi-source';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 import { createConfigManager } from '../services/app/config';
 
-/** Encode cwd to projectHash (same logic as CC/Codex path encoding) */
-function encodeProjectHash(cwd: string): string {
-  if (!cwd) return '';
-  return cwd.replace(/[^a-zA-Z0-9-]/g, '-');
-}
-
 const CC_BASE_PATH = join(homedir(), '.claude');
 const CODEX_BASE_PATH = join(homedir(), '.codex');
 const GEMINI_BASE_PATH = join(homedir(), '.gemini');
@@ -112,22 +106,9 @@ export function createChatHandlers() {
         cm.saveConfig({ ...config, sessionCustomTitles: sessionTitles });
         return { success: true, sessionId: directSessionId };
       } else if (cwd) {
-        // CWD fallback: find most recent session for project and bind name to it
-        const projectHash = encodeProjectHash(cwd);
-        if (!projectHash) return { success: false };
-
-        let sessionId: string | undefined;
-        const sessions = await reader.getSessionsForProject(projectHash, 1);
-        if (sessions.length > 0) {
-          sessionId = sessions[0].sessionId;
-          if (customName) {
-            sessionTitles[sessionId] = customName;
-          } else {
-            delete sessionTitles[sessionId];
-          }
-          cm.saveConfig({ ...config, sessionCustomTitles: sessionTitles });
-          return { success: true, sessionId };
-        }
+        // CWD fallback: don't write to config here.
+        // The terminal's customName is already set via terminalManager.setName().
+        // chatWatcher.onSessionUpdate will detect the session and persist the name.
         return { success: false };
       } else {
         return { success: false };
