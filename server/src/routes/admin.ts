@@ -304,7 +304,7 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
     }>(
       `SELECT date,
               COUNT(DISTINCT device_id)::text AS active_devices,
-              ROUND(AVG(heartbeat_count) * 30)::text AS avg_minutes,
+              ROUND(AVG(heartbeat_count))::text AS avg_minutes,
               SUM(heartbeat_count)::text AS total_minutes
        FROM (
          SELECT date, device_id, COUNT(*) * 30 AS heartbeat_count

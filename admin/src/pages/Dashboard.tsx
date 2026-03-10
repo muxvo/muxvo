@@ -213,18 +213,13 @@ export function Dashboard() {
       </div>
 
       {/* Section 4: Secondary Stats */}
-      <div className="grid grid-cols-4 gap-5 mb-8">
+      <div className="grid grid-cols-2 gap-5 mb-8">
         <StatCard label="Total Users 总用户" value={stats.totalUsers} />
         <StatCard
           label="Active Users 活跃用户"
           value={stats.activeUsers}
           color="text-emerald-400"
         />
-        <StatCard
-          label="Published Showcases"
-          value={stats.publishedShowcases}
-        />
-        <StatCard label="Marketplace Skills" value={stats.publishedSkills} />
       </div>
 
       {/* Section 5: Bottom Row */}
