@@ -709,7 +709,7 @@ app.whenReady().then(() => {
 
   // Auto-update setup (registered once, outside launchWindowWithTerminals to avoid duplicate registration on macOS activate)
   // Flow: detect → native dialog → user approves → silent download → auto-install on next quit
-  // Max 3 prompts per version (initial + 4h + 1d). "Don't remind" skips permanently. Persisted across restarts.
+  // Max 2 prompts per version (initial + 3d). "Don't remind" skips permanently. Persisted across restarts.
   if (!is.dev) {
     autoUpdater.logger = createUpdateLogger();
     autoUpdater.autoDownload = false;
@@ -720,7 +720,7 @@ app.whenReady().then(() => {
     let dismissedVersion = '';
     let updateReminderTimer: ReturnType<typeof setTimeout> | null = null;
     let isPromptingUpdate = false;
-    const REMIND_INTERVALS = [4 * 3600_000, 24 * 3600_000]; // 4h, 1d
+    const REMIND_INTERVALS = [72 * 3600_000]; // 3d
 
     // Restore dismiss state from preferences
     getPreferences().then((prefs) => {
@@ -748,7 +748,7 @@ app.whenReady().then(() => {
           type: 'info',
           title: 'Muxvo 有可用更新',
           message: `发现新版本 v${version}`,
-          detail: '是否立即下载？下载完成后将在下次启动时自动更新。',
+          detail: '下载在后台进行，不影响当前工作。下次启动时自动安装更新。',
           buttons: ['立即下载', '暂不更新', '不再提醒此版本'],
           defaultId: 0,
           cancelId: 1,
@@ -867,7 +867,7 @@ app.whenReady().then(() => {
     setInterval(() => {
       console.log('[MUXVO:update] Periodic update check');
       autoUpdater.checkForUpdates().catch(() => {});
-    }, 60 * 60 * 1000);
+    }, 4 * 60 * 60 * 1000);
   } else {
     // Dev mode: register no-op handlers so renderer doesn't get unhandled errors
     ipcMain.handle(IPC_CHANNELS.APP.CHECK_FOR_UPDATE, () => null);

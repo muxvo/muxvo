@@ -1,8 +1,8 @@
 /**
- * VERIFY: Update reminder — max 3 prompts + "don't remind" button
+ * VERIFY: Update reminder — max 2 prompts + "don't remind" button
  *
  * Changes:
- * 1. REMIND_INTERVALS reduced from 4 to 2 (max 3 prompts: initial + 4h + 1d)
+ * 1. REMIND_INTERVALS has 1 entry (max 2 prompts: initial + 3d)
  * 2. Dialog has 3 buttons: "立即下载" / "暂不更新" / "不再提醒此版本"
  * 3. "不再提醒此版本" sets count=999 and persists via savePreferences
  *
@@ -19,14 +19,14 @@ function readIndex(): string {
   return fs.readFileSync(INDEX_PATH, 'utf-8');
 }
 
-describe('Update reminder: 3 prompts + "don\'t remind" button', () => {
-  test('REMIND_INTERVALS has exactly 2 entries (= max 3 prompts)', () => {
+describe('Update reminder: 2 prompts + "don\'t remind" button', () => {
+  test('REMIND_INTERVALS has exactly 1 entry (= max 2 prompts)', () => {
     const src = readIndex();
     // Match the REMIND_INTERVALS declaration
     const match = src.match(/const REMIND_INTERVALS\s*=\s*\[([^\]]+)\]/);
     expect(match).not.toBeNull();
     const entries = match![1].split(',').map((s) => s.trim()).filter(Boolean);
-    expect(entries.length).toBe(2);
+    expect(entries.length).toBe(1);
   });
 
   test('dialog buttons include "不再提醒此版本"', () => {
@@ -96,6 +96,18 @@ describe('Update reminder: 3 prompts + "don\'t remind" button', () => {
     expect(src).toContain('updateDismissCount = saved.count');
   });
 
+  test('dialog detail mentions "不影响当前工作"', () => {
+    const src = readIndex();
+    const promptBlock = src.match(/async function promptUpdate[\s\S]*?finally\s*\{[\s\S]*?\}/);
+    expect(promptBlock).not.toBeNull();
+    expect(promptBlock![0]).toContain('不影响当前工作');
+  });
+
+  test('periodic check interval is 4 hours', () => {
+    const src = readIndex();
+    expect(src).toContain('4 * 60 * 60 * 1000');
+  });
+
   test('new version resets dismiss count', () => {
     const src = readIndex();
     const handler = src.match(/autoUpdater\.on\('update-available'[\s\S]*?\}\);/);
@@ -109,7 +121,7 @@ describe('Update reminder: 3 prompts + "don\'t remind" button', () => {
 });
 
 describe('Update reminder: logic simulation', () => {
-  const REMIND_INTERVALS = [4 * 3600_000, 24 * 3600_000]; // mirrors source
+  const REMIND_INTERVALS = [72 * 3600_000]; // mirrors source
 
   /**
    * Simulates the dismiss logic from promptUpdate.
@@ -133,23 +145,16 @@ describe('Update reminder: logic simulation', () => {
     return { count: newCount, timerScheduled: false };
   }
 
-  test('first dismiss: count=1, timer scheduled at 4h', () => {
+  test('first dismiss: count=1, timer scheduled at 3d', () => {
     const result = simulateDismiss(0, 1);
     expect(result.count).toBe(1);
     expect(result.timerScheduled).toBe(true);
-    expect(result.timerDelay).toBe(4 * 3600_000);
+    expect(result.timerDelay).toBe(72 * 3600_000);
   });
 
-  test('second dismiss: count=2, timer scheduled at 1d', () => {
+  test('second dismiss: count=2, NO timer (max reached)', () => {
     const result = simulateDismiss(1, 1);
     expect(result.count).toBe(2);
-    expect(result.timerScheduled).toBe(true);
-    expect(result.timerDelay).toBe(24 * 3600_000);
-  });
-
-  test('third dismiss: count=3, NO timer (max reached)', () => {
-    const result = simulateDismiss(2, 1);
-    expect(result.count).toBe(3);
     expect(result.timerScheduled).toBe(false);
   });
 
@@ -174,8 +179,8 @@ describe('Update reminder: logic simulation', () => {
     expect(shouldPrompt).toBe(false);
   });
 
-  test('update-available with count=3 skips prompt (exceeded max)', () => {
-    const count = 3;
+  test('update-available with count=2 skips prompt (exceeded max)', () => {
+    const count = 2;
     const shouldPrompt = !(count > REMIND_INTERVALS.length);
     expect(shouldPrompt).toBe(false);
   });
