@@ -327,7 +327,11 @@ function TilingGrid({ terminals, selectedId, focusedId, activeSidebarId, onDoubl
           gridTemplateColumns,
           gap: '6px',
           flex: rowFlex,
-          position: 'relative',
+          // In focused mode, use 'static' so that children with position: absolute
+          // resolve relative to the outer container (which has position: relative),
+          // not the row div. Resize handles (the only reason for 'relative') are
+          // hidden in focused mode anyway.
+          position: isFocusedMode ? 'static' : 'relative',
           minHeight: 0,
         };
 
@@ -345,7 +349,7 @@ function TilingGrid({ terminals, selectedId, focusedId, activeSidebarId, onDoubl
 
               const cellStyle: React.CSSProperties = isFocusedMode
                 ? (isFocused
-                  ? { position: 'fixed', top: 0, left: 0, right: nonFocusedTerminals.length > 0 ? '25%' : 0, bottom: 0, zIndex: 10, overflow: 'hidden' }
+                  ? { position: 'absolute', top: 0, left: 0, right: nonFocusedTerminals.length > 0 ? '25%' : 0, bottom: 0, zIndex: 10, overflow: 'hidden' }
                   : { position: 'absolute', width: 0, height: 0, overflow: 'hidden', opacity: 0, pointerEvents: 'none' })
                 : { gridColumn: `${colIdx + 1}`, minWidth: 0, minHeight: 0, height: '100%', overflow: 'hidden' };
 
