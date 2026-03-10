@@ -70,6 +70,21 @@ export function removeChildren(list: TreeEntry[], parentPath: string, parentInde
   return [...list.slice(0, parentIdx + 1), ...list.slice(endIdx)];
 }
 
+/** Compute ancestor directory paths between projectCwd and filePath */
+export function getAncestorPaths(projectCwd: string, filePath: string): string[] {
+  if (!filePath.startsWith(projectCwd + '/')) return [];
+  const relative = filePath.slice(projectCwd.length + 1);
+  const parts = relative.split('/');
+  parts.pop(); // remove filename
+  const ancestors: string[] = [];
+  let current = projectCwd;
+  for (const part of parts) {
+    current = current + '/' + part;
+    ancestors.push(current);
+  }
+  return ancestors;
+}
+
 /** Insert children after a parent entry in the flat list */
 export function insertAfter(list: TreeEntry[], parent: TreeEntry, children: TreeEntry[]): TreeEntry[] {
   const idx = list.findIndex(f => f.path === parent.path);
