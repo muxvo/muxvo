@@ -748,7 +748,7 @@ app.whenReady().then(() => {
           type: 'info',
           title: 'Muxvo 有可用更新',
           message: `发现新版本 v${version}`,
-          detail: '是否立即下载？下载完成后将在下次启动时自动更新。',
+          detail: '下载在后台进行，不影响当前工作。下次启动时自动安装更新。',
           buttons: ['立即下载', '暂不更新', '不再提醒此版本'],
           defaultId: 0,
           cancelId: 1,
