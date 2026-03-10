@@ -96,6 +96,18 @@ describe('Update reminder: 2 prompts + "don\'t remind" button', () => {
     expect(src).toContain('updateDismissCount = saved.count');
   });
 
+  test('dialog detail mentions "不影响当前工作"', () => {
+    const src = readIndex();
+    const promptBlock = src.match(/async function promptUpdate[\s\S]*?finally\s*\{[\s\S]*?\}/);
+    expect(promptBlock).not.toBeNull();
+    expect(promptBlock![0]).toContain('不影响当前工作');
+  });
+
+  test('periodic check interval is 4 hours', () => {
+    const src = readIndex();
+    expect(src).toContain('4 * 60 * 60 * 1000');
+  });
+
   test('new version resets dismiss count', () => {
     const src = readIndex();
     const handler = src.match(/autoUpdater\.on\('update-available'[\s\S]*?\}\);/);
