@@ -327,7 +327,11 @@ function TilingGrid({ terminals, selectedId, focusedId, activeSidebarId, onDoubl
           gridTemplateColumns,
           gap: '6px',
           flex: rowFlex,
-          position: 'relative',
+          // In focused mode, use 'static' so that children with position: absolute
+          // resolve relative to the outer container (which has position: relative),
+          // not the row div. Resize handles (the only reason for 'relative') are
+          // hidden in focused mode anyway.
+          position: isFocusedMode ? 'static' : 'relative',
           minHeight: 0,
         };
 
@@ -343,16 +347,14 @@ function TilingGrid({ terminals, selectedId, focusedId, activeSidebarId, onDoubl
                 t.id === draggingId ? 'dragging' :
                 t.id === dragOverId ? 'drag-over' : 'none';
 
-              // In focused mode, ALL tiles inside row divs are hidden;
-              // the focused tile is rendered separately as a direct child of
-              // the outer container (with position: absolute) to avoid the
-              // position: fixed issue that causes the header to hide behind the nav bar.
               const cellStyle: React.CSSProperties = isFocusedMode
-                ? { position: 'absolute', width: 0, height: 0, overflow: 'hidden', opacity: 0, pointerEvents: 'none' }
+                ? (isFocused
+                  ? { position: 'absolute', top: 0, left: 0, right: nonFocusedTerminals.length > 0 ? '25%' : 0, bottom: 0, zIndex: 10, overflow: 'hidden' }
+                  : { position: 'absolute', width: 0, height: 0, overflow: 'hidden', opacity: 0, pointerEvents: 'none' })
                 : { gridColumn: `${colIdx + 1}`, minWidth: 0, minHeight: 0, height: '100%', overflow: 'hidden' };
 
               return (
-                <div key={t.id} style={cellStyle}>
+                <div key={t.id} style={cellStyle} onClick={isFocused ? () => onSidebarDeactivate?.() : undefined}>
                   <TerminalTile
                     id={t.id} state={t.state} cwd={t.cwd} customName={t.customName}
                     onRename={onRename} selected={!isFocusedMode && t.id === selectedId}
@@ -415,29 +417,6 @@ function TilingGrid({ terminals, selectedId, focusedId, activeSidebarId, onDoubl
           }}
         />
       ))}
-
-      {/* Focused tile — rendered as direct child of outer container so position: absolute works relative to the grid, not a row div */}
-      {isFocusedMode && (() => {
-        const ft = terminals.find((t) => t.id === focusedId);
-        if (!ft) return null;
-        const ftIdx = terminals.indexOf(ft);
-        return (
-          <div
-            style={{ position: 'absolute', top: 0, left: 0, right: nonFocusedTerminals.length > 0 ? '25%' : 0, bottom: 0, zIndex: 10, overflow: 'hidden' }}
-            onClick={() => onSidebarDeactivate?.()}
-          >
-            <TerminalTile
-              id={ft.id} state={ft.state} cwd={ft.cwd} customName={ft.customName}
-              onRename={onRename} focused staggerIndex={ftIdx}
-              onDoubleClick={() => onDoubleClick?.(ft.id)}
-              onFocus={() => onFocusTerminal?.(ft.id)}
-              onClick={() => onClick?.(ft.id)}
-              onClose={onClose}
-              onBackToTiling={onBackToTiling}
-            />
-          </div>
-        );
-      })()}
 
       {/* Focused mode sidebar */}
       {renderFocusedSidebar(isFocusedMode, nonFocusedTerminals, activeSidebarId, onSidebarClick, onSidebarActivate, onSidebarDeactivate, onClose)}
