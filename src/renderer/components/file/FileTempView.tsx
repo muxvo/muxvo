@@ -58,6 +58,21 @@ function getTagLabel(fileType: 'markdown' | 'code' | 'text' | 'image' | 'spreads
   }
 }
 
+/** Compute ancestor directory paths between projectCwd and filePath */
+function getAncestorPaths(projectCwd: string, fp: string): string[] {
+  if (!fp.startsWith(projectCwd + '/')) return [];
+  const relative = fp.slice(projectCwd.length + 1);
+  const parts = relative.split('/');
+  parts.pop(); // remove filename
+  const ancestors: string[] = [];
+  let current = projectCwd;
+  for (const part of parts) {
+    current = current + '/' + part;
+    ancestors.push(current);
+  }
+  return ancestors;
+}
+
 function CodeView({ content }: { content: string }) {
   const lines = content.split('\n');
   return (
@@ -190,6 +205,61 @@ export function FileTempView({
       }
     }).catch(() => {});
   }, [projectCwd, showHidden]);
+
+  // Auto-reveal: expand ancestor directories of the current file and scroll to it
+  const revealingRef = useRef(false);
+  useEffect(() => {
+    if (!filePath || treeFiles.length === 0) return;
+    const ancestors = getAncestorPaths(projectCwd, filePath);
+    // If file is in root or all ancestors already expanded, just scroll
+    if (ancestors.length === 0 || ancestors.every(a => expandedFolders.has(a))) {
+      requestAnimationFrame(() => {
+        const container = document.querySelector('.file-temp-view__files-content');
+        const activeEl = container?.querySelector('.file-item--active');
+        activeEl?.scrollIntoView({ block: 'nearest' });
+      });
+      return;
+    }
+    // Prevent re-entrance while revealing
+    if (revealingRef.current) return;
+    revealingRef.current = true;
+
+    const targetFilePath = filePath;
+    (async () => {
+      let currentTree = treeFiles;
+      const newExpanded = new Set(expandedFolders);
+
+      for (const ancestor of ancestors) {
+        if (newExpanded.has(ancestor)) continue;
+        // Find the folder entry in the current tree
+        const folderEntry = currentTree.find(e => e.path === ancestor && e.type === 'folder');
+        if (!folderEntry) break;
+        try {
+          const result = await window.api.fs.readDir(ancestor);
+          if (result?.success && result.data) {
+            const children = mapIpcToTree(result.data as IpcFileEntry[], folderEntry.indent + 1, showHidden);
+            currentTree = insertAfter(currentTree, folderEntry, children);
+            newExpanded.add(ancestor);
+          }
+        } catch {
+          break;
+        }
+      }
+
+      // Only apply if file hasn't changed during async work
+      if (targetFilePath === filePath) {
+        setExpandedFolders(newExpanded);
+        setTreeFiles(currentTree);
+        // Scroll to active file after DOM update
+        requestAnimationFrame(() => {
+          const container = document.querySelector('.file-temp-view__files-content');
+          const activeEl = container?.querySelector('.file-item--active');
+          activeEl?.scrollIntoView({ block: 'nearest' });
+        });
+      }
+      revealingRef.current = false;
+    })();
+  }, [filePath, treeFiles.length > 0]);
 
   // Keyboard shortcuts: Cmd+S save, Cmd+/ toggle markdown preview, Esc close
   useEffect(() => {
