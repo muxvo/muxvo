@@ -395,7 +395,7 @@ app.whenReady().then(() => {
     // Notify renderer to refresh terminal list
     const list = terminalManager.list();
     mainWindow.webContents.send(IPC_CHANNELS.TERMINAL.LIST_UPDATED, list.map((t) => ({
-      id: t.id, state: t.state, cwd: t.cwd, customName: t.customName,
+      id: t.id, state: t.state, cwd: t.cwd, customName: t.customName, sessionId: t.sessionId,
     })));
   }
 
@@ -596,6 +596,29 @@ app.whenReady().then(() => {
   registerChatArchiveHandlers(chatArchive);
   chatWatcher.onSessionUpdate((projectHash, sessionId) => {
     chatArchive?.onSessionUpdate(projectHash, sessionId);
+
+    // Auto-bind CC sessions to terminals with matching CWD
+    if (!terminalManager) return;
+    const terminals = terminalManager.list();
+    for (const t of terminals) {
+      if (t.sessionId) continue; // Already bound
+      if (!t.cwd) continue;
+      const termHash = t.cwd.replace(/[^a-zA-Z0-9-]/g, '-');
+      if (termHash === projectHash) {
+        terminalManager.setSessionId(t.id, sessionId);
+        // If terminal has a custom name, persist to sessionCustomTitles
+        if (t.customName) {
+          const cm = createConfigManager();
+          const config = cm.loadConfig();
+          const titles = { ...(config.sessionCustomTitles || {}) };
+          if (!titles[sessionId]) {
+            titles[sessionId] = t.customName;
+            cm.saveConfig({ ...config, sessionCustomTitles: titles });
+          }
+        }
+        break;
+      }
+    }
   });
   chatWatcher.start();
   let lastProgressPush = 0;
@@ -860,7 +883,7 @@ app.whenReady().then(() => {
           if (win) {
             const list = terminalManager.list();
             win.webContents.send(IPC_CHANNELS.TERMINAL.LIST_UPDATED, list.map((t) => ({
-              id: t.id, state: t.state, cwd: t.cwd, customName: t.customName,
+              id: t.id, state: t.state, cwd: t.cwd, customName: t.customName, sessionId: t.sessionId,
             })));
           }
 

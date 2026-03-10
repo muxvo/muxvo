@@ -220,6 +220,7 @@ export function TerminalProvider({ children }: { children: ReactNode }): JSX.Ele
         id: info.id,
         state: info.state,
         cwd: info.cwd || '/',
+        sessionId: info.sessionId,
       }));
       dispatch({ type: 'SET_TERMINALS', entries });
       // Restore custom names from main process

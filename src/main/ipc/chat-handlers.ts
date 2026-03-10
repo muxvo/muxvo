@@ -17,12 +17,6 @@ import { createChatMultiSource } from '../services/chat-multi-source';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 import { createConfigManager } from '../services/app/config';
 
-/** Encode cwd to projectHash (same logic as CC/Codex path encoding) */
-function encodeProjectHash(cwd: string): string {
-  if (!cwd) return '';
-  return cwd.replace(/[^a-zA-Z0-9-]/g, '-');
-}
-
 const CC_BASE_PATH = join(homedir(), '.claude');
 const CODEX_BASE_PATH = join(homedir(), '.codex');
 const GEMINI_BASE_PATH = join(homedir(), '.gemini');
@@ -50,40 +44,6 @@ export function createChatHandlers() {
   }
 
   const reader = createChatMultiSource({ ccReader, codexReader, geminiReader });
-
-  // Pending names for CWD fallback when session doesn't exist yet (user renames before CC starts)
-  const pendingNames = new Map<string, { customName: string; timer: ReturnType<typeof setTimeout>; attempt: number }>();
-
-  const MAX_RETRIES = 6;
-  const RETRY_INTERVAL = 5000; // 5 seconds
-
-  function scheduleRetry(projectHash: string, customName: string, attempt: number) {
-    if (attempt >= MAX_RETRIES) {
-      pendingNames.delete(projectHash);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      try {
-        const sessions = await reader.getSessionsForProject(projectHash, 1);
-        if (sessions.length > 0) {
-          const sessionId = sessions[0].sessionId;
-          const cm = createConfigManager();
-          const config = cm.loadConfig();
-          const titles = { ...(config.sessionCustomTitles || {}) };
-          titles[sessionId] = customName;
-          cm.saveConfig({ ...config, sessionCustomTitles: titles });
-          pendingNames.delete(projectHash);
-        } else {
-          scheduleRetry(projectHash, customName, attempt + 1);
-        }
-      } catch {
-        scheduleRetry(projectHash, customName, attempt + 1);
-      }
-    }, RETRY_INTERVAL);
-
-    pendingNames.set(projectHash, { customName, timer, attempt });
-  }
 
   return {
     async getProjects() {
@@ -146,33 +106,9 @@ export function createChatHandlers() {
         cm.saveConfig({ ...config, sessionCustomTitles: sessionTitles });
         return { success: true, sessionId: directSessionId };
       } else if (cwd) {
-        // CWD fallback: find most recent session for project and bind name to it
-        const projectHash = encodeProjectHash(cwd);
-        if (!projectHash) return { success: false };
-
-        // Cancel any existing pending retry for this project
-        const existing = pendingNames.get(projectHash);
-        if (existing) {
-          clearTimeout(existing.timer);
-          pendingNames.delete(projectHash);
-        }
-
-        const sessions = await reader.getSessionsForProject(projectHash, 1);
-        if (sessions.length > 0) {
-          const sessionId = sessions[0].sessionId;
-          if (customName) {
-            sessionTitles[sessionId] = customName;
-          } else {
-            delete sessionTitles[sessionId];
-          }
-          cm.saveConfig({ ...config, sessionCustomTitles: sessionTitles });
-          return { success: true, sessionId };
-        }
-
-        // No session yet — schedule retry (session file may not exist yet)
-        if (customName) {
-          scheduleRetry(projectHash, customName, 0);
-        }
+        // CWD fallback: don't write to config here.
+        // The terminal's customName is already set via terminalManager.setName().
+        // chatWatcher.onSessionUpdate will detect the session and persist the name.
         return { success: false };
       } else {
         return { success: false };
