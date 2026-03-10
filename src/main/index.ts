@@ -616,6 +616,15 @@ app.whenReady().then(() => {
             cm.saveConfig({ ...config, sessionCustomTitles: titles });
           }
         }
+        // Push to renderer so it gets the new sessionId
+        const updatedList = terminalManager.list();
+        BrowserWindow.getAllWindows().forEach((win) => {
+          if (!win.isDestroyed()) {
+            win.webContents.send(IPC_CHANNELS.TERMINAL.LIST_UPDATED, updatedList.map((u) => ({
+              id: u.id, state: u.state, cwd: u.cwd, customName: u.customName, sessionId: u.sessionId,
+            })));
+          }
+        });
         break;
       }
     }
