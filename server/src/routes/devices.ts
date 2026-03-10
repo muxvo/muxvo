@@ -16,6 +16,7 @@ const heartbeatSchema = {
       os_version: { type: 'string' as const },
       app_version: { type: 'string' as const },
       hostname: { type: 'string' as const },
+      previous_device_id: { type: 'string' as const },
     },
     additionalProperties: false,
   },
@@ -37,6 +38,7 @@ export const devicesRoutes: FastifyPluginAsync = async (app) => {
       os_version?: string;
       app_version?: string;
       hostname?: string;
+      previous_device_id?: string;
     };
   }>('/heartbeat', { schema: heartbeatSchema, preHandler: [optionalAuthenticate] }, async (request) => {
     const deviceId = request.headers['x-device-id'] as string | undefined;
@@ -45,18 +47,45 @@ export const devicesRoutes: FastifyPluginAsync = async (app) => {
       throw new ValidationError('X-Device-ID header is required');
     }
 
-    const userId = (request as FastifyRequest & { userId?: string }).userId ?? null;
-    const { platform = null, arch = null, os_version = null, app_version = null, hostname = null } = request.body ?? {};
+    let userId = (request as FastifyRequest & { userId?: string }).userId ?? null;
+    const {
+      platform = null, arch = null, os_version = null,
+      app_version = null, hostname = null, previous_device_id = null,
+    } = request.body ?? {};
+
+    // 设备 ID 迁移：旧版本用随机 UUID，新版本用硬件 ID
+    // 把旧设备的数据合并到新设备上
+    let oldFirstSeen: string | null = null;
+    if (previous_device_id && previous_device_id !== deviceId) {
+      const old = await query<{ user_id: string | null; first_seen_at: string }>(
+        `DELETE FROM devices WHERE device_id = $1 RETURNING user_id, first_seen_at`,
+        [previous_device_id],
+      );
+      if (old.rows.length > 0) {
+        // 继承旧设备的 user_id（如果当前没有）
+        if (!userId && old.rows[0].user_id) {
+          userId = old.rows[0].user_id;
+        }
+        oldFirstSeen = old.rows[0].first_seen_at;
+        // 迁移旧设备的分析事件到新 device_id
+        await query(
+          `UPDATE analytics_events SET device_id = $1 WHERE device_id = $2`,
+          [deviceId, previous_device_id],
+        );
+      }
+    }
 
     const result = await query<{ device_id: string; status: string }>(
-      `INSERT INTO devices (device_id, user_id, platform, arch, os_version, app_version, hostname, last_ip)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO devices (device_id, user_id, platform, arch, os_version, app_version, hostname, last_ip, first_seen_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9::timestamptz, NOW()))
        ON CONFLICT (device_id) DO UPDATE SET
          user_id = COALESCE($2, devices.user_id),
          platform = $3, arch = $4, os_version = $5, app_version = $6,
-         hostname = $7, last_ip = $8, last_seen_at = NOW()
+         hostname = $7, last_ip = $8,
+         first_seen_at = LEAST(devices.first_seen_at, COALESCE($9::timestamptz, devices.first_seen_at)),
+         last_seen_at = NOW()
        RETURNING device_id, status`,
-      [deviceId, userId, platform, arch, os_version, app_version, hostname, request.ip],
+      [deviceId, userId, platform, arch, os_version, app_version, hostname, request.ip, oldFirstSeen],
     );
 
     return { device_id: result.rows[0].device_id, status: result.rows[0].status };

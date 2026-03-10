@@ -41,7 +41,7 @@ import { registerAuthHandlers, getAuthManager, configureAuthManager } from './ip
 import { registerAnalyticsHandlers } from './ipc/analytics-handlers';
 import { registerWorktreeHandlers } from './ipc/worktree-handlers';
 import type { AnalyticsTracker } from './services/analytics/tracker';
-import { getDeviceId } from './services/analytics/device-id';
+import { getDeviceId, getPreviousDeviceId } from './services/analytics/device-id';
 import { getDeviceInfo } from './services/analytics/device-info';
 import { createBackendClient } from './services/auth/backend-client';
 import { autoUpdater } from 'electron-updater';
@@ -969,7 +969,8 @@ app.whenReady().then(() => {
       const deviceInfo = getDeviceInfo();
       const deviceId = getDeviceId();
       const accessToken = await getAuthManager().getAccessToken().catch(() => null) ?? undefined;
-      const result = await analyticsBackendClient.deviceHeartbeat(deviceId, deviceInfo, accessToken);
+      const previousId = getPreviousDeviceId();
+      const result = await analyticsBackendClient.deviceHeartbeat(deviceId, deviceInfo, accessToken, previousId);
 
       if (result?.status === 'blocked' && mainWindow && !mainWindow.isDestroyed()) {
         dialog.showMessageBoxSync(mainWindow, {

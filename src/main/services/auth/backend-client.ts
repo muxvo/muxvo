@@ -201,6 +201,7 @@ export function createBackendClient(options: BackendClientOptions) {
       deviceId: string,
       info: { platform: string; arch: string; os_version: string; app_version: string; hostname: string },
       accessToken?: string,
+      previousDeviceId?: string | null,
     ): Promise<{ device_id: string; status: string } | null> {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -213,11 +214,16 @@ export function createBackendClient(options: BackendClientOptions) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeout);
 
+      const body: Record<string, unknown> = { ...info };
+      if (previousDeviceId) {
+        body.previous_device_id = previousDeviceId;
+      }
+
       try {
         const response = await fetch(`${baseUrl}/devices/heartbeat`, {
           method: 'POST',
           headers,
-          body: JSON.stringify(info),
+          body: JSON.stringify(body),
           signal: controller.signal,
         });
 

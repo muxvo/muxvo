@@ -10,6 +10,12 @@ import { execSync } from 'child_process';
 import { createHash, randomUUID } from 'crypto';
 
 let cachedDeviceId: string | null = null;
+let previousDeviceId: string | null = null;
+
+/** 返回升级前的旧 device_id（仅在 ID 发生变更时有值），供 heartbeat 迁移用 */
+export function getPreviousDeviceId(): string | null {
+  return previousDeviceId;
+}
 
 function getMacHardwareId(): string | null {
   try {
@@ -30,10 +36,15 @@ export function getDeviceId(): string {
 
   if (hardwareId) {
     // 硬件 ID 可用：始终使用它（覆盖旧的随机 UUID）
-    cachedDeviceId = hardwareId;
-    if (!existsSync(filePath) || readFileSync(filePath, 'utf-8').trim() !== hardwareId) {
-      writeFileSync(filePath, hardwareId, 'utf-8');
+    if (existsSync(filePath)) {
+      const existingId = readFileSync(filePath, 'utf-8').trim();
+      if (existingId && existingId !== hardwareId) {
+        // 旧版本用的随机 UUID，记录下来供 heartbeat 迁移
+        previousDeviceId = existingId;
+      }
     }
+    cachedDeviceId = hardwareId;
+    writeFileSync(filePath, hardwareId, 'utf-8');
   } else if (existsSync(filePath)) {
     // 硬件 ID 不可用，但有缓存文件
     cachedDeviceId = readFileSync(filePath, 'utf-8').trim();
