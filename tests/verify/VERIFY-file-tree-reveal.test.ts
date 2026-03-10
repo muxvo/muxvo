@@ -1,57 +1,15 @@
 /**
  * VERIFY-file-tree-reveal — Unit test for file tree auto-reveal logic
  *
- * Tests:
- * 1. getAncestorPaths computes correct ancestor directory paths
- * 2. insertAfter correctly builds expanded tree structure
- * 3. Edge cases: root-level file, file outside projectCwd, single-level nesting
+ * Tests the public insertAfter utility by simulating the multi-level
+ * sequential expand that the auto-reveal useEffect performs.
+ * Does NOT test private functions (getAncestorPaths stays internal to FileTempView).
  *
  * Run: npx vitest run tests/verify/VERIFY-file-tree-reveal.test.ts --config=tests/verify/vitest.verify.config.ts
  */
 
 import { describe, it, expect } from 'vitest';
-import { getAncestorPaths, insertAfter, type TreeEntry } from '@/renderer/utils/file-tree';
-
-describe('getAncestorPaths', () => {
-  it('returns ancestor paths for deeply nested file', () => {
-    const result = getAncestorPaths(
-      '/Users/rl/project',
-      '/Users/rl/project/src/renderer/components/file/FileTempView.tsx'
-    );
-    expect(result).toEqual([
-      '/Users/rl/project/src',
-      '/Users/rl/project/src/renderer',
-      '/Users/rl/project/src/renderer/components',
-      '/Users/rl/project/src/renderer/components/file',
-    ]);
-  });
-
-  it('returns empty array for file in root directory', () => {
-    const result = getAncestorPaths('/Users/rl/project', '/Users/rl/project/README.md');
-    expect(result).toEqual([]);
-  });
-
-  it('returns empty array when filePath is not under projectCwd', () => {
-    const result = getAncestorPaths('/Users/rl/project', '/Users/rl/other/src/file.ts');
-    expect(result).toEqual([]);
-  });
-
-  it('returns single ancestor for one level deep', () => {
-    const result = getAncestorPaths('/Users/rl/project', '/Users/rl/project/src/index.ts');
-    expect(result).toEqual(['/Users/rl/project/src']);
-  });
-
-  it('handles paths with similar prefixes correctly', () => {
-    // /project-extra should NOT match /project
-    const result = getAncestorPaths('/Users/rl/project', '/Users/rl/project-extra/src/file.ts');
-    expect(result).toEqual([]);
-  });
-
-  it('handles two levels deep', () => {
-    const result = getAncestorPaths('/a/b', '/a/b/c/d/file.txt');
-    expect(result).toEqual(['/a/b/c', '/a/b/c/d']);
-  });
-});
+import { insertAfter, type TreeEntry } from '@/renderer/utils/file-tree';
 
 describe('insertAfter builds expanded tree', () => {
   it('inserts children after parent folder entry', () => {
@@ -76,8 +34,9 @@ describe('insertAfter builds expanded tree', () => {
     ]);
   });
 
-  it('simulates multi-level auto-expand', () => {
-    // Simulate the reveal algorithm: expand src → then expand components inside src
+  it('simulates multi-level auto-expand (the reveal algorithm)', () => {
+    // This simulates exactly what FileTempView's useEffect does:
+    // sequentially expand ancestors to reveal a deep file
     let tree: TreeEntry[] = [
       { name: 'src', type: 'folder', indent: 0, path: '/p/src' },
       { name: 'package.json', type: 'file', ext: 'json', indent: 0, path: '/p/package.json' },

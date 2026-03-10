@@ -14,7 +14,7 @@ import { UnsavedPromptDialog } from './UnsavedPromptDialog';
 import { FileItem } from './FileItem';
 import { SpreadsheetView, type SpreadsheetHandle } from './SpreadsheetView';
 import { PdfPreview } from './PdfPreview';
-import { type TreeEntry, mapIpcToTree, insertAfter, removeChildren, getAncestorPaths } from '@/renderer/utils/file-tree';
+import { type TreeEntry, mapIpcToTree, insertAfter, removeChildren } from '@/renderer/utils/file-tree';
 import type { FileEntry as IpcFileEntry } from '@/shared/types/fs.types';
 import './FileTempView.css';
 
@@ -56,6 +56,21 @@ function getTagLabel(fileType: 'markdown' | 'code' | 'text' | 'image' | 'spreads
     case 'text':
       return 'TXT';
   }
+}
+
+/** Compute ancestor directory paths between projectCwd and filePath */
+function getAncestorPaths(projectCwd: string, fp: string): string[] {
+  if (!fp.startsWith(projectCwd + '/')) return [];
+  const relative = fp.slice(projectCwd.length + 1);
+  const parts = relative.split('/');
+  parts.pop(); // remove filename
+  const ancestors: string[] = [];
+  let current = projectCwd;
+  for (const part of parts) {
+    current = current + '/' + part;
+    ancestors.push(current);
+  }
+  return ancestors;
 }
 
 function CodeView({ content }: { content: string }) {
