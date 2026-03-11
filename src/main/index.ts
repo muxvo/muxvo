@@ -15,6 +15,7 @@ import { app, BrowserWindow, ipcMain, shell, protocol, net, Menu, dialog } from 
 import { join } from 'path';
 import { pathToFileURL } from 'url';
 import { is } from '@electron-toolkit/utils';
+import { getLatestRelease, formatReleaseAsMarkdown } from '@/shared/utils/changelog-parser';
 
 // Register custom protocol for serving local files (images, etc.)
 // Must be called before app.whenReady()
@@ -451,7 +452,6 @@ app.whenReady().then(() => {
       .then(() => copyFile(guideSrc, guideDest))
       .then(async () => {
         try {
-          const { getLatestRelease, formatReleaseAsMarkdown } = require('@/shared/utils/changelog-parser');
           const changelog = await readGuideFile(changelogSrc, 'utf-8');
           const latest = getLatestRelease(changelog);
           if (latest) {
