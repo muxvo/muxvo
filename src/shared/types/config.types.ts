@@ -130,8 +130,6 @@ export interface MuxvoConfig {
   dockBadgeMode?: DockBadgeMode;
   /** 定时模式检查间隔（分钟），默认 1，最小 1 */
   dockBadgeIntervalMin?: number;
-  /** 是否已弹过 Dock 角标权限提示（持久化，只弹一次） */
-  dockBadgePermissionNotified?: boolean;
   /** 保存的工作区列表（最多 10 个） */
   savedWorkspaces?: SavedWorkspace[];
 }
