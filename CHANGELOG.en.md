@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-03-11
+
+### Added
+
+- What's New modal showing release highlights on first launch after update
+- Default working directory setting for new terminals (configurable in Settings)
+- Help button (opens a terminal with AI assistant guided by Muxvo documentation)
+- Auto-binding between terminals and Chat sessions
+- Independent column width adjustment per row in terminal grid
+- File tree auto-expand and scroll to currently opened file
+- Terminal folder button context menu (Open in Finder)
+
+### Changed
+
+- Reduced update reminder frequency with improved notification wording
+- New Worktree no longer auto-named; existing Worktree preserves branch name
+- Removed misleading Dock badge notification permission dialog
+
+### Fixed
+
+- Onboarding step 3 blocked when named terminals already exist
+- Terminal working directory reset on startup
+- Chat history naming mismatch (added session name retry mechanism)
+- bindkey command appearing in input box when resuming chat
+- Worktree popover not auto-naming terminal with branch name
+- Worktree project sessions not found during search
+- Dock badge not clearing after clicking terminal (default changed to real-time mode)
+- Focus mode sidebar terminal showing bindkey garbage
+- Terminal menu button obscured by nav bar in multi-row focused layout
+- Enhanced terminal resize safeguards
+
 ## [0.4.0] - 2026-03-09
 
 ### Added

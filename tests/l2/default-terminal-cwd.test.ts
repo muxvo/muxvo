@@ -119,11 +119,11 @@ describe('VERIFY: Default terminal cwd', () => {
   });
 
   test('MuxvoConfig type includes defaultTerminalCwd field', async () => {
-    // Verify the type exists by importing and checking default config
-    const { defaultMuxvoConfig } = await import('@/main/services/app/config');
+    const { getAppConfig } = await import('@/main/services/app/config');
+    const config = await getAppConfig();
     // defaultTerminalCwd is optional, so it may not be in defaults
     // but the type should accept it
-    const configWithCwd = { ...defaultMuxvoConfig, defaultTerminalCwd: '/some/path' };
+    const configWithCwd = { ...config, defaultTerminalCwd: '/some/path' };
     expect(configWithCwd.defaultTerminalCwd).toBe('/some/path');
   });
 });
