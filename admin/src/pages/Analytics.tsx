@@ -23,6 +23,18 @@ interface EventsResponse {
   data: EventItem[];
 }
 
+interface UsageDurationItem {
+  date: string;
+  active_devices: number;
+  avg_minutes: number;
+  total_minutes: number;
+}
+interface UsageDurationResponse {
+  from: string;
+  to: string;
+  data: UsageDurationItem[];
+}
+
 interface RetentionRateItem {
   total: number;
   retained: number;
@@ -39,17 +51,26 @@ interface RetentionResponse {
   granularity: 'week' | 'month';
 }
 
-function formatDate(d: Date): string {
+function formatDateISO(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
 function daysAgo(n: number): string {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return formatDate(d);
+  return formatDateISO(d);
 }
 
-const today = formatDate(new Date());
+function formatDuration(minutes: number): string {
+  if (minutes >= 60) {
+    const h = Math.floor(minutes / 60);
+    const m = Math.round(minutes % 60);
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  }
+  return `${Math.round(minutes)}m`;
+}
+
+const today = formatDateISO(new Date());
 const defaultFrom = daysAgo(30);
 
 type Preset = 'today' | 7 | 30 | 90;
@@ -64,6 +85,7 @@ const SOURCE_TABS: { value: Source; label: string }[] = [
 export function Analytics() {
   const [dauData, setDauData] = useState<DauItem[]>([]);
   const [eventsData, setEventsData] = useState<EventItem[]>([]);
+  const [usageData, setUsageData] = useState<UsageDurationItem[]>([]);
   const [retentionData, setRetentionData] = useState<RetentionResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -80,10 +102,12 @@ export function Analytics() {
     Promise.all([
       apiFetch<DauResponse>(`/admin/analytics/dau?from=${from}&to=${to}${sourceParam}`),
       apiFetch<EventsResponse>(`/admin/analytics/events?from=${from}&to=${to}${sourceParam}`),
+      apiFetch<UsageDurationResponse>(`/admin/analytics/usage-duration?from=${from}&to=${to}`),
     ])
-      .then(([dau, events]) => {
+      .then(([dau, events, usage]) => {
         setDauData(dau.data);
         setEventsData(events.data);
+        setUsageData(usage.data);
         setSelectedDate(null);
       })
       .catch((err) => setError(err.message))
@@ -135,6 +159,11 @@ export function Analytics() {
   const totalDau = dauData.reduce((sum, d) => sum + d.dau, 0);
   const totalRegistered = dauData.reduce((sum, d) => sum + d.registered_users, 0);
   const registeredPct = totalDau > 0 ? ((totalRegistered / totalDau) * 100).toFixed(1) : '0.0';
+
+  const avgUsageMinutes =
+    usageData.length > 0
+      ? usageData.reduce((sum, d) => sum + d.avg_minutes, 0) / usageData.length
+      : 0;
 
   // Aggregate events by metric
   const eventsByMetric = eventsData.reduce<Record<string, number>>((acc, d) => {
@@ -229,7 +258,7 @@ export function Analytics() {
       </div>
 
       {/* Overview cards */}
-      <div className="grid grid-cols-5 gap-5 mb-10">
+      <div className="grid grid-cols-6 gap-5 mb-10">
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
           <p className="text-sm text-gray-500 mb-1">Avg. DAU 日活</p>
           <p className="text-3xl font-bold text-white">{avgDau.toLocaleString()}</p>
@@ -245,6 +274,10 @@ export function Analytics() {
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
           <p className="text-sm text-gray-500 mb-1">Registered % 注册率</p>
           <p className="text-3xl font-bold text-emerald-400">{registeredPct}%</p>
+        </div>
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+          <p className="text-sm text-gray-500 mb-1">Avg Usage 使用时长</p>
+          <p className="text-3xl font-bold text-cyan-400">{formatDuration(avgUsageMinutes)}</p>
         </div>
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
           <p className="text-sm text-gray-500 mb-1">Total Events 总事件</p>
@@ -274,17 +307,24 @@ export function Analytics() {
         </div>
       )}
 
-      {/* DAU trend chart */}
+      {/* DAU trend line chart */}
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-10">
-        <h2 className="text-lg font-semibold mb-4">DAU Trend</h2>
+        <h2 className="text-lg font-semibold mb-4">DAU Trend DAU 趋势</h2>
         {dauData.length === 0 ? (
           <p className="text-gray-500 text-sm">No DAU data yet.</p>
         ) : (
           <>
-            <DauChart
-              data={dauData}
-              selectedDate={selectedDate}
+            <LineChart
+              data={dauData.map((d) => ({
+                date: d.date,
+                lines: [
+                  { value: d.dau, color: '#fbbf24', label: 'DAU' },
+                  { value: d.registered_users, color: '#34d399', label: 'Registered' },
+                ],
+              }))}
+              height={200}
               onSelectDate={(date) => setSelectedDate(selectedDate === date ? null : date)}
+              selectedDate={selectedDate}
             />
             {selectedDau && (
               <DayDetail
@@ -294,6 +334,25 @@ export function Analytics() {
               />
             )}
           </>
+        )}
+      </div>
+
+      {/* Usage duration line chart */}
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-10">
+        <h2 className="text-lg font-semibold mb-4">Usage Duration 使用时长趋势</h2>
+        {usageData.length === 0 ? (
+          <p className="text-gray-500 text-sm">No usage data yet.</p>
+        ) : (
+          <LineChart
+            data={usageData.map((d) => ({
+              date: d.date,
+              lines: [
+                { value: d.avg_minutes, color: '#22d3ee', label: 'Avg min' },
+              ],
+            }))}
+            height={160}
+            formatValue={(v) => formatDuration(v)}
+          />
         )}
       </div>
 
@@ -335,6 +394,199 @@ export function Analytics() {
   );
 }
 
+// ---------------------------------------------------------------------------
+// SVG Line Chart (reusable)
+// ---------------------------------------------------------------------------
+
+interface LineChartPoint {
+  date: string;
+  lines: { value: number; color: string; label: string }[];
+}
+
+function LineChart({
+  data,
+  height = 200,
+  formatValue,
+  onSelectDate,
+  selectedDate,
+}: {
+  data: LineChartPoint[];
+  height?: number;
+  formatValue?: (v: number) => string;
+  onSelectDate?: (date: string) => void;
+  selectedDate?: string | null;
+}) {
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+
+  if (data.length === 0) return null;
+
+  const padL = 50;
+  const padR = 20;
+  const padT = 20;
+  const padB = 40;
+  const W = 800;
+  const H = height;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+
+  const lineCount = data[0].lines.length;
+  const allValues = data.flatMap((d) => d.lines.map((l) => l.value));
+  const maxVal = Math.max(...allValues, 1);
+  const minVal = Math.min(...allValues, 0);
+  const range = maxVal - minVal || 1;
+
+  function x(i: number) {
+    return padL + (data.length === 1 ? chartW / 2 : (i / (data.length - 1)) * chartW);
+  }
+  function y(v: number) {
+    return padT + chartH - ((v - minVal) / range) * chartH;
+  }
+
+  // Y-axis ticks (5 ticks)
+  const yTicks = Array.from({ length: 5 }, (_, i) => {
+    const val = minVal + (range * i) / 4;
+    return { val: Math.round(val), py: y(val) };
+  });
+
+  // X-axis labels (show ~6 labels max)
+  const labelStep = Math.max(1, Math.floor(data.length / 6));
+  const xLabels = data
+    .map((d, i) => ({ label: d.date.slice(5), px: x(i), i }))
+    .filter((_, i) => i % labelStep === 0 || i === data.length - 1);
+
+  // Build polyline paths
+  const paths = Array.from({ length: lineCount }, (_, li) => {
+    const points = data.map((d, i) => `${x(i)},${y(d.lines[li].value)}`).join(' ');
+    return { points, color: data[0].lines[li].color, label: data[0].lines[li].label };
+  });
+
+  const fmt = formatValue || ((v: number) => String(Math.round(v)));
+
+  return (
+    <div>
+      {/* Legend */}
+      <div className="flex gap-4 mb-3 text-xs text-gray-400">
+        {paths.map((p) => (
+          <div key={p.label} className="flex items-center gap-1.5">
+            <div className="w-3 h-0.5 rounded" style={{ backgroundColor: p.color }} />
+            <span>{p.label}</span>
+          </div>
+        ))}
+      </div>
+
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="w-full"
+        style={{ height: `${height}px` }}
+        onMouseLeave={() => setHoverIndex(null)}
+      >
+        {/* Grid lines */}
+        {yTicks.map((t) => (
+          <g key={t.val}>
+            <line x1={padL} y1={t.py} x2={W - padR} y2={t.py} stroke="#374151" strokeWidth={0.5} />
+            <text x={padL - 8} y={t.py + 4} textAnchor="end" fill="#6b7280" fontSize={11}>
+              {t.val}
+            </text>
+          </g>
+        ))}
+
+        {/* X-axis labels */}
+        {xLabels.map((l) => (
+          <text key={l.i} x={l.px} y={H - 8} textAnchor="middle" fill="#6b7280" fontSize={11}>
+            {l.label}
+          </text>
+        ))}
+
+        {/* Lines */}
+        {paths.map((p) => (
+          <polyline
+            key={p.label}
+            points={p.points}
+            fill="none"
+            stroke={p.color}
+            strokeWidth={2}
+            strokeLinejoin="round"
+          />
+        ))}
+
+        {/* Selected date vertical line */}
+        {selectedDate && (() => {
+          const si = data.findIndex((d) => d.date === selectedDate);
+          if (si < 0) return null;
+          return <line x1={x(si)} y1={padT} x2={x(si)} y2={padT + chartH} stroke="#fbbf24" strokeWidth={1} strokeDasharray="4 2" />;
+        })()}
+
+        {/* Hover areas */}
+        {data.map((d, i) => {
+          const colW = data.length === 1 ? chartW : chartW / (data.length - 1);
+          return (
+            <rect
+              key={d.date}
+              x={x(i) - colW / 2}
+              y={padT}
+              width={colW}
+              height={chartH}
+              fill="transparent"
+              onMouseEnter={() => setHoverIndex(i)}
+              onClick={() => onSelectDate?.(d.date)}
+              style={{ cursor: onSelectDate ? 'pointer' : 'default' }}
+            />
+          );
+        })}
+
+        {/* Hover dots and tooltip */}
+        {hoverIndex !== null && (() => {
+          const d = data[hoverIndex];
+          const tx = x(hoverIndex);
+          // Vertical hover line
+          return (
+            <g>
+              <line x1={tx} y1={padT} x2={tx} y2={padT + chartH} stroke="#4b5563" strokeWidth={1} />
+              {d.lines.map((l, li) => (
+                <circle key={li} cx={tx} cy={y(l.value)} r={4} fill={l.color} stroke="#111827" strokeWidth={2} />
+              ))}
+              {/* Tooltip background */}
+              <rect
+                x={Math.min(tx + 8, W - padR - 150)}
+                y={padT}
+                width={140}
+                height={16 + d.lines.length * 16}
+                rx={4}
+                fill="#1f2937"
+                stroke="#374151"
+              />
+              <text
+                x={Math.min(tx + 16, W - padR - 142)}
+                y={padT + 14}
+                fill="#9ca3af"
+                fontSize={11}
+              >
+                {d.date}
+              </text>
+              {d.lines.map((l, li) => (
+                <text
+                  key={li}
+                  x={Math.min(tx + 16, W - padR - 142)}
+                  y={padT + 30 + li * 16}
+                  fill={l.color}
+                  fontSize={12}
+                  fontWeight="bold"
+                >
+                  {l.label}: {fmt(l.value)}
+                </text>
+              ))}
+            </g>
+          );
+        })()}
+      </svg>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
 function EventTable({ rows }: { rows: { metric: string; total: number; avgPerDay: number }[] }) {
   return (
     <table className="w-full">
@@ -359,75 +611,6 @@ function EventTable({ rows }: { rows: { metric: string; total: number; avgPerDay
         ))}
       </tbody>
     </table>
-  );
-}
-
-function DauChart({
-  data,
-  selectedDate,
-  onSelectDate,
-}: {
-  data: DauItem[];
-  selectedDate: string | null;
-  onSelectDate: (date: string) => void;
-}) {
-  const maxDau = Math.max(...data.map((d) => d.dau), 1);
-
-  return (
-    <div>
-      {/* Legend */}
-      <div className="flex gap-4 mb-3 text-xs text-gray-400">
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm bg-emerald-400/80" />
-          <span>Registered 注册用户</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm bg-amber-400/80" />
-          <span>Anonymous 匿名用户</span>
-        </div>
-      </div>
-
-      {/* Chart */}
-      <div className="flex items-end gap-1 h-40">
-        {data.map((d) => {
-          const totalPct = (d.dau / maxDau) * 100;
-          const regPct = d.dau > 0 ? (d.registered_users / d.dau) * 100 : 0;
-          const anonPct = 100 - regPct;
-          const anonymous = d.dau - d.registered_users;
-          const isSelected = selectedDate === d.date;
-
-          return (
-            <div
-              key={d.date}
-              className="flex-1 flex flex-col items-center group relative cursor-pointer"
-              onClick={() => onSelectDate(d.date)}
-            >
-              {/* Stacked bar */}
-              <div
-                className={`w-full flex flex-col rounded-t overflow-hidden transition-all ${isSelected ? 'ring-2 ring-white/50' : ''}`}
-                style={{ height: `${Math.max(totalPct, 2)}%` }}
-              >
-                {/* Anonymous (top) */}
-                <div
-                  className="w-full bg-amber-400/80 transition-all group-hover:bg-amber-400"
-                  style={{ flex: `${anonPct} 0 0%` }}
-                />
-                {/* Registered (bottom) */}
-                <div
-                  className="w-full bg-emerald-400/80 transition-all group-hover:bg-emerald-400"
-                  style={{ flex: `${regPct} 0 0%` }}
-                />
-              </div>
-
-              {/* Tooltip */}
-              <div className="absolute bottom-full mb-2 hidden group-hover:block bg-gray-800 text-xs text-white px-2 py-1 rounded whitespace-nowrap z-10">
-                {d.date}: {d.dau} DAU ({d.registered_users} registered, {anonymous} anonymous)
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
   );
 }
 
