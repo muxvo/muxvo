@@ -367,6 +367,18 @@
   text-align: left;
 }
 
+/* What's New link */
+.settings-modal__whats-new-link {
+  color: var(--accent);
+  text-decoration: none;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.settings-modal__whats-new-link:hover {
+  text-decoration: underline;
+}
+
 /* Light theme adjustments */
 [data-theme="light"] .settings-modal__toggle-btn--active {
   color: #fff;

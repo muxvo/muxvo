@@ -363,6 +363,14 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
                 <div className="settings-modal__label">{locale === 'zh' ? '检查更新' : 'Check for Updates'}</div>
                 <div className="settings-modal__desc">
                   {locale === 'zh' ? '当前版本' : 'Current version'} v{__APP_VERSION__}
+                  {' '}
+                  <a
+                    href="#"
+                    className="settings-modal__whats-new-link"
+                    onClick={(e) => { e.preventDefault(); dispatch({ type: 'OPEN_WHATS_NEW' }); }}
+                  >
+                    {locale === 'zh' ? '查看更新内容' : "What's New"}
+                  </a>
                 </div>
               </div>
               {updateStatus === 'idle' && (

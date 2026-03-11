@@ -79,6 +79,7 @@ export const IPC_CHANNELS = {
     INSTALL_UPDATE: 'app:install-update',
     CHECK_FOR_UPDATE: 'app:check-for-update',
     DOWNLOAD_UPDATE: 'app:download-update',
+    GET_RELEASE_NOTES: 'app:get-release-notes',
     ZOOM: 'app:zoom',
     CLOSE_REQUESTED: 'app:close-requested',
     CONFIRM_CLOSE: 'app:confirm-close',

@@ -15,6 +15,7 @@ import { app, BrowserWindow, ipcMain, shell, protocol, net, Menu, dialog } from 
 import { join } from 'path';
 import { pathToFileURL } from 'url';
 import { is } from '@electron-toolkit/utils';
+import { getLatestRelease, formatReleaseAsMarkdown } from '@/shared/utils/changelog-parser';
 
 // Register custom protocol for serving local files (images, etc.)
 // Must be called before app.whenReady()
@@ -435,14 +436,29 @@ app.whenReady().then(() => {
   perfLogger = createPerfLogger();
 
   // Copy muxvo-guide.md to ~/.muxvo/guide.md for help button access
+  // Append latest release notes from CHANGELOG.md so Claude can discuss new features
   {
-    const { copyFile, mkdir: mkdirGuide } = require('fs/promises');
-    const guideDest = require('path').join(require('os').homedir(), '.muxvo', 'guide.md');
+    const { copyFile, mkdir: mkdirGuide, readFile: readGuideFile, appendFile: appendGuideFile } = require('fs/promises');
+    const pathMod = require('path');
+    const osMod = require('os');
+    const guideDest = pathMod.join(osMod.homedir(), '.muxvo', 'guide.md');
     const guideSrc = is.dev
-      ? require('path').join(app.getAppPath(), 'docs', 'muxvo-guide.md')
-      : require('path').join(process.resourcesPath, 'muxvo-guide.md');
-    mkdirGuide(require('path').join(require('os').homedir(), '.muxvo'), { recursive: true })
+      ? pathMod.join(app.getAppPath(), 'docs', 'muxvo-guide.md')
+      : pathMod.join(process.resourcesPath, 'muxvo-guide.md');
+    const changelogSrc = is.dev
+      ? pathMod.join(app.getAppPath(), 'CHANGELOG.zh.md')
+      : pathMod.join(process.resourcesPath, 'CHANGELOG.zh.md');
+    mkdirGuide(pathMod.join(osMod.homedir(), '.muxvo'), { recursive: true })
       .then(() => copyFile(guideSrc, guideDest))
+      .then(async () => {
+        try {
+          const changelog = await readGuideFile(changelogSrc, 'utf-8');
+          const latest = getLatestRelease(changelog);
+          if (latest) {
+            await appendGuideFile(guideDest, '\n\n---\n\n' + formatReleaseAsMarkdown(latest));
+          }
+        } catch { /* changelog not available — guide still works without it */ }
+      })
       .catch(() => {});
   }
 

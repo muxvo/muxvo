@@ -23,6 +23,7 @@ import { WaitingInputNotification } from './components/terminal/WaitingInputNoti
 import { LoginModal } from './components/auth/LoginModal';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { WorkspaceManagerModal } from './components/workspace/WorkspaceManagerModal';
+import { WhatsNewModal } from './components/whats-new/WhatsNewModal';
 import { AppCloseConfirmDialog } from './components/app/AppCloseConfirmDialog';
 import { PanelProvider, usePanelContext } from './contexts/PanelContext';
 import { TerminalProvider, useTerminalState, useOrderedTerminals, useTerminalActions } from './contexts/TerminalContext';
@@ -151,6 +152,21 @@ function AppContent({
     window.api.app.getPreferences().then((result: any) => {
       if (result?.preferences && !result.preferences?.tourCompleted) {
         setTimeout(() => dispatch({ type: 'SHOW_WELCOME' }), 1500);
+      }
+    }).catch(() => {});
+  }, [dispatch]);
+
+  // Show "What's New" modal on first launch after version update
+  useEffect(() => {
+    window.api.app.getPreferences().then((result: any) => {
+      const prefs = result?.preferences || result?.data || {};
+      const lastSeen = prefs.lastSeenVersion;
+      if (lastSeen && lastSeen !== __APP_VERSION__) {
+        setTimeout(() => dispatch({ type: 'OPEN_WHATS_NEW' }), 2000);
+      }
+      // Always update lastSeenVersion to current
+      if (lastSeen !== __APP_VERSION__) {
+        window.api.app.savePreferences({ ...prefs, lastSeenVersion: __APP_VERSION__ }).catch(() => {});
       }
     }).catch(() => {});
   }, [dispatch]);
@@ -322,6 +338,7 @@ function AppContent({
       />
 
       <SettingsModal uiTheme={uiTheme} onToggleTheme={onToggleTheme} />
+      <WhatsNewModal />
       <WorkspaceManagerModal />
       <LoginModal />
       <WaitingInputNotification

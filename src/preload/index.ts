@@ -112,6 +112,7 @@ const api = {
     installUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.APP.INSTALL_UPDATE),
     checkForUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.APP.CHECK_FOR_UPDATE),
     downloadUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.APP.DOWNLOAD_UPDATE),
+    getReleaseNotes: (locale?: string) => ipcRenderer.invoke(IPC_CHANNELS.APP.GET_RELEASE_NOTES, { locale }),
     onZoom: (callback: (direction: string) => void) => {
       const handler = (_event: Electron.IpcRendererEvent, direction: string) => callback(direction);
       ipcRenderer.on(IPC_CHANNELS.APP.ZOOM, handler);
