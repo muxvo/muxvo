@@ -28,7 +28,7 @@ export function TourOverlay({ terminalCount, viewMode, terminalNames }: Props): 
   const currentStepRef = useRef<number>(0);
   const prevTerminalCountRef = useRef<number>(terminalCount);
   const prevViewModeRef = useRef<'Tiling' | 'Focused'>(viewMode);
-  const prevHasNameRef = useRef<boolean>(Object.values(terminalNames).some(n => n && n.length > 0));
+  const prevHasNameRef = useRef<boolean>(false);
 
   const completeTour = useCallback((skipped = false) => {
     if (driverRef.current) {
@@ -79,7 +79,7 @@ export function TourOverlay({ terminalCount, viewMode, terminalNames }: Props): 
     if (state.tour.active) {
       prevTerminalCountRef.current = terminalCount;
       prevViewModeRef.current = viewMode;
-      prevHasNameRef.current = Object.values(terminalNames).some(n => n && n.length > 0);
+      prevHasNameRef.current = false;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.tour.active]);
@@ -141,7 +141,7 @@ export function TourOverlay({ terminalCount, viewMode, terminalNames }: Props): 
     // Reset refs
     prevTerminalCountRef.current = terminalCount;
     prevViewModeRef.current = viewMode;
-    prevHasNameRef.current = Object.values(terminalNames).some(n => n && n.length > 0);
+    prevHasNameRef.current = false;
     currentStepRef.current = 0;
 
     // Build driver.js steps
