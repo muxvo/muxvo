@@ -186,6 +186,12 @@ export function TileHeader({
     panelDispatch({ type: 'OPEN_FILE_PANEL', terminalId: id });
   };
 
+  const handleFileContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.api.fs.showFileMenu(cwd, true, e.clientX, e.clientY);
+  };
+
   const handleCloseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onClose?.(id);
@@ -305,7 +311,7 @@ export function TileHeader({
             )}
 
             {/* File button (amber pill) */}
-            <button className="tile-file-btn" onClick={handleFileClick} title={t('terminal.file')}>
+            <button className="tile-file-btn" onClick={handleFileClick} onContextMenu={handleFileContextMenu} title={t('terminal.file')}>
               <FolderIcon />
             </button>
 
