@@ -1,7 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
-import { Dashboard } from './pages/Dashboard';
 import { Users } from './pages/Users';
 import { Analytics } from './pages/Analytics';
 import { Devices } from './pages/Devices';
@@ -25,9 +24,8 @@ export function App() {
           </ProtectedRoute>
         }
       >
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<Analytics />} />
         <Route path="/users" element={<Users />} />
-        <Route path="/analytics" element={<Analytics />} />
         <Route path="/devices" element={<Devices />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

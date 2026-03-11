@@ -1,5 +1,8 @@
 import pg from 'pg';
 
+// Return DATE columns as 'YYYY-MM-DD' strings instead of Date objects
+pg.types.setTypeParser(1082, (val: string) => val);
+
 const { Pool } = pg;
 
 export const pool = new Pool({
