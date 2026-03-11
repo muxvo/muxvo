@@ -132,6 +132,8 @@ export interface MuxvoConfig {
   dockBadgeIntervalMin?: number;
   /** 保存的工作区列表（最多 10 个） */
   savedWorkspaces?: SavedWorkspace[];
+  /** 新建终端的默认工作路径（为空时使用 $HOME） */
+  defaultTerminalCwd?: string;
 }
 
 /** app:get-preferences 返回的用户偏好 */

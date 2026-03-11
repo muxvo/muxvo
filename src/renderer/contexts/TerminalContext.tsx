@@ -322,10 +322,13 @@ export function useTerminalActions() {
 
   // Double-click-to-focus setting (default: false)
   const doubleClickToFocusRef = useRef(false);
+  // Default terminal cwd from config
+  const defaultTerminalCwdRef = useRef('');
   useEffect(() => {
     const loadConfig = () => {
       window.api.app.getConfig().then((result: any) => {
         doubleClickToFocusRef.current = result?.data?.doubleClickToFocus === true;
+        defaultTerminalCwdRef.current = result?.data?.defaultTerminalCwd ?? '';
       }).catch(() => {});
     };
     loadConfig();
@@ -335,7 +338,7 @@ export function useTerminalActions() {
 
   const addTerminal = useCallback(async (cwd?: string) => {
     const home = window.api.app.getHomePath();
-    const targetCwd = cwd ?? home;
+    const targetCwd = cwd ?? (defaultTerminalCwdRef.current || home);
     const { cols, rows } = getTerminalSizeCache();
     const result = await window.api.terminal.create(targetCwd, cols, rows);
     if (result?.success && result.data) {
