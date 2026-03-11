@@ -453,8 +453,18 @@ export function useTerminalActions() {
     }
 
     // If terminal is in a worktree, sync rename to git branch
+    // Sanitize name for git branch compatibility (spaces, special chars)
     if (name && terminal?.cwd?.includes('/.worktrees/')) {
-      window.api.worktree.rename(terminal.cwd, name).catch(() => {});
+      const branchName = name
+        .replace(/\s+/g, '-')
+        .replace(/[~^:?*[\]\\]/g, '')
+        .replace(/\.{2,}/g, '.')
+        .replace(/\.lock$/i, '')
+        .replace(/^-+|-+$/g, '');
+      if (branchName) {
+        window.api.worktree.rename(terminal.cwd, branchName)
+          .catch((e) => console.warn('[worktree] rename failed:', e));
+      }
     }
   }, [dispatch]);
 
