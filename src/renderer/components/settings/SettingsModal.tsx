@@ -67,11 +67,12 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
 
   const handleBrowseDefaultCwd = useCallback(async () => {
     const result = await window.api.fs.selectDirectory(defaultCwd || undefined);
-    if (result?.data?.path) {
-      const newCwd = result.data.path;
+    if (result?.success && result?.data) {
+      const newCwd = result.data as string;
       setDefaultCwd(newCwd);
       window.api.app.getConfig().then((r: any) => {
         window.api.app.saveConfig({ ...r?.data, defaultTerminalCwd: newCwd });
+        window.dispatchEvent(new CustomEvent('muxvo:config-changed'));
       }).catch(() => {});
     }
   }, [defaultCwd]);
@@ -80,6 +81,7 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
     setDefaultCwd('');
     window.api.app.getConfig().then((r: any) => {
       window.api.app.saveConfig({ ...r?.data, defaultTerminalCwd: '' });
+      window.dispatchEvent(new CustomEvent('muxvo:config-changed'));
     }).catch(() => {});
   }, []);
 
