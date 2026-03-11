@@ -224,13 +224,21 @@ Config: `electron-builder.yml`. Signing credentials: see `1apple-developer-signi
 
 ### Release Workflow (发版流程)
 
-**发版只需两步，其余全自动：**
+**发版四步（CC 自动执行），其余全自动：**
 
-1. 修改 `package.json` 的 `version` 字段
-2. 提交、打 tag、推送：
+1. **写 CHANGELOG**：在 `CHANGELOG.md` 中按 Keep a Changelog 格式写本版更新内容
+   - 格式：`## [x.y.z] - YYYY-MM-DD`，分类用 `### Added` / `### Changed` / `### Fixed`
+   - 此内容会被 app 内 "What's New" 弹窗展示，并追加到帮助按钮的 guide.md 末尾
+2. **融合旧 changelog 到帮助文档**：
+   - 读取 `CHANGELOG.md` 中上一版本的条目 + 当前 `docs/muxvo-guide.md`
+   - 把上一版本的功能描述融合到 guide.md 对应章节中（终端管理、聊天历史等）
+   - 融合后从 guide.md 末尾删除旧 changelog 区块，只保留功能说明本体
+   - （app 启动时会自动把最新版 changelog 追加到 guide.md 末尾，无需手动处理）
+3. **改版本号**：修改 `package.json` 的 `version` 字段
+4. **提交发布**：
 
 ```bash
-git add package.json
+git add package.json CHANGELOG.md docs/muxvo-guide.md
 git commit -m "chore: bump version to X.Y.Z"
 git tag vX.Y.Z
 git push origin main --tags
