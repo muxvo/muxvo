@@ -166,7 +166,7 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
           setTimeout(() => {
             const t = terminals.get(id);
             if (t && t.machine.state !== 'Stopped') {
-              proc.write(` cd ${options.cwd.replace(/ /g, '\\ ')}\n`);
+              proc.write(` cd ${options.cwd.replace(/ /g, '\\ ')} && clear\n`);
             }
           }, 1500);
         }

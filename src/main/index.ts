@@ -389,7 +389,7 @@ app.whenReady().then(() => {
     const tm = terminalManager;
     setTimeout(() => {
       for (const { id, cwd } of spawnedIds) {
-        tm.write(id, ` cd ${cwd.replace(/ /g, '\\ ')}\n`);
+        tm.write(id, ` cd ${cwd.replace(/ /g, '\\ ')} && clear\n`);
       }
     }, 1500);
     // Notify renderer to refresh terminal list
