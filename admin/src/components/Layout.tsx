@@ -17,9 +17,8 @@ export function Layout() {
           <h1 className="text-lg font-bold text-amber-400 tracking-tight">Muxvo Admin</h1>
         </div>
         <nav className="flex-1 p-3 space-y-1">
-          <SidebarLink to="/" label="Dashboard" />
+          <SidebarLink to="/" label="Analytics" />
           <SidebarLink to="/users" label="Users" />
-          <SidebarLink to="/analytics" label="Analytics" />
           <SidebarLink to="/devices" label="Devices" />
         </nav>
         <div className="p-3 border-t border-gray-800">
