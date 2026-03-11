@@ -18,7 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dock badge notifications (show count when terminals are waiting for input, with real-time / timed modes)
 - Terminal keyboard shortcuts (⌘T new terminal, ⌘← / ⌘→ jump to line start/end)
 - Project-level custom title
-- Device usage duration tracking and retention analysis
 
 ### Fixed
 
@@ -70,7 +69,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Terminal bell and OSC notification detection
 - Codex session resume support
 - Terminal scroll position persistence and auto-restore
-- Device heartbeat and registration
 
 ### Changed
 
@@ -93,8 +91,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Chat history browser with multi-source aggregation (Claude Code and Codex)
 - Configuration editor with atomic write protection for settings and CLAUDE.md files
 - Rich text editor with TipTap and Markdown support
-- Skill marketplace with search, install/uninstall, and update checking
-- AI-powered skill scoring and showcase publishing
-- GitHub OAuth authentication for marketplace and showcase features
-- Analytics dashboard for tracking usage across sessions
+- User authentication (GitHub OAuth, Google OAuth)
 - File viewer with directory watching and clipboard image support

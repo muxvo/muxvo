@@ -18,7 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dock 角标通知（终端等待输入时显示数字角标，支持实时/定时两种模式）
 - 终端快捷键支持（⌘T 新建终端、⌘← / ⌘→ 跳转行首行尾）
 - 项目级别自定义标题功能
-- 设备使用时长统计与留存率分析
 
 ### Fixed
 
@@ -70,7 +69,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 终端铃声和 OSC 通知检测
 - Codex 会话恢复支持
 - 终端滚动位置保持与自动恢复
-- 设备心跳与注册功能
 
 ### Changed
 
@@ -93,8 +91,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 聊天历史浏览器，多来源聚合（Claude Code 和 Codex）
 - 配置编辑器，支持 settings 和 CLAUDE.md 文件的原子写入保护
 - 富文本编辑器，集成 TipTap 和 Markdown 支持
-- Skill 市场，支持搜索、安装/卸载、更新检查
-- AI 驱动的 Skill 评分与 Showcase 发布
-- GitHub OAuth 认证（用于市场和 Showcase 功能）
-- 数据分析仪表盘，跨会话追踪使用情况
+- 用户认证系统（GitHub OAuth、Google OAuth）
 - 文件浏览器，支持目录监听和剪贴板图片粘贴

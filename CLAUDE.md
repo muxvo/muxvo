@@ -229,6 +229,7 @@ Config: `electron-builder.yml`. Signing credentials: see `1apple-developer-signi
 1. **写 CHANGELOG**：在 `CHANGELOG.md` 中按 Keep a Changelog 格式写本版更新内容
    - 格式：`## [x.y.z] - YYYY-MM-DD`，分类用 `### Added` / `### Changed` / `### Fixed`
    - 此内容会被 app 内 "What's New" 弹窗展示，并追加到帮助按钮的 guide.md 末尾
+   - **注意**：数据统计、埋点、内部分析等不面向用户的功能不写入 CHANGELOG
 2. **融合旧 changelog 到帮助文档**：
    - 读取 `CHANGELOG.md` 中上一版本的条目 + 当前 `docs/muxvo-guide.md`
    - 把上一版本的功能描述融合到 guide.md 对应章节中（终端管理、聊天历史等）
