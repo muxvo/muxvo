@@ -159,6 +159,18 @@ export function createTerminalManager(deps?: TerminalManagerDeps) {
         startCwdPolling();
         debugLog(`[TERM:spawn] id=${id} pid=${proc.pid} cwd=${options.cwd}`);
 
+        // Login shell (--login) may reset cwd during init scripts (.zprofile/.zshrc).
+        // Force cd back to requested cwd after shell init completes.
+        const homePath = require('os').homedir();
+        if (options.cwd !== homePath) {
+          setTimeout(() => {
+            const t = terminals.get(id);
+            if (t && t.machine.state !== 'Stopped') {
+              proc.write(` cd ${options.cwd.replace(/ /g, '\\ ')}\n`);
+            }
+          }, 1500);
+        }
+
         pushStateChange(id, machine.state);
 
         // Push terminal output to renderer
