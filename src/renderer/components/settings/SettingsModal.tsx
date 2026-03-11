@@ -16,6 +16,7 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
   const [dockBadgeMode, setDockBadgeMode] = useState<'off' | 'realtime' | 'timed'>('realtime');
   const [dockBadgeInterval, setDockBadgeInterval] = useState(1);
   const [intervalInputValue, setIntervalInputValue] = useState('1');
+  const [defaultCwd, setDefaultCwd] = useState('');
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'up-to-date' | 'error'>('idle');
   const [newVersion, setNewVersion] = useState('');
 
@@ -26,6 +27,7 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
       if (result?.data?.startupTerminalCount) {
         setStartupCount(Math.max(1, Math.min(20, result.data.startupTerminalCount)));
       }
+      setDefaultCwd(result?.data?.defaultTerminalCwd ?? '');
       setDblClickFocus(result?.data?.doubleClickToFocus === true);
       setDockBadgeMode(result?.data?.dockBadgeMode ?? 'realtime');
       const iv = result?.data?.dockBadgeIntervalMin ?? 1;
@@ -60,6 +62,24 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
     window.api.app.getConfig().then((result: any) => {
       window.api.app.saveConfig({ ...result?.data, doubleClickToFocus: enabled });
       window.dispatchEvent(new CustomEvent('muxvo:config-changed'));
+    }).catch(() => {});
+  }, []);
+
+  const handleBrowseDefaultCwd = useCallback(async () => {
+    const result = await window.api.fs.selectDirectory(defaultCwd || undefined);
+    if (result?.data?.path) {
+      const newCwd = result.data.path;
+      setDefaultCwd(newCwd);
+      window.api.app.getConfig().then((r: any) => {
+        window.api.app.saveConfig({ ...r?.data, defaultTerminalCwd: newCwd });
+      }).catch(() => {});
+    }
+  }, [defaultCwd]);
+
+  const handleClearDefaultCwd = useCallback(() => {
+    setDefaultCwd('');
+    window.api.app.getConfig().then((r: any) => {
+      window.api.app.saveConfig({ ...r?.data, defaultTerminalCwd: '' });
     }).catch(() => {});
   }, []);
 
@@ -177,6 +197,25 @@ export function SettingsModal({ uiTheme, onToggleTheme }: SettingsModalProps): J
                 >
                   {t('settings.disabled')}
                 </button>
+              </div>
+            </div>
+            <div className="settings-modal__row">
+              <div>
+                <div className="settings-modal__label">{t('settings.defaultTerminalCwd')}</div>
+                <div className="settings-modal__desc">{t('settings.defaultTerminalCwdDesc')}</div>
+              </div>
+              <div className="settings-modal__cwd-controls">
+                <span className="settings-modal__cwd-path" title={defaultCwd || undefined}>
+                  {defaultCwd || t('settings.defaultTerminalCwdPlaceholder')}
+                </span>
+                <button className="settings-modal__tour-btn" onClick={handleBrowseDefaultCwd}>
+                  {t('settings.browse')}
+                </button>
+                {defaultCwd && (
+                  <button className="settings-modal__tour-btn" onClick={handleClearDefaultCwd}>
+                    {t('settings.clear')}
+                  </button>
+                )}
               </div>
             </div>
             {isMac && (

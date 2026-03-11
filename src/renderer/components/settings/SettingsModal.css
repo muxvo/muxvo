@@ -347,6 +347,26 @@
   margin: 0;
 }
 
+/* Default terminal cwd controls */
+.settings-modal__cwd-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  max-width: 60%;
+}
+
+.settings-modal__cwd-path {
+  font-size: 11px;
+  color: var(--text-secondary);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: left;
+}
+
 /* Light theme adjustments */
 [data-theme="light"] .settings-modal__toggle-btn--active {
   color: #fff;

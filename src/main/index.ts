@@ -900,11 +900,12 @@ app.whenReady().then(() => {
           } else {
             // Normal start: create terminals based on config
             const homePath = require('os').homedir();
+            const defaultCwd = config.defaultTerminalCwd || homePath;
             const count = Math.max(1, Math.min(20, config.startupTerminalCount ?? 1));
             for (let i = 0; i < count; i++) {
-              terminalManager.spawn({ cwd: homePath });
+              terminalManager.spawn({ cwd: defaultCwd });
             }
-            console.log('[MUXVO] fresh start, created ' + count + ' terminal(s) at ' + homePath);
+            console.log('[MUXVO] fresh start, created ' + count + ' terminal(s) at ' + defaultCwd);
           }
 
           // Notify renderer to refresh terminal list
