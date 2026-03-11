@@ -46,8 +46,10 @@ files:
 extraResources:
   - from: docs/muxvo-guide.md
     to: muxvo-guide.md
-  - from: CHANGELOG.md
-    to: CHANGELOG.md
+  - from: CHANGELOG.zh.md
+    to: CHANGELOG.zh.md
+  - from: CHANGELOG.en.md
+    to: CHANGELOG.en.md
 
 npmRebuild: true
 

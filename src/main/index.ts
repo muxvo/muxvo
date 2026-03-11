@@ -446,8 +446,8 @@ app.whenReady().then(() => {
       ? pathMod.join(app.getAppPath(), 'docs', 'muxvo-guide.md')
       : pathMod.join(process.resourcesPath, 'muxvo-guide.md');
     const changelogSrc = is.dev
-      ? pathMod.join(app.getAppPath(), 'CHANGELOG.md')
-      : pathMod.join(process.resourcesPath, 'CHANGELOG.md');
+      ? pathMod.join(app.getAppPath(), 'CHANGELOG.zh.md')
+      : pathMod.join(process.resourcesPath, 'CHANGELOG.zh.md');
     mkdirGuide(pathMod.join(osMod.homedir(), '.muxvo'), { recursive: true })
       .then(() => copyFile(guideSrc, guideDest))
       .then(async () => {

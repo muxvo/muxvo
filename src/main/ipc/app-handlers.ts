@@ -28,11 +28,13 @@ export function registerAppHandlers(): void {
     };
   });
 
-  ipcMain.handle(IPC_CHANNELS.APP.GET_RELEASE_NOTES, async (): Promise<ReleaseEntry[]> => {
+  ipcMain.handle(IPC_CHANNELS.APP.GET_RELEASE_NOTES, async (_event, params?: { locale?: string }): Promise<ReleaseEntry[]> => {
     try {
+      const lang = params?.locale === 'en' ? 'en' : 'zh';
+      const filename = `CHANGELOG.${lang}.md`;
       const changelogPath = is.dev
-        ? join(app.getAppPath(), 'CHANGELOG.md')
-        : join(process.resourcesPath, 'CHANGELOG.md');
+        ? join(app.getAppPath(), filename)
+        : join(process.resourcesPath, filename);
       const content = await readFile(changelogPath, 'utf-8');
       return parseChangelog(content);
     } catch {

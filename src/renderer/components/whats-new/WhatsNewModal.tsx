@@ -22,11 +22,11 @@ export function WhatsNewModal(): JSX.Element | null {
 
   useEffect(() => {
     if (!state.whatsNewModal.open) return;
-    window.api.app.getReleaseNotes().then((data: ReleaseEntry[]) => {
+    window.api.app.getReleaseNotes(locale).then((data: ReleaseEntry[]) => {
       setEntries(data);
       setExpandedVersions(new Set());
     });
-  }, [state.whatsNewModal.open]);
+  }, [state.whatsNewModal.open, locale]);
 
   if (!state.whatsNewModal.open) return null;
 
