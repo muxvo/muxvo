@@ -11,14 +11,7 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('electron', () => ({
   app: {
-    focus: vi.fn(),
     dock: { setBadge: vi.fn() },
-  },
-  dialog: {
-    showMessageBoxSync: vi.fn().mockReturnValue(1),
-  },
-  shell: {
-    openExternal: vi.fn(),
   },
 }));
 
@@ -28,16 +21,12 @@ import { createDockBadgeService } from '@/main/services/dock-badge';
 function makeDeps(overrides: {
   mode?: 'off' | 'realtime' | 'timed';
   terminals?: Array<{ state: string }>;
-  notified?: boolean;
 } = {}) {
   const mode = overrides.mode ?? 'realtime';
   const terminals = overrides.terminals ?? [];
-  let notified = overrides.notified ?? true; // skip permission dialog
   return {
     listTerminals: () => terminals,
     getConfig: () => ({ mode, intervalMin: 1 }),
-    getPermissionNotified: () => notified,
-    setPermissionNotified: () => { notified = true; },
   };
 }
 

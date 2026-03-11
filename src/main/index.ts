@@ -547,11 +547,6 @@ app.whenReady().then(() => {
         intervalMin: cfg.dockBadgeIntervalMin ?? 1,
       };
     },
-    getPermissionNotified: () => configManager.loadConfig().dockBadgePermissionNotified ?? false,
-    setPermissionNotified: () => {
-      const cfg = configManager.loadConfig();
-      configManager.saveConfig({ ...cfg, dockBadgePermissionNotified: true });
-    },
   });
   dockBadge.reconfigure();
 
