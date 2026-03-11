@@ -1,7 +1,11 @@
-import { ipcMain } from 'electron';
+import { ipcMain, app } from 'electron';
+import { readFile } from 'fs/promises';
+import { join } from 'path';
+import { is } from '@electron-toolkit/utils';
 import { IPC_CHANNELS } from '@/shared/constants/channels';
 import { getPreferences, savePreferences } from '../services/app/preferences';
 import { detectCliTools } from '../services/app/cli-detection';
+import { parseChangelog, type ReleaseEntry } from '@/shared/utils/changelog-parser';
 
 export function registerAppHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.APP.GET_PREFERENCES, async () => {
@@ -22,5 +26,17 @@ export function registerAppHandlers(): void {
       codex: detected.includes('codex'),
       gemini: detected.includes('gemini'),
     };
+  });
+
+  ipcMain.handle(IPC_CHANNELS.APP.GET_RELEASE_NOTES, async (): Promise<ReleaseEntry[]> => {
+    try {
+      const changelogPath = is.dev
+        ? join(app.getAppPath(), 'CHANGELOG.md')
+        : join(process.resourcesPath, 'CHANGELOG.md');
+      const content = await readFile(changelogPath, 'utf-8');
+      return parseChangelog(content);
+    } catch {
+      return [];
+    }
   });
 }
