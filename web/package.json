@@ -1,0 +1,44 @@
+{
+  "name": "muxvo-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Muxvo 新版 Web 前端（M0 探针 3：终端 tile 网格复刻屏，纯展示组件 + fixture 驱动）",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tiptap/core": "3.27.2",
+    "@tiptap/extension-document": "3.27.2",
+    "@tiptap/extension-hard-break": "3.27.2",
+    "@tiptap/extension-paragraph": "3.27.2",
+    "@tiptap/extension-text": "3.27.2",
+    "@tiptap/extensions": "3.27.2",
+    "@tiptap/pm": "3.27.2",
+    "@tiptap/react": "3.27.2",
+    "@tiptap/starter-kit": "3.27.2",
+    "driver.js": "1.4.0",
+    "highlight.js": "^11.11.1",
+    "markdown-it": "^14.3.0",
+    "mermaid": "^11.16.0",
+    "pdfjs-dist": "^6.1.200",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tiptap-markdown": "0.9.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^25.9.3",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^29.1.1",
+    "typescript": "~5.6.3",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.9"
+  }
+}

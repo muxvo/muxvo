@@ -1,0 +1,91 @@
+# Muxvo CI（任务 13）：本地 scripts/preflight.sh 是主闸，Actions 只做轻量远端兜底。
+#
+# 刻意不进 CI 的部分及原因：
+# - visual-diff：跨机字体渲染必假红（golden 在本机 chromium 上字节级冻结，
+#   runner 字体栈不同必 diff）。由本地 preflight 第 5 步覆盖。
+# - bench / probes：vendor 产物（libghostty-vt 等）不进 git，runner 上无法构建；
+#   且 bench 数字跨机无可比性。基线落 probes/term-probe/reports/。
+# - swift-tests-macos 需要 vendor libghostty-vt.a 才能链接 M3 终端 target（方案 B）：
+#   本机 build-ghostty.sh --package-release 打 tar 传到 release vendor-ghostty-<pin短sha>，
+#   CI 用 actions/cache 缓存、miss 时 gh release download 解包到 ~/Library/Caches/
+#   muxvo-build/artifacts；app.sh 自动建 app/vendor/artifacts 符号链接。换 pin 需本机重传。
+# - macOS job 仅 push main：私有仓库 macOS runner 按 10× 计费，分支推送由
+#   ubuntu 秒级 job 兜底即可。
+# - codegen --check 第⑤项（改 protocol.json 必须递增 protocolVersion）在 CI
+#   是 no-op（checkout 工作树 == HEAD，恒提前返回）——该防线只在本地 preflight
+#   生效，此处保留 --check 是为其余四项 + --selftest 六反例自验。
+# - 不做依赖缓存（轻量优先）；将来若 macOS job 变慢，可加 actions/cache 缓存
+#   SwiftPM scratch（~/Library/Caches/muxvo-build/spm-scratch）。
+name: ci
+
+on: push
+
+jobs:
+  # 每 push 全分支：秒级纯 node 检查，不装 playwright 不碰 Swift
+  checks-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: bridge codegen --check --selftest
+        run: node bridge/codegen.mjs --check --selftest
+      - name: spec-runner（legacy 176 case 1:1 归属）
+        run: node tools/spec-runner/run.mjs
+      - name: web tsc --noEmit + vitest run
+        working-directory: web
+        # package-lock.json 的 resolved 指 registry.npmmirror.com（公共 CDN，
+        # runner 可达）；若该源不可用导致红灯，预案：本地用 npmjs 重写 lockfile。
+        run: |
+          npm ci
+          npx tsc --noEmit
+          npx vitest run
+  # 仅 push main：全部 Swift 测试（含 SIGKILL 集成 4 场景）。
+  # runner 写死 macos-15（不用 latest，防镜像漂移）；不显式 xcode-select——
+  # 默认 Xcode 的 Swift 6.1+ 可构建 swift-tools-6.0 manifest 与 GRDB 7.8.0（exact pin）。
+  swift-tests-macos:
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+      - name: 工具链版本 + 资源上限（红灯诊断用）
+        run: |
+          swift --version
+          xcodebuild -version
+          # 二轮诊断：核数 + fd 上限——判读线程池饥饿 / fd 耗尽两假设的关键量。
+          echo "ncpu=$(sysctl -n hw.ncpu) logical=$(sysctl -n hw.logicalcpu) physical=$(sysctl -n hw.physicalcpu)"
+          echo "ulimit -Sn=$(ulimit -Sn) -Hn=$(ulimit -Hn)"
+          echo "kern.maxfilesperproc=$(sysctl -n kern.maxfilesperproc)"
+      # 方案 B：拉预构建 vendor 产物（libghostty-vt.a + include/），供链接 M3 终端 target。
+      # pin 短 sha 从 VERSIONS.md 读，与 build-ghostty.sh --package-release 命名一致。
+      - name: 解析 vendor pin 短 sha
+        id: pin
+        run: |
+          sha=$(grep 'main commit' probes/VERSIONS.md | grep -oE '[0-9a-f]{40}' | head -1)
+          echo "sha=${sha:0:12}" >> "$GITHUB_OUTPUT"
+      - name: 缓存 vendor 产物（libghostty-vt）
+        id: vendor-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/muxvo-build/artifacts
+          key: vendor-ghostty-${{ steps.pin.outputs.sha }}
+      - name: cache miss → 从 release 下载解包
+        if: steps.vendor-cache.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="vendor-ghostty-${{ steps.pin.outputs.sha }}"
+          mkdir -p ~/Library/Caches/muxvo-build/artifacts
+          tmp=$(mktemp -d)
+          gh release download "$tag" -p '*.tar.gz' -D "$tmp"
+          tar -C ~/Library/Caches/muxvo-build/artifacts -xzf "$tmp"/*.tar.gz
+          ls -R ~/Library/Caches/muxvo-build/artifacts | head -20
+      - name: scripts/app.sh test
+        # 主修（二轮）：--no-parallel 串行跑测——低核 runner 上全并行会被阻塞型测试体
+        # （usleep 轮询 / waitpid / Process.waitUntilExit）打满线程池，饿死产品侧 kqueue
+        # DispatchSource 回调（accept 读源 / NOTE_EXIT 退出源）。串行后任一时刻至多一个阻塞体，
+        # 回调即时投递、原始小窗口即过。ulimit 抬软限为 fd 副压保险（GitHub runner 允许）。
+        run: |
+          ulimit -n 4096
+          ./scripts/app.sh test --no-parallel

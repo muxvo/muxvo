@@ -1,0 +1,24 @@
+{
+ ".tile": [],
+ ".tile-header": [],
+ ".tile-status": [],
+ ".tile-worktree-badge": [],
+ ".tile-cwd": [],
+ ".tile-custom-name": [],
+ ".tile-custom-name-input": [],
+ ".tile-waiting-badge": [],
+ ".tile-worktree-btn": [],
+ ".tile-file-btn": [],
+ ".tile-max-btn": [],
+ ".tile-tiling-btn": [],
+ ".tile-close-btn": [],
+ ".tile-terminal": [],
+ ".terminal-grid__fab": [
+  {
+   "x": 1380,
+   "y": 840,
+   "w": 40,
+   "h": 40
+  }
+ ]
+}

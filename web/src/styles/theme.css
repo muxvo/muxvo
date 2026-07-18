@@ -1,0 +1,107 @@
+/* Muxvo 设计 token（spec §6）—— amber 主题终端工作台 */
+
+:root {
+  /* 背景层（deep → elevated） */
+  --bg-deep: #06080c;
+  --bg-primary: #0a0e14;
+  --bg-card: #0d1117;
+  --bg-elevated: #161b22;
+  --bg-hover: #1c2333;
+  --bg-input: #0d1117;
+
+  /* 文本 */
+  --text-primary: #d4d4d8;
+  --text-secondary: #71717a;
+  --text-muted: #3f3f46;
+
+  /* 强调（amber） */
+  --accent: #e8a748;
+  --accent-hover: #f0c060;
+  --accent-muted: #e8a74830;
+  --accent-glow: #e8a74820;
+
+  /* 语义色 */
+  --success: #4ade80;
+  --error: #f87171;
+  --cyan: #22d3ee;
+
+  /* 边框与投影 */
+  --border: #1e2530;
+  --border-focus: #e8a74855;
+  --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-dialog: 0 16px 48px rgba(0, 0, 0, 0.6);
+
+  /* 字体 */
+  --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Courier New', monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', Roboto, 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+}
+
+[data-theme='light'] {
+  --bg-deep: #e8e8ec;
+  --bg-primary: #f0f0f3;
+  --bg-card: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-hover: #e5e5ea;
+  --bg-input: #ffffff;
+
+  --text-primary: #1c1c1e;
+  --text-secondary: #636366;
+  --text-muted: #aeaeb2;
+
+  --accent: #c87d1a;
+  --accent-hover: #a56610;
+  --accent-muted: #c87d1a30;
+  --accent-glow: #c87d1a20;
+
+  --border: #d1d1d6;
+  --border-focus: #c87d1a55;
+  --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-dialog: 0 8px 32px rgba(0, 0, 0, 0.12);
+
+  /* 行内代码（legacy theme.css:108-109 原样；仅亮色定义，暗色继续吃组件级回退——不对称
+     系 legacy 原状，B1 逐值对齐补齐 panels.css var(--code-bg/--code-fg) 亮色缺口）。 */
+  --code-bg: rgba(200, 125, 26, 0.1);
+  --code-fg: #9a5b13;
+}
+
+/* === 全局 reset === */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+}
+
+/* === 滚动条 === */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+[data-theme='light'] ::-webkit-scrollbar-thumb {
+  background: #c7c7cc;
+}
+[data-theme='light'] ::-webkit-scrollbar-thumb:hover {
+  background: #aeaeb2;
+}

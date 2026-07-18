@@ -1,0 +1,166 @@
+[
+  {
+    "id": "sk-list",
+    "desc": "Skills 三栏满载（系统组2+项目组1、CC/CX+GM badge、文件树、SKILL.md wysiwyg；选中 skill 的 SKILL.md 无 frontmatter，见 specs/behavior/skills-panel.md §0）",
+    "theme": "dark",
+    "screen": "skills-panel",
+    "homePath": "/Users/rl",
+    "skills": {
+      "items": [
+        {
+          "name": "commit-helper",
+          "path": "/Users/rl/.claude/skills/commit-helper",
+          "source": "claude",
+          "level": "system",
+          "desc": "commit-helper"
+        },
+        {
+          "name": "pdf-toolkit",
+          "path": "/Users/rl/.claude/skills/pdf-toolkit",
+          "source": "shared",
+          "level": "system",
+          "desc": "PDF 文档处理工具集：抽取文本、合并拆分、表单填写一站式完成"
+        },
+        {
+          "name": "api-mocker",
+          "path": "/Users/rl/work/clients/acme/web-app/.claude/skills/api-mocker",
+          "source": "codex",
+          "level": "project",
+          "desc": "为 acme web-app 生成 REST API mock 数据与 handler 桩代码"
+        }
+      ],
+      "selected": "/Users/rl/.claude/skills/commit-helper",
+      "sourceMode": false,
+      "dirty": false
+    },
+    "files": {
+      "/Users/rl/.claude/skills/commit-helper/SKILL.md": "# commit-helper\n\n根据暂存区 diff 自动生成符合 Conventional Commits 规范的提交信息。\n\n## 使用方式\n\n在终端运行 `claude commit`，skill 会读取 `git diff --cached` 并产出三段式结果：\n\n- **type**：feat / fix / refactor / docs 之一\n- **scope**：从变更文件路径推断\n- **subject**：50 字符以内的祈使句\n\n## 示例\n\n```bash\ngit add -A\nclaude commit --dry-run\n```\n\n> 提示：若暂存区为空，skill 会先列出工作区变更供选择。\n\n详见 references 目录下的规范全文与 scripts 中的校验脚本。\n",
+      "/Users/rl/.claude/skills/pdf-toolkit/SKILL.md": "---\nname: pdf-toolkit\ndescription: PDF 文档处理工具集：抽取文本、合并拆分、表单填写一站式完成\n---\n\n# pdf-toolkit\n",
+      "/Users/rl/work/clients/acme/web-app/.claude/skills/api-mocker/SKILL.md": "---\nname: api-mocker\ndescription: 为 acme web-app 生成 REST API mock 数据与 handler 桩代码\n---\n\n# api-mocker\n"
+    },
+    "dirs": {
+      "/Users/rl/.claude/skills/commit-helper": [
+        { "name": "references", "isDirectory": true },
+        { "name": "scripts", "isDirectory": true },
+        { "name": "SKILL.md", "isDirectory": false },
+        { "name": "usage.md", "isDirectory": false }
+      ]
+    }
+  },
+  {
+    "id": "sk-dirty",
+    "desc": "Skills source 模式 + dirty 红点（golden 驱动：点 Source → 原生 setter 注 dirtyValue）",
+    "theme": "dark",
+    "screen": "skills-panel",
+    "homePath": "/Users/rl",
+    "skills": {
+      "items": [
+        {
+          "name": "commit-helper",
+          "path": "/Users/rl/.claude/skills/commit-helper",
+          "source": "claude",
+          "level": "system",
+          "desc": "commit-helper"
+        },
+        {
+          "name": "pdf-toolkit",
+          "path": "/Users/rl/.claude/skills/pdf-toolkit",
+          "source": "shared",
+          "level": "system",
+          "desc": "PDF 文档处理工具集：抽取文本、合并拆分、表单填写一站式完成"
+        }
+      ],
+      "selected": "/Users/rl/.claude/skills/commit-helper",
+      "sourceMode": true,
+      "dirty": true,
+      "dirtyValue": "# commit-helper\n\n根据暂存区 diff 自动生成符合 Conventional Commits 规范的提交信息。\n\n## 使用方式\n\n在终端运行 `claude commit`，skill 会读取 `git diff --cached` 并产出三段式结果：\n\n- **type**：feat / fix / refactor / docs 之一\n- **scope**：从变更文件路径推断\n- **subject**：50 字符以内的祈使句\n\n## TODO\n\n- 支持 monorepo 多包 scope 推断\n"
+    },
+    "files": {
+      "/Users/rl/.claude/skills/commit-helper/SKILL.md": "# commit-helper\n\n根据暂存区 diff 自动生成符合 Conventional Commits 规范的提交信息。\n\n## 使用方式\n\n在终端运行 `claude commit`，skill 会读取 `git diff --cached` 并产出三段式结果：\n\n- **type**：feat / fix / refactor / docs 之一\n- **scope**：从变更文件路径推断\n- **subject**：50 字符以内的祈使句\n",
+      "/Users/rl/.claude/skills/pdf-toolkit/SKILL.md": "---\nname: pdf-toolkit\ndescription: PDF 文档处理工具集：抽取文本、合并拆分、表单填写一站式完成\n---\n\n# pdf-toolkit\n"
+    },
+    "dirs": {
+      "/Users/rl/.claude/skills/commit-helper": [
+        { "name": "references", "isDirectory": true },
+        { "name": "scripts", "isDirectory": true },
+        { "name": "SKILL.md", "isDirectory": false },
+        { "name": "usage.md", "isDirectory": false }
+      ]
+    }
+  },
+  {
+    "id": "sk-empty",
+    "desc": "Skills 空态（四面板空态代表作；legacy 实渲染 '暂无技能'+路径 hint（SkillList.tsx:108-111），CONFIG_L1_16 断言以此为准，spec 文案为零消费 stub）",
+    "theme": "dark",
+    "screen": "skills-panel",
+    "homePath": "/Users/rl",
+    "skills": {
+      "items": [],
+      "selected": null,
+      "sourceMode": false,
+      "dirty": false
+    },
+    "files": {},
+    "dirs": {}
+  },
+  {
+    "id": "sk-light",
+    "desc": "浅色主题代表作（列表+MD 预览满载，三栏 chrome 最密）",
+    "theme": "light",
+    "screen": "skills-panel",
+    "homePath": "/Users/rl",
+    "skills": {
+      "items": [
+        {
+          "name": "commit-helper",
+          "path": "/Users/rl/.claude/skills/commit-helper",
+          "source": "claude",
+          "level": "system",
+          "desc": "commit-helper"
+        },
+        {
+          "name": "pdf-toolkit",
+          "path": "/Users/rl/.claude/skills/pdf-toolkit",
+          "source": "shared",
+          "level": "system",
+          "desc": "PDF 文档处理工具集：抽取文本、合并拆分、表单填写一站式完成"
+        },
+        {
+          "name": "api-mocker",
+          "path": "/Users/rl/work/clients/acme/web-app/.claude/skills/api-mocker",
+          "source": "codex",
+          "level": "project",
+          "desc": "为 acme web-app 生成 REST API mock 数据与 handler 桩代码"
+        }
+      ],
+      "selected": "/Users/rl/.claude/skills/commit-helper",
+      "sourceMode": false,
+      "dirty": false
+    },
+    "files": {
+      "/Users/rl/.claude/skills/commit-helper/SKILL.md": "# commit-helper\n\n根据暂存区 diff 自动生成符合 Conventional Commits 规范的提交信息。\n\n## 使用方式\n\n在终端运行 `claude commit`，skill 会读取 `git diff --cached` 并产出三段式结果：\n\n- **type**：feat / fix / refactor / docs 之一\n- **scope**：从变更文件路径推断\n- **subject**：50 字符以内的祈使句\n\n## 示例\n\n```bash\ngit add -A\nclaude commit --dry-run\n```\n\n> 提示：若暂存区为空，skill 会先列出工作区变更供选择。\n\n详见 references 目录下的规范全文与 scripts 中的校验脚本。\n",
+      "/Users/rl/.claude/skills/pdf-toolkit/SKILL.md": "---\nname: pdf-toolkit\ndescription: PDF 文档处理工具集：抽取文本、合并拆分、表单填写一站式完成\n---\n\n# pdf-toolkit\n",
+      "/Users/rl/work/clients/acme/web-app/.claude/skills/api-mocker/SKILL.md": "---\nname: api-mocker\ndescription: 为 acme web-app 生成 REST API mock 数据与 handler 桩代码\n---\n\n# api-mocker\n"
+    },
+    "dirs": {
+      "/Users/rl/.claude/skills/commit-helper": [
+        {
+          "name": "references",
+          "isDirectory": true
+        },
+        {
+          "name": "scripts",
+          "isDirectory": true
+        },
+        {
+          "name": "SKILL.md",
+          "isDirectory": false
+        },
+        {
+          "name": "usage.md",
+          "isDirectory": false
+        }
+      ]
+    }
+  }
+]

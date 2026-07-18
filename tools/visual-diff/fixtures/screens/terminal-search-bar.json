@@ -1,0 +1,76 @@
+[
+  {
+    "id": "sb-open",
+    "desc": "终端内搜索条展开（空输入，input 聚焦 amber 边）",
+    "theme": "dark",
+    "screen": "terminal-search-bar",
+    "base": {
+      "homePath": "/Users/rl",
+      "viewMode": "Tiling",
+      "focusedId": null,
+      "selectedId": null,
+      "activeSidebarId": null,
+      "maxReached": false,
+      "dragging": null,
+      "dragOver": null,
+      "editing": null,
+      "waitingNotification": null,
+      "terminals": [
+        {
+          "id": "t1",
+          "state": "Running",
+          "cwd": "/Users/rl/dev/muxvo",
+          "customName": "api-server",
+          "isGitRepo": true,
+          "contentKey": "cc-codegen"
+        },
+        {
+          "id": "t2",
+          "state": "Running",
+          "cwd": "/Users/rl/work/clients/acme/web-app",
+          "isGitRepo": true,
+          "contentKey": "test-watch"
+        }
+      ]
+    },
+    "searchBar": { "terminalId": "t1" }
+  },
+  {
+    "id": "sb-light",
+    "desc": "浅色主题代表作（open-空输入，搜索条 chrome 硬编码色）",
+    "theme": "light",
+    "screen": "terminal-search-bar",
+    "base": {
+      "homePath": "/Users/rl",
+      "viewMode": "Tiling",
+      "focusedId": null,
+      "selectedId": null,
+      "activeSidebarId": null,
+      "maxReached": false,
+      "dragging": null,
+      "dragOver": null,
+      "editing": null,
+      "waitingNotification": null,
+      "terminals": [
+        {
+          "id": "t1",
+          "state": "Running",
+          "cwd": "/Users/rl/dev/muxvo",
+          "customName": "api-server",
+          "isGitRepo": true,
+          "contentKey": "cc-codegen"
+        },
+        {
+          "id": "t2",
+          "state": "Running",
+          "cwd": "/Users/rl/work/clients/acme/web-app",
+          "isGitRepo": true,
+          "contentKey": "test-watch"
+        }
+      ]
+    },
+    "searchBar": {
+      "terminalId": "t1"
+    }
+  }
+]

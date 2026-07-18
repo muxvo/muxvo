@@ -1,0 +1,32 @@
+# Swift / SwiftPM
+.build/
+.swiftpm/
+DerivedData/
+*.xcodeproj
+xcuserdata/
+
+# zig / ghostty 构建产物（源码与工具链在 ~/Library/Caches/muxvo-build/）
+zig-out/
+zig-cache/
+.zig-cache/
+*.xcframework
+probes/*/vendor/artifacts
+app/vendor/artifacts
+
+# 压测产物
+probes/*/reports/raw/
+*.cast.tmp
+
+# node
+node_modules/
+dist/
+
+# macOS
+.DS_Store
+
+# 坚果云
+.sync.ffs_db
+
+# 视觉回归产物（golden 已提交作基准；current/report 可再生）
+tools/visual-diff/current/
+tools/visual-diff/report/

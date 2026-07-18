@@ -1,0 +1,70 @@
+[
+  {
+    "id": "tour-step",
+    "desc": "新手引导代表 step（步1 新建终端：FAB 挖孔 spotlight + 气泡「1 / 4」；M2 唯一复合宿主特例，screens.json 裁决#4 授权；代表 step 裁决见 specs/behavior/tour-overlay.md §4）",
+    "theme": "dark",
+    "screen": "tour-overlay",
+    "base": {
+      "homePath": "/Users/rl",
+      "viewMode": "Tiling",
+      "focusedId": null,
+      "selectedId": null,
+      "activeSidebarId": null,
+      "maxReached": false,
+      "dragging": null,
+      "dragOver": null,
+      "editing": null,
+      "waitingNotification": null,
+      "terminals": [
+        {
+          "id": "t1",
+          "state": "Running",
+          "cwd": "/Users/rl/dev/muxvo",
+          "isGitRepo": true,
+          "contentKey": "cc-codegen"
+        },
+        {
+          "id": "t2",
+          "state": "Running",
+          "cwd": "/Users/rl/work/clients/acme/web-app",
+          "isGitRepo": true,
+          "contentKey": "build-log"
+        }
+      ]
+    }
+  },
+  {
+    "id": "tour-light",
+    "desc": "浅色主题代表作（代表 step spotlight+气泡；复合宿主 grid+menubar）",
+    "theme": "light",
+    "screen": "tour-overlay",
+    "base": {
+      "homePath": "/Users/rl",
+      "viewMode": "Tiling",
+      "focusedId": null,
+      "selectedId": null,
+      "activeSidebarId": null,
+      "maxReached": false,
+      "dragging": null,
+      "dragOver": null,
+      "editing": null,
+      "waitingNotification": null,
+      "terminals": [
+        {
+          "id": "t1",
+          "state": "Running",
+          "cwd": "/Users/rl/dev/muxvo",
+          "isGitRepo": true,
+          "contentKey": "cc-codegen"
+        },
+        {
+          "id": "t2",
+          "state": "Running",
+          "cwd": "/Users/rl/work/clients/acme/web-app",
+          "isGitRepo": true,
+          "contentKey": "build-log"
+        }
+      ]
+    }
+  }
+]

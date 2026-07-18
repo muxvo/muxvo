@@ -1,0 +1,317 @@
+/* markdown 查看排版（dogfood-r3 问题7）：Penraft global.css `.ProseMirror` 段移植，token 映射
+   muxvo theme.css（--text → --text-primary / --muted → --text-secondary / --line → --border /
+   --link → --accent）；code/斑马纹底色 theme.css 无对应 token → 局部变量 --md-code-bg / --md-zebra
+   补齐（沿 chat.css/panels.css「字面量+注记」纪律）。字号取 muxvo 现制 15px/1.7（不照搬 Penraft
+   17px/8% padding）。
+   本文件仅由 md-view.tsx（live 动态 chunk）import——golden/截图 bundle 零感知，无需 .muxvo-live 前缀。
+   自含纪律：复制钮/mermaid/hljs 色版全部 scoped 在 .markdown-view 下——不得依赖 chat-live.css/chat.css
+   的加载时序（文件预览上下文里它们可能根本没加载）。 */
+
+.markdown-view {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px 32px;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-primary);
+  word-wrap: break-word;
+  user-select: text; /* theme.css body 默认 user-select:none，查看文档须可选中 */
+  /* dark 默认（:root 即 dark，与 Penraft 相反——muxvo 以 [data-theme='light'] 覆写） */
+  --md-code-bg: rgba(255, 255, 255, 0.08);
+  --md-zebra: #161b22; /* = --bg-elevated 字面量（斑马纹独立注记，防 token 语义漂移） */
+}
+
+[data-theme='light'] .markdown-view {
+  --md-code-bg: rgba(27, 31, 35, 0.06);
+  --md-zebra: #f6f8fa;
+}
+
+/* ── 标题阶梯（Penraft：h1/h2 底边线） ── */
+.markdown-view h1,
+.markdown-view h2,
+.markdown-view h3,
+.markdown-view h4,
+.markdown-view h5,
+.markdown-view h6 {
+  margin: 24px 0 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.markdown-view h1 {
+  font-size: 2em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--border);
+}
+
+.markdown-view h2 {
+  font-size: 1.6em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--border);
+}
+
+.markdown-view h3 {
+  font-size: 1.4em;
+}
+.markdown-view h4 {
+  font-size: 1.2em;
+}
+.markdown-view h5 {
+  font-size: 1em;
+}
+.markdown-view h6 {
+  font-size: 0.9em;
+  color: var(--text-secondary);
+}
+
+/* ── 正文块 ── */
+.markdown-view p {
+  margin: 0 0 16px;
+}
+
+.markdown-view ul,
+.markdown-view ol {
+  margin: 0 0 16px;
+  padding-left: 2em;
+}
+
+.markdown-view li + li {
+  margin-top: 0.25em;
+}
+
+.markdown-view blockquote {
+  margin: 0 0 16px;
+  padding: 0 1em;
+  color: var(--text-secondary);
+  border-left: 0.25em solid var(--border);
+}
+
+.markdown-view blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown-view hr {
+  border: 0;
+  height: 0.25em;
+  background: var(--border);
+  margin: 24px 0;
+}
+
+.markdown-view img {
+  max-width: 100%;
+  border-radius: 6px;
+}
+
+.markdown-view a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.markdown-view a:hover {
+  text-decoration: underline;
+}
+
+/* ── 代码（行内 + 围栏共用 --md-code-bg，Penraft「视觉同源」注记） ── */
+.markdown-view code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  background: var(--md-code-bg);
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+}
+
+.markdown-view pre {
+  position: relative; /* 复制钮定位锚 */
+  margin: 0 0 16px;
+  padding: 16px;
+  background: var(--md-code-bg);
+  border-radius: 6px;
+  overflow: auto;
+  line-height: 1.5;
+  font-size: 0.92em;
+}
+
+.markdown-view pre code {
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+  color: inherit;
+  border-radius: 0;
+}
+
+/* ── 表格（GFM，斑马纹） ── */
+.markdown-view table {
+  display: block;
+  width: 100%;
+  overflow: auto;
+  margin: 0 0 16px;
+  border-collapse: collapse;
+}
+
+.markdown-view th,
+.markdown-view td {
+  border: 1px solid var(--border);
+  padding: 6px 13px;
+}
+
+.markdown-view th {
+  font-weight: 600;
+}
+
+.markdown-view tbody tr:nth-child(2n) {
+  background: var(--md-zebra);
+}
+
+/* ── GFM 任务列表（gfmTaskLists 后处理产物） ── */
+.markdown-view .task-list-item {
+  list-style: none;
+  margin-left: -1.5em;
+}
+
+.markdown-view .task-list-item input {
+  margin-right: 0.5em;
+  vertical-align: middle;
+}
+
+/* ── 复制钮（自含，chat-live.css .md-copy-btn 同形——那份 scoped 于 .markdown-live hover） ── */
+.markdown-view .md-copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.markdown-view pre:hover .md-copy-btn,
+.markdown-view .md-copy-btn:focus {
+  opacity: 1;
+}
+
+.markdown-view .md-copy-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-focus);
+}
+
+/* ── mermaid 容器（自含；渲染失败留转义源码文本） ── */
+.markdown-view .mermaid {
+  display: block;
+  margin: 8px 0;
+  text-align: center;
+}
+
+.markdown-view .mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ── hljs 色版（自含 scoped；dark ≈ VS2015 / light ≈ GitHub，chat.css 子集的补全版） ── */
+.markdown-view .hljs {
+  background: var(--md-code-bg);
+  color: var(--text-primary);
+}
+
+.markdown-view .hljs-comment,
+.markdown-view .hljs-quote {
+  color: #57a64a;
+  font-style: italic;
+}
+
+.markdown-view .hljs-keyword,
+.markdown-view .hljs-selector-tag,
+.markdown-view .hljs-literal {
+  color: #569cd6;
+}
+
+.markdown-view .hljs-string,
+.markdown-view .hljs-regexp,
+.markdown-view .hljs-addition {
+  color: #d69d85;
+}
+
+.markdown-view .hljs-number,
+.markdown-view .hljs-symbol,
+.markdown-view .hljs-bullet {
+  color: #b5cea8;
+}
+
+.markdown-view .hljs-title,
+.markdown-view .hljs-section,
+.markdown-view .hljs-name {
+  color: #dcdcaa;
+}
+
+.markdown-view .hljs-built_in,
+.markdown-view .hljs-type,
+.markdown-view .hljs-class .hljs-title {
+  color: #4ec9b0;
+}
+
+.markdown-view .hljs-attr,
+.markdown-view .hljs-attribute,
+.markdown-view .hljs-variable,
+.markdown-view .hljs-template-variable {
+  color: #9cdcfe;
+}
+
+.markdown-view .hljs-meta,
+.markdown-view .hljs-deletion {
+  color: #9b9b9b;
+}
+
+[data-theme='light'] .markdown-view .hljs {
+  color: #24292e;
+}
+
+[data-theme='light'] .markdown-view .hljs-comment,
+[data-theme='light'] .markdown-view .hljs-quote {
+  color: #6a737d;
+}
+
+[data-theme='light'] .markdown-view .hljs-keyword,
+[data-theme='light'] .markdown-view .hljs-selector-tag,
+[data-theme='light'] .markdown-view .hljs-literal {
+  color: #d73a49;
+}
+
+[data-theme='light'] .markdown-view .hljs-string,
+[data-theme='light'] .markdown-view .hljs-regexp,
+[data-theme='light'] .markdown-view .hljs-addition {
+  color: #032f62;
+}
+
+[data-theme='light'] .markdown-view .hljs-number,
+[data-theme='light'] .markdown-view .hljs-symbol,
+[data-theme='light'] .markdown-view .hljs-bullet,
+[data-theme='light'] .markdown-view .hljs-attr,
+[data-theme='light'] .markdown-view .hljs-attribute,
+[data-theme='light'] .markdown-view .hljs-variable,
+[data-theme='light'] .markdown-view .hljs-template-variable {
+  color: #005cc5;
+}
+
+[data-theme='light'] .markdown-view .hljs-title,
+[data-theme='light'] .markdown-view .hljs-section,
+[data-theme='light'] .markdown-view .hljs-name {
+  color: #6f42c1;
+}
+
+[data-theme='light'] .markdown-view .hljs-built_in,
+[data-theme='light'] .markdown-view .hljs-type,
+[data-theme='light'] .markdown-view .hljs-class .hljs-title {
+  color: #e36209;
+}
+
+[data-theme='light'] .markdown-view .hljs-meta,
+[data-theme='light'] .markdown-view .hljs-deletion {
+  color: #735c0f;
+}

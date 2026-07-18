@@ -1,0 +1,70 @@
+/* B2 modal 簇公共 chrome（specs/behavior/{settings,login,workspace-manager,whats-new}-modal.md §2）
+   像素值与 legacy 对齐：四 modal 的 backdrop/容器/标题栏在 legacy 各 css 中逐字相同，此处合并声明；
+   按屏差异（宽度/布局/login 头部变体等）落 screen/modal/modals.css。入场动画不收录（截图侧禁动画）。 */
+
+/* === 公共 backdrop：fixed 全屏 + 半透明 + 毛玻璃 + 居中 === */
+.settings-modal__backdrop,
+.login-modal__backdrop,
+.ws-manager__backdrop,
+.whats-new__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* === 公共容器基座（宽度按屏：420/380/480/460，见 modals.css） === */
+.settings-modal,
+.login-modal,
+.ws-manager,
+.whats-new__modal {
+  max-width: 90vw;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-dialog);
+}
+
+/* === 公共标题栏（login 头部 padding/边框不同，单列于 modals.css） === */
+.settings-modal__header,
+.ws-manager__header,
+.whats-new__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-modal__title,
+.ws-manager__title,
+.whats-new__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.settings-modal__close,
+.ws-manager__close,
+.whats-new__close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  font-size: 18px;
+  line-height: 1;
+  transition: all 0.15s;
+}
+
+.settings-modal__close:hover,
+.ws-manager__close:hover,
+.whats-new__close:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}

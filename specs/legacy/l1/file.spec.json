@@ -1,0 +1,348 @@
+{
+  "module": "FILE",
+  "layer": "L1",
+  "source": "tests/l1/file.test.ts",
+  "docSource": "docs/Muxvo_测试_v2/02_modules/test_FILE_CONFIG.md",
+  "totalCases": 32,
+  "cases": [
+    {
+      "id": "FILE_L1_01",
+      "description": "fs:read-dir IPC 格式 -- 返回 { entries: Array<{name, type, size, mtime}> }",
+      "type": "ipc",
+      "channel": "fs:read-dir",
+      "direction": "invoke",
+      "input": {
+        "path": "string"
+      },
+      "expectedResponse": {
+        "entries": "Array<{name: string, type: string, size: number, mtime: number}>"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "FILE_L1_02",
+      "description": "fs:read-file IPC 格式 -- 返回 { content, encoding }",
+      "type": "ipc",
+      "channel": "fs:read-file",
+      "direction": "invoke",
+      "input": {
+        "path": "string"
+      },
+      "expectedResponse": {
+        "content": "string",
+        "encoding": "string"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "FILE_L1_03",
+      "description": "fs:write-file IPC 格式 -- 返回 { success: true }",
+      "type": "ipc",
+      "channel": "fs:write-file",
+      "direction": "invoke",
+      "input": {
+        "path": "string",
+        "content": "string"
+      },
+      "expectedResponse": {
+        "success": true
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "FILE_L1_04",
+      "description": "fs:watch-start IPC 格式 -- 返回 { watchId }",
+      "type": "ipc",
+      "channel": "fs:watch-start",
+      "direction": "invoke",
+      "input": {
+        "path": "string"
+      },
+      "expectedResponse": {
+        "watchId": "string"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "FILE_L1_05",
+      "description": "fs:watch-stop IPC 格式 -- 返回 { success: true }",
+      "type": "ipc",
+      "channel": "fs:watch-stop",
+      "direction": "invoke",
+      "input": {
+        "watchId": "string"
+      },
+      "expectedResponse": {
+        "success": true
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "FILE_L1_06",
+      "description": "fs:change 推送格式 -- 推送 { watchId, type, path }",
+      "type": "ipc-push",
+      "channel": "fs:change",
+      "expectedPayload": {
+        "watchId": "string",
+        "type": "\"add\"|\"change\"|\"unlink\"",
+        "path": "string"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "FILE_L1_07",
+      "description": "fs:select-directory IPC 格式 -- 返回 { path } 或 { cancelled: true }",
+      "type": "ipc",
+      "channel": "fs:select-directory",
+      "direction": "invoke",
+      "input": null,
+      "expectedResponse": {
+        "path": "string | { cancelled: true }"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "FILE_L1_08",
+      "description": "Markdown 默认预览模式 -- 打开 .md 文件中栏为渲染预览",
+      "type": "default-value",
+      "target": "fileViewer.mdDefaultMode",
+      "expectedValue": "preview",
+      "priority": "P0"
+    },
+    {
+      "id": "FILE_L1_09",
+      "description": "三栏默认宽度 -- 左栏 250px, 中栏 flex:1, 右栏 280px",
+      "type": "default-value",
+      "target": "fileViewer.tempViewLayout",
+      "expectedValue": {
+        "left": "250px",
+        "middle": "flex:1",
+        "right": "280px"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "FILE_L1_10",
+      "description": "左栏终端显示规则 -- 同目录 2 个终端等分两份",
+      "type": "ui-state",
+      "state": "tempViewLeftPanel",
+      "condition": "2 terminals in same directory",
+      "expectedUI": {
+        "display": "2 terminals equally split"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "FILE_L1_11",
+      "description": "左栏终端 4+ 滚动 -- 5 个终端时显示 3 个等分, 其余滚动",
+      "type": "ui-state",
+      "state": "tempViewLeftPanel",
+      "condition": "5 terminals in same directory",
+      "expectedUI": {
+        "visible": 3,
+        "layout": "equal split",
+        "overflow": "scrollable"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "FILE_L1_12",
+      "description": "文件面板滑入动画 -- translateX(100%) -> translateX(0)",
+      "type": "ui-state",
+      "state": "filePanelAnimation",
+      "expectedCSS": {
+        "from": "translateX(100%)",
+        "to": "translateX(0)",
+        "direction": "from right"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "FILE_L1_13",
+      "description": "空目录缺省态 -- 显示\"此目录为空\" + 文件夹图标",
+      "type": "ui-state",
+      "state": "emptyDirectory",
+      "condition": "cwd is empty directory",
+      "expectedUI": {
+        "message": "此目录为空",
+        "icon": "folder"
+      },
+      "priority": "P2"
+    },
+    {
+      "id": "FILE_L1_14",
+      "description": "无权限读取缺省态 -- 显示\"无法读取此目录，请检查权限\" + 锁图标",
+      "type": "ui-state",
+      "state": "permissionDenied",
+      "condition": "directory permission denied",
+      "expectedUI": {
+        "message": "无法读取此目录，请检查权限",
+        "icon": "lock"
+      },
+      "priority": "P2"
+    },
+    {
+      "id": "FILE_L1_15",
+      "description": "打开文件面板 -- Closed -> Opening -> Open",
+      "type": "ui-state",
+      "state": "Closed -> Opening -> Open",
+      "action": "click file button",
+      "expectedBehavior": "300ms transition",
+      "priority": "P0"
+    },
+    {
+      "id": "FILE_L1_16",
+      "description": "切换终端文件面板 -- Open(A) -> Open(B) 无动画切换",
+      "type": "ui-state",
+      "state": "Open(A) -> Open(B)",
+      "action": "click another terminal's file button",
+      "expectedBehavior": "switch content, no animation",
+      "priority": "P1"
+    },
+    {
+      "id": "FILE_L1_17",
+      "description": "打开文件进入三栏 -- Open -> TransitionToTempView -> Closed(面板关闭)+三栏打开",
+      "type": "ui-state",
+      "state": "Open -> TransitionToTempView",
+      "action": "click file item",
+      "expectedBehavior": "panel closes, temp view opens",
+      "priority": "P0"
+    },
+    {
+      "id": "FILE_L1_18",
+      "description": "关闭文件面板 -- Open -> Closing -> Closed (Esc/外部点击/x)",
+      "type": "ui-state",
+      "state": "Open -> Closing -> Closed",
+      "action": "Esc / click outside / click X",
+      "expectedBehavior": "300ms transition",
+      "priority": "P0"
+    },
+    {
+      "id": "FILE_L1_19",
+      "description": "打开三栏临时视图 -- 文件面板点击文件, Grid 隐藏, 三栏显示",
+      "type": "ui-state",
+      "state": "Hidden -> Entering -> Active(PreviewMode)",
+      "action": "click file in file panel",
+      "expectedBehavior": "Grid hidden, three-column view displayed",
+      "priority": "P0"
+    },
+    {
+      "id": "FILE_L1_20",
+      "description": "切换查看文件 -- 点击右栏另一文件, 中栏内容更新",
+      "type": "ui-state",
+      "state": "PreviewMode -> UpdatingContent -> ContentLoaded",
+      "action": "click another file in right panel",
+      "expectedBehavior": "middle panel content updates",
+      "priority": "P0"
+    },
+    {
+      "id": "FILE_L1_21",
+      "description": "切换编辑/预览模式 -- Cmd+/ 切换 PreviewMode <-> EditMode",
+      "type": "ui-state",
+      "state": "PreviewMode <-> EditMode",
+      "action": "Cmd+/",
+      "expectedBehavior": "toggle between preview and edit mode",
+      "priority": "P0"
+    },
+    {
+      "id": "FILE_L1_22",
+      "description": "Cmd+S 保存文件 -- EditMode 中保存, Saving -> Editing",
+      "type": "ui-state",
+      "state": "EditMode -> Saving -> Editing",
+      "action": "Cmd+S",
+      "expectedBehavior": "file saved successfully",
+      "priority": "P0"
+    },
+    {
+      "id": "FILE_L1_23",
+      "description": "关闭三栏临时视图 -- Esc/x 关闭, Grid 恢复",
+      "type": "ui-state",
+      "state": "Active -> Exiting -> Hidden",
+      "action": "Esc or click X",
+      "expectedBehavior": "Grid restored",
+      "priority": "P0"
+    },
+    {
+      "id": "FILE_L1_24",
+      "description": "未保存修改时切换模式 -- EditMode+未保存 -> UnsavedPrompt",
+      "type": "ui-state",
+      "state": "EditMode -> UnsavedPrompt",
+      "condition": "has unsaved changes",
+      "action": "Cmd+/",
+      "expectedBehavior": "show unsaved prompt dialog",
+      "priority": "P1"
+    },
+    {
+      "id": "FILE_L1_25",
+      "description": "UnsavedPrompt 保存/放弃 -> PreviewMode",
+      "type": "ui-state",
+      "state": "UnsavedPrompt -> PreviewMode",
+      "action": "user saves or discards",
+      "expectedBehavior": "switch to preview mode",
+      "priority": "P1"
+    },
+    {
+      "id": "FILE_L1_26",
+      "description": "UnsavedPrompt 取消 -> 继续 Editing",
+      "type": "ui-state",
+      "state": "UnsavedPrompt -> Editing",
+      "action": "user cancels",
+      "expectedBehavior": "back to editing",
+      "priority": "P1"
+    },
+    {
+      "id": "FILE_L1_27",
+      "description": "拖拽左侧 resize handle -- PreviewMode -> ResizingLeft -> PreviewMode",
+      "type": "ui-state",
+      "state": "PreviewMode -> ResizingLeft -> PreviewMode",
+      "action": "drag left resize handle",
+      "expectedBehavior": "width persists on mouseup",
+      "priority": "P1"
+    },
+    {
+      "id": "FILE_L1_28",
+      "description": "拖拽右侧 resize handle -- PreviewMode -> ResizingRight -> PreviewMode",
+      "type": "ui-state",
+      "state": "PreviewMode -> ResizingRight -> PreviewMode",
+      "action": "drag right resize handle",
+      "expectedBehavior": "width persists on mouseup",
+      "priority": "P1"
+    },
+    {
+      "id": "FILE_L1_29",
+      "description": "切换另一终端文件面板 -- 面板内容切换为终端 B 的目录",
+      "type": "ui-state",
+      "state": "Open(A) -> Open(B)",
+      "action": "click terminal B's file button while panel shows terminal A's files",
+      "expectedBehavior": "content switches to terminal B directory, no animation",
+      "priority": "P1"
+    },
+    {
+      "id": "FILE_L1_30",
+      "description": "打开三栏关闭面板 -- 从文件面板点击文件后面板自动关闭",
+      "type": "ui-state",
+      "state": "Open -> TransitionToTempView -> panel closes, temp view opens",
+      "action": "click file in panel",
+      "expectedBehavior": "panel auto-closes, temp view opens",
+      "priority": "P0"
+    },
+    {
+      "id": "FILE_L1_31",
+      "description": "三栏视图切换文件 -- PreviewMode 中右栏点击另一文件",
+      "type": "ui-state",
+      "state": "PreviewMode -> UpdatingContent -> ContentLoaded",
+      "action": "click another file in right panel",
+      "expectedBehavior": "middle panel content updates to new file",
+      "priority": "P1"
+    },
+    {
+      "id": "FILE_L1_32",
+      "description": "三栏视图退出恢复 Grid -- Exiting -> Hidden -> Grid 恢复显示",
+      "type": "ui-state",
+      "state": "Active -> Exiting -> Hidden",
+      "action": "exit temp view",
+      "expectedBehavior": "Grid restored to display",
+      "priority": "P0"
+    }
+  ]
+}

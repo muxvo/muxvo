@@ -1,0 +1,84 @@
+[
+  {
+    "id": "mb-user-menu",
+    "desc": "MenuBar 用户头像下拉 open 态（头像 data-URI + 名/邮箱/provider + 登出项；golden 侧 JS click 生产入口）",
+    "theme": "dark",
+    "screen": "user-dropdown",
+    "auth": {
+      "username": "ruilin",
+      "email": "ruilin@example.com",
+      "provider": "github",
+      "avatarDataUri": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Crect width='48' height='48' fill='%23e8a748'/%3E%3Ccircle cx='24' cy='18' r='8' fill='%230a0e14'/%3E%3Cpath d='M8 44c0-9 7-14 16-14s16 5 16 14z' fill='%230a0e14'/%3E%3C/svg%3E"
+    },
+    "update": null,
+    "base": {
+      "homePath": "/Users/rl",
+      "viewMode": "Tiling",
+      "focusedId": null,
+      "selectedId": null,
+      "activeSidebarId": null,
+      "maxReached": false,
+      "dragging": null,
+      "dragOver": null,
+      "editing": null,
+      "waitingNotification": null,
+      "terminals": [
+        {
+          "id": "t1",
+          "state": "Running",
+          "cwd": "/Users/rl/dev/muxvo",
+          "isGitRepo": true,
+          "contentKey": "cc-codegen"
+        },
+        {
+          "id": "t2",
+          "state": "Running",
+          "cwd": "/Users/rl/work/clients/acme/web-app",
+          "isGitRepo": true,
+          "contentKey": "build-log"
+        }
+      ]
+    }
+  },
+  {
+    "id": "ud-light",
+    "desc": "浅色主题代表作（open 头像+登出项）",
+    "theme": "light",
+    "screen": "user-dropdown",
+    "auth": {
+      "username": "ruilin",
+      "email": "ruilin@example.com",
+      "provider": "github",
+      "avatarDataUri": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Crect width='48' height='48' fill='%23e8a748'/%3E%3Ccircle cx='24' cy='18' r='8' fill='%230a0e14'/%3E%3Cpath d='M8 44c0-9 7-14 16-14s16 5 16 14z' fill='%230a0e14'/%3E%3C/svg%3E"
+    },
+    "update": null,
+    "base": {
+      "homePath": "/Users/rl",
+      "viewMode": "Tiling",
+      "focusedId": null,
+      "selectedId": null,
+      "activeSidebarId": null,
+      "maxReached": false,
+      "dragging": null,
+      "dragOver": null,
+      "editing": null,
+      "waitingNotification": null,
+      "terminals": [
+        {
+          "id": "t1",
+          "state": "Running",
+          "cwd": "/Users/rl/dev/muxvo",
+          "isGitRepo": true,
+          "contentKey": "cc-codegen"
+        },
+        {
+          "id": "t2",
+          "state": "Running",
+          "cwd": "/Users/rl/work/clients/acme/web-app",
+          "isGitRepo": true,
+          "contentKey": "build-log"
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,142 @@
+/* 引导气泡与高亮——driver.js 基座（driver.css，同版本同字节）之上的 Muxvo 主题覆盖
+   （specs/behavior/tour-overlay.md §3，逐值对照）。呼吸动画保留供生产预览；
+   截图模式全局禁动画 → 仅静态 brightness + outline 入图。 */
+
+.tour-popover.driver-popover {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-dialog);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  max-width: 340px;
+}
+
+.tour-popover .driver-popover-title {
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+}
+
+.tour-popover .driver-popover-description {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+  font-family: var(--font-sans);
+}
+
+/* 导航钮（本批四步均 close-only 不可见；样式随 spec §3 保留） */
+.tour-popover .driver-popover-navigation-btns button {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border: 1px solid rgba(232, 167, 72, 0.3);
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 12px;
+  padding: 5px 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-shadow: none;
+}
+
+.tour-popover .driver-popover-navigation-btns button:hover {
+  background: var(--accent);
+  color: var(--bg-deep);
+}
+
+.tour-popover .driver-popover-prev-btn {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border) !important;
+}
+
+.tour-popover .driver-popover-prev-btn:hover {
+  background: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+}
+
+.tour-popover .driver-popover-progress-text {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-family: var(--font-sans);
+}
+
+.tour-popover .driver-popover-close-btn {
+  color: var(--text-secondary);
+}
+
+.tour-popover .driver-popover-close-btn:hover {
+  color: var(--text-primary);
+}
+
+.tour-popover .driver-popover-arrow {
+  border-color: var(--bg-elevated);
+}
+
+.tour-popover.driver-popover-side-bottom .driver-popover-arrow-side-top {
+  border-bottom-color: var(--bg-elevated);
+}
+
+.tour-popover.driver-popover-side-top .driver-popover-arrow-side-bottom {
+  border-top-color: var(--bg-elevated);
+}
+
+.tour-popover.driver-popover-side-left .driver-popover-arrow-side-right {
+  border-left-color: var(--bg-elevated);
+}
+
+.tour-popover.driver-popover-side-right .driver-popover-arrow-side-left {
+  border-right-color: var(--bg-elevated);
+}
+
+/* 游戏化高亮：spotlight 中的锚点元素提亮 + 琥珀 outline + 呼吸 box-shadow */
+.driver-active .driver-active-element {
+  animation: tour-pulse 1.8s ease-in-out infinite;
+  filter: brightness(1.15);
+  outline: 2px solid rgba(232, 167, 72, 0.6);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+@keyframes tour-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px 2px rgba(232, 167, 72, 0.2), 0 0 0 0 rgba(232, 167, 72, 0);
+  }
+  50% {
+    box-shadow: 0 0 16px 6px rgba(232, 167, 72, 0.45), 0 0 0 4px rgba(232, 167, 72, 0.7);
+  }
+}
+
+/* 完成 toast（发布阻断回修 fix/welcome-overlay-island：TourOverlayLive 创建 .tour-complete-toast 元素并
+   依赖此处「基态透明 + --visible 过渡显形」样式，但 topright-parity 批实现时漏移植该样式 → toast 无
+   position/z-index/背景/显形过渡 → 完成导览后 toast 不可见〔单测只 query DOM 存在、jsdom 无 CSS 渲染测
+   不出，真机不可见〕。逐值移植自 legacy TourOverlay.css:115，--shadow-elevated→--shadow-dialog。
+   z-index 9999 高于文件面板〔live-panel-overlay:500〕/欢迎卡〔:600〕，末步打开文件面板后 toast 不被盖；
+   pointer-events:none 纯显示不拦点击〔无需 data-hit-island〕。 */
+.tour-complete-toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  opacity: 0;
+  z-index: 9999;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(232, 167, 72, 0.4);
+  border-radius: 10px;
+  box-shadow: 0 0 20px 4px rgba(232, 167, 72, 0.15), var(--shadow-dialog);
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  color: var(--accent);
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.tour-complete-toast--visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}

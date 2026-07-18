@@ -1,0 +1,74 @@
+[
+  {
+    "id": "cwd-open",
+    "desc": "工作目录选择浮层（当前路径 + 快捷路径 + 浏览）",
+    "theme": "dark",
+    "screen": "cwd-picker",
+    "base": {
+      "homePath": "/Users/rl",
+      "viewMode": "Tiling",
+      "focusedId": null,
+      "selectedId": null,
+      "activeSidebarId": null,
+      "maxReached": false,
+      "dragging": null,
+      "dragOver": null,
+      "editing": null,
+      "waitingNotification": null,
+      "terminals": [
+        {
+          "id": "t1",
+          "state": "Running",
+          "cwd": "/Users/rl/dev/muxvo",
+          "isGitRepo": true,
+          "contentKey": "cc-tools"
+        },
+        {
+          "id": "t2",
+          "state": "Stopped",
+          "cwd": "/opt/services/gateway",
+          "isGitRepo": false,
+          "contentKey": "stopped-session"
+        }
+      ]
+    },
+    "cwdPicker": { "terminalId": "t1" }
+  },
+  {
+    "id": "cwd-light",
+    "desc": "浅色主题代表作（open-树+快捷路径）",
+    "theme": "light",
+    "screen": "cwd-picker",
+    "base": {
+      "homePath": "/Users/rl",
+      "viewMode": "Tiling",
+      "focusedId": null,
+      "selectedId": null,
+      "activeSidebarId": null,
+      "maxReached": false,
+      "dragging": null,
+      "dragOver": null,
+      "editing": null,
+      "waitingNotification": null,
+      "terminals": [
+        {
+          "id": "t1",
+          "state": "Running",
+          "cwd": "/Users/rl/dev/muxvo",
+          "isGitRepo": true,
+          "contentKey": "cc-tools"
+        },
+        {
+          "id": "t2",
+          "state": "Stopped",
+          "cwd": "/opt/services/gateway",
+          "isGitRepo": false,
+          "contentKey": "stopped-session"
+        }
+      ]
+    },
+    "cwdPicker": {
+      "terminalId": "t1"
+    }
+  }
+]

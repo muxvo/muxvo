@@ -1,0 +1,281 @@
+{
+ ".chat-history-panel": [
+  {
+   "x": 0,
+   "y": 36,
+   "w": 1440,
+   "h": 864
+  }
+ ],
+ ".chat-archive-banner": [],
+ ".chat-archive-banner__text": [],
+ ".chat-archive-toggle": [],
+ ".chat-archive-banner__close": [],
+ ".chat-history-panel__columns": [
+  {
+   "x": 0,
+   "y": 36,
+   "w": 1440,
+   "h": 864
+  }
+ ],
+ ".chat-history-panel__left": [
+  {
+   "x": 0,
+   "y": 36,
+   "w": 220,
+   "h": 864
+  }
+ ],
+ ".chat-history-panel__middle": [
+  {
+   "x": 220,
+   "y": 36,
+   "w": 340,
+   "h": 864
+  }
+ ],
+ ".chat-history-panel__right": [
+  {
+   "x": 560,
+   "y": 36,
+   "w": 880,
+   "h": 864
+  }
+ ],
+ ".project-list__header": [
+  {
+   "x": 0,
+   "y": 44,
+   "w": 219,
+   "h": 32
+  }
+ ],
+ ".project-list__item": [
+  {
+   "x": 0,
+   "y": 76,
+   "w": 219,
+   "h": 34
+  },
+  {
+   "x": 0,
+   "y": 110,
+   "w": 219,
+   "h": 32
+  },
+  {
+   "x": 0,
+   "y": 142,
+   "w": 219,
+   "h": 32
+  },
+  {
+   "x": 0,
+   "y": 174,
+   "w": 219,
+   "h": 32
+  },
+  {
+   "x": 0,
+   "y": 206,
+   "w": 219,
+   "h": 32
+  }
+ ],
+ ".project-list__dot": [
+  {
+   "x": 16,
+   "y": 89,
+   "w": 8,
+   "h": 8
+  },
+  {
+   "x": 16,
+   "y": 122,
+   "w": 8,
+   "h": 8
+  },
+  {
+   "x": 16,
+   "y": 154,
+   "w": 8,
+   "h": 8
+  },
+  {
+   "x": 16,
+   "y": 186,
+   "w": 8,
+   "h": 8
+  },
+  {
+   "x": 16,
+   "y": 218,
+   "w": 8,
+   "h": 8
+  }
+ ],
+ ".project-list__name": [
+  {
+   "x": 32,
+   "y": 84,
+   "w": 124.25,
+   "h": 18
+  },
+  {
+   "x": 32,
+   "y": 118,
+   "w": 129.34,
+   "h": 16
+  },
+  {
+   "x": 32,
+   "y": 150,
+   "w": 131.3,
+   "h": 16
+  },
+  {
+   "x": 32,
+   "y": 182,
+   "w": 127.19,
+   "h": 16
+  },
+  {
+   "x": 32,
+   "y": 214,
+   "w": 134.53,
+   "h": 16
+  }
+ ],
+ ".project-list__count": [
+  {
+   "x": 164.25,
+   "y": 86.5,
+   "w": 38.75,
+   "h": 13
+  },
+  {
+   "x": 169.34,
+   "y": 119.5,
+   "w": 33.66,
+   "h": 13
+  },
+  {
+   "x": 171.3,
+   "y": 151.5,
+   "w": 31.7,
+   "h": 13
+  },
+  {
+   "x": 167.19,
+   "y": 183.5,
+   "w": 35.81,
+   "h": 13
+  },
+  {
+   "x": 174.53,
+   "y": 215.5,
+   "w": 28.47,
+   "h": 13
+  }
+ ],
+ ".session-list__header": [
+  {
+   "x": 220,
+   "y": 44,
+   "w": 339,
+   "h": 32
+  }
+ ],
+ ".search-input-wrap": [
+  {
+   "x": 220,
+   "y": 76,
+   "w": 339,
+   "h": 45
+  }
+ ],
+ ".search-input-wrap__input": [
+  {
+   "x": 232,
+   "y": 84,
+   "w": 315,
+   "h": 28
+  }
+ ],
+ ".search-input-wrap__result-count": [
+  {
+   "x": 487.83,
+   "y": 90,
+   "w": 43.17,
+   "h": 16
+  }
+ ],
+ ".session-list__cards": [
+  {
+   "x": 220,
+   "y": 121,
+   "w": 339,
+   "h": 771
+  }
+ ],
+ ".session-list__section-header": [],
+ ".session-list__empty": [
+  {
+   "x": 220,
+   "y": 129,
+   "w": 339,
+   "h": 82
+  }
+ ],
+ ".session-card": [],
+ ".session-card__header": [],
+ ".session-card__title": [],
+ ".session-card__time": [],
+ ".session-card__preview": [],
+ ".session-card__footer": [],
+ ".session-card__tags": [],
+ ".session-card__tag": [],
+ ".session-card__project-badge": [],
+ ".session-card__count": [],
+ ".source-badge": [],
+ ".panel-skeleton": [],
+ ".session-detail": [
+  {
+   "x": 560,
+   "y": 36,
+   "w": 880,
+   "h": 864
+  }
+ ],
+ ".session-detail__empty": [
+  {
+   "x": 560,
+   "y": 36,
+   "w": 880,
+   "h": 864
+  }
+ ],
+ ".session-detail__skeleton": [],
+ ".skeleton-bubble": [],
+ ".skeleton-bubble__content": [],
+ ".session-detail__resume-bar": [],
+ ".session-detail__resume-btn": [],
+ ".session-detail__all-loaded": [],
+ ".message-bubble": [],
+ ".message-bubble__label": [],
+ ".message-bubble__content": [],
+ ".message-bubble__meta": [],
+ ".message-bubble__text": [],
+ ".tool-call-block": [],
+ ".tool-call-block__header": [],
+ ".tool-call-block__content": [],
+ ".tool-call-block__field-key": [],
+ ".tool-result-block": [],
+ ".tool-result-block__header": [],
+ ".markdown-preview": [],
+ ".markdown-preview pre": [],
+ ".markdown-preview code": [],
+ ".hljs-comment": [],
+ ".search-highlight": []
+}

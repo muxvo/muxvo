@@ -1,0 +1,141 @@
+{
+  "module": "TERM",
+  "layer": "L2",
+  "category": "grid-layout",
+  "source": "tests/l2/term-state.test.ts",
+  "docSource": "docs/Muxvo_测试_v2/02_modules/test_TERM.md",
+  "fixtureSource": "tests/helpers/test-fixtures.ts (gridFixtures)",
+  "totalCases": 13,
+  "cases": [
+    {
+      "id": "TERM_L2_01_grid_1",
+      "description": "1 个终端 -> 1x1 全屏",
+      "type": "algorithm",
+      "function": "calculateGridLayout",
+      "input": { "terminalCount": 1 },
+      "expected": { "cols": 1, "rows": 1 },
+      "formula": "单终端特殊处理",
+      "priority": "P0"
+    },
+    {
+      "id": "TERM_L2_02_grid_2",
+      "description": "2 个终端 -> 2x1 左右对半",
+      "type": "algorithm",
+      "function": "calculateGridLayout",
+      "input": { "terminalCount": 2 },
+      "expected": { "cols": 2, "rows": 1 },
+      "formula": "n <= 3 -> 横向排列, cols = n, rows = 1",
+      "priority": "P0"
+    },
+    {
+      "id": "TERM_L2_03_grid_3",
+      "description": "3 个终端 -> 3x1 三等分",
+      "type": "algorithm",
+      "function": "calculateGridLayout",
+      "input": { "terminalCount": 3 },
+      "expected": { "cols": 3, "rows": 1 },
+      "formula": "n <= 3 -> 横向排列, cols = n, rows = 1",
+      "priority": "P0"
+    },
+    {
+      "id": "TERM_L2_04_grid_4",
+      "description": "4 个终端 -> 2x2 四宫格",
+      "type": "algorithm",
+      "function": "calculateGridLayout",
+      "input": { "terminalCount": 4 },
+      "expected": { "cols": 2, "rows": 2 },
+      "formula": "cols = ceil(sqrt(4)) = 2, rows = ceil(4/2) = 2",
+      "priority": "P0"
+    },
+    {
+      "id": "TERM_L2_05_grid_5",
+      "description": "5 个终端 -> 上 3 下 2（span 居中布局）",
+      "type": "algorithm",
+      "function": "calculateGridLayout",
+      "input": { "terminalCount": 5 },
+      "expected": { "cols": 6, "rows": 2, "rowPattern": [3, 2], "spanRow": { "0": 2, "1": 3 }, "distribution": [3, 2] },
+      "formula": "6列网格: 第1行3个各占2列, 第2行2个各占3列, 实现居中",
+      "priority": "P0"
+    },
+    {
+      "id": "TERM_L2_06_grid_6",
+      "description": "6 个终端 -> 3x2 六宫格",
+      "type": "algorithm",
+      "function": "calculateGridLayout",
+      "input": { "terminalCount": 6 },
+      "expected": { "cols": 3, "rows": 2 },
+      "formula": "cols = ceil(sqrt(6)) = 3, rows = ceil(6/3) = 2",
+      "priority": "P0"
+    },
+    {
+      "id": "TERM_L2_07_grid_7",
+      "description": "7 个终端 -> 上 4 下 3（span 居中布局）",
+      "type": "algorithm",
+      "function": "calculateGridLayout",
+      "input": { "terminalCount": 7 },
+      "expected": { "cols": 12, "rows": 2, "rowPattern": [4, 3], "spanRow": { "0": 3, "1": 4 }, "distribution": [4, 3] },
+      "formula": "12列网格: 第1行4个各占3列, 第2行3个各占4列, 实现居中",
+      "priority": "P1"
+    },
+    {
+      "id": "TERM_L2_08_grid_9",
+      "description": "9 个终端 -> 3x3 九宫格",
+      "type": "algorithm",
+      "function": "calculateGridLayout",
+      "input": { "terminalCount": 9 },
+      "expected": { "cols": 3, "rows": 3 },
+      "formula": "cols = ceil(sqrt(9)) = 3, rows = ceil(9/3) = 3",
+      "priority": "P1"
+    },
+    {
+      "id": "TERM_L2_09_grid_10",
+      "description": "10 个终端 -> 4 列布局",
+      "type": "algorithm",
+      "function": "calculateGridLayout",
+      "input": { "terminalCount": 10 },
+      "expected": { "cols": 4, "rows": 3, "distribution": [4, 4, 2] },
+      "formula": "cols = ceil(sqrt(10)) = 4, rows = ceil(10/4) = 3",
+      "priority": "P1"
+    },
+    {
+      "id": "TERM_L2_10_grid_16",
+      "description": "16 个终端 -> 4x4 十六宫格",
+      "type": "algorithm",
+      "function": "calculateGridLayout",
+      "input": { "terminalCount": 16 },
+      "expected": { "cols": 4, "rows": 4 },
+      "formula": "cols = ceil(sqrt(16)) = 4, rows = ceil(16/4) = 4",
+      "priority": "P2"
+    },
+    {
+      "id": "TERM_L2_11_grid_20",
+      "description": "20 个终端（上限） -> 5 列布局",
+      "type": "algorithm",
+      "function": "calculateGridLayout",
+      "input": { "terminalCount": 20 },
+      "expected": { "cols": 5, "rows": 4 },
+      "formula": "cols = ceil(sqrt(20)) = 5, rows = ceil(20/5) = 4, 上限测试",
+      "priority": "P1"
+    },
+    {
+      "id": "TERM_L2_12_grid_8",
+      "description": "8 终端 → 4x2",
+      "type": "algorithm",
+      "function": "calculateGridLayout",
+      "input": { "terminalCount": 8 },
+      "expected": { "cols": 4, "rows": 2, "distribution": [4, 4] },
+      "formula": "4x2网格均分",
+      "priority": "P1"
+    },
+    {
+      "id": "TERM_L2_13_grid_0",
+      "description": "0 终端 → 空网格",
+      "type": "algorithm",
+      "function": "calculateGridLayout",
+      "input": { "terminalCount": 0 },
+      "expected": { "cols": 0, "rows": 0 },
+      "formula": "空状态特殊处理",
+      "priority": "P1"
+    }
+  ]
+}

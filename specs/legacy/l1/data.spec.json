@@ -1,0 +1,94 @@
+{
+  "module": "DATA",
+  "layer": "L1",
+  "source": "tests/l1/data.test.ts",
+  "docSource": "docs/Muxvo_测试_v2/02_modules/test_DATA.md",
+  "totalCases": 7,
+  "cases": [
+    {
+      "id": "DATA_L1_01",
+      "description": "文件监听启动 -- 终端创建后开始监听 cwd 目录, Inactive -> Watching",
+      "type": "ui-state",
+      "state": "Inactive -> Watching",
+      "trigger": "terminal creation completes",
+      "expectedBehavior": "start watching cwd directory via chokidar",
+      "priority": "P0"
+    },
+    {
+      "id": "DATA_L1_02",
+      "description": "新文件创建通知 -- Watching 状态下 cwd 新增文件, UI 标记 NEW",
+      "type": "ipc-push",
+      "channel": "fs:change",
+      "condition": "Watching state, new file created in cwd",
+      "expectedPayload": {
+        "type": "add"
+      },
+      "expectedUI": {
+        "fileIndicator": "NEW"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "DATA_L1_03",
+      "description": "文件修改通知 -- Watching 状态下文件被修改, UI 刷新",
+      "type": "ipc-push",
+      "channel": "fs:change",
+      "condition": "Watching state, file modified in cwd",
+      "expectedPayload": {
+        "type": "change"
+      },
+      "expectedUI": {
+        "action": "refresh file list"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "DATA_L1_04",
+      "description": "文件删除通知 -- Watching 状态下文件被删除, UI 移除条目",
+      "type": "ipc-push",
+      "channel": "fs:change",
+      "condition": "Watching state, file deleted in cwd",
+      "expectedPayload": {
+        "type": "unlink"
+      },
+      "expectedUI": {
+        "action": "remove file entry"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "DATA_L1_05",
+      "description": "停止监听 -- 终端关闭后停止监听目录, Watching -> Inactive",
+      "type": "ui-state",
+      "state": "Watching -> Inactive",
+      "trigger": "terminal close",
+      "expectedBehavior": "stop watching directory",
+      "priority": "P0"
+    },
+    {
+      "id": "DATA_L1_06",
+      "description": "镜像目录结构 -- 同步后检查 chat-history/ 目录结构",
+      "type": "default-value",
+      "target": "data.mirrorStructure",
+      "expectedValue": {
+        "files": [
+          "chat-history/sync-state.json",
+          "projects/{project-hash}/project-info.json",
+          "sessions/{session-id}.jsonl",
+          "history-index.jsonl"
+        ]
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "DATA_L1_07",
+      "description": "sync-state.json 格式 -- 包含每个项目的最后同步时间和文件 mtime",
+      "type": "default-value",
+      "target": "data.syncStateFormat",
+      "expectedValue": {
+        "contains": "per-project lastSync time and file mtime"
+      },
+      "priority": "P1"
+    }
+  ]
+}

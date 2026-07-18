@@ -1,0 +1,336 @@
+/* B1 popover 屏样式（specs/behavior/{terminal-search-bar,cwd-picker,worktree-popover}.md）
+   像素值与 legacy 对齐：TileEffects.css:478-523 / CwdPicker.css / WorktreePopover.css */
+
+/* === 终端内搜索条（spec terminal-search-bar §2） === */
+.terminal-search-bar {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-card, #2d2d2d);
+  border: 1px solid var(--border, #444);
+  border-radius: 6px;
+  padding: 4px 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.terminal-search-bar input {
+  background: transparent;
+  border: 1px solid var(--border, #555);
+  color: var(--text-primary, #ccc);
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  outline: none;
+  width: 180px;
+}
+
+.terminal-search-bar input:focus {
+  border-color: var(--accent, #e8a748);
+}
+
+.terminal-search-bar button {
+  background: transparent;
+  border: 1px solid var(--border, #555);
+  color: var(--text-secondary, #999);
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.terminal-search-bar button:hover {
+  background: var(--bg-hover, #3d3d3d);
+  color: var(--text-primary, #ccc);
+}
+
+/* === 工作目录选择浮层（spec cwd-picker §2） === */
+.cwd-picker-portal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+
+.cwd-picker {
+  position: fixed;
+  width: 320px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow-elevated);
+  padding: 12px;
+  pointer-events: auto;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.cwd-picker-header {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.cwd-picker-current {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  padding: 6px 8px;
+  background: var(--bg-primary);
+  border-radius: 4px;
+}
+
+.cwd-picker-current-path {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.cwd-picker-section-title {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.cwd-picker-quick {
+  margin-bottom: 12px;
+}
+
+.cwd-picker-item {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 8px 10px;
+  text-align: left;
+  color: var(--text-primary);
+  cursor: pointer;
+  border-radius: 4px;
+  margin-bottom: 2px;
+  font-size: 13px;
+  transition: background 0.15s ease;
+}
+
+.cwd-picker-item:hover {
+  background: var(--bg-hover);
+}
+
+.cwd-picker-browse {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.cwd-picker-browse-btn {
+  width: 100%;
+  background: var(--bg-hover);
+  border: none;
+  padding: 8px 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s ease;
+}
+
+.cwd-picker-browse-btn:hover {
+  background: var(--bg-elevated);
+}
+
+/* === Worktree 浮层（spec worktree-popover §2）
+   注意：--bg-secondary/--danger 两侧主题表均未定义，按 legacy 实际取 fallback 值 === */
+.worktree-popover-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+}
+
+.worktree-popover {
+  position: fixed;
+  width: 280px;
+  max-height: 320px;
+  background: var(--bg-secondary, #1e1e2e);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  padding: 8px 0;
+  overflow-y: auto;
+  z-index: 10000;
+}
+
+.worktree-popover__header {
+  padding: 4px 12px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted, rgba(255, 255, 255, 0.5));
+}
+
+.worktree-popover__loading,
+.worktree-popover__error {
+  padding: 12px;
+  font-size: 12px;
+  color: var(--text-muted, rgba(255, 255, 255, 0.5));
+  text-align: center;
+}
+
+.worktree-popover__error {
+  color: var(--danger, #f38ba8);
+}
+
+.worktree-popover__list {
+  display: flex;
+  flex-direction: column;
+}
+
+.worktree-popover__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary, #cdd6f4);
+  font-size: 13px;
+  font-family: var(--font-mono, monospace);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.worktree-popover__item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.worktree-popover__item--current {
+  background: rgba(232, 167, 72, 0.08);
+}
+
+/* F-D2：stale 行（worktree 目录已删除但 git 仍列出）灰化提示，仍可点（点了走 create → invalidCwd 可见文案）。 */
+.worktree-popover__item--missing {
+  opacity: 0.5;
+}
+
+.worktree-popover__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent, #e8a748);
+  flex-shrink: 0;
+}
+
+.worktree-popover__dot--main {
+  background: #a6e3a1;
+}
+
+.worktree-popover__branch {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* §5：行主显自定义名时的 wt-N 弱化小字（仅 customName 在场才渲染，golden fixture 不含 → 零像素动） */
+.worktree-popover__branch-code {
+  margin-left: 6px;
+  font-size: 10px;
+  color: var(--text-muted, rgba(255, 255, 255, 0.5));
+}
+
+.worktree-popover__badge {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted, rgba(255, 255, 255, 0.5));
+  flex-shrink: 0;
+}
+
+.worktree-popover__badge--current {
+  background: rgba(232, 167, 72, 0.15);
+  color: var(--accent, #e8a748);
+}
+
+.worktree-popover__badge--merged {
+  background: rgba(166, 227, 161, 0.15);
+  color: #a6e3a1;
+}
+
+.worktree-popover__delete {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  font-size: 11px;
+  color: var(--text-muted, rgba(255, 255, 255, 0.4));
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+
+.worktree-popover__delete:hover {
+  background: rgba(243, 139, 168, 0.2);
+  color: var(--danger, #f38ba8);
+}
+
+.worktree-popover__divider {
+  height: 1px;
+  background: var(--border, rgba(255, 255, 255, 0.1));
+  margin: 4px 0;
+}
+
+.worktree-popover__warning {
+  padding: 6px 12px;
+  font-size: 11px;
+  color: #fab387;
+  background: rgba(250, 179, 135, 0.08);
+  border-left: 2px solid #fab387;
+  margin: 0 8px 4px;
+  border-radius: 0 4px 4px 0;
+}
+
+.worktree-popover__create {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  color: var(--accent, #e8a748);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.worktree-popover__create:hover {
+  background: rgba(232, 167, 72, 0.1);
+}
+
+.worktree-popover__create:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* light 主题（spec worktree-popover §2 末） */
+[data-theme='light'] .worktree-popover {
+  background: var(--bg-secondary, #f5f5f5);
+  border-color: var(--border, rgba(0, 0, 0, 0.1));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme='light'] .worktree-popover__badge--merged {
+  background: rgba(64, 160, 43, 0.12);
+  color: #40a02b;
+}

@@ -1,0 +1,18 @@
+{
+  "name": "muxvo-visual-diff",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "探针 3 视觉回归：Playwright 截图 + pixelmatch 双层断言 + diff 热力图（契约见 fixtures/_CONTRACT.md）",
+  "scripts": {
+    "golden": "node src/capture.mjs golden",
+    "current": "node src/capture.mjs current",
+    "compare": "node src/compare.mjs",
+    "bridge-isolation": "node src/bridge-isolation.mjs",
+    "all": "npm run golden && npm run current && npm run compare"
+  },
+  "dependencies": {
+    "pixelmatch": "^6.0.0",
+    "pngjs": "^7.0.0"
+  }
+}

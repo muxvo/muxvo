@@ -1,0 +1,83 @@
+/* live 应用外壳（M6 批1）：仅 live 模式挂载，不入任何 golden 截图。 */
+
+/* 配置面板 overlay：菜单栏 36px 之下全屏铺满。z-index 高于终端网格、低于系统 modal 自持 backdrop
+   （settings modal 自带 fixed inset:0 backdrop z-index 500，经自身定位覆盖，见 settings-modal.md §2）。
+   仅用 position:fixed（不加 transform/filter）→ 不成为 fixed 后代的包含块，settings backdrop 仍相对视口。 */
+.live-panel-overlay {
+  position: fixed;
+  top: 36px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 400;
+}
+
+/* 会话恢复顶部横幅（B5 登记6 form 半）：菜单栏之上一条细条，flex-shrink:0 不挤终端网格几何
+   （TerminalScreen 的 useLayoutReport 按视口重报洞位，自然下移，无需额外接线）。 */
+.live-restore-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-height: 28px;
+  padding: 4px 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #fff;
+  background: #8a5a00; /* 琥珀警示；非 golden 面，纯 live 壳 */
+}
+.live-restore-banner__text {
+  flex: 1 1 auto;
+}
+.live-restore-banner__dismiss {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.live-restore-banner__dismiss:hover {
+  opacity: 0.8;
+}
+
+/* What's New live 弹窗全屏岛（auto-update.md §7）：Screen 自带 fixed backdrop（z 500），
+   本层只承担 data-hit-island 命中面（终端洞穿透区抠掉），与 .live-panel-overlay 同工艺。 */
+.live-whatsnew-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+}
+
+/* 底部居中一次性轻提示 toast（中性色不借 accent，tour-complete-toast 配方）：
+   透明基态 + --visible 过渡显形；pointer-events:none 纯显示不拦点击（无需 data-hit-island）；
+   z 9999 同 tour toast 级。共用者：
+     · hook 首启自动启用提示（wait-detector.md §7；HookEnabledNoticeLive）
+     · 老版聊天归档首启迁移提示（legacy-migration.md §7.2；LegacyMigrationNoticeLive）。 */
+.hook-enabled-toast,
+.migration-notice-toast {
+  position: fixed;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  opacity: 0;
+  z-index: 9999;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-dialog);
+  padding: 10px 20px;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.hook-enabled-toast--visible,
+.migration-notice-toast--visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

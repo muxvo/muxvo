@@ -1,0 +1,25 @@
+[
+  {
+    "id": "lg-buttons",
+    "desc": "登录弹窗 buttons 态（GitHub/Google/邮箱三按钮 + 标题 Muxvo 登录 + 左空槽右✕）",
+    "theme": "dark",
+    "screen": "login-modal",
+    "login": { "mode": "buttons" }
+  },
+  {
+    "id": "lg-form",
+    "desc": "登录弹窗 login 表单态（back 键 + 空表单 disabled 登录钮 + 创建账号/忘记密码链接）",
+    "theme": "dark",
+    "screen": "login-modal",
+    "login": { "mode": "login" }
+  },
+  {
+    "id": "lg-light",
+    "desc": "浅色主题代表作（login 表单态，输入框/标签 chrome 最密）",
+    "theme": "light",
+    "screen": "login-modal",
+    "login": {
+      "mode": "login"
+    }
+  }
+]

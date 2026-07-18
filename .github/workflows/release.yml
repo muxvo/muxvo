@@ -1,0 +1,153 @@
+# Muxvo 新客户端发布 workflow（M7 批1，distribution.md §6）。
+#
+# ⚠️⚠️ 本 workflow「只写不触发」：文件已就位，但 tag 未打、Secrets 未配前**永不运行**。
+#      落位实配 = D7' 用户逐件点头（见文末「待用户拍板/配置」）。
+#
+# 形态（§6 + R-04 铁律 §8）：
+#   打 tag v* → 构建（web + swift release，含 vendor libghostty）→ Developer ID 由内而外签名
+#   → notarytool 公证 + staple → 打包 zip+DMG → 建 **draft** release（**绝不带任何 feed 文件**）。
+#   · draft = 不公开、不触发任何客户端升级，须人工验证后用户手动 publish（D7'）。
+#   · **R-04**：draft release 只挂 zip + DMG，**不挂 appcast.xml、不挂 latest-mac.yml**——
+#     新公开仓 Sparkle feed / 老私仓 electron feed 都不在此步落地。appcast 仅作 workflow 工件产出供人工复核。
+#   · release 目标 = **新公开仓**（§0 拍板 4），非本 dev 私仓；经 PUBLIC_REPO 参数 + PAT 定向。
+#
+# feed 宿主公开仓名**待用户拍板**：下方 env.PUBLIC_REPO 占位 __PUBLIC_REPO__，SUFeedURL/enclosure/
+# release owner-repo 全走它。仓名定后一处替换即落位。
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'   # 例 v2.0.0（严格 > 老版最新 tag v0.5.0，R-08）
+
+# ⚠️默认不给权限；release 定向到**外部公开仓**，用 PAT（PUBLIC_REPO_TOKEN）而非 GITHUB_TOKEN
+#   （GITHUB_TOKEN 只能写当前私仓，不能在公开仓建 release）。当前仓不建任何 release（R-04）。
+permissions:
+  contents: read
+
+env:
+  # ⚠️占位：feed 宿主 = 新公开仓（owner/repo），待用户拍板后填。SUFeedURL/enclosure/release 目标全用它。
+  PUBLIC_REPO: __PUBLIC_REPO__
+
+jobs:
+  build:
+    # macOS Apple Silicon runner：原生出 arm64（§3「发布先 arm64」）。x64 待评估（矩阵可扩）。
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      # ── 版本号从 tag 推（v2.0.0 → 2.0.0；build = 去点 200，供 Sparkle CFBundleVersion 比较）──
+      - name: 解析版本
+        id: ver
+        run: |
+          V="${GITHUB_REF_NAME#v}"
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "build=$(echo "$V" | tr -d '.')" >> "$GITHUB_OUTPUT"
+
+      # ── vendor libghostty-vt 产物（不进 git，与 ci.yml 同法：pin 短 sha → cache → miss 时 release 下载）──
+      - name: 解析 vendor pin 短 sha
+        id: pin
+        run: |
+          sha=$(grep 'main commit' probes/VERSIONS.md | grep -oE '[0-9a-f]{40}' | head -1)
+          echo "sha=${sha:0:12}" >> "$GITHUB_OUTPUT"
+      - name: 缓存 vendor 产物
+        id: vendor-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/muxvo-build/artifacts
+          key: vendor-ghostty-${{ steps.pin.outputs.sha }}
+      - name: cache miss → 从 release 下载解包
+        if: steps.vendor-cache.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="vendor-ghostty-${{ steps.pin.outputs.sha }}"
+          mkdir -p ~/Library/Caches/muxvo-build/artifacts
+          tmp=$(mktemp -d)
+          gh release download "$tag" -p '*.tar.gz' -D "$tmp"
+          tar -C ~/Library/Caches/muxvo-build/artifacts -xzf "$tmp"/*.tar.gz
+
+      # ── 导入 Apple Developer ID 证书到临时钥匙串（骨架照抄老 release.yml；凭据经 Secret，D7' 配）──
+      - name: 导入 Apple 签名证书
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}              # p12 的 base64
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          CERTIFICATE_PATH=$RUNNER_TEMP/certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+          echo -n "$APPLE_CERTIFICATE" | base64 --decode -o "$CERTIFICATE_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERTIFICATE_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+
+      # ── 构建 → 签名 → 公证 → 打包（app.sh dist 全链；发布身份 + 公证凭据经 env）──
+      #    §1.1 发布身份配方：Muxvo / 可执行 Muxvo / appId com.muxvo.app / 数据根 Muxvo2。
+      - name: app.sh dist（bundle → notarize → 打包 zip+DMG）
+        env:
+          MUXVO_APP_NAME: Muxvo
+          MUXVO_EXECUTABLE_NAME: Muxvo
+          MUXVO_BUNDLE_ID: com.muxvo.app
+          MUXVO_DATA_ROOT_NAME: Muxvo2
+          MUXVO_APP_VERSION: ${{ steps.ver.outputs.version }}
+          MUXVO_APP_BUILD: ${{ steps.ver.outputs.build }}
+          MUXVO_SPARKLE_ED_KEY: ${{ vars.SPARKLE_ED_PUBLIC_KEY }}          # 公钥（非密），注 SUPublicEDKey
+          MUXVO_NOTARY_APPLE_ID: ${{ secrets.APPLE_ID }}
+          MUXVO_NOTARY_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          MUXVO_NOTARY_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} # App 专用密码
+          MUXVO_DIST_OUT: ${{ github.workspace }}/dist-out
+          MUXVO_DMG_NO_LAYOUT: '1'                                         # 无头 runner：跳过 Finder 图标布局
+        run: scripts/app.sh dist
+
+      # ── 生成 appcast（EdDSA 私钥从 Secret 经 stdin；enclosure 指公开仓 release asset）──
+      #    ⚠️R-04：appcast 只作 **workflow 工件** 产出供人工复核，**不挂 release、不上任何 feed**。
+      - name: 生成 appcast.xml（仅工件，不上 feed）
+        env:
+          MUXVO_PUBLIC_REPO: ${{ env.PUBLIC_REPO }}
+          MUXVO_RELEASE_TAG: ${{ github.ref_name }}
+          MUXVO_SPARKLE_ED_KEY_STDIN: '1'
+        run: |
+          echo "${{ secrets.SPARKLE_ED_PRIVATE_KEY }}" \
+            | tools/release/gen-appcast.sh "${{ github.workspace }}/dist-out" "${{ github.ref_name }}"
+
+      - name: 上传构建工件（zip/DMG/appcast）供人工复核
+        uses: actions/upload-artifact@v4
+        with:
+          name: muxvo-release-${{ steps.ver.outputs.version }}
+          path: |
+            dist-out/*.zip
+            dist-out/*.dmg
+            dist-out/appcast.xml
+
+      # ── 建 DRAFT release 到**新公开仓**：只挂 zip + DMG，**绝不挂 appcast.xml / latest-mac.yml**（R-04）──
+      #    draft=true 且不 publish；须人工验证后用户手动发布（D7'）。定向外部仓需 PAT。
+      - name: 建 draft release（公开仓，仅 zip+DMG，零 feed 文件）
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true                              # ⚠️永远 draft，绝不自动 publish（R-04 §8.1）
+          repository: ${{ env.PUBLIC_REPO }}       # ⚠️占位公开仓，待拍板
+          token: ${{ secrets.PUBLIC_REPO_TOKEN }}  # 对公开仓有 contents:write 的 PAT（D7' 配）
+          tag_name: ${{ github.ref_name }}
+          name: Muxvo ${{ steps.ver.outputs.version }}
+          files: |
+            dist-out/*.zip
+            dist-out/*.dmg
+          # ⚠️刻意不列 appcast.xml / latest-mac.yml：新客户端 Sparkle feed 与老 electron feed 均不在此落地。
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 待用户拍板 / 配置（D7'，本 workflow 落位实跑前逐件）：
+#   [仓名]  env.PUBLIC_REPO：新公开仓 owner/repo（现占位 __PUBLIC_REPO__）。
+#   [版本]  tag = vD4（建议 v2.0.0，须 > 老 v0.5.0）。
+#   [Secrets]  APPLE_CERTIFICATE(p12 base64) / APPLE_CERTIFICATE_PASSWORD / APPLE_ID /
+#             APPLE_TEAM_ID / APPLE_APP_SPECIFIC_PASSWORD / SPARKLE_ED_PRIVATE_KEY /
+#             PUBLIC_REPO_TOKEN（公开仓 PAT）。
+#   [Variables]  SPARKLE_ED_PUBLIC_KEY（EdDSA 公钥文本，非密）。
+#   凭据实物见 memory ref-apple-signing.md；EdDSA 密钥生成见 tools/release/eddsa-keys.sh。

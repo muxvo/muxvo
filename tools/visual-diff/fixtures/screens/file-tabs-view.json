@@ -1,0 +1,215 @@
+[
+  {
+    "id": "ftabs-md-dark",
+    "desc": "tab 式文件视图：双文件 tab（md 满载 WYSIWYG 活跃 + code 非活跃）+ 左树多层展开（dot 文件隐藏态）+ 终端状态灯组三灯三色（displayed=t2≠owner 分离态：owner 环留 t1、指示条落 t2、tab 名跟随）",
+    "theme": "dark",
+    "screen": "file-tabs-view",
+    "base": {
+      "terminals": [
+        {
+          "id": "t1",
+          "state": "Running",
+          "cwd": "/Users/rl/dev/muxvo",
+          "isGitRepo": true,
+          "contentKey": "cc-codegen"
+        },
+        {
+          "id": "t2",
+          "state": "WaitingInput",
+          "cwd": "/Users/rl/dev/muxvo-legacy",
+          "customName": "worker-2",
+          "contentKey": "waiting-perm"
+        },
+        {
+          "id": "t3",
+          "state": "Stopped",
+          "cwd": "/Users/rl/dev/bench",
+          "contentKey": "stopped-session"
+        }
+      ]
+    },
+    "fileConfig": {
+      "showHiddenFiles": false
+    },
+    "dirs": {
+      "/Users/rl/dev/muxvo": [
+        { "name": ".gitignore", "isDirectory": false, "size": 128 },
+        { "name": "docs", "isDirectory": true },
+        { "name": "src", "isDirectory": true },
+        { "name": "README.md", "isDirectory": false, "size": 3275 },
+        { "name": "notes.md", "isDirectory": false, "size": 866 },
+        { "name": "package.json", "isDirectory": false, "size": 512 }
+      ],
+      "/Users/rl/dev/muxvo/src": [
+        { "name": "screen", "isDirectory": true },
+        { "name": "app.ts", "isDirectory": false, "size": 1520 },
+        { "name": "main.ts", "isDirectory": false, "size": 2048 }
+      ],
+      "/Users/rl/dev/muxvo/src/screen": [
+        { "name": "FileTabsView.tsx", "isDirectory": false, "size": 4096 },
+        { "name": "registry.ts", "isDirectory": false, "size": 2200 }
+      ]
+    },
+    "fileTabs": {
+      "sourceTerminalId": "t1",
+      "displayedTerminalId": "t2",
+      "projectCwd": "/Users/rl/dev/muxvo",
+      "expandFolders": ["/Users/rl/dev/muxvo/src", "/Users/rl/dev/muxvo/src/screen"],
+      "activeId": "/Users/rl/dev/muxvo/README.md",
+      "tabs": [
+        {
+          "path": "/Users/rl/dev/muxvo/README.md",
+          "name": "README.md",
+          "fileType": "markdown",
+          "mdSource": false,
+          "content": "# Muxvo\n\n终端编排工作台：**多终端平铺** 与会话编排的 macOS 客户端。\n\n## 特性\n\n- Metal 直渲终端，滚动吞吐 `120fps`\n- WKWebView 面板与 **行为规格** 驱动开发\n- Git worktree 并行任务流\n\n## 快速开始\n\n```bash\nnpm install\nnpm run dev\n```\n\n> 数据目录隔离：dev 一律使用 Muxvo2 Dev。\n"
+        },
+        {
+          "path": "/Users/rl/dev/muxvo/src/main.ts",
+          "name": "main.ts",
+          "fileType": "code",
+          "content": "import { spawn } from 'node:child_process';\n\nexport interface TermSpec {\n  id: string;\n  cwd: string;\n  cols: number;\n  rows: number;\n}\n\nexport function launch(spec: TermSpec): number {\n  const child = spawn('/bin/zsh', ['-l'], {\n    cwd: spec.cwd,\n    env: { TERM: 'xterm-256color' },\n  });\n  return child.pid ?? -1;\n}\n"
+        }
+      ],
+      "dialog": null
+    }
+  },
+  {
+    "id": "ftabs-dirty-exit",
+    "desc": "tab 式文件视图：两个 dirty tab（琥珀点）+ 退出汇总确认对话框（列 2 文件 + 全部保存/全部丢弃/取消）",
+    "theme": "dark",
+    "screen": "file-tabs-view",
+    "base": {
+      "terminals": [
+        {
+          "id": "t1",
+          "state": "Running",
+          "cwd": "/Users/rl/dev/muxvo",
+          "isGitRepo": true,
+          "contentKey": "cc-codegen"
+        }
+      ]
+    },
+    "fileConfig": {
+      "showHiddenFiles": false
+    },
+    "dirs": {
+      "/Users/rl/dev/muxvo": [
+        { "name": ".gitignore", "isDirectory": false, "size": 128 },
+        { "name": "docs", "isDirectory": true },
+        { "name": "src", "isDirectory": true },
+        { "name": "README.md", "isDirectory": false, "size": 3275 },
+        { "name": "notes.md", "isDirectory": false, "size": 866 },
+        { "name": "package.json", "isDirectory": false, "size": 512 }
+      ],
+      "/Users/rl/dev/muxvo/src": [
+        { "name": "screen", "isDirectory": true },
+        { "name": "app.ts", "isDirectory": false, "size": 1520 },
+        { "name": "main.ts", "isDirectory": false, "size": 2048 }
+      ]
+    },
+    "fileTabs": {
+      "sourceTerminalId": "t1",
+      "projectCwd": "/Users/rl/dev/muxvo",
+      "expandFolders": ["/Users/rl/dev/muxvo/src"],
+      "activeId": "/Users/rl/dev/muxvo/src/main.ts",
+      "tabs": [
+        {
+          "path": "/Users/rl/dev/muxvo/README.md",
+          "name": "README.md",
+          "fileType": "markdown",
+          "content": "# Muxvo\n\n终端编排工作台。\n"
+        },
+        {
+          "path": "/Users/rl/dev/muxvo/src/main.ts",
+          "name": "main.ts",
+          "fileType": "code",
+          "content": "import { spawn } from 'node:child_process';\n\nexport function launch(cwd: string): number {\n  const child = spawn('/bin/zsh', ['-l'], { cwd });\n  return child.pid ?? -1;\n}\n",
+          "dirtyValue": "import { spawn } from 'node:child_process';\n\n// TODO: 支持 login shell 开关\nexport function launch(cwd: string): number {\n  const child = spawn('/bin/zsh', ['-l'], { cwd });\n  return child.pid ?? -1;\n}\n"
+        },
+        {
+          "path": "/Users/rl/dev/muxvo/notes.md",
+          "name": "notes.md",
+          "fileType": "markdown",
+          "content": "# 发布清单\n\n- 更新 CHANGELOG\n- 跑 preflight 七步\n",
+          "dirtyValue": "# 发布清单\n\n- 更新 CHANGELOG\n- 跑 preflight 七步\n- 通知 beta 用户\n"
+        }
+      ],
+      "dialog": { "k": "exitSummary", "paths": ["/Users/rl/dev/muxvo/src/main.ts", "/Users/rl/dev/muxvo/notes.md"] }
+    }
+  },
+  {
+    "id": "ftabs-light",
+    "desc": "tab 式文件视图 light 主题代表作（接棒 ftv-light 的 light 簇职责）：md 满载 WYSIWYG 活跃 + code 非活跃 + 终端状态灯组三灯三色（displayed=owner：环+指示条同灯）",
+    "theme": "light",
+    "screen": "file-tabs-view",
+    "base": {
+      "terminals": [
+        {
+          "id": "t1",
+          "state": "Running",
+          "cwd": "/Users/rl/dev/muxvo",
+          "isGitRepo": true,
+          "contentKey": "cc-codegen"
+        },
+        {
+          "id": "t2",
+          "state": "WaitingInput",
+          "cwd": "/Users/rl/dev/muxvo-legacy",
+          "customName": "worker-2",
+          "contentKey": "waiting-perm"
+        },
+        {
+          "id": "t3",
+          "state": "Stopped",
+          "cwd": "/Users/rl/dev/bench",
+          "contentKey": "stopped-session"
+        }
+      ]
+    },
+    "fileConfig": {
+      "showHiddenFiles": false
+    },
+    "dirs": {
+      "/Users/rl/dev/muxvo": [
+        { "name": ".gitignore", "isDirectory": false, "size": 128 },
+        { "name": "docs", "isDirectory": true },
+        { "name": "src", "isDirectory": true },
+        { "name": "README.md", "isDirectory": false, "size": 3275 },
+        { "name": "notes.md", "isDirectory": false, "size": 866 },
+        { "name": "package.json", "isDirectory": false, "size": 512 }
+      ],
+      "/Users/rl/dev/muxvo/src": [
+        { "name": "screen", "isDirectory": true },
+        { "name": "app.ts", "isDirectory": false, "size": 1520 },
+        { "name": "main.ts", "isDirectory": false, "size": 2048 }
+      ],
+      "/Users/rl/dev/muxvo/src/screen": [
+        { "name": "FileTabsView.tsx", "isDirectory": false, "size": 4096 },
+        { "name": "registry.ts", "isDirectory": false, "size": 2200 }
+      ]
+    },
+    "fileTabs": {
+      "sourceTerminalId": "t1",
+      "projectCwd": "/Users/rl/dev/muxvo",
+      "expandFolders": ["/Users/rl/dev/muxvo/src", "/Users/rl/dev/muxvo/src/screen"],
+      "activeId": "/Users/rl/dev/muxvo/README.md",
+      "tabs": [
+        {
+          "path": "/Users/rl/dev/muxvo/README.md",
+          "name": "README.md",
+          "fileType": "markdown",
+          "mdSource": false,
+          "content": "# Muxvo\n\n终端编排工作台：**多终端平铺** 与会话编排的 macOS 客户端。\n\n## 特性\n\n- Metal 直渲终端，滚动吞吐 `120fps`\n- WKWebView 面板与 **行为规格** 驱动开发\n- Git worktree 并行任务流\n\n## 快速开始\n\n```bash\nnpm install\nnpm run dev\n```\n\n> 数据目录隔离：dev 一律使用 Muxvo2 Dev。\n"
+        },
+        {
+          "path": "/Users/rl/dev/muxvo/src/main.ts",
+          "name": "main.ts",
+          "fileType": "code",
+          "content": "import { spawn } from 'node:child_process';\n\nexport interface TermSpec {\n  id: string;\n  cwd: string;\n  cols: number;\n  rows: number;\n}\n\nexport function launch(spec: TermSpec): number {\n  const child = spawn('/bin/zsh', ['-l'], {\n    cwd: spec.cwd,\n    env: { TERM: 'xterm-256color' },\n  });\n  return child.pid ?? -1;\n}\n"
+        }
+      ],
+      "dialog": null
+    }
+  }
+]

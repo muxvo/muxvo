@@ -1,0 +1,424 @@
+/**
+ * chat live-only UI 样式（M5-R1 批3 W8/W11）：右键菜单 / 删除确认弹窗 / 内联重命名输入 /
+ * 代码块「复制」钮 / 详情头「复制为 Markdown」钮 / mermaid 容器。
+ *
+ * **golden 安全靠 import 门**：本文件仅由 ChatHistoryLive 容器 import → 只入 chat live chunk，不入
+ * 截图/主 bundle（截图契约隔离）；截图路径根本不加载本表，故不影响 6 张 chat golden。
+ * ⚠️ 注意：本表并非「全 live-only 选择器」——`.session-detail`(:247)、`.session-detail__resume-bar`(:184)
+ * 命中的是 §4 静态 golden DOM 元素（今日增量属性像素影响≈0，但**若截图路径误载本表将改 golden**）。
+ * 故安全边界是 import 门，不是选择器本身；新增静态元素选择器请务必留在此门内、勿依赖「选择器即安全」的误解。
+ * 全部 token 化（var(--*) 经 theme.css 按 data-theme 翻），暗亮双主题自动适配。
+ */
+
+/* ── W8 右键菜单 ── */
+.session-context-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 180px;
+  padding: 4px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-elevated);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.session-context-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.session-context-menu__item:hover {
+  background: var(--bg-hover);
+}
+
+.session-context-menu__item--danger {
+  color: var(--error);
+}
+
+.session-context-menu__icon {
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.session-context-menu__sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--border);
+}
+
+/* ── W8 删除确认弹窗 ── */
+.chat-confirm-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.chat-confirm-modal__dialog {
+  width: 340px;
+  max-width: calc(100vw - 48px);
+  padding: 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-dialog);
+  font-family: var(--font-sans);
+}
+
+.chat-confirm-modal__text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.chat-confirm-modal__error {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--error);
+}
+
+.chat-confirm-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.chat-confirm-modal__btn {
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.chat-confirm-modal__btn:hover {
+  border-color: var(--border-focus);
+}
+
+.chat-confirm-modal__btn--danger {
+  border-color: transparent;
+  background: var(--error);
+  color: #fff;
+}
+
+.chat-confirm-modal__btn--danger:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* ── W8 内联重命名输入（替换卡片 title span，尽量与标题行同尺寸）── */
+.session-card__rename-input {
+  flex: 1;
+  min-width: 0;
+  padding: 1px 4px;
+  border: 1px solid var(--border-focus);
+  border-radius: 4px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  outline: none;
+}
+
+/* ── W11 代码块「复制」钮（chat-md-live 命令式注入到 pre）── */
+.markdown-live pre {
+  position: relative;
+}
+
+.md-copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.markdown-live pre:hover .md-copy-btn,
+.md-copy-btn:focus {
+  opacity: 1;
+}
+
+.md-copy-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-focus);
+}
+
+/* ── W11 mermaid 图容器（渲染失败时内为转义源码文本）── */
+.markdown-live .mermaid {
+  display: block;
+  margin: 8px 0;
+  text-align: center;
+}
+
+.markdown-live .mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ── W11 详情头「复制为 Markdown」钮 + 与「继续聊天」并排间距（resume-bar 仅 live 时含两钮）── */
+.session-detail__resume-bar {
+  gap: 8px;
+}
+
+.session-detail__copy-md-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.session-detail__copy-md-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-focus);
+}
+
+/* ── W6 搜索命中导航徽记（详情打开的搜索态，{cur}/{total}+▲▼ 替换「n 个结果」；legacy SearchInput.css:11-15）── */
+.search-input-wrap__nav {
+  position: absolute;
+  right: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.search-input-wrap__nav-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+.search-input-wrap__nav-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 9px;
+  padding: 1px 3px;
+  line-height: 1;
+  border-radius: 3px;
+}
+
+.search-input-wrap__nav-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.search-input-wrap__nav-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* ── W10 回到顶部浮钮（右栏滚动区右下角，live-only；scrollTop>2×clientHeight 淡入）── */
+.session-detail {
+  position: relative; /* 浮钮定位上下文（live-only 生效；静态 chat.css 不含此规则，golden 无感） */
+}
+
+.session-detail__back-to-top {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 5;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--shadow-elevated);
+  opacity: 0;
+  animation: chat-back-to-top-in 0.15s ease forwards;
+}
+
+@keyframes chat-back-to-top-in {
+  to {
+    opacity: 1;
+  }
+}
+
+.session-detail__back-to-top:hover {
+  color: var(--text-primary);
+  border-color: var(--border-focus);
+}
+
+.session-detail__back-to-top--busy {
+  cursor: default;
+}
+
+/* 问题3a：live 索引首扫中空态提示（骨架上方一行「正在建立索引…」）。
+   live-only——静态/golden 路径 live 缺席不渲此元素，故样式只落 live 专属 chat-live.css，不入冻结的 chat.css。 */
+.session-list__sync-hint {
+  padding: 12px 16px 4px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* ── 问题4 转写降噪：system 折叠壳 / thinking 块 / unknown 块 / user 气泡 markdown（均 live-only）── */
+
+/* system 折叠壳（复刻 tool-call-block 交互；头一行 SYSTEM·分类·摘要，摘要 CSS 单行 ellipsis） */
+.system-fold__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-muted);
+  overflow: hidden;
+}
+
+.system-fold__icon {
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.system-fold__label {
+  font-weight: 600;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+.system-fold__summary {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-muted);
+}
+
+.system-fold__body {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text-secondary);
+}
+
+/* thinking 块（与 tool-call-block 同构，紫系） */
+.thinking-block {
+  border-left: 3px solid #a78bfa;
+  padding: 8px 12px;
+  margin: 8px 0;
+  background: rgba(167, 139, 250, 0.1);
+  border-radius: 4px;
+}
+
+.thinking-block__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #a78bfa;
+  cursor: pointer;
+}
+
+.thinking-block__icon {
+  font-size: 10px;
+}
+
+.thinking-block__content {
+  margin-top: 8px;
+}
+
+/* unknown 块（与 tool-call-block 同构，灰系；展开体 <pre> 原文 JSON） */
+.unknown-block {
+  border-left: 3px solid var(--text-muted);
+  padding: 8px 12px;
+  margin: 8px 0;
+  background: rgba(148, 163, 184, 0.1);
+  border-radius: 4px;
+}
+
+.unknown-block__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.unknown-block__icon {
+  font-size: 10px;
+}
+
+.unknown-block__content {
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--bg-primary);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-x: auto;
+  color: var(--text-secondary);
+}
+
+/* user 气泡 markdown（缺陷4/问题4：user string 现走 text 块 md 通道）——蓝底上收紧留白 + 防 light 主题撞色 */
+.message-bubble--user .markdown-preview {
+  font-size: 13px;
+  padding: 0;
+  color: #fff;
+}
+
+.message-bubble--user .markdown-preview code {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.message-bubble--user .markdown-preview a {
+  color: #dbeafe;
+}
+
+/* 连续 system 折叠壳收密度（live-only；golden 不载本表） */
+.message-bubble--system + .message-bubble--system {
+  margin-top: -8px;
+}

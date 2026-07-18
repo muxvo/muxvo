@@ -1,0 +1,90 @@
+{
+  "cc-codegen": [
+    [{ "t": "> ", "c": "dim" }, { "t": "实现用户登录的 JWT 校验中间件", "c": "fg" }],
+    [],
+    [{ "t": "⏺ ", "c": "green" }, { "t": "I'll implement the JWT verification middleware.", "c": "fg" }],
+    [],
+    [{ "t": "⏺ ", "c": "green" }, { "t": "Write", "c": "brightWhite" }, { "t": "(src/middleware/auth.ts)", "c": "dim" }],
+    [{ "t": "  ⎿ ", "c": "dim" }, { "t": "Wrote 84 lines to src/middleware/auth.ts", "c": "fg" }],
+    [],
+    [{ "t": "  import jwt from 'jsonwebtoken';", "c": "cyan" }],
+    [{ "t": "  import type { Request, Response } from 'express';", "c": "cyan" }],
+    [],
+    [{ "t": "  export function verifyToken(req: Request) {", "c": "fg" }],
+    [{ "t": "    const token = req.headers.authorization;", "c": "fg" }],
+    [{ "t": "    if (!token) throw new AuthError(401);", "c": "fg" }],
+    [{ "t": "  }", "c": "fg" }]
+  ],
+  "cc-diff": [
+    [{ "t": "⏺ ", "c": "green" }, { "t": "Update", "c": "brightWhite" }, { "t": "(server/src/routes/user.ts)", "c": "dim" }],
+    [{ "t": "  ⎿ ", "c": "dim" }, { "t": "Updated server/src/routes/user.ts with 3 additions and 2 removals", "c": "fg" }],
+    [{ "t": "      42 ", "c": "dim" }, { "t": "  router.post('/login', async (req, res) => {", "c": "fg" }],
+    [{ "t": "      43 ", "c": "dim" }, { "t": "-   const user = await db.findUser(req.body.name);", "c": "red" }],
+    [{ "t": "      44 ", "c": "dim" }, { "t": "-   res.json({ ok: true, user });", "c": "red" }],
+    [{ "t": "      43 ", "c": "dim" }, { "t": "+   const user = await db.findUser(req.body.name);", "c": "green" }],
+    [{ "t": "      44 ", "c": "dim" }, { "t": "+   const token = signToken(user.id);", "c": "green" }],
+    [{ "t": "      45 ", "c": "dim" }, { "t": "+   res.json({ ok: true, user, token });", "c": "green" }],
+    [{ "t": "      46 ", "c": "dim" }, { "t": "  });", "c": "fg" }],
+    [],
+    [{ "t": "⏺ ", "c": "green" }, { "t": "Now let me run the tests to verify.", "c": "fg" }]
+  ],
+  "cc-tools": [
+    [{ "t": "⏺ ", "c": "green" }, { "t": "Bash", "c": "brightWhite" }, { "t": "(npm test)", "c": "dim" }],
+    [{ "t": "  ⎿ ", "c": "dim" }, { "t": "Running 48 tests across 6 files...", "c": "fg" }],
+    [{ "t": "  ⎿ ", "c": "dim" }, { "t": "✓ auth.test.ts (12 tests) 84ms", "c": "green" }],
+    [{ "t": "  ⎿ ", "c": "dim" }, { "t": "✓ routes.test.ts (18 tests) 132ms", "c": "green" }],
+    [{ "t": "  ⎿ ", "c": "dim" }, { "t": "✗ session.test.ts (2 failed) 201ms", "c": "red" }],
+    [],
+    [{ "t": "⏺ ", "c": "green" }, { "t": "Read", "c": "brightWhite" }, { "t": "(tests/session.test.ts)", "c": "dim" }],
+    [{ "t": "  ⎿ ", "c": "dim" }, { "t": "Read 96 lines", "c": "fg" }],
+    [],
+    [{ "t": "⏺ ", "c": "green" }, { "t": "The session mock is missing the expiry field — fixing.", "c": "fg" }]
+  ],
+  "build-log": [
+    [{ "t": "$ ", "c": "dim" }, { "t": "npm run build", "c": "fg" }],
+    [],
+    [{ "t": "vite v5.4.2 ", "c": "cyan" }, { "t": "building for production...", "c": "dim" }],
+    [{ "t": "✓ 312 modules transformed.", "c": "green" }],
+    [{ "t": "dist/index.html                 0.46 kB", "c": "dim" }],
+    [{ "t": "dist/assets/index-BfQ8x2.css   24.18 kB │ gzip:  5.02 kB", "c": "dim" }],
+    [{ "t": "dist/assets/index-Dk3m9p.js   186.42 kB │ gzip: 58.77 kB", "c": "dim" }],
+    [{ "t": "✓ built in 2.34s", "c": "green" }]
+  ],
+  "test-watch": [
+    [{ "t": "$ ", "c": "dim" }, { "t": "npx vitest", "c": "fg" }],
+    [],
+    [{ "t": " DEV ", "c": "magenta" }, { "t": " v2.1.1 ", "c": "dim" }, { "t": "/Users/rl/work/acme", "c": "dim" }],
+    [],
+    [{ "t": " ✓ ", "c": "green" }, { "t": "src/utils/date.test.ts ", "c": "fg" }, { "t": "(9)", "c": "dim" }],
+    [{ "t": " ✓ ", "c": "green" }, { "t": "src/utils/path.test.ts ", "c": "fg" }, { "t": "(14)", "c": "dim" }],
+    [],
+    [{ "t": " Test Files ", "c": "dim" }, { "t": " 2 passed", "c": "green" }, { "t": " (2)", "c": "dim" }],
+    [{ "t": "      Tests ", "c": "dim" }, { "t": " 23 passed", "c": "green" }, { "t": " (23)", "c": "dim" }],
+    [{ "t": "   Watching for file changes...", "c": "dim" }]
+  ],
+  "waiting-perm": [
+    [{ "t": "⏺ ", "c": "green" }, { "t": "Bash", "c": "brightWhite" }, { "t": "(rm -rf dist && npm run build)", "c": "dim" }],
+    [],
+    [{ "t": "╭─────────────────────────────────────────────╮", "c": "fg" }],
+    [{ "t": "│ ", "c": "fg" }, { "t": "Allow Bash to run this command?", "c": "brightWhite" }, { "t": "             │", "c": "fg" }],
+    [{ "t": "│ ", "c": "fg" }, { "t": "rm -rf dist && npm run build", "c": "yellow" }, { "t": "                │", "c": "fg" }],
+    [{ "t": "│                                             │", "c": "fg" }],
+    [{ "t": "│ ", "c": "fg" }, { "t": "❯ 1. Yes", "c": "green" }, { "t": "                                   │", "c": "fg" }],
+    [{ "t": "│ ", "c": "fg" }, { "t": "  2. Yes, don't ask again", "c": "fg" }, { "t": "                   │", "c": "fg" }],
+    [{ "t": "│ ", "c": "fg" }, { "t": "  3. No", "c": "fg" }, { "t": "                                     │", "c": "fg" }],
+    [{ "t": "╰─────────────────────────────────────────────╯", "c": "fg" }]
+  ],
+  "idle-prompt": [
+    [{ "t": "Last login: Tue Jun 10 09:41:22 on ttys004", "c": "dim" }],
+    [{ "t": "rl@mbp ", "c": "green" }, { "t": "~/dev/muxvo ", "c": "cyan" }, { "t": "% ", "c": "fg" }]
+  ],
+  "stopped-session": [
+    [{ "t": "⏺ ", "c": "green" }, { "t": "All 23 tests passing. The middleware is complete.", "c": "fg" }],
+    [],
+    [{ "t": "Total cost:            $0.48", "c": "dim" }],
+    [{ "t": "Total duration (API):  4m 12.8s", "c": "dim" }],
+    [{ "t": "Total code changes:    142 lines added, 12 lines removed", "c": "dim" }],
+    [],
+    [{ "t": "rl@mbp ", "c": "green" }, { "t": "~/work/acme ", "c": "cyan" }, { "t": "% ", "c": "fg" }]
+  ]
+}

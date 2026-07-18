@@ -1,0 +1,89 @@
+{
+ ".login-modal": [
+  {
+   "x": 530,
+   "y": 337,
+   "w": 380,
+   "h": 226
+  }
+ ],
+ ".login-modal__header": [
+  {
+   "x": 531,
+   "y": 338,
+   "w": 378,
+   "h": 44
+  }
+ ],
+ ".login-modal__title": [
+  {
+   "x": 662.52,
+   "y": 357,
+   "w": 86.98,
+   "h": 22
+  }
+ ],
+ ".login-modal__back-btn": [],
+ ".login-modal__close-btn": [
+  {
+   "x": 861,
+   "y": 354,
+   "w": 28,
+   "h": 28
+  }
+ ],
+ ".login-modal__body": [
+  {
+   "x": 531,
+   "y": 382,
+   "w": 378,
+   "h": 180
+  }
+ ],
+ ".login-modal__oauth-btn": [
+  {
+   "x": 551,
+   "y": 402,
+   "w": 338,
+   "h": 40
+  },
+  {
+   "x": 551,
+   "y": 452,
+   "w": 338,
+   "h": 40
+  },
+  {
+   "x": 551,
+   "y": 502,
+   "w": 338,
+   "h": 40
+  }
+ ],
+ ".login-modal__oauth-icon": [
+  {
+   "x": 654.44,
+   "y": 413,
+   "w": 18,
+   "h": 18
+  },
+  {
+   "x": 654.22,
+   "y": 463,
+   "w": 18,
+   "h": 18
+  },
+  {
+   "x": 667,
+   "y": 513,
+   "w": 18,
+   "h": 18
+  }
+ ],
+ ".login-modal__email-form": [],
+ ".login-modal__field": [],
+ ".login-modal__input": [],
+ ".login-modal__login-btn": [],
+ ".login-modal__links": [],
+ ".login-modal__link": []
+}

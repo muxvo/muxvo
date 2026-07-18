@@ -1,0 +1,14 @@
+[
+  {
+    "id": "wel-card",
+    "desc": "首启欢迎卡片（开始导览/跳过；单组件挂载盖 body 底色，golden 侧 dispatch SHOW_WELCOME 生产 action）",
+    "theme": "dark",
+    "screen": "welcome-overlay"
+  },
+  {
+    "id": "wel-light",
+    "desc": "浅色主题代表作（居中卡片）",
+    "theme": "light",
+    "screen": "welcome-overlay"
+  }
+]

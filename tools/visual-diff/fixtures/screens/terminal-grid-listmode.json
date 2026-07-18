@@ -1,0 +1,46 @@
+[
+  {
+    "id": "list-mode-5",
+    "desc": "批B 列表模式（dark）：5 终端（1 收起）——左栏 240px = 4 非收起行（含 waiting 红点 t3 + selected 高亮 t1 + customName）+ 底部「已收起」分组 1 卡（带 lastLine 摘要）；右详情 = 选中终端 t1 完整 TermTile（role=grid 真交互）",
+    "theme": "dark",
+    "homePath": "/Users/rl",
+    "viewMode": "List",
+    "focusedId": null,
+    "selectedId": "t1",
+    "activeSidebarId": null,
+    "maxReached": false,
+    "dragging": null,
+    "dragOver": null,
+    "editing": null,
+    "waitingNotification": null,
+    "terminals": [
+      { "id": "t1", "state": "Running", "cwd": "/Users/rl/dev/muxvo", "customName": "api-server", "isGitRepo": true, "contentKey": "cc-codegen" },
+      { "id": "t2", "state": "Running", "cwd": "/Users/rl/work/clients/acme/web-app", "isGitRepo": true, "contentKey": "test-watch" },
+      { "id": "t3", "state": "WaitingInput", "cwd": "/opt/services/gateway", "isGitRepo": false, "contentKey": "waiting-perm" },
+      { "id": "t4", "state": "Running", "cwd": "/Users/rl/dev/muxvo/.worktrees/feat-x", "customName": "构建任务", "isGitRepo": true, "contentKey": "build-log" },
+      { "id": "t5", "state": "Running", "cwd": "/Users/rl/dev/muxvo/tools", "isGitRepo": true, "contentKey": "cc-tools", "minimized": true, "lastLine": "✓ build 完成 · 12 tests passed" }
+    ]
+  },
+  {
+    "id": "list-mode-light",
+    "desc": "批B 列表模式（light 代表作）：同 list-mode-5 结构、light 主题——左栏 4 行 + 收起分组 1 卡、右详情选中 t1 完整 tile",
+    "theme": "light",
+    "homePath": "/Users/rl",
+    "viewMode": "List",
+    "focusedId": null,
+    "selectedId": "t1",
+    "activeSidebarId": null,
+    "maxReached": false,
+    "dragging": null,
+    "dragOver": null,
+    "editing": null,
+    "waitingNotification": null,
+    "terminals": [
+      { "id": "t1", "state": "Running", "cwd": "/Users/rl/dev/muxvo", "customName": "api-server", "isGitRepo": true, "contentKey": "cc-codegen" },
+      { "id": "t2", "state": "Running", "cwd": "/Users/rl/work/clients/acme/web-app", "isGitRepo": true, "contentKey": "test-watch" },
+      { "id": "t3", "state": "WaitingInput", "cwd": "/opt/services/gateway", "isGitRepo": false, "contentKey": "waiting-perm" },
+      { "id": "t4", "state": "Running", "cwd": "/Users/rl/dev/muxvo/.worktrees/feat-x", "customName": "构建任务", "isGitRepo": true, "contentKey": "build-log" },
+      { "id": "t5", "state": "Running", "cwd": "/Users/rl/dev/muxvo/tools", "isGitRepo": true, "contentKey": "cc-tools", "minimized": true, "lastLine": "✓ build 完成 · 12 tests passed" }
+    ]
+  }
+]

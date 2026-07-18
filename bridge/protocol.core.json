@@ -1,0 +1,2882 @@
+{
+  "protocolVersion": 41,
+  "types": {
+    "HelloRequest": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "protocolVersion",
+          "type": "int"
+        },
+        {
+          "name": "webBuild",
+          "type": "string"
+        }
+      ]
+    },
+    "HelloResponse": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "protocolVersion",
+          "type": "int"
+        },
+        {
+          "name": "appVersion",
+          "type": "string"
+        },
+        {
+          "name": "active",
+          "type": {
+            "array": "string"
+          }
+        }
+      ]
+    },
+    "UIStatePush": {
+      "kind": "union",
+      "variants": [
+        {
+          "name": "snapshot",
+          "fields": [
+            {
+              "name": "state",
+              "type": {
+                "ref": "UIState"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "UIAction": {
+      "kind": "union",
+      "variants": [
+        {
+          "name": "tileClick",
+          "fields": [
+            {
+              "name": "terminalId",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "sidebarSelect",
+          "fields": [
+            {
+              "name": "terminalId",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "maximizeTile",
+          "fields": [
+            {
+              "name": "terminalId",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "restoreTiling",
+          "fields": []
+        },
+        {
+          "name": "minimizeTile",
+          "fields": [
+            {
+              "name": "terminalId",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "restoreTile",
+          "fields": [
+            {
+              "name": "terminalId",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "restoreAllMinimized",
+          "fields": []
+        },
+        {
+          "name": "renameSubmit",
+          "fields": [
+            {
+              "name": "terminalId",
+              "type": "string"
+            },
+            {
+              "name": "name",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "acknowledgeWaiting",
+          "fields": [
+            {
+              "name": "terminalId",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "layoutReport",
+          "fields": [
+            {
+              "name": "stateId",
+              "type": "string"
+            },
+            {
+              "name": "rects",
+              "type": {
+                "array": {
+                  "ref": "TermRect"
+                }
+              }
+            },
+            {
+              "name": "viewportW",
+              "type": "double",
+              "optional": true
+            },
+            {
+              "name": "viewportH",
+              "type": "double",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "reorder",
+          "fields": [
+            {
+              "name": "order",
+              "type": {
+                "array": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "gridResize",
+          "fields": [
+            {
+              "name": "columnRatios",
+              "type": {
+                "array": "double"
+              }
+            },
+            {
+              "name": "rowRatios",
+              "type": {
+                "array": "double"
+              }
+            }
+          ]
+        },
+        {
+          "name": "searchQuery",
+          "fields": [
+            {
+              "name": "terminalId",
+              "type": "string"
+            },
+            {
+              "name": "query",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "searchNext",
+          "fields": [
+            {
+              "name": "terminalId",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "searchPrev",
+          "fields": [
+            {
+              "name": "terminalId",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "searchClose",
+          "fields": [
+            {
+              "name": "terminalId",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "chatClose",
+          "fields": []
+        },
+        {
+          "name": "chatJumpToTerminal",
+          "fields": [
+            {
+              "name": "sessionId",
+              "type": "string"
+            },
+            {
+              "name": "cwd",
+              "type": "string",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "chatResume",
+          "fields": [
+            {
+              "name": "sessionId",
+              "type": "string"
+            },
+            {
+              "name": "cwd",
+              "type": "string"
+            },
+            {
+              "name": "source",
+              "type": {
+                "ref": "ChatSource"
+              }
+            },
+            {
+              "name": "customTitle",
+              "type": "string",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "chatOpen",
+          "fields": []
+        },
+        {
+          "name": "exitTaskCenter",
+          "fields": []
+        },
+        {
+          "name": "confirmQuit",
+          "fields": []
+        },
+        {
+          "name": "cancelQuit",
+          "fields": []
+        },
+        {
+          "name": "fileOpen",
+          "fields": [
+            {
+              "name": "terminalId",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "fileClose",
+          "fields": []
+        },
+        {
+          "name": "setShowHiddenFiles",
+          "fields": [
+            {
+              "name": "value",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "name": "panelOverlayReport",
+          "fields": [
+            {
+              "name": "source",
+              "type": "string"
+            },
+            {
+              "name": "active",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "name": "dismissRestoreBanner",
+          "fields": []
+        },
+        {
+          "name": "toggleListMode",
+          "fields": []
+        },
+        {
+          "name": "helpOpen",
+          "fields": []
+        }
+      ]
+    },
+    "Theme": {
+      "kind": "enum",
+      "values": [
+        "dark",
+        "light"
+      ]
+    },
+    "ViewMode": {
+      "kind": "enum",
+      "values": [
+        "Tiling",
+        "Focused",
+        "List"
+      ]
+    },
+    "PanelMode": {
+      "kind": "enum",
+      "values": [
+        "terminal",
+        "taskCenter",
+        "chatHistory"
+      ]
+    },
+    "TerminalState": {
+      "kind": "enum",
+      "values": [
+        "Created",
+        "Starting",
+        "Running",
+        "Busy",
+        "WaitingInput",
+        "Stopping",
+        "Stopped",
+        "Disconnected",
+        "Failed",
+        "Removed"
+      ]
+    },
+    "EditingState": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "value",
+          "type": "string"
+        }
+      ]
+    },
+    "WaitingNotification": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "count",
+          "type": "int"
+        }
+      ]
+    },
+    "Palette": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "background",
+          "type": "string"
+        },
+        {
+          "name": "foreground",
+          "type": "string"
+        }
+      ]
+    },
+    "ContentSegment": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "t",
+          "type": "string"
+        },
+        {
+          "name": "hex",
+          "type": "string",
+          "optional": true
+        }
+      ]
+    },
+    "ContentLine": {
+      "kind": "alias",
+      "type": {
+        "array": {
+          "ref": "ContentSegment"
+        }
+      }
+    },
+    "TerminalSnapshot": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "state",
+          "type": {
+            "ref": "TerminalState"
+          }
+        },
+        {
+          "name": "cwd",
+          "type": "string"
+        },
+        {
+          "name": "customName",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "isGitRepo",
+          "type": "bool",
+          "optional": true
+        },
+        {
+          "name": "worktreeRegistered",
+          "type": "bool",
+          "optional": true
+        },
+        {
+          "name": "content",
+          "type": {
+            "array": {
+              "ref": "ContentLine"
+            }
+          },
+          "optional": true
+        },
+        {
+          "name": "altScreen",
+          "type": "bool",
+          "optional": true
+        },
+        {
+          "name": "minimized",
+          "type": "bool",
+          "optional": true
+        },
+        {
+          "name": "lastLine",
+          "type": "string",
+          "optional": true
+        }
+      ]
+    },
+    "UIState": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "desc",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "theme",
+          "type": {
+            "ref": "Theme"
+          }
+        },
+        {
+          "name": "homePath",
+          "type": "string"
+        },
+        {
+          "name": "viewMode",
+          "type": {
+            "ref": "ViewMode"
+          }
+        },
+        {
+          "name": "focusedId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "selectedId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "activeSidebarId",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "maxReached",
+          "type": "bool"
+        },
+        {
+          "name": "dragging",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "dragOver",
+          "type": "string",
+          "nullable": true
+        },
+        {
+          "name": "editing",
+          "type": {
+            "ref": "EditingState"
+          },
+          "nullable": true
+        },
+        {
+          "name": "waitingNotification",
+          "type": {
+            "ref": "WaitingNotification"
+          },
+          "nullable": true
+        },
+        {
+          "name": "searchBar",
+          "type": {
+            "ref": "SearchBar"
+          },
+          "nullable": true
+        },
+        {
+          "name": "showHiddenFiles",
+          "type": "bool",
+          "optional": true
+        },
+        {
+          "name": "filePanel",
+          "type": {
+            "ref": "FilePanel"
+          },
+          "optional": true
+        },
+        {
+          "name": "panelMode",
+          "type": {
+            "ref": "PanelMode"
+          },
+          "optional": true
+        },
+        {
+          "name": "panelZoom",
+          "type": "double",
+          "optional": true
+        },
+        {
+          "name": "quitConfirm",
+          "type": {
+            "ref": "QuitConfirm"
+          },
+          "nullable": true
+        },
+        {
+          "name": "restoreBanner",
+          "type": {
+            "ref": "RestoreBanner"
+          },
+          "optional": true
+        },
+        {
+          "name": "terminals",
+          "type": {
+            "array": {
+              "ref": "TerminalSnapshot"
+            }
+          }
+        },
+        {
+          "name": "palette",
+          "type": {
+            "ref": "Palette"
+          }
+        }
+      ]
+    },
+    "SearchBar": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "terminalId",
+          "type": "string"
+        }
+      ]
+    },
+    "QuitConfirm": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "terminalCount",
+          "type": "int"
+        }
+      ]
+    },
+    "RestoreBanner": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "cannotRestoreCount",
+          "type": "int"
+        },
+        {
+          "name": "crashLoopPausedCount",
+          "type": "int"
+        }
+      ]
+    },
+    "TermRectRole": {
+      "kind": "enum",
+      "values": [
+        "grid",
+        "sidebarPreview",
+        "island"
+      ]
+    },
+    "TermRect": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "terminalId",
+          "type": "string"
+        },
+        {
+          "name": "x",
+          "type": "double"
+        },
+        {
+          "name": "y",
+          "type": "double"
+        },
+        {
+          "name": "w",
+          "type": "double"
+        },
+        {
+          "name": "h",
+          "type": "double"
+        },
+        {
+          "name": "visible",
+          "type": "bool"
+        },
+        {
+          "name": "role",
+          "type": {
+            "ref": "TermRectRole"
+          }
+        }
+      ]
+    },
+    "ZoomAction": {
+      "kind": "enum",
+      "values": [
+        "in",
+        "out",
+        "reset"
+      ]
+    },
+    "RejectCode": {
+      "kind": "enum",
+      "values": [
+        "maxReached",
+        "invalidCwd",
+        "notFound",
+        "notReady",
+        "internal"
+      ]
+    },
+    "TermCommandRequest": {
+      "kind": "union",
+      "variants": [
+        {
+          "name": "create",
+          "fields": [
+            {
+              "name": "cwd",
+              "type": "string",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "close",
+          "fields": [
+            {
+              "name": "terminalId",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "zoom",
+          "fields": [
+            {
+              "name": "action",
+              "type": {
+                "ref": "ZoomAction"
+              }
+            }
+          ]
+        },
+        {
+          "name": "insertText",
+          "fields": [
+            {
+              "name": "terminalId",
+              "type": "string"
+            },
+            {
+              "name": "text",
+              "type": "string"
+            }
+          ]
+        }
+      ]
+    },
+    "TermCommandResponse": {
+      "kind": "union",
+      "variants": [
+        {
+          "name": "created",
+          "fields": [
+            {
+              "name": "terminalId",
+              "type": "string"
+            },
+            {
+              "name": "pid",
+              "type": "int"
+            }
+          ]
+        },
+        {
+          "name": "closed",
+          "fields": [
+            {
+              "name": "terminalId",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "zoomed",
+          "fields": [
+            {
+              "name": "fontSize",
+              "type": "int"
+            }
+          ]
+        },
+        {
+          "name": "inserted",
+          "fields": [
+            {
+              "name": "terminalId",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "rejected",
+          "fields": [
+            {
+              "name": "code",
+              "type": {
+                "ref": "RejectCode"
+              }
+            },
+            {
+              "name": "message",
+              "type": "string"
+            }
+          ]
+        }
+      ]
+    },
+    "FsRequest": {
+      "kind": "union",
+      "variants": [
+        {
+          "name": "readDir",
+          "fields": [
+            {
+              "name": "path",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "showFileMenu",
+          "fields": [
+            {
+              "name": "path",
+              "type": "string"
+            },
+            {
+              "name": "isDirectory",
+              "type": "bool"
+            },
+            {
+              "name": "x",
+              "type": "double"
+            },
+            {
+              "name": "y",
+              "type": "double"
+            }
+          ]
+        },
+        {
+          "name": "worktreeStatus",
+          "fields": [
+            {
+              "name": "cwd",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "worktreeCreate",
+          "fields": [
+            {
+              "name": "repoPath",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "worktreeRemove",
+          "fields": [
+            {
+              "name": "worktreePath",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "readFile",
+          "fields": [
+            {
+              "name": "path",
+              "type": "string"
+            },
+            {
+              "name": "encoding",
+              "type": "string",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "writeFile",
+          "fields": [
+            {
+              "name": "path",
+              "type": "string"
+            },
+            {
+              "name": "content",
+              "type": "string"
+            },
+            {
+              "name": "baseMtimeMs",
+              "type": "int",
+              "optional": true
+            }
+          ]
+        }
+      ]
+    },
+    "FsResponse": {
+      "kind": "union",
+      "variants": [
+        {
+          "name": "dir",
+          "fields": [
+            {
+              "name": "entries",
+              "type": {
+                "array": {
+                  "ref": "FsEntry"
+                }
+              }
+            },
+            {
+              "name": "truncated",
+              "type": "bool",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "menuAction",
+          "fields": [
+            {
+              "name": "action",
+              "type": {
+                "ref": "FileMenuAction"
+              }
+            }
+          ]
+        },
+        {
+          "name": "worktreeStatus",
+          "fields": [
+            {
+              "name": "isRepo",
+              "type": "bool"
+            },
+            {
+              "name": "repoPath",
+              "type": "string",
+              "optional": true
+            },
+            {
+              "name": "warning",
+              "type": {
+                "ref": "WorktreeWarning"
+              },
+              "optional": true
+            },
+            {
+              "name": "worktrees",
+              "type": {
+                "array": {
+                  "ref": "WorktreeEntry"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "worktreeCreated",
+          "fields": [
+            {
+              "name": "worktreePath",
+              "type": "string"
+            },
+            {
+              "name": "branch",
+              "type": "string"
+            },
+            {
+              "name": "warning",
+              "type": {
+                "ref": "WorktreeWarning"
+              },
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "worktreeRemoved",
+          "fields": []
+        },
+        {
+          "name": "fileContent",
+          "fields": [
+            {
+              "name": "content",
+              "type": "string"
+            },
+            {
+              "name": "encoding",
+              "type": "string"
+            },
+            {
+              "name": "truncated",
+              "type": "bool",
+              "optional": true
+            },
+            {
+              "name": "mtimeMs",
+              "type": "int"
+            }
+          ]
+        },
+        {
+          "name": "fileWritten",
+          "fields": [
+            {
+              "name": "mtimeMs",
+              "type": "int"
+            }
+          ]
+        },
+        {
+          "name": "rejected",
+          "fields": [
+            {
+              "name": "code",
+              "type": "string"
+            },
+            {
+              "name": "message",
+              "type": "string"
+            }
+          ]
+        }
+      ]
+    },
+    "FilePanel": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "terminalId",
+          "type": "string"
+        }
+      ]
+    },
+    "FsEntry": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "isDirectory",
+          "type": "bool"
+        },
+        {
+          "name": "size",
+          "type": "int",
+          "optional": true
+        }
+      ]
+    },
+    "WorktreeEntry": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "path",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "type": "string"
+        },
+        {
+          "name": "isMain",
+          "type": "bool"
+        },
+        {
+          "name": "isMerged",
+          "type": "bool"
+        },
+        {
+          "name": "missing",
+          "type": "bool",
+          "optional": true
+        },
+        {
+          "name": "customName",
+          "type": "string",
+          "optional": true
+        }
+      ]
+    },
+    "WorktreeWarning": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "sizeMB",
+          "type": "int"
+        }
+      ]
+    },
+    "FileMenuAction": {
+      "kind": "enum",
+      "values": [
+        "copyPath",
+        "revealInFinder",
+        "openWithDefaultApp",
+        "dismissed"
+      ]
+    },
+    "KeyValue": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "key",
+          "type": "string"
+        },
+        {
+          "name": "value",
+          "type": "string"
+        }
+      ]
+    },
+    "ChatSource": {
+      "kind": "enum",
+      "values": [
+        "claudeCode",
+        "codex"
+      ]
+    },
+    "ChatExportFormat": {
+      "kind": "enum",
+      "values": [
+        "markdown",
+        "json"
+      ]
+    },
+    "ChatRole": {
+      "kind": "enum",
+      "values": [
+        "user",
+        "assistant",
+        "system"
+      ]
+    },
+    "ChatSyncStatus": {
+      "kind": "enum",
+      "values": [
+        "syncing",
+        "idle",
+        "error"
+      ]
+    },
+    "ChatContentBlock": {
+      "kind": "union",
+      "variants": [
+        {
+          "name": "text",
+          "fields": [
+            {
+              "name": "text",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "toolUse",
+          "fields": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "inputJson",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "toolResult",
+          "fields": [
+            {
+              "name": "resultJson",
+              "type": "string",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "image",
+          "fields": [
+            {
+              "name": "dataUri",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "thinking",
+          "fields": [
+            {
+              "name": "text",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "unknown",
+          "fields": [
+            {
+              "name": "blockType",
+              "type": "string"
+            },
+            {
+              "name": "rawJson",
+              "type": "string"
+            }
+          ]
+        }
+      ]
+    },
+    "ChatProjectView": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "projectHash",
+          "type": "string"
+        },
+        {
+          "name": "displayPath",
+          "type": "string"
+        },
+        {
+          "name": "displayName",
+          "type": "string"
+        },
+        {
+          "name": "sessionCount",
+          "type": "int"
+        },
+        {
+          "name": "totalSize",
+          "type": "int"
+        },
+        {
+          "name": "lastActivityMs",
+          "type": "int"
+        }
+      ]
+    },
+    "ChatSessionView": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "sessionId",
+          "type": "string"
+        },
+        {
+          "name": "projectHash",
+          "type": "string"
+        },
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "startedAtMs",
+          "type": "int"
+        },
+        {
+          "name": "lastModifiedMs",
+          "type": "int"
+        },
+        {
+          "name": "fileSize",
+          "type": "int"
+        },
+        {
+          "name": "source",
+          "type": {
+            "ref": "ChatSource"
+          },
+          "optional": true
+        },
+        {
+          "name": "customTitle",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "cwd",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "worktreeLabel",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "archiveOnly",
+          "type": "bool",
+          "optional": true
+        }
+      ]
+    },
+    "ChatMessageView": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "uuid",
+          "type": "string"
+        },
+        {
+          "name": "sessionId",
+          "type": "string"
+        },
+        {
+          "name": "role",
+          "type": {
+            "ref": "ChatRole"
+          }
+        },
+        {
+          "name": "cwd",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "tsMs",
+          "type": "int"
+        },
+        {
+          "name": "text",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "blocks",
+          "type": {
+            "array": {
+              "ref": "ChatContentBlock"
+            }
+          },
+          "optional": true
+        }
+      ]
+    },
+    "ChatSearchHit": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "projectHash",
+          "type": "string"
+        },
+        {
+          "name": "sessionId",
+          "type": "string"
+        },
+        {
+          "name": "snippet",
+          "type": "string"
+        },
+        {
+          "name": "tsMs",
+          "type": "int"
+        }
+      ]
+    },
+    "ChatRequest": {
+      "kind": "union",
+      "variants": [
+        {
+          "name": "projects",
+          "fields": []
+        },
+        {
+          "name": "sessions",
+          "fields": [
+            {
+              "name": "projectHash",
+              "type": "string",
+              "optional": true
+            },
+            {
+              "name": "cursor",
+              "type": "string",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "session",
+          "fields": [
+            {
+              "name": "projectHash",
+              "type": "string"
+            },
+            {
+              "name": "sessionId",
+              "type": "string"
+            },
+            {
+              "name": "before",
+              "type": "string",
+              "optional": true
+            },
+            {
+              "name": "all",
+              "type": "bool",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "search",
+          "fields": [
+            {
+              "name": "query",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "export",
+          "fields": [
+            {
+              "name": "projectHash",
+              "type": "string"
+            },
+            {
+              "name": "sessionId",
+              "type": "string"
+            },
+            {
+              "name": "format",
+              "type": {
+                "ref": "ChatExportFormat"
+              }
+            }
+          ]
+        },
+        {
+          "name": "delete",
+          "fields": [
+            {
+              "name": "projectHash",
+              "type": "string"
+            },
+            {
+              "name": "sessionId",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "setTitle",
+          "fields": [
+            {
+              "name": "sessionId",
+              "type": "string"
+            },
+            {
+              "name": "title",
+              "type": "string",
+              "optional": true
+            }
+          ]
+        }
+      ]
+    },
+    "ChatResponse": {
+      "kind": "union",
+      "variants": [
+        {
+          "name": "projects",
+          "fields": [
+            {
+              "name": "projects",
+              "type": {
+                "array": {
+                  "ref": "ChatProjectView"
+                }
+              }
+            },
+            {
+              "name": "ccDetected",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "name": "sessions",
+          "fields": [
+            {
+              "name": "sessions",
+              "type": {
+                "array": {
+                  "ref": "ChatSessionView"
+                }
+              }
+            },
+            {
+              "name": "nextCursor",
+              "type": "string",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "messages",
+          "fields": [
+            {
+              "name": "messages",
+              "type": {
+                "array": {
+                  "ref": "ChatMessageView"
+                }
+              }
+            },
+            {
+              "name": "prevCursor",
+              "type": "string",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "search",
+          "fields": [
+            {
+              "name": "results",
+              "type": {
+                "array": {
+                  "ref": "ChatSearchHit"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "exported",
+          "fields": [
+            {
+              "name": "outputPath",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "deleted",
+          "fields": [
+            {
+              "name": "sessionId",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "ok",
+          "fields": []
+        },
+        {
+          "name": "rejected",
+          "fields": [
+            {
+              "name": "code",
+              "type": "string"
+            },
+            {
+              "name": "message",
+              "type": "string"
+            }
+          ]
+        }
+      ]
+    },
+    "DockBadgeMode": {
+      "kind": "enum",
+      "values": [
+        "off",
+        "realtime",
+        "timed"
+      ]
+    },
+    "McpScope": {
+      "kind": "enum",
+      "values": [
+        "global",
+        "desktop",
+        "codex",
+        "gemini"
+      ]
+    },
+    "McpType": {
+      "kind": "enum",
+      "values": [
+        "stdio",
+        "http",
+        "sse"
+      ]
+    },
+    "ResourceType": {
+      "kind": "enum",
+      "values": [
+        "skills"
+      ]
+    },
+    "ResourceFormat": {
+      "kind": "enum",
+      "values": [
+        "md",
+        "json",
+        "sh",
+        "other"
+      ]
+    },
+    "GridLayoutView": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "columnRatios",
+          "type": {
+            "array": "double"
+          }
+        },
+        {
+          "name": "rowRatios",
+          "type": {
+            "array": "double"
+          }
+        }
+      ]
+    },
+    "ConfigSnapshot": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "startupTerminalCount",
+          "type": "int"
+        },
+        {
+          "name": "doubleClickToFocus",
+          "type": "bool"
+        },
+        {
+          "name": "dockBadgeMode",
+          "type": {
+            "ref": "DockBadgeMode"
+          }
+        },
+        {
+          "name": "dockBadgeIntervalMin",
+          "type": "int"
+        },
+        {
+          "name": "defaultTerminalCwd",
+          "type": "string"
+        },
+        {
+          "name": "showHiddenFiles",
+          "type": "bool"
+        },
+        {
+          "name": "language",
+          "type": "string"
+        },
+        {
+          "name": "theme",
+          "type": {
+            "ref": "Theme"
+          }
+        },
+        {
+          "name": "terminalThemeName",
+          "type": "string"
+        },
+        {
+          "name": "fontSize",
+          "type": "int"
+        },
+        {
+          "name": "gridLayout",
+          "type": {
+            "ref": "GridLayoutView"
+          }
+        },
+        {
+          "name": "ftvLeftWidth",
+          "type": "double"
+        },
+        {
+          "name": "ftvRightWidth",
+          "type": "double"
+        },
+        {
+          "name": "archiveEnabled",
+          "type": "bool"
+        },
+        {
+          "name": "tourCompleted",
+          "type": "bool"
+        }
+      ]
+    },
+    "PrefsPatch": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "startupTerminalCount",
+          "type": "int",
+          "optional": true
+        },
+        {
+          "name": "doubleClickToFocus",
+          "type": "bool",
+          "optional": true
+        },
+        {
+          "name": "dockBadgeMode",
+          "type": {
+            "ref": "DockBadgeMode"
+          },
+          "optional": true
+        },
+        {
+          "name": "dockBadgeIntervalMin",
+          "type": "int",
+          "optional": true
+        },
+        {
+          "name": "defaultTerminalCwd",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "showHiddenFiles",
+          "type": "bool",
+          "optional": true
+        },
+        {
+          "name": "language",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "theme",
+          "type": {
+            "ref": "Theme"
+          },
+          "optional": true
+        },
+        {
+          "name": "terminalThemeName",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "fontSize",
+          "type": "int",
+          "optional": true
+        },
+        {
+          "name": "gridLayout",
+          "type": {
+            "ref": "GridLayoutView"
+          },
+          "optional": true
+        },
+        {
+          "name": "ftvLeftWidth",
+          "type": "double",
+          "optional": true
+        },
+        {
+          "name": "ftvRightWidth",
+          "type": "double",
+          "optional": true
+        },
+        {
+          "name": "archiveEnabled",
+          "type": "bool",
+          "optional": true
+        },
+        {
+          "name": "tourCompleted",
+          "type": "bool",
+          "optional": true
+        }
+      ]
+    },
+    "ResourceItem": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "path",
+          "type": "string"
+        },
+        {
+          "name": "type",
+          "type": "string"
+        }
+      ]
+    },
+    "ConfigDirEntry": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "isDirectory",
+          "type": "bool"
+        }
+      ]
+    },
+    "McpServerView": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "type",
+          "type": {
+            "ref": "McpType"
+          }
+        },
+        {
+          "name": "scope",
+          "type": {
+            "ref": "McpScope"
+          }
+        },
+        {
+          "name": "command",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "args",
+          "type": {
+            "array": "string"
+          },
+          "optional": true
+        },
+        {
+          "name": "url",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "headers",
+          "type": {
+            "array": {
+              "ref": "KeyValue"
+            }
+          },
+          "optional": true
+        },
+        {
+          "name": "env",
+          "type": {
+            "array": {
+              "ref": "KeyValue"
+            }
+          },
+          "optional": true
+        },
+        {
+          "name": "configPath",
+          "type": "string"
+        }
+      ]
+    },
+    "McpServerEdit": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "type",
+          "type": {
+            "ref": "McpType"
+          }
+        },
+        {
+          "name": "command",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "args",
+          "type": {
+            "array": "string"
+          },
+          "optional": true
+        },
+        {
+          "name": "url",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "headers",
+          "type": {
+            "array": {
+              "ref": "KeyValue"
+            }
+          },
+          "optional": true
+        },
+        {
+          "name": "env",
+          "type": {
+            "array": {
+              "ref": "KeyValue"
+            }
+          },
+          "optional": true
+        }
+      ]
+    },
+    "PluginView": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "marketplace",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "string"
+        },
+        {
+          "name": "scope",
+          "type": "string"
+        },
+        {
+          "name": "installPath",
+          "type": "string"
+        },
+        {
+          "name": "enabled",
+          "type": "bool"
+        },
+        {
+          "name": "installedAt",
+          "type": "string"
+        },
+        {
+          "name": "lastUpdated",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "authorName",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "commands",
+          "type": {
+            "array": "string"
+          }
+        },
+        {
+          "name": "skills",
+          "type": {
+            "array": "string"
+          }
+        },
+        {
+          "name": "hooks",
+          "type": {
+            "array": "string"
+          }
+        },
+        {
+          "name": "agents",
+          "type": {
+            "array": "string"
+          }
+        }
+      ]
+    },
+    "ConfigRequest": {
+      "kind": "union",
+      "variants": [
+        {
+          "name": "get",
+          "fields": []
+        },
+        {
+          "name": "set",
+          "fields": [
+            {
+              "name": "patch",
+              "type": {
+                "ref": "PrefsPatch"
+              }
+            }
+          ]
+        },
+        {
+          "name": "listResources",
+          "fields": [
+            {
+              "name": "types",
+              "type": {
+                "array": {
+                  "ref": "ResourceType"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "readResource",
+          "fields": [
+            {
+              "name": "path",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "listResourceDir",
+          "fields": [
+            {
+              "name": "path",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "writeResource",
+          "fields": [
+            {
+              "name": "path",
+              "type": "string"
+            },
+            {
+              "name": "content",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "getSettings",
+          "fields": []
+        },
+        {
+          "name": "saveSettings",
+          "fields": [
+            {
+              "name": "json",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "mcpServers",
+          "fields": []
+        },
+        {
+          "name": "mcpSave",
+          "fields": [
+            {
+              "name": "server",
+              "type": {
+                "ref": "McpServerEdit"
+              }
+            }
+          ]
+        },
+        {
+          "name": "mcpDelete",
+          "fields": [
+            {
+              "name": "name",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "plugins",
+          "fields": []
+        },
+        {
+          "name": "setPluginEnabled",
+          "fields": [
+            {
+              "name": "pluginId",
+              "type": "string"
+            },
+            {
+              "name": "enabled",
+              "type": "bool"
+            }
+          ]
+        }
+      ]
+    },
+    "ConfigResponse": {
+      "kind": "union",
+      "variants": [
+        {
+          "name": "snapshot",
+          "fields": [
+            {
+              "name": "config",
+              "type": {
+                "ref": "ConfigSnapshot"
+              }
+            }
+          ]
+        },
+        {
+          "name": "resources",
+          "fields": [
+            {
+              "name": "items",
+              "type": {
+                "array": {
+                  "ref": "ResourceItem"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "resourceContent",
+          "fields": [
+            {
+              "name": "content",
+              "type": "string"
+            },
+            {
+              "name": "format",
+              "type": {
+                "ref": "ResourceFormat"
+              }
+            }
+          ]
+        },
+        {
+          "name": "dirEntries",
+          "fields": [
+            {
+              "name": "entries",
+              "type": {
+                "array": {
+                  "ref": "ConfigDirEntry"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "settingsJson",
+          "fields": [
+            {
+              "name": "json",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "mcpServers",
+          "fields": [
+            {
+              "name": "servers",
+              "type": {
+                "array": {
+                  "ref": "McpServerView"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "plugins",
+          "fields": [
+            {
+              "name": "items",
+              "type": {
+                "array": {
+                  "ref": "PluginView"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "saved",
+          "fields": []
+        },
+        {
+          "name": "rejected",
+          "fields": [
+            {
+              "name": "code",
+              "type": "string"
+            },
+            {
+              "name": "message",
+              "type": "string"
+            }
+          ]
+        }
+      ]
+    },
+    "AuthProvider": {
+      "kind": "enum",
+      "values": [
+        "github",
+        "google"
+      ]
+    },
+    "AuthCodePurpose": {
+      "kind": "enum",
+      "values": [
+        "register",
+        "reset"
+      ]
+    },
+    "AuthUserView": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "username",
+          "type": "string"
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "avatarUrl",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "provider",
+          "type": "string"
+        }
+      ]
+    },
+    "AuthView": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "loggedIn",
+          "type": "bool"
+        },
+        {
+          "name": "user",
+          "type": {
+            "ref": "AuthUserView"
+          },
+          "optional": true
+        }
+      ]
+    },
+    "ReleaseSection": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "key",
+          "type": "string"
+        },
+        {
+          "name": "items",
+          "type": {
+            "array": "string"
+          }
+        }
+      ]
+    },
+    "ReleaseEntry": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "version",
+          "type": "string"
+        },
+        {
+          "name": "date",
+          "type": "string"
+        },
+        {
+          "name": "sections",
+          "type": {
+            "array": {
+              "ref": "ReleaseSection"
+            }
+          }
+        }
+      ]
+    },
+    "HookInstallState": {
+      "kind": "enum",
+      "values": [
+        "installed",
+        "notInstalled",
+        "drift",
+        "foreignBound",
+        "disabled"
+      ]
+    },
+    "AppRequest": {
+      "kind": "union",
+      "variants": [
+        {
+          "name": "selectDirectory",
+          "fields": [
+            {
+              "name": "defaultPath",
+              "type": "string",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "updateCheck",
+          "fields": []
+        },
+        {
+          "name": "updateDownload",
+          "fields": []
+        },
+        {
+          "name": "releaseNotes",
+          "fields": [
+            {
+              "name": "locale",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "whatsNewStatus",
+          "fields": []
+        },
+        {
+          "name": "hookStatus",
+          "fields": []
+        },
+        {
+          "name": "hookEnable",
+          "fields": []
+        },
+        {
+          "name": "hookDisable",
+          "fields": []
+        },
+        {
+          "name": "hookAutoEnableNotice",
+          "fields": []
+        },
+        {
+          "name": "legacyMigrationNotice",
+          "fields": []
+        },
+        {
+          "name": "openExternal",
+          "fields": [
+            {
+              "name": "url",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "authStatus",
+          "fields": []
+        },
+        {
+          "name": "authLoginOAuth",
+          "fields": [
+            {
+              "name": "provider",
+              "type": {
+                "ref": "AuthProvider"
+              }
+            }
+          ]
+        },
+        {
+          "name": "authLoginPassword",
+          "fields": [
+            {
+              "name": "email",
+              "type": "string"
+            },
+            {
+              "name": "password",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "authRegister",
+          "fields": [
+            {
+              "name": "email",
+              "type": "string"
+            },
+            {
+              "name": "code",
+              "type": "string"
+            },
+            {
+              "name": "password",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "authSendEmailCode",
+          "fields": [
+            {
+              "name": "email",
+              "type": "string"
+            },
+            {
+              "name": "purpose",
+              "type": {
+                "ref": "AuthCodePurpose"
+              }
+            }
+          ]
+        },
+        {
+          "name": "authResetPassword",
+          "fields": [
+            {
+              "name": "email",
+              "type": "string"
+            },
+            {
+              "name": "code",
+              "type": "string"
+            },
+            {
+              "name": "newPassword",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "authLogout",
+          "fields": []
+        }
+      ]
+    },
+    "AppResponse": {
+      "kind": "union",
+      "variants": [
+        {
+          "name": "directorySelected",
+          "fields": [
+            {
+              "name": "path",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "selectionCancelled",
+          "fields": []
+        },
+        {
+          "name": "updateAck",
+          "fields": []
+        },
+        {
+          "name": "releaseNotes",
+          "fields": [
+            {
+              "name": "entries",
+              "type": {
+                "array": {
+                  "ref": "ReleaseEntry"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "whatsNewStatus",
+          "fields": [
+            {
+              "name": "shouldShow",
+              "type": "bool"
+            },
+            {
+              "name": "appVersion",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "hookStatus",
+          "fields": [
+            {
+              "name": "state",
+              "type": {
+                "ref": "HookInstallState"
+              }
+            },
+            {
+              "name": "reason",
+              "type": "string",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "hookNotice",
+          "fields": [
+            {
+              "name": "show",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "name": "migrationNotice",
+          "fields": [
+            {
+              "name": "show",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "name": "opened",
+          "fields": []
+        },
+        {
+          "name": "authState",
+          "fields": [
+            {
+              "name": "auth",
+              "type": {
+                "ref": "AuthView"
+              }
+            }
+          ]
+        },
+        {
+          "name": "authAck",
+          "fields": []
+        },
+        {
+          "name": "rejected",
+          "fields": [
+            {
+              "name": "code",
+              "type": "string"
+            },
+            {
+              "name": "message",
+              "type": "string"
+            }
+          ]
+        }
+      ]
+    },
+    "DataEvent": {
+      "kind": "union",
+      "variants": [
+        {
+          "name": "configResourcesChanged",
+          "fields": [
+            {
+              "name": "resourceType",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "chatSessionUpdate",
+          "fields": [
+            {
+              "name": "projectHash",
+              "type": "string"
+            },
+            {
+              "name": "sessionId",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "chatSyncStatus",
+          "fields": [
+            {
+              "name": "status",
+              "type": {
+                "ref": "ChatSyncStatus"
+              }
+            },
+            {
+              "name": "lastSyncMs",
+              "type": "int",
+              "optional": true
+            },
+            {
+              "name": "synced",
+              "type": "int",
+              "optional": true
+            },
+            {
+              "name": "total",
+              "type": "int",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "chatTitleUpdate",
+          "fields": [
+            {
+              "name": "sessionId",
+              "type": "string"
+            },
+            {
+              "name": "title",
+              "type": "string",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "updateChecking",
+          "fields": []
+        },
+        {
+          "name": "updateAvailable",
+          "fields": [
+            {
+              "name": "version",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "updateNotAvailable",
+          "fields": []
+        },
+        {
+          "name": "updateDownloading",
+          "fields": [
+            {
+              "name": "percent",
+              "type": "double"
+            },
+            {
+              "name": "transferred",
+              "type": "int"
+            },
+            {
+              "name": "total",
+              "type": "int"
+            },
+            {
+              "name": "bytesPerSecond",
+              "type": "int"
+            }
+          ]
+        },
+        {
+          "name": "updateDownloaded",
+          "fields": [
+            {
+              "name": "version",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "updateError",
+          "fields": []
+        },
+        {
+          "name": "authStatusChanged",
+          "fields": [
+            {
+              "name": "auth",
+              "type": {
+                "ref": "AuthView"
+              }
+            }
+          ]
+        },
+        {
+          "name": "authSessionExpired",
+          "fields": []
+        },
+        {
+          "name": "memoryWarning",
+          "fields": [
+            {
+              "name": "currentMemoryMB",
+              "type": "int"
+            },
+            {
+              "name": "threshold",
+              "type": "int"
+            },
+            {
+              "name": "message",
+              "type": "string"
+            }
+          ]
+        }
+      ]
+    },
+    "TelemetryEvent": {
+      "kind": "record",
+      "fields": [
+        {
+          "name": "metric",
+          "type": "string"
+        },
+        {
+          "name": "value",
+          "type": "double",
+          "optional": true
+        },
+        {
+          "name": "params",
+          "type": {
+            "array": {
+              "ref": "KeyValue"
+            }
+          },
+          "optional": true
+        }
+      ]
+    }
+  },
+  "messages": [
+    {
+      "name": "bridge.hello",
+      "direction": "webToNative",
+      "pattern": "request",
+      "status": "active",
+      "milestone": "M1",
+      "payload": {
+        "req": "HelloRequest",
+        "resp": "HelloResponse"
+      }
+    },
+    {
+      "name": "ui.state",
+      "direction": "nativeToWeb",
+      "pattern": "push",
+      "status": "active",
+      "milestone": "M1",
+      "payload": {
+        "type": "UIStatePush"
+      }
+    },
+    {
+      "name": "ui.action",
+      "direction": "webToNative",
+      "pattern": "event",
+      "status": "active",
+      "milestone": "M1",
+      "payload": {
+        "type": "UIAction"
+      }
+    },
+    {
+      "name": "term.command",
+      "direction": "webToNative",
+      "pattern": "request",
+      "status": "active",
+      "milestone": "M3",
+      "payload": {
+        "req": "TermCommandRequest",
+        "resp": "TermCommandResponse"
+      }
+    },
+    {
+      "name": "chat.request",
+      "direction": "webToNative",
+      "pattern": "request",
+      "status": "active",
+      "milestone": "M5",
+      "payload": {
+        "req": "ChatRequest",
+        "resp": "ChatResponse"
+      }
+    },
+    {
+      "name": "fs.request",
+      "direction": "webToNative",
+      "pattern": "request",
+      "status": "active",
+      "milestone": "M6",
+      "payload": {
+        "req": "FsRequest",
+        "resp": "FsResponse"
+      }
+    },
+    {
+      "name": "config.request",
+      "direction": "webToNative",
+      "pattern": "request",
+      "status": "active",
+      "milestone": "M6",
+      "payload": {
+        "req": "ConfigRequest",
+        "resp": "ConfigResponse"
+      }
+    },
+    {
+      "name": "app.request",
+      "direction": "webToNative",
+      "pattern": "request",
+      "status": "active",
+      "milestone": "M2+",
+      "payload": {
+        "req": "AppRequest",
+        "resp": "AppResponse"
+      }
+    },
+    {
+      "name": "data.event",
+      "direction": "nativeToWeb",
+      "pattern": "push",
+      "status": "active",
+      "milestone": "M5/M6",
+      "payload": {
+        "type": "DataEvent"
+      }
+    },
+    {
+      "name": "app.telemetry",
+      "direction": "webToNative",
+      "pattern": "event",
+      "status": "active",
+      "milestone": "M7",
+      "payload": {
+        "type": "TelemetryEvent"
+      }
+    }
+  ]
+}

@@ -1,0 +1,157 @@
+[
+  {
+    "id": "pl-list",
+    "desc": "Plugins 列表+启停 toggle 混合态（enabled×2/disabled×1 圆点；选中 git-flow 详情：toggle on + 信息行 + contents chips + 安装路径）",
+    "theme": "dark",
+    "screen": "plugins-panel",
+    "homePath": "/Users/rl",
+    "plugins": {
+      "error": null,
+      "items": [
+        {
+          "id": "git-flow@claude-community",
+          "name": "git-flow",
+          "marketplace": "claude-community",
+          "version": "1.4.2",
+          "scope": "user",
+          "installPath": "/Users/rl/.claude/plugins/marketplaces/claude-community/plugins/git-flow",
+          "enabled": true,
+          "installedAt": "2026-04-18T12:00:00.000Z",
+          "lastUpdated": "2026-05-30T12:00:00.000Z",
+          "manifest": {
+            "description": "Git 工作流增强：分支策略、PR 模板与发布脚本一键化",
+            "author": { "name": "muxvo-dev" }
+          },
+          "contents": {
+            "commands": ["gf-release", "gf-hotfix"],
+            "skills": ["branch-strategy"],
+            "hooks": ["pre-push.sh"],
+            "agents": ["release-bot"]
+          }
+        },
+        {
+          "id": "docs-writer@claude-community",
+          "name": "docs-writer",
+          "marketplace": "claude-community",
+          "version": "0.9.0",
+          "scope": "user",
+          "installPath": "/Users/rl/.claude/plugins/marketplaces/claude-community/plugins/docs-writer",
+          "enabled": true,
+          "installedAt": "2026-05-12T12:00:00.000Z",
+          "lastUpdated": "2026-05-12T12:00:00.000Z",
+          "manifest": { "description": "从代码注释生成 API 文档" },
+          "contents": { "commands": ["gen-docs"], "skills": [], "hooks": [], "agents": [] }
+        },
+        {
+          "id": "perf-audit@claude-community",
+          "name": "perf-audit",
+          "marketplace": "claude-community",
+          "version": "2.0.1",
+          "scope": "user",
+          "installPath": "/Users/rl/.claude/plugins/marketplaces/claude-community/plugins/perf-audit",
+          "enabled": false,
+          "installedAt": "2026-03-02T12:00:00.000Z",
+          "lastUpdated": "2026-04-22T12:00:00.000Z",
+          "contents": { "commands": [], "skills": [], "hooks": [], "agents": [] }
+        }
+      ],
+      "selectedId": "git-flow@claude-community"
+    }
+  },
+  {
+    "id": "pl-error",
+    "desc": "Plugins error 态（全簇 error 代表作，仅此面板有 error 分支；stub reject 定值 Error → 渲染 'Error: EACCES...'）",
+    "theme": "dark",
+    "screen": "plugins-panel",
+    "homePath": "/Users/rl",
+    "plugins": {
+      "error": "EACCES: permission denied, open '/Users/rl/.claude/plugins/installed_plugins.json'",
+      "items": [],
+      "selectedId": null
+    }
+  },
+  {
+    "id": "pl-light",
+    "desc": "浅色主题代表作（列表+启停 toggle 混合态）",
+    "theme": "light",
+    "screen": "plugins-panel",
+    "homePath": "/Users/rl",
+    "plugins": {
+      "error": null,
+      "items": [
+        {
+          "id": "git-flow@claude-community",
+          "name": "git-flow",
+          "marketplace": "claude-community",
+          "version": "1.4.2",
+          "scope": "user",
+          "installPath": "/Users/rl/.claude/plugins/marketplaces/claude-community/plugins/git-flow",
+          "enabled": true,
+          "installedAt": "2026-04-18T12:00:00.000Z",
+          "lastUpdated": "2026-05-30T12:00:00.000Z",
+          "manifest": {
+            "description": "Git 工作流增强：分支策略、PR 模板与发布脚本一键化",
+            "author": {
+              "name": "muxvo-dev"
+            }
+          },
+          "contents": {
+            "commands": [
+              "gf-release",
+              "gf-hotfix"
+            ],
+            "skills": [
+              "branch-strategy"
+            ],
+            "hooks": [
+              "pre-push.sh"
+            ],
+            "agents": [
+              "release-bot"
+            ]
+          }
+        },
+        {
+          "id": "docs-writer@claude-community",
+          "name": "docs-writer",
+          "marketplace": "claude-community",
+          "version": "0.9.0",
+          "scope": "user",
+          "installPath": "/Users/rl/.claude/plugins/marketplaces/claude-community/plugins/docs-writer",
+          "enabled": true,
+          "installedAt": "2026-05-12T12:00:00.000Z",
+          "lastUpdated": "2026-05-12T12:00:00.000Z",
+          "manifest": {
+            "description": "从代码注释生成 API 文档"
+          },
+          "contents": {
+            "commands": [
+              "gen-docs"
+            ],
+            "skills": [],
+            "hooks": [],
+            "agents": []
+          }
+        },
+        {
+          "id": "perf-audit@claude-community",
+          "name": "perf-audit",
+          "marketplace": "claude-community",
+          "version": "2.0.1",
+          "scope": "user",
+          "installPath": "/Users/rl/.claude/plugins/marketplaces/claude-community/plugins/perf-audit",
+          "enabled": false,
+          "installedAt": "2026-03-02T12:00:00.000Z",
+          "lastUpdated": "2026-04-22T12:00:00.000Z",
+          "contents": {
+            "commands": [],
+            "skills": [],
+            "hooks": [],
+            "agents": []
+          }
+        }
+      ],
+      "selectedId": "git-flow@claude-community"
+    }
+  }
+]

@@ -1,0 +1,77 @@
+{
+ ".skills-panel": [
+  {
+   "x": 0,
+   "y": 36,
+   "w": 1440,
+   "h": 864
+  }
+ ],
+ ".skills-panel__left": [
+  {
+   "x": 0,
+   "y": 36,
+   "w": 240,
+   "h": 864
+  }
+ ],
+ ".skills-panel__middle": [],
+ ".skills-panel__right": [
+  {
+   "x": 246,
+   "y": 36,
+   "w": 1194,
+   "h": 864
+  }
+ ],
+ ".skill-list__header": [
+  {
+   "x": 0,
+   "y": 36,
+   "w": 239,
+   "h": 46
+  }
+ ],
+ ".skill-list__count": [
+  {
+   "x": 61.19,
+   "y": 51,
+   "w": 23.41,
+   "h": 15
+  }
+ ],
+ ".search-input-wrap": [],
+ ".search-input-wrap__input": [],
+ ".skill-list__group-header": [],
+ ".skill-list__group-label": [],
+ ".skill-list__group-count": [],
+ ".skill-list__item": [],
+ ".skill-list__item-name": [],
+ ".source-badge": [],
+ ".skill-list__item-desc": [],
+ ".skill-list__empty": [
+  {
+   "x": 0,
+   "y": 82,
+   "w": 239,
+   "h": 50
+  }
+ ],
+ ".skill-file-tree__header": [],
+ ".file-item": [],
+ ".skills-panel__editor-header": [],
+ ".skills-panel__editor-filename": [],
+ ".skills-panel__editor-dirty": [],
+ ".skills-panel__editor-mode-btn": [],
+ ".skills-panel__editor-tag": [],
+ ".skills-panel__editor-body": [],
+ ".markdown-wysiwyg": [],
+ ".skills-panel__placeholder": [
+  {
+   "x": 246,
+   "y": 36,
+   "w": 1194,
+   "h": 864
+  }
+ ]
+}

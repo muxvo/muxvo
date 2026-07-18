@@ -1,0 +1,891 @@
+{
+  "meta": {
+    "doc": "M2 屏幕目录（REBUILD-PLAN M2：全部界面 × 状态 × fixture）。本清单即全部新 golden 的生成授权；执行中超清单新增须攒小批回用户增量确认。",
+    "checkpoint6": "2026-06-12 通过（用户授权改独立 agent 对抗终审）：正向核验全过（渲染树/浮层零漏、41 case 全收编、deadCode 4/4 真死、excluded 7/7 准确），发现 F1-F5 与裁决修正 R1-R9 已全部落实；6 项 adjudications 全技术类当场裁决，升级用户问题 0。终审报告 /tmp/muxvo-m2-checkpoint6-verdict.md",
+    "source": "muxvo-legacy@0468e68（与 specs/legacy/status.json 同基线）",
+    "generatedAt": "2026-06-12",
+    "method": "3 视角对抗枚举（App.tsx 渲染树逐行 / PRD+spec+IPC 交叉 / fixture 可行性与颗粒度），明细见 /tmp/m2-screens/critic-*.md",
+    "goldenBudget": {
+      "existing": 15,
+      "proposedNew": 49,
+      "total": 64,
+      "trimCandidates": [
+        "wt-warning",
+        "ftv-image-sub",
+        "set-en",
+        "mb-user-menu",
+        "hk-form"
+      ],
+      "trimVerdict": "检查点⑥裁决#3：不砍——5 项各有不可替代覆盖（adjudicated: keep）"
+    },
+    "rules": [
+      "双 oracle：像素权威=golden（不发明 legacy 没有渲染的 UI）；断言权威=spec（vitest 1:1）",
+      "golden 分级：existing:fX=已有冻结基准 / new=本清单授权新截 / dom-assert=不出 golden、走 vitest DOM 或常量断言 / hard-substitute=确定性替代呈现（替代理由必须写明）",
+      "light 主题（M6 主题批修订，★用户裁决 2026-07-07 全量亮色）：23 簇逐簇 ≥1 张亮色代表作（代表态选簇内 CSS 硬编码最多屏；不逐态×2）。权威分层：legacy 有对照屏→5199 legacy fixture 截图沿袭 M2 权威链；无对照屏（task-center/message-editor/settings-modal 改版行）→新 web 截+★肉眼冻结。set-* 3 张因外观区新增下拉行 DOM 变更授权修订重截，权威随迁 ★",
+      "i18n zh/en 不 ×2：仅 settings-modal 出 1 张 en 代表作（文案最密，防溢出回归）",
+      "滚动条/长文本截断不单列：在满载 fixture 里灌溢出与长样本",
+      "popover（cwd/worktree/user-dropdown/search-bar）以宿主屏 + capture-action 或受控态呈现，独立登记便于核对",
+      "确定性铁律见 tools/visual-diff/fixtures/_CONTRACT.md（固定时戳/禁随机/禁网络 URL/data-URI）"
+    ]
+  },
+  "screens": [
+    {
+      "id": "terminal-grid",
+      "name": "终端平铺网格（主屏）",
+      "batch": "B1",
+      "legacySources": [
+        "src/renderer/components/terminal/TerminalGrid.tsx",
+        "TerminalTile.tsx",
+        "TileHeader.tsx",
+        "ResizeHandle.tsx",
+        "TerminalSidebar.tsx",
+        "tile/*.ts"
+      ],
+      "states": [
+        {
+          "id": "grid-0-empty",
+          "golden": "existing:f6a"
+        },
+        {
+          "id": "grid-1",
+          "golden": "existing:f2-n1"
+        },
+        {
+          "id": "grid-2",
+          "golden": "new:f2-n2",
+          "note": "TERM_L2_02 + TERM_L1_11（columnRatios=[1,1]）缺口"
+        },
+        {
+          "id": "grid-3",
+          "golden": "existing:f2-n3"
+        },
+        {
+          "id": "grid-4-五态",
+          "golden": "existing:f1",
+          "note": "Running/Waiting/Idle/Selected/customName 同图"
+        },
+        {
+          "id": "grid-5",
+          "golden": "existing:f2-n5"
+        },
+        {
+          "id": "grid-6",
+          "golden": "new:f2-n6"
+        },
+        {
+          "id": "grid-7",
+          "golden": "existing:f2-n7"
+        },
+        {
+          "id": "grid-8",
+          "golden": "new:f2-n8"
+        },
+        {
+          "id": "grid-9",
+          "golden": "existing:f2-n9"
+        },
+        {
+          "id": "grid-10",
+          "golden": "new:f2-n10"
+        },
+        {
+          "id": "grid-11-末行不满",
+          "golden": "existing:f3b"
+        },
+        {
+          "id": "grid-12",
+          "golden": "existing:f3"
+        },
+        {
+          "id": "grid-16",
+          "golden": "new:f2-n16"
+        },
+        {
+          "id": "grid-20-上限",
+          "golden": "new:f2-n20",
+          "note": "f6b 只是 4 格 + maxReached 标志，非真实 20 格画面"
+        },
+        {
+          "id": "focused-模式",
+          "golden": "existing:f4"
+        },
+        {
+          "id": "tile-hover",
+          "golden": "new:f10",
+          "note": "TERM_L2_57；capture-action：两侧对称 page.hover（任务4 已落基建）"
+        },
+        {
+          "id": "drag-中+悬停",
+          "golden": "existing:f5"
+        },
+        {
+          "id": "maxReached-FAB",
+          "golden": "existing:f6b"
+        },
+        {
+          "id": "worktree-badge+命名编辑",
+          "golden": "existing:f7"
+        },
+        {
+          "id": "light-主题",
+          "golden": "existing:f9"
+        },
+        {
+          "id": "min-rail-展开",
+          "golden": "new:grid-4-min-rail",
+          "note": "批A 终端收起边栏（展开 dark，2 收起项带 lastLine 摘要，term-grid §11）；新增待截待用户肉眼冻结"
+        },
+        {
+          "id": "min-rail-折叠细条",
+          "golden": "new:grid-min-rail-collapsed",
+          "note": "批A 边栏折叠 28px 细条（数量徽标+waiting 汇总点）；minRailCollapsed 截图态种子；新增待截待用户冻结"
+        },
+        {
+          "id": "min-rail-light",
+          "golden": "new:grid-4-min-rail-light",
+          "note": "批A 终端收起边栏 light 代表作；新增待截待用户冻结"
+        },
+        {
+          "id": "list-mode-5",
+          "golden": "new:list-mode-5",
+          "note": "批B 列表模式（dark，term-list-mode.md）：左栏 240px 4 行（含 waiting/selected/customName）+ 收起分组 1 卡 + 右详情选中终端完整 tile；新增待截待用户肉眼冻结"
+        },
+        {
+          "id": "list-mode-light",
+          "golden": "new:list-mode-light",
+          "note": "批B 列表模式 light 代表作；新增待截待用户冻结"
+        }
+      ],
+      "specCases": [
+        "TERM_L2_01..13",
+        "TERM_L2_56..60",
+        "TERM_L2_87",
+        "TERM_L2_88",
+        "TERM_L1_08(defaults 模块)",
+        "APP_L2_02(defaults 模块，与 TERM_L1_08 同模块落地)",
+        "TERM_L1_11",
+        "TERM_L1_12",
+        "TERM_L1_13",
+        "TERM_L1_14",
+        "TERM_L1_15"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "terminal-search-bar",
+      "name": "终端内搜索条（Cmd+F）",
+      "batch": "B1",
+      "legacySources": [
+        "src/renderer/components/terminal/TerminalSearchBar.tsx（挂载于 XTermRenderer）"
+      ],
+      "states": [
+        {
+          "id": "open-空输入",
+          "golden": "new:sb-open"
+        },
+        {
+          "id": "匹配计数/无结果",
+          "golden": "dom-assert"
+        },
+        {
+          "id": "浅色主题代表作（open-空输入，搜索条 chrome 硬编码色）",
+          "golden": "new:sb-light",
+          "note": "M6 主题批 ★ 全量亮色（2026-07-07）；legacy 有对照→5199 legacy fixture 沿袭 M2 权威链"
+        }
+      ],
+      "specCases": [],
+      "openQuestions": [
+        "fixture 页用 FixtureTermContent 替代 XTermRenderer，搜索条挂载点可能不在 fixture DOM 里——B1 落地时核实，必要时 fixture-only 独立挂载（dev-only）"
+      ]
+    },
+    {
+      "id": "cwd-picker",
+      "name": "工作目录选择浮层（320px portal）",
+      "batch": "B1",
+      "legacySources": [
+        "src/renderer/components/terminal/CwdPicker.tsx（入口 TileHeader）"
+      ],
+      "states": [
+        {
+          "id": "open-树+快捷路径",
+          "golden": "new:cwd-open",
+          "note": "capture-action JS click 入口；window.api.app.getHomePath 是同步调用，stub 必须同步"
+        },
+        {
+          "id": "浅色主题代表作（open-树+快捷路径）",
+          "golden": "new:cwd-light",
+          "note": "M6 主题批 ★ 全量亮色（2026-07-07）；legacy 有对照→5199 legacy fixture 沿袭 M2 权威链"
+        }
+      ],
+      "specCases": [],
+      "openQuestions": []
+    },
+    {
+      "id": "worktree-popover",
+      "name": "Worktree 浮层（280px portal）",
+      "batch": "B1",
+      "legacySources": [
+        "src/renderer/components/terminal/WorktreePopover.tsx（入口 TileHeader）"
+      ],
+      "states": [
+        {
+          "id": "列表态（main/current/merged badge+删除+新建）",
+          "golden": "new:wt-list"
+        },
+        {
+          "id": "大仓警告态（sizeMB）",
+          "golden": "new:wt-warning",
+          "note": "可砍项"
+        },
+        {
+          "id": "loading/error/creating",
+          "golden": "dom-assert"
+        },
+        {
+          "id": "浅色主题代表作（列表态 main/current/merged badge）",
+          "golden": "new:wt-light",
+          "note": "M6 主题批 ★ 全量亮色（2026-07-07）；legacy 有对照→5199 legacy fixture 沿袭 M2 权威链"
+        }
+      ],
+      "specCases": [],
+      "openQuestions": []
+    },
+    {
+      "id": "waiting-input-notification",
+      "name": "右下等待输入浮卡",
+      "batch": "B1",
+      "legacySources": [
+        "src/renderer/components/terminal/WaitingInputNotification.tsx"
+      ],
+      "states": [
+        {
+          "id": "count=2 浮卡",
+          "golden": "existing:f8",
+          "note": "显示条件 waitingCount>0 且 overlayActive（盖在 overlay 之上，非终端屏直接通知）"
+        },
+        {
+          "id": "浅色主题代表作（count=2 浮卡）",
+          "golden": "new:wait-light",
+          "note": "M6 主题批 ★ 全量亮色（2026-07-07）；legacy 有对照→5199 legacy fixture 沿袭 M2 权威链"
+        }
+      ],
+      "specCases": [],
+      "openQuestions": []
+    },
+    {
+      "id": "settings-modal",
+      "name": "设置弹窗（420px）",
+      "batch": "B2",
+      "legacySources": [
+        "src/renderer/components/settings/SettingsModal.tsx"
+      ],
+      "goldenAuthority": "M6 主题批（2026-07-07）外观区新增「终端配色」下拉行（settings-modal.md §3.2/§4）→ set-default/set-update/set-en 三张 DOM 变更授权修订重截，权威从 legacy 像素链迁为 ★ 用户肉眼冻结（新 DOM 含 legacy 无对照的下拉行，同 message-editor/orchScreens 无对照屏模型）；set-light 新增同权威",
+      "inspectionStatus": "★ 用户肉眼巡检冻结 2026-07-07（主题批 v2：R1 返工后重截——外观区合并为单「主题」5 选下拉[R1-a 用户裁决]+tc-light 列表白卡分隔[R1-b]；set-default/set-update/set-en/set-light+tc-light 五张经全览页[终端实拍×5+界面暗亮对照×6]用户巡检通过，冻结落账进字节回归纪律）",
+      "states": [
+        {
+          "id": "默认态（stepper/toggle/badge三档/默认cwd未设/终端配色=dark）",
+          "golden": "new:set-default",
+          "note": "授权重截（M6 主题批，DOM 变更：外观区新增终端配色下拉行）"
+        },
+        {
+          "id": "update-available + badge-timed 组合态",
+          "golden": "new:set-update",
+          "note": "授权重截（M6 主题批，DOM 变更：外观区新增终端配色下拉行）"
+        },
+        {
+          "id": "en 代表作（i18n 溢出防线）",
+          "golden": "new:set-en",
+          "note": "可砍项；授权重截（M6 主题批，DOM 变更：外观区新增终端配色下拉行）"
+        },
+        {
+          "id": "浅色主题代表作（亮暗 toggle=亮色 + 终端配色下拉可见组合态）",
+          "golden": "new:set-light",
+          "note": "M6 主题批 ★ 全量亮色（2026-07-07）；改版行无 legacy 对照→新 web 截 + ★ 肉眼冻结"
+        },
+        {
+          "id": "updateStatus checking/up-to-date/error 变体",
+          "golden": "dom-assert",
+          "note": "SettingsModal.tsx:381-394；golden 仅覆盖 idle+available"
+        },
+        {
+          "id": "终端等待检测行 installed/notInstalled/drift/foreignBound 变体（hooks fixture 门控可选行）",
+          "golden": "dom-assert",
+          "note": "wait-detector.md §7 单绑定入口（2026-07-16）；fixture 缺席=行不渲染 → 4 张 set-* golden 字节不动（WD_panel_golden_parity 护栏），非授权重截"
+        }
+      ],
+      "specCases": [],
+      "openQuestions": []
+    },
+    {
+      "id": "login-modal",
+      "name": "登录弹窗（380px，4 mode）",
+      "batch": "B2",
+      "legacySources": [
+        "src/renderer/components/auth/LoginModal.tsx + 表单组件 + AuthContext"
+      ],
+      "states": [
+        {
+          "id": "buttons 态（OAuth 按钮组）",
+          "golden": "new:lg-buttons"
+        },
+        {
+          "id": "login 表单态",
+          "golden": "new:lg-form"
+        },
+        {
+          "id": "register/forgot/terms-confirm/错误态",
+          "golden": "dom-assert",
+          "note": "同骨架，结构断言"
+        },
+        {
+          "id": "浅色主题代表作（login 表单态，输入框/标签 chrome 最密）",
+          "golden": "new:lg-light",
+          "note": "M6 主题批 ★ 全量亮色（2026-07-07）；legacy 有对照→5199 legacy fixture 沿袭 M2 权威链"
+        }
+      ],
+      "specCases": [],
+      "openQuestions": []
+    },
+    {
+      "id": "user-dropdown",
+      "name": "MenuBar 用户头像下拉",
+      "batch": "B3",
+      "legacySources": [
+        "src/renderer/components/auth/UserDropdown.tsx（AuthButton→MenuBar）"
+      ],
+      "states": [
+        {
+          "id": "open（头像+登出项）",
+          "golden": "new:mb-user-menu",
+          "note": "可砍项；头像 data-URI"
+        },
+        {
+          "id": "闭合 avatar/placeholder 两态",
+          "golden": "dom-assert"
+        },
+        {
+          "id": "浅色主题代表作（open 头像+登出项）",
+          "golden": "new:ud-light",
+          "note": "M6 主题批 ★ 全量亮色（2026-07-07）；legacy 有对照→5199 legacy fixture 沿袭 M2 权威链；头像 data-URI"
+        }
+      ],
+      "specCases": [],
+      "openQuestions": []
+    },
+    {
+      "id": "workspace-manager-modal",
+      "name": "工作区管理弹窗（480px）",
+      "batch": "B2",
+      "legacySources": [
+        "src/renderer/components/workspace/WorkspaceManagerModal.tsx"
+      ],
+      "states": [
+        {
+          "id": "列表 + 行内编辑中（同图）",
+          "golden": "new:ws-list"
+        },
+        {
+          "id": "空态/删除确认",
+          "golden": "dom-assert"
+        },
+        {
+          "id": "浅色主题代表作（列表 + 行内编辑中）",
+          "golden": "new:ws-light",
+          "note": "M6 主题批 ★ 全量亮色（2026-07-07）；legacy 有对照→5199 legacy fixture 沿袭 M2 权威链"
+        }
+      ],
+      "specCases": [],
+      "openQuestions": []
+    },
+    {
+      "id": "whats-new-modal",
+      "name": "What's New 弹窗（460px）",
+      "batch": "B2",
+      "legacySources": [
+        "src/renderer/components/whats-new/WhatsNewModal.tsx"
+      ],
+      "states": [
+        {
+          "id": "releaseNotes 满载（含展开/折叠版本）",
+          "golden": "new:wn-notes",
+          "note": "替身缺 app.getReleaseNotes 会 TypeError，stub 必须先扩"
+        },
+        {
+          "id": "浅色主题代表作（releaseNotes 满载）",
+          "golden": "new:wn-light",
+          "note": "M6 主题批 ★ 全量亮色（2026-07-07）；legacy 有对照→5199 legacy fixture 沿袭 M2 权威链"
+        }
+      ],
+      "specCases": [],
+      "openQuestions": []
+    },
+    {
+      "id": "close-confirm-dialog",
+      "name": "关闭确认对话框（终端版代表作）",
+      "batch": "B2",
+      "legacySources": [
+        "src/renderer/components/terminal/CloseConfirmDialog.tsx",
+        "src/renderer/components/app/AppCloseConfirmDialog.tsx"
+      ],
+      "states": [
+        {
+          "id": "终端关闭（带 processName）",
+          "golden": "new:cc-dialog"
+        },
+        {
+          "id": "终端关闭（无 processName）/整 app 关闭（terminalCount 文案）",
+          "golden": "dom-assert",
+          "note": "视觉同构，结构断言"
+        },
+        {
+          "id": "浅色主题代表作（终端关闭带 processName）",
+          "golden": "new:cc-light",
+          "note": "M6 主题批 ★ 全量亮色（2026-07-07）；legacy 有对照→5199 legacy fixture 沿袭 M2 权威链"
+        }
+      ],
+      "specCases": [],
+      "openQuestions": []
+    },
+    {
+      "id": "menu-bar",
+      "name": "顶部菜单栏（36px）",
+      "batch": "B3",
+      "legacySources": [
+        "src/renderer/components/layout/MenuBar.tsx",
+        "UpdateProgress.tsx",
+        "AuthButton.tsx"
+      ],
+      "states": [
+        {
+          "id": "focused 组合态（返回平铺+终端计数 badge+语言切换+登录态）",
+          "golden": "new:mb-focused"
+        },
+        {
+          "id": "update-downloading（环形 63%）",
+          "golden": "new:mb-upd-downloading",
+          "note": "stub onUpdateDownloading 立即回调，percent 冻结"
+        },
+        {
+          "id": "update-error",
+          "golden": "new:mb-upd-error"
+        },
+        {
+          "id": "六 tab 激活态/常态/未登录",
+          "golden": "dom-assert",
+          "note": "update done 态有 fade-out 计时器=动画中帧，hard，跳过"
+        },
+        {
+          "id": "update-progress hover tooltip（大小+速度）",
+          "golden": "dom-assert",
+          "note": "UpdateProgress.tsx:96-114"
+        },
+        {
+          "id": "浅色主题代表作（focused 组合态：返回平铺+计数 badge+语言+登录态）",
+          "golden": "new:mb-light",
+          "note": "M6 主题批 ★ 全量亮色（2026-07-07）；legacy 有对照→5199 legacy fixture 沿袭 M2 权威链"
+        }
+      ],
+      "specCases": [],
+      "openQuestions": []
+    },
+    {
+      "id": "skills-panel",
+      "name": "Skills 三栏面板（左240/中280/右文件查看）",
+      "batch": "B3",
+      "legacySources": [
+        "src/renderer/components/skill/SkillsPanel.tsx",
+        "SkillList.tsx",
+        "SkillFileTree.tsx"
+      ],
+      "states": [
+        {
+          "id": "列表+MD 预览满载",
+          "golden": "new:sk-list"
+        },
+        {
+          "id": "source 模式+dirty",
+          "golden": "new:sk-dirty"
+        },
+        {
+          "id": "空态（四面板空态代表作）",
+          "golden": "new:sk-empty",
+          "note": "legacy 实际文案 '暂无技能'+路径 hint（SkillList.tsx:108-111），非 spec 文案；CONFIG_L1_16 偏差记 overlay"
+        },
+        {
+          "id": "搜索无命中 No matching skills",
+          "golden": "dom-assert",
+          "note": "SkillList.tsx:139"
+        },
+        {
+          "id": "浅色主题代表作（列表+MD 预览满载，三栏 chrome 最密）",
+          "golden": "new:sk-light",
+          "note": "M6 主题批 ★ 全量亮色（2026-07-07）；legacy 有对照→5199 legacy fixture 沿袭 M2 权威链"
+        }
+      ],
+      "specCases": [
+        "CONFIG_L1_16"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "mcp-panel",
+      "name": "MCP 两栏面板（左280）",
+      "batch": "B3",
+      "legacySources": [
+        "src/renderer/components/mcp/McpPanel.tsx"
+      ],
+      "states": [
+        {
+          "id": "列表+详情",
+          "golden": "new:mcp-list"
+        },
+        {
+          "id": "编辑表单（stdio）",
+          "golden": "new:mcp-form",
+          "note": "http 字段变体走 dom-assert"
+        },
+        {
+          "id": "空态/loading",
+          "golden": "dom-assert"
+        },
+        {
+          "id": "浅色主题代表作（列表+详情）",
+          "golden": "new:mcp-light",
+          "note": "M6 主题批 ★ 全量亮色（2026-07-07）；legacy 有对照→5199 legacy fixture 沿袭 M2 权威链"
+        }
+      ],
+      "specCases": [],
+      "openQuestions": []
+    },
+    {
+      "id": "hooks-panel",
+      "name": "Hooks 两栏面板（左300）",
+      "batch": "B3",
+      "legacySources": [
+        "src/renderer/components/hook/HooksPanel.tsx"
+      ],
+      "states": [
+        {
+          "id": "列表+详情（item badges）",
+          "golden": "new:hk-list"
+        },
+        {
+          "id": "表单（event/matcher/handlerType/timeout/async/once）",
+          "golden": "new:hk-form",
+          "note": "可砍项"
+        },
+        {
+          "id": "空态",
+          "golden": "dom-assert",
+          "note": "legacy 实际文案 '暂无 Hook 配置'（HooksPanel.tsx:173），非 spec 文案；CONFIG_L1_17 偏差记 overlay。空态视觉同构，代表作在 skills"
+        },
+        {
+          "id": "浅色主题代表作（列表+详情 item badges）",
+          "golden": "new:hk-light",
+          "note": "M6 主题批 ★ 全量亮色（2026-07-07）；legacy 有对照→5199 legacy fixture 沿袭 M2 权威链"
+        }
+      ],
+      "specCases": [
+        "CONFIG_L1_17"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "plugins-panel",
+      "name": "Plugins 两栏面板",
+      "batch": "B3",
+      "legacySources": [
+        "src/renderer/components/plugin/PluginPanel.tsx"
+      ],
+      "states": [
+        {
+          "id": "列表+启停 toggle 混合态",
+          "golden": "new:pl-list"
+        },
+        {
+          "id": "error 态（全簇 error 代表作，仅此面板有 error 分支）",
+          "golden": "new:pl-error"
+        },
+        {
+          "id": "空态/loading",
+          "golden": "dom-assert"
+        },
+        {
+          "id": "浅色主题代表作（列表+启停 toggle 混合态）",
+          "golden": "new:pl-light",
+          "note": "M6 主题批 ★ 全量亮色（2026-07-07）；legacy 有对照→5199 legacy fixture 沿袭 M2 权威链"
+        }
+      ],
+      "specCases": [
+        "CONFIG_L1_09(stub-only，见 adjudications)"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "file-panel",
+      "name": "右滑出文件树面板（320px）",
+      "batch": "B4",
+      "legacySources": [
+        "src/renderer/components/file/FilePanel.tsx",
+        "FileItem.tsx"
+      ],
+      "states": [
+        {
+          "id": "树满载（展开/折叠混合+隐藏文件 toggle on）",
+          "golden": "new:fp-tree",
+          "note": "fixture 数据含 isNew 条目（FileItem.tsx:86 NEW 徽标）"
+        },
+        {
+          "id": "空目录/无权限（M6 批A 终裁：『此目录为空』📁 /『无法读取此目录，请检查权限』🔒，.file-panel__empty 仅 live 可达）",
+          "golden": "dom-assert",
+          "note": "用户裁决 2026-07-06 覆盖 legacy 留白实况（behavior spec §0）；判空=readDir ok 且全量 0 条，隐藏滤空≠空目录"
+        },
+        {
+          "id": "浅色主题代表作（树满载：展开/折叠混合+隐藏文件 toggle on）",
+          "golden": "new:fp-light",
+          "note": "M6 主题批 ★ 全量亮色（2026-07-07）；legacy 有对照→5199 legacy fixture 沿袭 M2 权威链"
+        }
+      ],
+      "specCases": [
+        "FILE_L1_13",
+        "FILE_L1_14"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "file-tabs-view",
+      "name": "tab 式文件视图（左树250常驻 + 终端/文件 tab 栏 + 内容区，替换退役三栏 FileTempView）",
+      "batch": "M6-B",
+      "legacySources": [
+        "全新设计无 legacy 对照：specs/behavior/file-tabs-view.md（用户 2026-07-06 参考图 + 裁决⑥⑦/D1-D3 定版）；退役的三栏 FileTempView 见 specs/behavior/file-temp-view.md 头部退役注记（用户授权 2026-07-07）"
+      ],
+      "goldenAuthority": "无老 app 对照（同 orchScreens/message-editor 授权模型）：golden 权威 = ★ 用户肉眼巡检冻结（纯 View FileTabsView 经 FileTabsViewScreen 确定性静态渲染为像素基线，集成 agent 预巡检 §8 三态符规格后呈用户）；★ 通过即进字节回归纪律（同 orchScreens b46InspectFrozen 流程）",
+      "states": [
+        {
+          "id": "双文件 tab + md 满载 WYSIWYG 活跃（左树多层展开 + dot 隐藏态，dark）+ 灯组三灯三色 displayed=t2≠owner 分离态（§2.5）",
+          "golden": "new:ftabs-md-dark"
+        },
+        {
+          "id": "两 dirty tab（琥珀点）+ 退出汇总确认对话框（全部保存/全部丢弃/取消）；单终端灯组隐藏（§2.5 反面态，golden 零字节即断言）",
+          "golden": "new:ftabs-dirty-exit"
+        },
+        {
+          "id": "light 主题代表作（接棒 ftv-light 的 light 簇职责）+ 灯组三灯三色 displayed=owner 环+条同灯（§2.5）",
+          "golden": "new:ftabs-light"
+        },
+        {
+          "id": "tab 去重聚焦 / 单关聚焦迁移 / 终端 tab 洞结构 / ⌘S 清 dirty / D1 语义 / Esc 链 / 溢出滚动",
+          "golden": "dom-assert",
+          "note": "§8：其余交互态全 dom-assert（reducer 纯函数直测 + dom-assert，批1 已落 vitest）"
+        }
+      ],
+      "specCases": [
+        "FILE_L1_09"
+      ],
+      "goldenBudget": {
+        "new": 3,
+        "runningTotalAfter": 91,
+        "note": "M6-B 退役三栏 FileTempView 8 张（ftv-md/ftv-md-dirty/ftv-code/ftv-sheet/ftv-unsaved/ftv-light/ftv-image-sub/ftv-pdf-sub）+ 新增 tab 视图 3 张（ftabs-md-dark/ftabs-dirty-exit/ftabs-light）：合并窗口追平 main 主题批 +19 亮色后基数 102（83+19），102−8+3=97（磁盘实数核对一致）；不改 meta.goldenBudget（M2 检查点冻结记录，另账）；用户授权退役 2026-07-07。F-C 终端 composer 全退役删 me-1..6 六张（message-editor 屏条目一并删）→ 97−6=91（磁盘实数核对一致，用户裁决 2026-07-08）"
+      },
+      "ftabsInspectFrozen": "2026-07-08 M6 批B 用户巡检裁决（HTML 巡检页 3 张全内嵌，artifact golden-3-review）：ftabs-md-dark / ftabs-dirty-exit / ftabs-light 全部通过「golden 没问题」，冻结落账（进字节回归纪律，冻结提交 f4430bb）。同日用户真机验收开出终端 tab 黑屏回修（洞零高+双层不透明底，801c532，web CSS/类修复不触 golden——compare 97/97 零字节复验）",
+      "ftabsLightsRefreeze": "2026-07-15 ftabs-lights 批（file-tabs-view.md §2.5 终端状态灯组）：ftabs-md-dark / ftabs-light 两张授权重冻（fixture 加 t2 WaitingInput + t3 Stopped 三灯入镜）；ftabs-dirty-exit 保持单终端 golden 零字节（compare 实证 0.0000%，灯组隐藏+inert 工艺的反面断言）。用户巡检（对照页 artifact 9e87e195）「查看图了，没问题」通过，同日落账冻结（进字节回归纪律）",
+      "openQuestions": []
+    },
+    {
+      "id": "chat-history",
+      "name": "聊天历史三栏（左220/中340/右flex）",
+      "batch": "B5",
+      "legacySources": [
+        "src/renderer/components/chat/ChatHistoryPanel.tsx",
+        "ProjectList.tsx",
+        "SessionList.tsx",
+        "SessionDetail.tsx"
+      ],
+      "states": [
+        {
+          "id": "三栏满载（工具调用展开块/长标题截断/滚动条/resume bar/archive banner 同图）",
+          "golden": "new:chat-full"
+        },
+        {
+          "id": "空态代表",
+          "golden": "new:chat-empty",
+          "note": "legacy 实际文案 '暂无会话记录'（SessionList.tsx:360 + zh.ts:31），spec '还没有聊天记录...' 偏差记 overlay（CHAT_L1_15）"
+        },
+        {
+          "id": "detail 骨架屏（loading）",
+          "golden": "new:chat-skeleton"
+        },
+        {
+          "id": "搜索有结果（mark 高亮+计数+snippet）",
+          "golden": "new:chat-search-hit"
+        },
+        {
+          "id": "搜索无结果",
+          "golden": "new:chat-search-empty"
+        },
+        {
+          "id": "light 主题代表作",
+          "golden": "new:chat-light",
+          "note": "M5-R1 批3 W4-B 授权重截（亮色 B 组四处 token 化：project-badge 底/tool-call 蓝边+底+头/tool-result 绿底）——★用户拍板 2026-07-08 重生成；其余 5 张暗色字节不动"
+        },
+        {
+          "id": "会话重命名编辑中/tool-call 折叠态/归档进行中 {synced}/{total} 横幅变体",
+          "golden": "dom-assert",
+          "note": "归档横幅两变体互斥（ChatHistoryPanel.tsx:58-62），chat-full 含其一，另一变体 dom-assert"
+        },
+        {
+          "id": "同步条底栏（idle「Muxvo 镜像 · 最后同步 HH:MM」/ syncing 旋转图标「同步中…」/ error「同步暂停」）",
+          "golden": "dom-assert",
+          "note": "§7.5 CHAT_L1_13 翻牌（M5）：面板底部新增 .chat-history__sync-bar，live-only（fx.live 缺席不渲染）→ 加性不动既有 chat 屏 golden；stub-only 改派 M5 真实现"
+        },
+        {
+          "id": "noCC 空态（CC + Codex 双缺）：气泡图标 +「未检测到 Claude Code 聊天记录…」+「了解 Claude Code」钮",
+          "golden": "dom-assert",
+          "note": "§7.6 CHAT_L1_14 翻牌（M5）：中栏 .chat-nocc，live-only（fx.live.noCC）；与 CHAT_L1_15 noProjects「暂无会话记录」区分（noCC 优先）；stub-only 改派 M5 真实现"
+        }
+      ],
+      "specCases": [
+        "CHAT_L1_09",
+        "CHAT_L1_10",
+        "CHAT_L1_11",
+        "CHAT_L1_13",
+        "CHAT_L1_14",
+        "CHAT_L1_15"
+      ],
+      "chatLightReauthorized": "2026-07-08 M5-R1 批3 W4-B：chat-light 单张授权重截（亮色 B 组 chat.css 四处 [data-theme='light'] 覆盖 token 化落地——.session-card__project-badge 底 rgba(0,0,0,.06) / .tool-call-block 蓝边 #2563eb+底 rgba(37,99,235,.08)+ __header #1d4ed8 / .tool-result-block 底 rgba(22,163,74,.08)）。★用户拍板 2026-07-08 重生成。其余 5 张暗色（chat-full/empty/skeleton/search-hit/search-empty）字节冻结不动，compare 6/6 chrome=0.0000% 复验；boxes.json layout 未变（重截仅色）",
+      "openQuestions": []
+    },
+    {
+      "id": "welcome-overlay",
+      "name": "首启欢迎全屏卡片",
+      "batch": "B6",
+      "legacySources": [
+        "src/renderer/components/tour/WelcomeOverlay.tsx"
+      ],
+      "states": [
+        {
+          "id": "居中卡片（开始引导/跳过）",
+          "golden": "new:wel-card"
+        },
+        {
+          "id": "浅色主题代表作（居中卡片）",
+          "golden": "new:wel-light",
+          "note": "M6 主题批 ★ 全量亮色（2026-07-07）；legacy 有对照→5199 legacy fixture 沿袭 M2 权威链"
+        }
+      ],
+      "specCases": [],
+      "openQuestions": []
+    },
+    {
+      "id": "tour-overlay",
+      "name": "新手引导 spotlight（driver.js）",
+      "batch": "B6",
+      "legacySources": [
+        "src/renderer/components/tour/TourOverlay.tsx",
+        "features/tour/steps.ts"
+      ],
+      "states": [
+        {
+          "id": "代表 step（spotlight+气泡）",
+          "golden": "new:tour-step",
+          "note": "capture-action；锚定真实布局元素，需复合宿主（grid+menubar）"
+        },
+        {
+          "id": "其余 steps",
+          "golden": "dom-assert",
+          "note": "steps.ts 数据驱动，断言步数与锚点"
+        },
+        {
+          "id": "浅色主题代表作（代表 step spotlight+气泡）",
+          "golden": "new:tour-light",
+          "note": "M6 主题批 ★ 全量亮色（2026-07-07）；legacy 有对照→5199 legacy fixture 沿袭 M2 权威链；复合宿主 grid+menubar"
+        }
+      ],
+      "specCases": [],
+      "openQuestions": [
+        "spotlight 需要整 App chrome 锚点，现 fixture 宿主只挂单组件——B6 落地时定复合宿主方案（见 adjudications #4）"
+      ]
+    }
+  ],
+  "orchScreens": [],
+  "excludedNonWebSurfaces": [
+    {
+      "what": "原生应用菜单",
+      "evidence": "src/main/index.ts:372 Menu.setApplicationMenu"
+    },
+    {
+      "what": "原生确认对话框（更新提示/下载完成/设备封禁）",
+      "evidence": "src/main/index.ts:772,:847,:1043 dialog.showMessageBox[Sync]"
+    },
+    {
+      "what": "webContents/文件树/会话卡 右键原生菜单",
+      "evidence": "src/main/index.ts:220-232; ipc/fs-handlers.ts:155; ipc/chat-handlers.ts:197"
+    },
+    {
+      "what": "Dock badge 与下载进度条",
+      "evidence": "src/main/services/dock-badge.ts:15-20; setProgressBar"
+    },
+    {
+      "what": "目录选择原生对话框",
+      "evidence": "src/main/ipc/fs-handlers.ts:103"
+    },
+    {
+      "what": "local-file:// 自定义协议",
+      "evidence": "src/main/index.ts:22-23,:287-289（影响 ftv-image，已 hard-substitute）"
+    },
+    {
+      "what": "Tray / 原生 Notification：legacy 不存在",
+      "evidence": "grep 零命中（防凭空列项）"
+    }
+  ],
+  "deadCode": [
+    {
+      "what": "components/layout/MenuDropdown.tsx + PanelContext.menuDropdown state",
+      "evidence": "全仓零 import/零 dispatch（PanelContext.tsx:19,58,146-155 定义但无用点）"
+    },
+    {
+      "what": "components/layout/BottomBar.tsx",
+      "evidence": "全仓零 import"
+    },
+    {
+      "what": "components/layout/FloatingControls.tsx",
+      "evidence": "App.tsx:271 注释明示已移除"
+    },
+    {
+      "what": "components/file/FilePreviewFloat.tsx",
+      "evidence": "全仓零 import（文件悬停预览实际不存在）"
+    }
+  ],
+  "adjudications": [
+    {
+      "n": 1,
+      "q": "stub-only case 的处置——spec 有断言，但 legacy 只有零消费配置模块、UI 从不渲染",
+      "recommendation": "【⑥已裁决，落实完毕】stub-only 共 7 个（终审 F1 增补 FILE_L1_13/14）：CHAT_L1_13/14→M5、CONFIG_L1_09→M6、FILE_L1_10/11/13/14→M6（status.json overlay 已改派并附 note，spec-runner 绿）。M2 不发明 legacy 没有的 UI（守 golden 像素权威），M2 翻牌目标 41→34。Tier-B 三 case（CHAT_L1_15/CONFIG_L1_16/17）留 M2：golden 与 vitest 断言以 legacy 实际文案为准，spec 文案偏差记 overlay note"
+    },
+    {
+      "n": 2,
+      "q": "TERM_L1_08 + APP_L2_02（默认窗口 1400×900 等 8 项默认值）owner 归属——窗口尺寸最终是 Swift 壳的事",
+      "recommendation": "【⑥已裁决】M2 以 owner:web 默认值常量模块落地（fontSize/theme/ratios/ftv 宽度本就是 web 的），窗口尺寸常量一并入模块；M3 接缝走 codegen/构建期共享，不占桥消息配额（≤15 条 CI 红线）。golden viewport 维持 _CONTRACT.md 冻结的 1440×900@2x，TERM_L1_08 的 1400×900 仅进常量断言，严禁据此改截图 viewport（15 张冻结 golden 会全部作废）"
+    },
+    {
+      "n": 3,
+      "q": "golden 预算 66 张（15 旧 + 51 新）是否要收口到 ~60",
+      "recommendation": "接受 66；如要收口，按 trimCandidates 砍 5 张（wt-warning/ftv-image-sub/set-en/mb-user-menu/hk-form）至 61"
+    },
+    {
+      "n": 4,
+      "q": "fixture 宿主形态：维持「单组件挂载」（M0 模式，面板 golden 不含 menubar/grid 背景）还是扩成「全 App 壳」",
+      "recommendation": "维持单组件挂载（隔离性好、零生产改动、M0 已验证）；唯 tour-overlay 一屏在 B6 做复合宿主特例（grid+menubar）"
+    },
+    {
+      "n": 5,
+      "q": "glyph-ref 探针（App.tsx:242-247，1px GPU 字形校验）是否复刻",
+      "recommendation": "不复刻——它是 xterm/GPU 渲染管线的内部探针，新版 Metal 直渲不经此路径"
+    },
+    {
+      "n": 6,
+      "q": "PDF 预览 golden 策略",
+      "recommendation": "toolbar+error 确定性 DOM 进 golden，canvas 内容不进像素对比（pdfjs 真渲染归 M6 集成验证）"
+    }
+  ]
+}

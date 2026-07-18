@@ -1,0 +1,76 @@
+[
+  {
+    "id": "set-default",
+    "desc": "设置弹窗默认态（stepper=1 边界 disabled / 双击聚焦关闭 / badge=realtime / 默认 cwd 未设 / 更新 idle）",
+    "theme": "dark",
+    "screen": "settings-modal",
+    "panel": { "open": ["SETTINGS"] },
+    "settings": {
+      "appVersion": "0.5.0",
+      "config": {
+        "startupTerminalCount": 1,
+        "doubleClickToFocus": false,
+        "dockBadgeMode": "realtime",
+        "dockBadgeIntervalMin": 1,
+        "defaultTerminalCwd": ""
+      },
+      "update": null
+    }
+  },
+  {
+    "id": "set-update",
+    "desc": "设置弹窗 update-available + badge-timed 组合态（下载 v0.6.0 / interval 子行 / cwd 已设长路径 rtl 截断+清除钮 / 双击聚焦启用）",
+    "theme": "dark",
+    "screen": "settings-modal",
+    "panel": { "open": ["SETTINGS"] },
+    "settings": {
+      "appVersion": "0.5.0",
+      "config": {
+        "startupTerminalCount": 4,
+        "doubleClickToFocus": true,
+        "dockBadgeMode": "timed",
+        "dockBadgeIntervalMin": 5,
+        "defaultTerminalCwd": "/Users/rl/work/clients/acme-corp/web-app"
+      },
+      "update": { "version": "0.6.0" }
+    }
+  },
+  {
+    "id": "set-en",
+    "desc": "设置弹窗 en 代表作（i18n 溢出哨兵：长 placeholder / timed 两位 interval / Download v0.6.0）",
+    "theme": "dark",
+    "screen": "settings-modal",
+    "locale": "en",
+    "panel": { "open": ["SETTINGS"] },
+    "settings": {
+      "appVersion": "0.5.0",
+      "config": {
+        "startupTerminalCount": 1,
+        "doubleClickToFocus": false,
+        "dockBadgeMode": "timed",
+        "dockBadgeIntervalMin": 10,
+        "defaultTerminalCwd": ""
+      },
+      "update": { "version": "0.6.0" }
+    }
+  },
+  {
+    "id": "set-light",
+    "desc": "设置弹窗浅色代表作（外观 亮暗 toggle=亮色 + 终端配色下拉可见组合态；改版行无 legacy 对照→★ 肉眼冻结）",
+    "theme": "light",
+    "screen": "settings-modal",
+    "panel": { "open": ["SETTINGS"] },
+    "settings": {
+      "appVersion": "0.5.0",
+      "config": {
+        "startupTerminalCount": 2,
+        "doubleClickToFocus": true,
+        "dockBadgeMode": "realtime",
+        "dockBadgeIntervalMin": 1,
+        "defaultTerminalCwd": "",
+        "terminalThemeName": "light"
+      },
+      "update": null
+    }
+  }
+]

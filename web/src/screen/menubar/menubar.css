@@ -1,0 +1,404 @@
+/* B3 menu-bar / user-dropdown 屏样式（specs/behavior/menu-bar.md / user-dropdown.md）
+   值逐条对照 legacy MenuBar.css / UpdateProgress.css / UserDropdown.css（出处见各规格 §）。
+   注：legacy 的 .menu-bar__back-btn 是 CSS 死规则（无 JSX 消费点），不复刻。 */
+
+/* App 壳（legacy App.css .app/.app-content 同款；菜单栏高 36px） */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.app-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* === MenuBar === */
+.menu-bar {
+  height: 36px; /* legacy var(--menu-bar-height) */
+  display: flex;
+  align-items: center;
+  background: rgba(10, 14, 20, 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--border);
+  padding: 0 12px;
+  gap: 2px;
+  position: relative;
+  user-select: none;
+  z-index: 300;
+  flex-shrink: 0;
+}
+
+[data-theme='light'] .menu-bar {
+  background: rgba(240, 240, 243, 0.7);
+}
+
+.menu-bar__drag-region {
+  position: absolute;
+  inset: 0;
+}
+
+.menu-bar__title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  pointer-events: none;
+  z-index: 1;
+  margin-right: 8px;
+  /* 让位 macOS 红绿灯 */
+  margin-left: 72px;
+}
+
+.menu-bar__tabs {
+  display: flex;
+  gap: 2px;
+  z-index: 2;
+}
+
+.menu-bar__tab {
+  padding: 5px 14px;
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-sans);
+  position: relative;
+  background: transparent;
+  border: none;
+}
+
+.menu-bar__tab:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.menu-bar__tab--active {
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+
+.menu-bar__badge {
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--accent-glow);
+  color: var(--accent);
+  padding: 0 5px;
+  border-radius: 8px;
+  margin-left: 6px;
+}
+
+.menu-bar__right-group {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.menu-bar__icon-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.menu-bar__icon-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.menu-bar__icon-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* === UpdateProgress（环形进度） === */
+.update-progress {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+
+.update-progress:hover {
+  background: var(--bg-hover);
+}
+
+.update-progress__ring {
+  position: absolute;
+  inset: 1px;
+  width: 24px;
+  height: 24px;
+}
+
+.update-progress__ring-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.06);
+  stroke-width: 2;
+}
+
+[data-theme='light'] .update-progress__ring-track {
+  stroke: rgba(0, 0, 0, 0.08);
+}
+
+.update-progress__ring-fill {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 56.55; /* 2 * PI * 9 */
+  transform: rotate(-90deg);
+  transform-origin: center;
+  transition: stroke-dashoffset 0.3s ease;
+}
+
+.update-progress__icon {
+  z-index: 1;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.update-progress__icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.update-progress--done .update-progress__icon {
+  color: #28c840;
+}
+
+.update-progress--done .update-progress__ring-fill {
+  stroke: #28c840;
+}
+
+.update-progress--error .update-progress__icon {
+  color: #ff5f57;
+}
+
+.update-progress--error .update-progress__ring-fill {
+  stroke: #ff5f57;
+}
+
+/* tooltip：默认 display:none，仅 :hover 显（dom-assert 面，不出 golden） */
+.update-progress__tooltip {
+  display: none;
+  position: absolute;
+  top: 34px;
+  right: 0;
+  background: var(--bg-elevated, #1a1f2e);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  min-width: 190px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 400;
+  pointer-events: none;
+}
+
+.update-progress:hover .update-progress__tooltip {
+  display: block;
+}
+
+.update-progress__tooltip-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.update-progress__tooltip-bar {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+[data-theme='light'] .update-progress__tooltip-bar {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.update-progress__tooltip-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.update-progress__tooltip-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.update-progress__tooltip-speed {
+  color: var(--accent);
+}
+
+/* fade-out：截图侧动画被全局禁用，类挂载与 legacy 对齐即可 */
+.update-progress--fade-out {
+  animation: update-progress-fade 0.5s ease-out forwards;
+  animation-delay: 2s;
+}
+
+@keyframes update-progress-fade {
+  to {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+/* === UserDropdown === */
+.user-dropdown {
+  position: relative;
+  z-index: 2;
+}
+
+.user-dropdown__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.user-dropdown__trigger:hover {
+  border-color: var(--accent);
+}
+
+.user-dropdown__avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-dropdown__avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: var(--accent-muted);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+}
+
+.user-dropdown__menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-elevated);
+  padding: 8px 0;
+  z-index: 400;
+}
+
+.user-dropdown__info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+}
+
+.user-dropdown__menu-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.user-dropdown__menu-avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-muted);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  flex-shrink: 0;
+}
+
+.user-dropdown__details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.user-dropdown__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-dropdown__provider {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+.user-dropdown__divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+.user-dropdown__logout-btn {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+
+.user-dropdown__logout-btn:hover {
+  background: var(--bg-hover);
+  color: var(--error);
+}

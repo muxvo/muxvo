@@ -1,0 +1,77 @@
+{
+ ".plugin-panel": [
+  {
+   "x": 0,
+   "y": 36,
+   "w": 1440,
+   "h": 864
+  }
+ ],
+ ".plugin-panel__left": [
+  {
+   "x": 0,
+   "y": 36,
+   "w": 280,
+   "h": 864
+  }
+ ],
+ ".plugin-panel__header": [
+  {
+   "x": 0,
+   "y": 36,
+   "w": 279,
+   "h": 49
+  }
+ ],
+ ".plugin-panel__count": [
+  {
+   "x": 52,
+   "y": 52.5,
+   "w": 23.41,
+   "h": 15
+  }
+ ],
+ ".plugin-panel__group-title": [],
+ ".plugin-panel__item": [],
+ ".plugin-panel__dot": [],
+ ".plugin-panel__item-name": [],
+ ".plugin-panel__empty": [
+  {
+   "x": 4,
+   "y": 89,
+   "w": 271,
+   "h": 91
+  }
+ ],
+ ".plugin-panel__right": [
+  {
+   "x": 286,
+   "y": 36,
+   "w": 1154,
+   "h": 864
+  }
+ ],
+ ".plugin-panel__detail": [],
+ ".plugin-panel__detail-name": [],
+ ".plugin-panel__tag": [],
+ ".plugin-panel__toggle-row": [],
+ ".plugin-panel__toggle-label": [],
+ ".plugin-panel__toggle": [],
+ ".plugin-panel__info-row": [],
+ ".plugin-panel__info-label": [],
+ ".plugin-panel__info-value": [],
+ ".plugin-panel__contents-section": [],
+ ".plugin-panel__content-group": [],
+ ".plugin-panel__content-label": [],
+ ".plugin-panel__content-item": [],
+ ".plugin-panel__path-section": [],
+ ".plugin-panel__path": [],
+ ".plugin-panel__placeholder": [
+  {
+   "x": 286,
+   "y": 36,
+   "w": 1154,
+   "h": 864
+  }
+ ]
+}

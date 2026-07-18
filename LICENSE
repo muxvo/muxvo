@@ -1,0 +1,34 @@
+                    GNU GENERAL PUBLIC LICENSE
+                       Version 3, 29 June 2007
+
+  Muxvo — a native macOS terminal + AI workspace.
+  Copyright (C) 2026 Muxvo authors and contributors.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+===============================================================================
+NOTE TO MAINTAINERS (remove this block before publishing):
+
+  This header carries the GPL-3.0 application notice, but a valid LICENSE file
+  MUST contain the *full verbatim* GNU General Public License v3.0 body below
+  this line. Drop it in at publish time (it is a fixed, well-known text):
+
+      curl -fsSL https://www.gnu.org/licenses/gpl-3.0.txt -o LICENSE
+      # then re-prepend the Muxvo copyright notice above, or keep the
+      # canonical text and add the copyright line to source file headers.
+
+  SPDX-License-Identifier: GPL-3.0-or-later
+  Contributor copyright is assigned via CLA (see CONTRIBUTING.md), enabling the
+  official "open-core + proprietary-orchestration" combined binary distribution.
+===============================================================================

@@ -1,0 +1,121 @@
+[
+  {
+    "id": "wn-notes",
+    "desc": "What's New 满载：current v0.5.0 三 section（含长条目换行）+ 历史 3 版本（v0.4.0 展开 / 两个折叠）",
+    "theme": "dark",
+    "screen": "whats-new-modal",
+    "panel": { "open": ["WHATS_NEW"] },
+    "whatsNew": {
+      "appVersion": "0.5.0",
+      "entries": [
+        {
+          "version": "0.5.0",
+          "date": "2026-05-20",
+          "sections": {
+            "Added": [
+              "终端平铺网格支持 20 终端上限与聚焦模式切换",
+              "Worktree 浮层：列表 / 新建 / 已合并分支一键删除",
+              "聊天历史自动归档到本地 ~/.muxvo/chat-archive/，所有数据仅保存在你的本地电脑，不会上传到任何服务器"
+            ],
+            "Changed": ["设置弹窗重排：Dock 角标通知改为 关闭/实时/定时 三档"],
+            "Fixed": ["修复终端关闭确认在进程退出后仍弹出的问题", "修复亮色主题下徽标对比度不足"]
+          }
+        },
+        {
+          "version": "0.4.0",
+          "date": "2026-04-18",
+          "sections": {
+            "Added": ["文件面板支持隐藏文件开关与 NEW 徽标"],
+            "Fixed": ["修复拖拽重排时偶发的 tile 闪烁"]
+          }
+        },
+        {
+          "version": "0.3.1",
+          "date": "2026-03-30",
+          "sections": {
+            "Fixed": ["修复 Cmd+F 搜索条在聚焦模式下的定位偏移"]
+          }
+        },
+        {
+          "version": "0.3.0",
+          "date": "2026-03-12",
+          "sections": {
+            "Added": ["新增 MCP / Hooks / Plugins 配置面板"],
+            "Security": ["登录会话改用系统钥匙串存储"]
+          }
+        }
+      ],
+      "expanded": ["0.4.0"]
+    }
+  },
+  {
+    "id": "wn-light",
+    "desc": "浅色主题代表作（releaseNotes 满载）",
+    "theme": "light",
+    "screen": "whats-new-modal",
+    "panel": {
+      "open": [
+        "WHATS_NEW"
+      ]
+    },
+    "whatsNew": {
+      "appVersion": "0.5.0",
+      "entries": [
+        {
+          "version": "0.5.0",
+          "date": "2026-05-20",
+          "sections": {
+            "Added": [
+              "终端平铺网格支持 20 终端上限与聚焦模式切换",
+              "Worktree 浮层：列表 / 新建 / 已合并分支一键删除",
+              "聊天历史自动归档到本地 ~/.muxvo/chat-archive/，所有数据仅保存在你的本地电脑，不会上传到任何服务器"
+            ],
+            "Changed": [
+              "设置弹窗重排：Dock 角标通知改为 关闭/实时/定时 三档"
+            ],
+            "Fixed": [
+              "修复终端关闭确认在进程退出后仍弹出的问题",
+              "修复亮色主题下徽标对比度不足"
+            ]
+          }
+        },
+        {
+          "version": "0.4.0",
+          "date": "2026-04-18",
+          "sections": {
+            "Added": [
+              "文件面板支持隐藏文件开关与 NEW 徽标"
+            ],
+            "Fixed": [
+              "修复拖拽重排时偶发的 tile 闪烁"
+            ]
+          }
+        },
+        {
+          "version": "0.3.1",
+          "date": "2026-03-30",
+          "sections": {
+            "Fixed": [
+              "修复 Cmd+F 搜索条在聚焦模式下的定位偏移"
+            ]
+          }
+        },
+        {
+          "version": "0.3.0",
+          "date": "2026-03-12",
+          "sections": {
+            "Added": [
+              "新增 MCP / Hooks / Plugins 配置面板"
+            ],
+            "Security": [
+              "登录会话改用系统钥匙串存储"
+            ]
+          }
+        }
+      ],
+      "expanded": [
+        "0.4.0"
+      ]
+    }
+  }
+]

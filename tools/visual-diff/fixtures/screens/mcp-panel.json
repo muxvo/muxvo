@@ -1,0 +1,134 @@
+[
+  {
+    "id": "mcp-list",
+    "desc": "MCP 列表+详情（系统组 4 server：stdio/http × CC/CC Desk/GM scope；选中 stdio 详情含命令/参数/环境变量/配置路径+编辑删除）",
+    "theme": "dark",
+    "screen": "mcp-panel",
+    "homePath": "/Users/rl",
+    "mcp": {
+      "servers": [
+        {
+          "name": "filesystem",
+          "type": "stdio",
+          "scope": "global",
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/rl/dev"],
+          "env": { "NODE_ENV": "production" },
+          "configPath": "/Users/rl/.claude.json"
+        },
+        {
+          "name": "fetch-remote",
+          "type": "http",
+          "scope": "global",
+          "url": "https://mcp.example.com/api",
+          "headers": { "Authorization": "Bearer mcp-fixture-token" },
+          "configPath": "/Users/rl/.claude.json"
+        },
+        {
+          "name": "sqlite-local",
+          "type": "stdio",
+          "scope": "desktop",
+          "command": "uvx",
+          "args": ["mcp-server-sqlite", "--db", "/Users/rl/data/app.db"],
+          "configPath": "/Users/rl/Library/Application Support/Claude/claude_desktop_config.json"
+        },
+        {
+          "name": "gemini-search",
+          "type": "http",
+          "scope": "gemini",
+          "url": "https://gemini.example.com/mcp",
+          "configPath": "/Users/rl/.gemini/settings.json"
+        }
+      ],
+      "selected": "filesystem",
+      "form": false
+    }
+  },
+  {
+    "id": "mcp-form",
+    "desc": "MCP 编辑表单 stdio（选中 filesystem 后点「编辑」；name/type/命令/参数/环境变量 预填；http 字段变体走 dom-assert）",
+    "theme": "dark",
+    "screen": "mcp-panel",
+    "homePath": "/Users/rl",
+    "mcp": {
+      "servers": [
+        {
+          "name": "filesystem",
+          "type": "stdio",
+          "scope": "global",
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/rl/dev"],
+          "env": { "NODE_ENV": "production" },
+          "configPath": "/Users/rl/.claude.json"
+        },
+        {
+          "name": "fetch-remote",
+          "type": "http",
+          "scope": "global",
+          "url": "https://mcp.example.com/api",
+          "headers": { "Authorization": "Bearer mcp-fixture-token" },
+          "configPath": "/Users/rl/.claude.json"
+        }
+      ],
+      "selected": "filesystem",
+      "form": true
+    }
+  },
+  {
+    "id": "mcp-light",
+    "desc": "浅色主题代表作（列表+详情）",
+    "theme": "light",
+    "screen": "mcp-panel",
+    "homePath": "/Users/rl",
+    "mcp": {
+      "servers": [
+        {
+          "name": "filesystem",
+          "type": "stdio",
+          "scope": "global",
+          "command": "npx",
+          "args": [
+            "-y",
+            "@modelcontextprotocol/server-filesystem",
+            "/Users/rl/dev"
+          ],
+          "env": {
+            "NODE_ENV": "production"
+          },
+          "configPath": "/Users/rl/.claude.json"
+        },
+        {
+          "name": "fetch-remote",
+          "type": "http",
+          "scope": "global",
+          "url": "https://mcp.example.com/api",
+          "headers": {
+            "Authorization": "Bearer mcp-fixture-token"
+          },
+          "configPath": "/Users/rl/.claude.json"
+        },
+        {
+          "name": "sqlite-local",
+          "type": "stdio",
+          "scope": "desktop",
+          "command": "uvx",
+          "args": [
+            "mcp-server-sqlite",
+            "--db",
+            "/Users/rl/data/app.db"
+          ],
+          "configPath": "/Users/rl/Library/Application Support/Claude/claude_desktop_config.json"
+        },
+        {
+          "name": "gemini-search",
+          "type": "http",
+          "scope": "gemini",
+          "url": "https://gemini.example.com/mcp",
+          "configPath": "/Users/rl/.gemini/settings.json"
+        }
+      ],
+      "selected": "filesystem",
+      "form": false
+    }
+  }
+]

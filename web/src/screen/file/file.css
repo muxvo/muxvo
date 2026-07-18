@@ -1,0 +1,557 @@
+/* B4 file 簇（specs/behavior/file-panel.md / file-temp-view.md）
+   legacy FilePanel.css + FileTempView.css + SpreadsheetView.css + UnsavedPromptDialog.css +
+   TerminalSidebar.css 逐字搬运（.file-item 基础行 / .markdown-wysiwyg 在 panels.css）。
+   var 缺口（web theme.css 未定义，按 legacy theme.css 计算值写字面量并注明）：
+   --warning→#fbbf24、--info→#60a5fa、--purple→#a78bfa、--menu-bar-height→走 36px fallback。
+   --bg-surface / --hover：legacy 两主题均未定义（fallback/初始值生效），保留同款 var() 行为。 */
+
+/* ============ FilePanel（右滑出） ============ */
+
+.file-panel-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+}
+
+.file-panel {
+  position: fixed;
+  top: var(--menu-bar-height, 36px);
+  right: 0;
+  bottom: 0;
+  width: 320px;
+  background: var(--bg-card);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-left: 1px solid var(--border);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: -8px 0 48px rgba(0, 0, 0, 0.5);
+}
+.file-panel--open {
+  transform: translateX(0);
+}
+
+.file-panel__header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.file-panel__title {
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.file-panel__title-name {
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+.file-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.file-panel__toggle-hidden {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+.file-panel__toggle-hidden:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.file-panel__toggle-hidden--active {
+  color: var(--accent);
+  background: var(--accent-muted);
+  border-color: var(--accent-glow);
+}
+
+.file-panel__close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--accent);
+  background: var(--accent-muted);
+  border: 1px solid var(--accent-glow);
+  font-size: 15px;
+  font-weight: 700;
+  transition: all 0.15s;
+}
+.file-panel__close:hover {
+  background: var(--accent-glow);
+  color: var(--accent-hover);
+}
+
+.file-panel__content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+/* .file-item 基础行在 panels.css；此处补 FilePanel 独用段（meta/new/badge） */
+.file-item__meta {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+.file-item--new .file-item__name {
+  color: var(--success);
+}
+.file-item__badge {
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--success);
+  background: var(--accent-glow);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+/* 面板级空态/无权限（M6 批A live 专属新分支；仅 LiveFilePanel 可达，fp-tree golden 零感知） */
+.file-panel__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 16px;
+  color: var(--text-muted);
+  text-align: center;
+}
+.file-panel__empty-icon {
+  font-size: 28px;
+  line-height: 1;
+  opacity: 0.7;
+}
+.file-panel__empty-text {
+  font-size: 12px;
+}
+
+/* 拖文件时全窗 overlay 放行 dragover（否则吞掉 → 拖不到 tile，plan §5；新增选择器，golden 无感） */
+body.dragging-file .file-panel-overlay {
+  pointer-events: none;
+}
+
+/* ============ FileTempView（三栏） ============ */
+
+.file-temp-view {
+  position: fixed;
+  top: var(--menu-bar-height, 36px);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  z-index: 150;
+  background: var(--bg-deep);
+}
+
+.file-temp-view__back {
+  width: 32px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--accent);
+  background: var(--accent-muted);
+  border: 1px solid var(--accent-glow);
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.file-temp-view__back svg {
+  transition: transform 0.2s;
+}
+.file-temp-view__back:hover {
+  background: var(--accent-glow);
+}
+.file-temp-view__back:hover svg {
+  transform: translateX(-3px);
+}
+
+.file-temp-view__resize-handle {
+  width: 6px;
+  cursor: col-resize;
+  background: transparent;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.file-temp-view__resize-handle:hover {
+  background: var(--accent-glow);
+}
+.file-temp-view__resize-handle:active {
+  background: var(--accent);
+}
+
+.file-temp-view__files {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  transform: translateX(calc(100vw - 320px));
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.file-temp-view__files--entered {
+  transform: translateX(0);
+}
+.file-temp-view__files-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+}
+.file-temp-view__files-title {
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+.file-temp-view__toggle-hidden {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+.file-temp-view__toggle-hidden:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.file-temp-view__toggle-hidden--active {
+  color: var(--accent);
+  background: var(--accent-muted);
+  border-color: var(--accent-glow);
+}
+
+.file-temp-view__files-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.file-temp-view__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease 0.15s;
+}
+.file-temp-view--entered .file-temp-view__content {
+  opacity: 1;
+}
+.file-temp-view__content-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.file-temp-view__content-filename {
+  flex: 1;
+}
+.file-temp-view__content-tag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+.file-temp-view__content-tag--markdown {
+  background: var(--accent-glow);
+  color: #60a5fa; /* legacy var(--info) */
+}
+.file-temp-view__content-tag--code {
+  background: var(--accent-glow);
+  color: #a78bfa; /* legacy var(--purple) */
+}
+.file-temp-view__content-tag--text {
+  background: var(--accent-glow);
+  color: var(--text-secondary);
+}
+.file-temp-view__content-tag--image {
+  background: var(--accent-glow);
+  color: var(--success);
+}
+.file-temp-view__content-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.8;
+  background: var(--bg-primary);
+}
+.file-temp-view__image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+.file-temp-view__image img {
+  max-width: 100%;
+  max-height: calc(100vh - 150px);
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.file-temp-view__editor {
+  width: 100%;
+  height: 100%;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  padding: 16px;
+  border: none;
+  outline: none;
+  resize: none;
+  overflow-y: auto;
+  tab-size: 2;
+  -moz-tab-size: 2;
+}
+.file-temp-view__editor:focus {
+  outline: none;
+}
+
+.file-temp-view__dirty-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fbbf24; /* legacy var(--warning, #f59e0b) → theme.css --warning: #fbbf24 */
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.file-temp-view__mode-btn {
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+}
+.file-temp-view__mode-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.file-temp-view__mode-btn--active {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ============ PdfPreview ============ */
+
+.pdf-preview {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+.pdf-preview--loading,
+.pdf-preview--error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary, #888);
+  font-size: 14px;
+}
+
+/* ============ SpreadsheetView ============ */
+
+.spreadsheet-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+.spreadsheet-view__tabs {
+  display: flex;
+  gap: 2px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.spreadsheet-view__tab {
+  padding: 4px 12px;
+  font-size: 12px;
+  border-radius: 4px 4px 0 0;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.spreadsheet-view__tab:hover {
+  color: var(--text-primary);
+}
+.spreadsheet-view__tab--active {
+  background: var(--bg-surface); /* legacy 同款：--bg-surface 未定义，保留同计算行为 */
+  color: var(--text-primary);
+  border-color: var(--border);
+  border-bottom-color: var(--bg-surface);
+}
+.spreadsheet-view__table-wrap {
+  flex: 1;
+  overflow: auto;
+}
+.spreadsheet-view__table {
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.spreadsheet-view__table td {
+  padding: 0;
+  border: 1px solid var(--border);
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: text;
+}
+.spreadsheet-view__cell-text {
+  display: block;
+  padding: 4px 8px;
+  min-height: 20px;
+}
+.spreadsheet-view__row-num {
+  color: var(--text-muted);
+  text-align: right;
+  user-select: none;
+  background: var(--bg-deep);
+  min-width: 40px;
+  padding: 4px 8px;
+  cursor: default;
+}
+.spreadsheet-view__empty,
+.spreadsheet-view__truncated {
+  padding: 16px;
+  color: var(--text-muted);
+  text-align: center;
+  font-size: 13px;
+}
+
+/* ============ UnsavedPromptDialog ============ */
+
+.unsaved-prompt-dialog__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.unsaved-prompt-dialog {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  width: 380px;
+  box-shadow: var(--shadow-dialog);
+}
+.unsaved-prompt-dialog__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+.unsaved-prompt-dialog__message {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.unsaved-prompt-dialog__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.unsaved-prompt-dialog__btn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: all 0.15s;
+}
+.unsaved-prompt-dialog__btn--save {
+  background: var(--accent);
+  color: var(--bg-deep);
+  border-color: var(--accent);
+}
+.unsaved-prompt-dialog__btn--save:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.unsaved-prompt-dialog__btn--discard {
+  background: transparent;
+  color: var(--error);
+  border-color: var(--error);
+}
+.unsaved-prompt-dialog__btn--discard:hover {
+  background: var(--error);
+  color: var(--bg-deep);
+}
+.unsaved-prompt-dialog__btn--cancel {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+.unsaved-prompt-dialog__btn--cancel:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* ============ TerminalSidebar（右栏） ============ */
+
+.terminal-sidebar {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  border-left: 1px solid var(--border);
+  background: var(--bg-deep);
+}
+.terminal-sidebar__item {
+  min-height: 150px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.file-temp-view__sidebar--entered {
+  opacity: 1 !important;
+}

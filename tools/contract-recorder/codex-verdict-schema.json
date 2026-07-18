@@ -1,0 +1,18 @@
+{
+  "type": "object",
+  "properties": {
+    "decision": {
+      "type": "string",
+      "enum": ["approve", "reject"]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "issues": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "required": ["decision", "summary", "issues"],
+  "additionalProperties": false
+}

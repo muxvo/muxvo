@@ -1,0 +1,171 @@
+[
+  {
+    "id": "mb-focused",
+    "desc": "MenuBar Focused 组合态（终端计数 badge=3 + 已登录头像 + Focused 底图；legacy 实况无返回钮/语言切换，见 specs/behavior/menu-bar.md 头注）",
+    "theme": "dark",
+    "screen": "menu-bar",
+    "auth": {
+      "username": "ruilin",
+      "email": "ruilin@example.com",
+      "provider": "github",
+      "avatarDataUri": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Crect width='48' height='48' fill='%23e8a748'/%3E%3Ccircle cx='24' cy='18' r='8' fill='%230a0e14'/%3E%3Cpath d='M8 44c0-9 7-14 16-14s16 5 16 14z' fill='%230a0e14'/%3E%3C/svg%3E"
+    },
+    "update": null,
+    "base": {
+      "homePath": "/Users/rl",
+      "viewMode": "Focused",
+      "focusedId": "t1",
+      "selectedId": null,
+      "activeSidebarId": null,
+      "maxReached": false,
+      "dragging": null,
+      "dragOver": null,
+      "editing": null,
+      "waitingNotification": null,
+      "terminals": [
+        {
+          "id": "t1",
+          "state": "Running",
+          "cwd": "/Users/rl/dev/muxvo",
+          "customName": "主屏",
+          "isGitRepo": true,
+          "contentKey": "cc-codegen"
+        },
+        {
+          "id": "t2",
+          "state": "Running",
+          "cwd": "/Users/rl/work/clients/acme/web-app",
+          "isGitRepo": true,
+          "contentKey": "build-log"
+        },
+        {
+          "id": "t3",
+          "state": "WaitingInput",
+          "cwd": "/opt/services/gateway",
+          "isGitRepo": false,
+          "contentKey": "waiting-perm"
+        }
+      ]
+    }
+  },
+  {
+    "id": "mb-upd-downloading",
+    "desc": "MenuBar 更新下载中（环形 63%，stub 订阅即回调冻结 percent；未登录 icon 态）",
+    "theme": "dark",
+    "screen": "menu-bar",
+    "auth": null,
+    "update": {
+      "state": "downloading",
+      "percent": 63,
+      "transferred": 39845888,
+      "total": 63245312,
+      "bytesPerSecond": 3145728
+    },
+    "base": {
+      "homePath": "/Users/rl",
+      "viewMode": "Tiling",
+      "focusedId": null,
+      "selectedId": null,
+      "activeSidebarId": null,
+      "maxReached": false,
+      "dragging": null,
+      "dragOver": null,
+      "editing": null,
+      "waitingNotification": null,
+      "terminals": [
+        {
+          "id": "t1",
+          "state": "Running",
+          "cwd": "/Users/rl/dev/muxvo",
+          "isGitRepo": true,
+          "contentKey": "cc-diff"
+        },
+        {
+          "id": "t2",
+          "state": "Running",
+          "cwd": "/Users/rl/work/clients/acme/web-app",
+          "isGitRepo": true,
+          "contentKey": "test-watch"
+        }
+      ]
+    }
+  },
+  {
+    "id": "mb-upd-error",
+    "desc": "MenuBar 更新下载失败（红 ✕ + 空环；fade-out 动画被截图侧禁用静止可截）",
+    "theme": "dark",
+    "screen": "menu-bar",
+    "auth": null,
+    "update": { "state": "error" },
+    "base": {
+      "homePath": "/Users/rl",
+      "viewMode": "Tiling",
+      "focusedId": null,
+      "selectedId": null,
+      "activeSidebarId": null,
+      "maxReached": false,
+      "dragging": null,
+      "dragOver": null,
+      "editing": null,
+      "waitingNotification": null,
+      "terminals": [
+        {
+          "id": "t1",
+          "state": "Running",
+          "cwd": "/Users/rl/dev/muxvo",
+          "isGitRepo": true,
+          "contentKey": "cc-tools"
+        }
+      ]
+    }
+  },
+  {
+    "id": "mb-light",
+    "desc": "浅色主题代表作（focused 组合态：返回平铺+计数 badge+语言+登录态）",
+    "theme": "light",
+    "screen": "menu-bar",
+    "auth": {
+      "username": "ruilin",
+      "email": "ruilin@example.com",
+      "provider": "github",
+      "avatarDataUri": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Crect width='48' height='48' fill='%23e8a748'/%3E%3Ccircle cx='24' cy='18' r='8' fill='%230a0e14'/%3E%3Cpath d='M8 44c0-9 7-14 16-14s16 5 16 14z' fill='%230a0e14'/%3E%3C/svg%3E"
+    },
+    "update": null,
+    "base": {
+      "homePath": "/Users/rl",
+      "viewMode": "Focused",
+      "focusedId": "t1",
+      "selectedId": null,
+      "activeSidebarId": null,
+      "maxReached": false,
+      "dragging": null,
+      "dragOver": null,
+      "editing": null,
+      "waitingNotification": null,
+      "terminals": [
+        {
+          "id": "t1",
+          "state": "Running",
+          "cwd": "/Users/rl/dev/muxvo",
+          "customName": "主屏",
+          "isGitRepo": true,
+          "contentKey": "cc-codegen"
+        },
+        {
+          "id": "t2",
+          "state": "Running",
+          "cwd": "/Users/rl/work/clients/acme/web-app",
+          "isGitRepo": true,
+          "contentKey": "build-log"
+        },
+        {
+          "id": "t3",
+          "state": "WaitingInput",
+          "cwd": "/opt/services/gateway",
+          "isGitRepo": false,
+          "contentKey": "waiting-perm"
+        }
+      ]
+    }
+  }
+]

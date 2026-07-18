@@ -1,0 +1,199 @@
+{
+  "chat-projects": [
+    {
+      "projectHash": "-Users-rl-dev-muxvo",
+      "displayPath": "/Users/rl/dev/muxvo",
+      "displayName": "muxvo",
+      "sessionCount": 6,
+      "totalSize": 8654848,
+      "lastActivity": "2026-06-01T06:30:00.000Z"
+    },
+    {
+      "projectHash": "codex--Users-rl-dev-vivaia-ads",
+      "displayPath": "/Users/rl/dev/vivaia-ads",
+      "displayName": "vivaia-ads",
+      "sessionCount": 3,
+      "totalSize": 2252800,
+      "lastActivity": "2026-05-31T01:15:00.000Z",
+      "source": "codex"
+    },
+    {
+      "projectHash": "-Users-rl-dev-skilox",
+      "displayPath": "/Users/rl/dev/skilox",
+      "displayName": "skilox",
+      "sessionCount": 2,
+      "totalSize": 393216,
+      "lastActivity": "2026-05-28T09:00:00.000Z"
+    },
+    {
+      "projectHash": "-Users-rl-Nutstore-Files-notes",
+      "displayPath": "/Users/rl/Nutstore_Files/notes",
+      "displayName": "notes",
+      "sessionCount": 1,
+      "totalSize": 51200,
+      "lastActivity": "2026-05-18T14:00:00.000Z"
+    }
+  ],
+  "chat-sessions": [
+    {
+      "sessionId": "s1-pty-fix",
+      "projectHash": "-Users-rl-dev-muxvo",
+      "title": "fix: PTY spawn ENOENT 崩溃排查与修复",
+      "startedAt": "2026-06-01T06:21:00.000Z",
+      "lastModified": "2026-06-01T06:30:00.000Z",
+      "fileSize": 245760,
+      "source": "claude-code",
+      "cwd": "/Users/rl/dev/muxvo"
+    },
+    {
+      "sessionId": "s2-worktree",
+      "projectHash": "-Users-rl-dev-muxvo",
+      "title": "feat: 重构 worktree 生命周期管理，创建、合并检测与删除全链路打通，附带回归测试与文档",
+      "startedAt": "2026-06-01T02:10:00.000Z",
+      "lastModified": "2026-06-01T03:05:00.000Z",
+      "fileSize": 1258291,
+      "source": "claude-code",
+      "worktreeLabel": "wt-2",
+      "cwd": "/Users/rl/dev/muxvo/.worktrees/wt-2"
+    },
+    {
+      "sessionId": "s3-q3-plan",
+      "projectHash": "codex--Users-rl-dev-vivaia-ads",
+      "title": "plan: Q3 投放预算分配与素材迭代方案",
+      "startedAt": "2026-05-31T00:40:00.000Z",
+      "lastModified": "2026-05-31T01:15:00.000Z",
+      "fileSize": 76800,
+      "source": "codex"
+    },
+    {
+      "sessionId": "s4-landing",
+      "projectHash": "codex--Users-rl-dev-vivaia-ads",
+      "title": "landing 页三版文案对比与选型",
+      "startedAt": "2026-05-31T00:05:00.000Z",
+      "lastModified": "2026-05-31T00:20:00.000Z",
+      "fileSize": 15360,
+      "source": "gemini"
+    },
+    {
+      "sessionId": "s5-tile-refactor",
+      "projectHash": "-Users-rl-dev-muxvo",
+      "title": "帮我 refactor tile 渲染层，抽出公共 hooks",
+      "customTitle": "tile 渲染重构",
+      "startedAt": "2026-05-30T11:50:00.000Z",
+      "lastModified": "2026-05-30T12:40:00.000Z",
+      "fileSize": 524288,
+      "source": "claude-code",
+      "cwd": "/Users/rl/dev/muxvo"
+    },
+    {
+      "sessionId": "s6-quiz-bug",
+      "projectHash": "-Users-rl-dev-skilox",
+      "title": "bug: quiz.json 题目重复注入排查",
+      "startedAt": "2026-05-28T08:20:00.000Z",
+      "lastModified": "2026-05-28T09:00:00.000Z",
+      "fileSize": 102400,
+      "source": "claude-code"
+    },
+    {
+      "sessionId": "s7-deploy",
+      "projectHash": "-Users-rl-dev-skilox",
+      "title": "部署脚本收敛：nginx 配置与 systemd 服务",
+      "startedAt": "2026-05-27T13:00:00.000Z",
+      "lastModified": "2026-05-27T13:30:00.000Z",
+      "fileSize": 61440,
+      "source": "claude-code"
+    },
+    {
+      "sessionId": "s8-i18n",
+      "projectHash": "-Users-rl-dev-muxvo",
+      "title": "feature: i18n 文案抽取与语言切换",
+      "startedAt": "2026-05-26T09:30:00.000Z",
+      "lastModified": "2026-05-26T10:10:00.000Z",
+      "fileSize": 327680,
+      "source": "claude-code"
+    },
+    {
+      "sessionId": "s9-ads-report",
+      "projectHash": "codex--Users-rl-dev-vivaia-ads",
+      "title": "投放周报自动生成器",
+      "startedAt": "2026-05-25T08:00:00.000Z",
+      "lastModified": "2026-05-25T08:45:00.000Z",
+      "fileSize": 40960,
+      "source": "codex"
+    },
+    {
+      "sessionId": "s10-notes",
+      "projectHash": "-Users-rl-Nutstore-Files-notes",
+      "title": "整理会议纪要并输出行动项",
+      "startedAt": "2026-05-18T13:20:00.000Z",
+      "lastModified": "2026-05-18T14:00:00.000Z",
+      "fileSize": 51200,
+      "source": "claude-code"
+    },
+    {
+      "sessionId": "s11-metal",
+      "projectHash": "-Users-rl-dev-muxvo",
+      "title": "Metal 渲染管线 plan 评审",
+      "startedAt": "2026-05-15T02:00:00.000Z",
+      "lastModified": "2026-05-15T02:30:00.000Z",
+      "fileSize": 143360,
+      "source": "claude-code"
+    },
+    {
+      "sessionId": "s12-ci",
+      "projectHash": "-Users-rl-dev-muxvo",
+      "title": "CI 矩阵拆分与缓存加速",
+      "startedAt": "2026-05-12T10:40:00.000Z",
+      "lastModified": "2026-05-12T11:20:00.000Z",
+      "fileSize": 81920,
+      "source": "claude-code"
+    }
+  ],
+  "chat-messages": [
+    {
+      "uuid": "u1",
+      "type": "user",
+      "sessionId": "s1-pty-fix",
+      "cwd": "/Users/rl/dev/muxvo",
+      "timestamp": "2026-06-01T06:21:05.000Z",
+      "content": "终端启动偶发崩溃，日志里有 ENOENT，帮我排查 PTY spawn 失败的原因"
+    },
+    {
+      "uuid": "a1",
+      "type": "assistant",
+      "sessionId": "s1-pty-fix",
+      "cwd": "/Users/rl/dev/muxvo",
+      "timestamp": "2026-06-01T06:23:18.000Z",
+      "content": [
+        {
+          "type": "text",
+          "text": "已定位到问题：`spawn` 时 **cwd 不存在** 会抛 ENOENT。"
+        },
+        {
+          "type": "tool_use",
+          "name": "Bash",
+          "input": {
+            "command": "ls -la /tmp/muxvo"
+          }
+        },
+        {
+          "type": "tool_result",
+          "content": "ls: /tmp/muxvo: No such file or directory"
+        }
+      ]
+    },
+    {
+      "uuid": "a2",
+      "type": "assistant",
+      "sessionId": "s1-pty-fix",
+      "cwd": "/Users/rl/dev/muxvo",
+      "timestamp": "2026-06-01T06:29:30.000Z",
+      "content": [
+        {
+          "type": "text",
+          "text": "补丁如下：\n\n```bash\n# 校验 cwd 存在后再 spawn\nnpm run preflight\n```"
+        }
+      ]
+    }
+  ]
+}

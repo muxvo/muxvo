@@ -1,0 +1,111 @@
+[
+  {
+    "id": "chat-full",
+    "desc": "聊天历史三栏满载（工具调用展开块/长标题截断/中栏滚动条/resume bar/archive banner 静态变体同图）",
+    "theme": "dark",
+    "screen": "chat-history",
+    "chat": {
+      "banner": true,
+      "archiveEnabled": true,
+      "selected": "s1-pty-fix",
+      "expandToolCall": true,
+      "search": null,
+      "detailPending": false,
+      "projects": "@chat-projects",
+      "sessions": "@chat-sessions",
+      "messages": "@chat-messages"
+    }
+  },
+  {
+    "id": "chat-empty",
+    "desc": "空态代表（无项目/无会话；legacy 实渲染「暂无会话记录」，CHAT_L1_15 偏差见 behavior spec §0）",
+    "theme": "dark",
+    "screen": "chat-history",
+    "chat": {
+      "banner": false,
+      "selected": null,
+      "search": null,
+      "projects": [],
+      "sessions": [],
+      "messages": []
+    }
+  },
+  {
+    "id": "chat-skeleton",
+    "desc": "detail 骨架屏（getSession 永不 resolve 冻结 loading；禁动画钉死 pulse）",
+    "theme": "dark",
+    "screen": "chat-history",
+    "chat": {
+      "banner": false,
+      "selected": "s1-pty-fix",
+      "detailPending": true,
+      "search": null,
+      "projects": "@chat-projects",
+      "sessions": "@chat-sessions",
+      "messages": []
+    }
+  },
+  {
+    "id": "chat-search-hit",
+    "desc": "搜索有结果（标题匹配/内容匹配分节 + mark 高亮 + 计数徽记 + snippet 预览替换 + 占位卡）",
+    "theme": "dark",
+    "screen": "chat-history",
+    "chat": {
+      "banner": false,
+      "selected": null,
+      "search": {
+        "query": "worktree",
+        "results": [
+          {
+            "projectHash": "-Users-rl-dev-muxvo",
+            "sessionId": "s5-tile-refactor",
+            "snippet": "把 tile 状态提升前，先检查 worktree 目录是否已注册，未注册就回退主仓路径",
+            "timestamp": "2026-05-30T12:38:00.000Z"
+          },
+          {
+            "projectHash": "-Users-rl-dev-skilox",
+            "sessionId": "s-archived-cleanup",
+            "snippet": "给 worktree 清理脚本加一个每日定时任务，避免磁盘占用累积",
+            "timestamp": "2026-05-20T02:00:00.000Z"
+          }
+        ]
+      },
+      "projects": "@chat-projects",
+      "sessions": "@chat-sessions",
+      "messages": []
+    }
+  },
+  {
+    "id": "chat-search-empty",
+    "desc": "搜索无结果（无匹配会话 + 0 个结果徽记）",
+    "theme": "dark",
+    "screen": "chat-history",
+    "chat": {
+      "banner": false,
+      "selected": null,
+      "search": {
+        "query": "GraphQL",
+        "results": []
+      },
+      "projects": "@chat-projects",
+      "sessions": "@chat-sessions",
+      "messages": []
+    }
+  },
+  {
+    "id": "chat-light",
+    "desc": "light 主题代表作（数据同 chat-full；user 气泡 #2563eb / 高亮与 hljs 走 light 色版）",
+    "theme": "light",
+    "screen": "chat-history",
+    "chat": {
+      "banner": true,
+      "archiveEnabled": true,
+      "selected": "s1-pty-fix",
+      "expandToolCall": true,
+      "search": null,
+      "projects": "@chat-projects",
+      "sessions": "@chat-sessions",
+      "messages": "@chat-messages"
+    }
+  }
+]

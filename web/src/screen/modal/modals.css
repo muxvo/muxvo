@@ -1,0 +1,1055 @@
+/* B2 modal 簇按屏样式（specs/behavior/*.md §2）——公共 chrome 见 styles/surfaces.css。
+   像素值与 legacy 对齐：SettingsModal.css / LoginModal.css / WorkspaceManagerModal.css /
+   WhatsNewModal.css / CloseConfirmDialog.css。dom-assert 态（error-bar/terms-confirm/loading/
+   register 表单等）样式随后续批接入，本批只收录 8 张 golden 触达的面。 */
+
+/* ============ settings-modal（420px） ============ */
+
+.settings-modal {
+  width: 420px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.settings-modal__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-modal__title svg {
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+}
+
+.settings-modal__body {
+  padding: 8px 20px 20px;
+}
+
+.settings-modal__section {
+  margin-top: 16px;
+}
+
+.settings-modal__section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.settings-modal__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.settings-modal__label {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.settings-modal__desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.settings-modal__stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-card);
+}
+
+.settings-modal__stepper-btn {
+  width: 32px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-modal__stepper-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--accent);
+}
+
+.settings-modal__stepper-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.settings-modal__stepper-value {
+  width: 36px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  line-height: 30px;
+}
+
+.settings-modal__toggle-group {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.settings-modal__toggle-btn {
+  padding: 5px 14px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.settings-modal__toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.settings-modal__toggle-btn--active {
+  background: var(--accent);
+  color: #000;
+  font-weight: 600;
+}
+
+/* ☆M6 主题批：外观区「终端配色」下拉（settings-modal.md §3/§4）。appearance:none + 自绘
+   chevron（内联 SVG data-URI，%23=#）避系统 select popup 的非确定性——golden 只截闭合态。
+   控件外观对齐 stepper/tour-btn（bg-card + border + 圆角 8px）。 */
+.settings-modal__select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 6px 30px 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.settings-modal__select:hover {
+  border-color: var(--accent);
+}
+
+[data-theme='light'] .settings-modal__select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23636366' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+}
+
+.settings-modal__tour-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.settings-modal__tour-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* 终端等待检测行按钮（wait-detector.md §7 单绑定入口，2026-07-16）：外观同 __tour-btn，
+   独立类名避开 Live 委托 tour-btn 分支的 section/button 序算术（settings-modal.md §3）。
+   仅 live 态渲染（golden fixture 不传 hooks），不入 golden。 */
+.settings-modal__hook-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.settings-modal__hook-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.settings-modal__hook-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.settings-modal__shortcut-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.settings-modal__shortcut-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+}
+
+.settings-modal__shortcut-item + .settings-modal__shortcut-item {
+  border-top: 1px solid var(--border);
+}
+
+.settings-modal__shortcut-label {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.settings-modal__kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  padding: 2px 7px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  box-shadow: 0 1px 0 var(--border);
+  white-space: nowrap;
+}
+
+.settings-modal__kbd-group {
+  display: flex;
+  gap: 4px;
+}
+
+.settings-modal__badge-toggle {
+  display: flex;
+  gap: 3px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+.settings-modal__badge-toggle-btn {
+  padding: 5px 11px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.settings-modal__badge-toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.settings-modal__badge-toggle-btn--active {
+  background: var(--accent);
+  color: #000;
+  font-weight: 600;
+}
+
+[data-theme='light'] .settings-modal__badge-toggle-btn--active {
+  color: #fff;
+}
+
+.settings-modal__badge-sub-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0 0;
+}
+
+.settings-modal__badge-sub-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.settings-modal__badge-sub-label::before {
+  content: '';
+  width: 12px;
+  height: 1px;
+  background: var(--border);
+}
+
+.settings-modal__badge-sub-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-modal__badge-sub-unit {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.settings-modal__stepper-input {
+  min-width: 36px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  line-height: 30px;
+  font-family: inherit;
+  -moz-appearance: textfield;
+  outline: none;
+  padding: 0 4px;
+}
+
+.settings-modal__stepper-input::-webkit-inner-spin-button,
+.settings-modal__stepper-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.settings-modal__cwd-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  max-width: 60%;
+}
+
+.settings-modal__cwd-path {
+  font-size: 11px;
+  color: var(--text-secondary);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: left;
+}
+
+.settings-modal__whats-new-link {
+  color: var(--accent);
+  text-decoration: none;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.settings-modal__whats-new-link:hover {
+  text-decoration: underline;
+}
+
+[data-theme='light'] .settings-modal__toggle-btn--active {
+  color: #fff;
+}
+
+/* ============ login-modal（380px；头部 padding/无底边框为本屏特例） ============ */
+
+.login-modal {
+  position: relative;
+  width: 380px;
+  overflow: hidden;
+}
+
+.login-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 0;
+}
+
+.login-modal__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+.login-modal__back-btn,
+.login-modal__close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.login-modal__back-btn:hover,
+.login-modal__close-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.login-modal__body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.login-modal__oauth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.login-modal__oauth-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--text-muted);
+}
+
+.login-modal__oauth-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.login-modal__oauth-btn--github:hover:not(:disabled) {
+  border-color: var(--text-secondary);
+}
+
+.login-modal__oauth-btn--google:hover:not(:disabled) {
+  border-color: #4285f4;
+}
+
+.login-modal__oauth-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.login-modal__email-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.login-modal__field {
+  display: flex;
+  gap: 8px;
+}
+
+.login-modal__input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.login-modal__input:focus {
+  border-color: var(--accent);
+}
+
+.login-modal__input::placeholder {
+  color: var(--text-muted);
+}
+
+.login-modal__input:disabled {
+  opacity: 0.5;
+}
+
+.login-modal__login-btn {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: var(--accent);
+  color: var(--bg-deep);
+}
+
+.login-modal__login-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.login-modal__login-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.login-modal__links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding: 0 2px;
+}
+
+.login-modal__link {
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+}
+
+.login-modal__link:hover {
+  text-decoration: underline;
+}
+
+/* ============ workspace-manager-modal（480px） ============ */
+
+.ws-manager {
+  width: 480px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.ws-manager__body {
+  padding: 12px 20px 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.ws-manager__empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 24px 0;
+}
+
+.ws-manager__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-subtle, var(--border));
+}
+
+.ws-manager__item:last-child {
+  border-bottom: none;
+}
+
+.ws-manager__name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-manager__name:hover {
+  border-color: var(--border);
+  background: var(--bg-card);
+}
+
+.ws-manager__name-input {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-primary);
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--accent);
+  background: var(--bg-card);
+  outline: none;
+  min-width: 0;
+}
+
+.ws-manager__meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.ws-manager__delete {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+
+.ws-manager__delete:hover {
+  color: var(--danger, #e74c3c);
+  background: var(--bg-hover);
+}
+
+/* ============ whats-new-modal（460px） ============ */
+
+.whats-new__modal {
+  width: 460px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.whats-new__header {
+  flex-shrink: 0;
+}
+
+.whats-new__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.whats-new__title svg {
+  color: var(--accent);
+}
+
+.whats-new__body {
+  padding: 16px 20px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.whats-new__current {
+  margin-bottom: 16px;
+}
+
+.whats-new__version-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+.whats-new__version-date {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.whats-new__section {
+  margin-bottom: 10px;
+}
+
+.whats-new__section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.whats-new__list {
+  margin: 0;
+  padding: 0 0 0 16px;
+}
+
+.whats-new__item {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.whats-new__empty {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 20px 0;
+}
+
+.whats-new__older {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.whats-new__older-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.whats-new__older-entry {
+  margin-bottom: 4px;
+}
+
+.whats-new__older-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 8px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: left;
+}
+
+.whats-new__older-toggle:hover {
+  background: var(--bg-hover);
+}
+
+.whats-new__chevron {
+  display: inline-block;
+  font-size: 10px;
+  transition: transform 0.15s;
+  color: var(--text-muted);
+}
+
+.whats-new__chevron--open {
+  transform: rotate(90deg);
+}
+
+.whats-new__older-content {
+  padding: 4px 8px 8px 22px;
+}
+
+.whats-new__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.whats-new__dismiss {
+  padding: 6px 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--accent);
+  color: #000;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.whats-new__dismiss:hover {
+  opacity: 0.9;
+}
+
+[data-theme='light'] .whats-new__dismiss {
+  color: #fff;
+}
+
+/* ============ close-confirm-dialog（z-index 1000，无 blur） ============ */
+
+/* .app-close-overlay：整 app 退出确认遮罩（DOGFOOD_M3_19，legacy 类名）。与终端关闭遮罩同款全窗
+   backdrop + 居中，复用同一 .close-confirm-dialog 视觉体（标题 + 两态文案 + 退出/取消）。 */
+.close-confirm-overlay,
+.app-close-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.close-confirm-title {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.close-confirm-dialog {
+  background: var(--bg-card, #1e2430);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 32px 40px;
+  min-width: 400px;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.close-confirm-message {
+  margin: 0 0 24px;
+  font-size: 15px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.close-confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.close-confirm-cancel,
+.close-confirm-ok {
+  padding: 8px 24px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  /* legacy 实况：--border-color 两侧均未定义且无 fallback → 声明 invalid →
+     border-color 落初始值 currentColor（spec close-confirm-dialog.md §2），逐字保留 */
+  border: 1px solid var(--border-color);
+  font-weight: 500;
+}
+
+.close-confirm-cancel {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.close-confirm-cancel:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.close-confirm-ok {
+  background: var(--accent, #e8a748);
+  color: var(--bg-deep, #0d1117);
+  border-color: transparent;
+}
+
+.close-confirm-ok:hover {
+  opacity: 0.9;
+}
+
+/* ============ rename-blur-guard（DOGFOOD_M3_15，live 门控挂卸式 portal） ============ */
+/* 改名编辑期全窗透明岛：仅为 data-hit-island 采集提供全窗 rect（native 拦回洞区点击）；
+   pointer-events:none 使 DOM 侧零遮挡（点击行为由 document 捕获监听承担），零 z-index 纠纷。 */
+.rename-blur-guard {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: transparent;
+}
+
+/* ── login-modal B5 加性态（右上角批；legacy LoginModal.css 逐值——error-bar/验证码行/条款二层/loading）── */
+.login-modal__error-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 12px 20px 0;
+  padding: 8px 12px;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  border-radius: 6px;
+  color: var(--error);
+  font-size: 12px;
+}
+.login-modal__field--code-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.login-modal__field--code-row .login-modal__input {
+  flex: 1;
+  min-width: 0;
+}
+.login-modal__send-code-btn {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: var(--accent-muted);
+  color: var(--accent);
+}
+.login-modal__send-code-btn:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--bg-deep);
+}
+.login-modal__send-code-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.login-modal__reset-success {
+  padding: 8px 4px;
+  font-size: 13px;
+  color: var(--success);
+}
+.login-modal__terms-confirm-backdrop {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 12px;
+  z-index: 10;
+}
+.login-modal__terms-confirm {
+  width: 300px;
+  padding: 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-dialog);
+}
+.login-modal__terms-confirm-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+.login-modal__terms-confirm-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+.login-modal__terms-link {
+  background: transparent;
+  border: none;
+  padding: 0 2px;
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+.login-modal__terms-link:hover {
+  color: var(--accent-hover);
+}
+.login-modal__terms-confirm-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.login-modal__terms-confirm-cancel {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-sans);
+}
+.login-modal__terms-confirm-cancel:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.login-modal__terms-confirm-agree {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  background: var(--accent);
+  color: var(--bg-deep);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-sans);
+}
+.login-modal__terms-confirm-agree:hover {
+  background: var(--accent-hover);
+}
+.login-modal__loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+}
+.login-modal__spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: loginSpinner 0.6s linear infinite;
+}
+@keyframes loginSpinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.login-modal__error-dismiss {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: var(--error);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}

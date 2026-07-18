@@ -1,0 +1,5 @@
+# 基础彩排剧本：Notification 亮红 → 停顿 → UserPromptSubmit 清红（wait-detector.md §9 端到端彩排）。
+# 每行：<event> [delayMsAfterSend] [raw-json...]
+Notification 800 {"message":"需要你确认"}
+Stop 800 {"reason":"reply-done"}
+UserPromptSubmit 0 {"prompt":"继续"}

@@ -1,0 +1,19 @@
+[
+  {
+    "id": "cc-dialog",
+    "desc": "终端关闭确认对话框（fixture 带 processName=claude；legacy 实况文案不渲染进程名，见 spec §1）",
+    "theme": "dark",
+    "screen": "close-confirm-dialog",
+    "closeConfirm": { "terminalId": "t1", "processName": "claude" }
+  },
+  {
+    "id": "cc-light",
+    "desc": "浅色主题代表作（终端关闭带 processName）",
+    "theme": "light",
+    "screen": "close-confirm-dialog",
+    "closeConfirm": {
+      "terminalId": "t1",
+      "processName": "claude"
+    }
+  }
+]

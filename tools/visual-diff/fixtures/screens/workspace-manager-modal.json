@@ -1,0 +1,117 @@
+[
+  {
+    "id": "ws-list",
+    "desc": "工作区管理弹窗：3 行列表 + 第 2 行行内编辑中（同图，含长名称省略样本）",
+    "theme": "dark",
+    "screen": "workspace-manager-modal",
+    "panel": { "open": ["WORKSPACE_MANAGER"] },
+    "workspace": {
+      "workspaces": [
+        {
+          "name": "默认工作区",
+          "savedAt": "2026-05-01T10:00:00.000Z",
+          "terminals": [
+            { "cwd": "/Users/rl/dev/muxvo" },
+            { "cwd": "/Users/rl/dev/muxvo" },
+            { "cwd": "/opt/services/gateway" },
+            { "cwd": "/Users/rl/notes" }
+          ]
+        },
+        {
+          "name": "前端联调",
+          "savedAt": "2026-05-12T08:30:00.000Z",
+          "terminals": [
+            { "cwd": "/Users/rl/work/clients/acme/web-app" },
+            { "cwd": "/Users/rl/work/clients/acme/api" }
+          ]
+        },
+        {
+          "name": "长名称样本——客户 ACME 项目全家桶工作区（含网关、监控与压测脚本集合）",
+          "savedAt": "2026-05-28T16:45:00.000Z",
+          "terminals": [
+            { "cwd": "/Users/rl/work/clients/acme/web-app" },
+            { "cwd": "/Users/rl/work/clients/acme/api" },
+            { "cwd": "/Users/rl/work/clients/acme/gateway" },
+            { "cwd": "/Users/rl/work/clients/acme/monitoring" },
+            { "cwd": "/Users/rl/work/clients/acme/loadtest" },
+            { "cwd": "/Users/rl/work/clients/acme/docs" }
+          ]
+        }
+      ],
+      "editing": { "index": 1, "value": "frontend-debug" }
+    }
+  },
+  {
+    "id": "ws-light",
+    "desc": "浅色主题代表作（列表 + 行内编辑中）",
+    "theme": "light",
+    "screen": "workspace-manager-modal",
+    "panel": {
+      "open": [
+        "WORKSPACE_MANAGER"
+      ]
+    },
+    "workspace": {
+      "workspaces": [
+        {
+          "name": "默认工作区",
+          "savedAt": "2026-05-01T10:00:00.000Z",
+          "terminals": [
+            {
+              "cwd": "/Users/rl/dev/muxvo"
+            },
+            {
+              "cwd": "/Users/rl/dev/muxvo"
+            },
+            {
+              "cwd": "/opt/services/gateway"
+            },
+            {
+              "cwd": "/Users/rl/notes"
+            }
+          ]
+        },
+        {
+          "name": "前端联调",
+          "savedAt": "2026-05-12T08:30:00.000Z",
+          "terminals": [
+            {
+              "cwd": "/Users/rl/work/clients/acme/web-app"
+            },
+            {
+              "cwd": "/Users/rl/work/clients/acme/api"
+            }
+          ]
+        },
+        {
+          "name": "长名称样本——客户 ACME 项目全家桶工作区（含网关、监控与压测脚本集合）",
+          "savedAt": "2026-05-28T16:45:00.000Z",
+          "terminals": [
+            {
+              "cwd": "/Users/rl/work/clients/acme/web-app"
+            },
+            {
+              "cwd": "/Users/rl/work/clients/acme/api"
+            },
+            {
+              "cwd": "/Users/rl/work/clients/acme/gateway"
+            },
+            {
+              "cwd": "/Users/rl/work/clients/acme/monitoring"
+            },
+            {
+              "cwd": "/Users/rl/work/clients/acme/loadtest"
+            },
+            {
+              "cwd": "/Users/rl/work/clients/acme/docs"
+            }
+          ]
+        }
+      ],
+      "editing": {
+        "index": 1,
+        "value": "frontend-debug"
+      }
+    }
+  }
+]

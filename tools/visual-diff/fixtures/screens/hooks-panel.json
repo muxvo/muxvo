@@ -1,0 +1,141 @@
+[
+  {
+    "id": "hk-list",
+    "desc": "Hooks 列表+详情（2 事件组 3 hook、matcher 有/无、command/prompt badge 混合；选中 PreToolUse:0:0 详情含 matcher/timeout/statusMessage/once）",
+    "theme": "dark",
+    "screen": "hooks-panel",
+    "homePath": "/Users/rl",
+    "hooks": {
+      "settings": {
+        "hooks": {
+          "PreToolUse": [
+            {
+              "matcher": "Bash",
+              "hooks": [
+                {
+                  "type": "command",
+                  "command": "~/.claude/hooks/guard-rm.sh",
+                  "timeout": 5000,
+                  "statusMessage": "校验危险命令",
+                  "once": true
+                }
+              ]
+            },
+            {
+              "hooks": [
+                {
+                  "type": "prompt",
+                  "command": "检查即将执行的工具调用是否涉及生产环境，若是则要求二次确认"
+                }
+              ]
+            }
+          ],
+          "Stop": [
+            {
+              "hooks": [
+                {
+                  "type": "command",
+                  "command": "afplay /System/Library/Sounds/Glass.aiff",
+                  "async": true,
+                  "statusMessage": "播放完成提示音"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "selectedId": "global:PreToolUse:0:0",
+      "form": false
+    }
+  },
+  {
+    "id": "hk-form",
+    "desc": "Hooks 编辑表单（选中 PreToolUse:0:0 后点「编辑」；event/matcher/handlerType/command/timeout/statusMessage 预填 + once 勾选）",
+    "theme": "dark",
+    "screen": "hooks-panel",
+    "homePath": "/Users/rl",
+    "hooks": {
+      "settings": {
+        "hooks": {
+          "PreToolUse": [
+            {
+              "matcher": "Bash",
+              "hooks": [
+                {
+                  "type": "command",
+                  "command": "~/.claude/hooks/guard-rm.sh",
+                  "timeout": 5000,
+                  "statusMessage": "校验危险命令",
+                  "once": true
+                }
+              ]
+            }
+          ],
+          "Stop": [
+            {
+              "hooks": [
+                {
+                  "type": "command",
+                  "command": "afplay /System/Library/Sounds/Glass.aiff",
+                  "async": true,
+                  "statusMessage": "播放完成提示音"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "selectedId": "global:PreToolUse:0:0",
+      "form": true
+    }
+  },
+  {
+    "id": "hk-light",
+    "desc": "浅色主题代表作（列表+详情 item badges）",
+    "theme": "light",
+    "screen": "hooks-panel",
+    "homePath": "/Users/rl",
+    "hooks": {
+      "settings": {
+        "hooks": {
+          "PreToolUse": [
+            {
+              "matcher": "Bash",
+              "hooks": [
+                {
+                  "type": "command",
+                  "command": "~/.claude/hooks/guard-rm.sh",
+                  "timeout": 5000,
+                  "statusMessage": "校验危险命令",
+                  "once": true
+                }
+              ]
+            },
+            {
+              "hooks": [
+                {
+                  "type": "prompt",
+                  "command": "检查即将执行的工具调用是否涉及生产环境，若是则要求二次确认"
+                }
+              ]
+            }
+          ],
+          "Stop": [
+            {
+              "hooks": [
+                {
+                  "type": "command",
+                  "command": "afplay /System/Library/Sounds/Glass.aiff",
+                  "async": true,
+                  "statusMessage": "播放完成提示音"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "selectedId": "global:PreToolUse:0:0",
+      "form": false
+    }
+  }
+]

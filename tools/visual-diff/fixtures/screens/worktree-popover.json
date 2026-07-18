@@ -1,0 +1,179 @@
+[
+  {
+    "id": "wt-list",
+    "desc": "Worktree 浮层列表态（main+current 同行、merged+删除✕、新建按钮）",
+    "theme": "dark",
+    "screen": "worktree-popover",
+    "base": {
+      "homePath": "/Users/rl",
+      "viewMode": "Tiling",
+      "focusedId": null,
+      "selectedId": null,
+      "activeSidebarId": null,
+      "maxReached": false,
+      "dragging": null,
+      "dragOver": null,
+      "editing": null,
+      "waitingNotification": null,
+      "terminals": [
+        {
+          "id": "t1",
+          "state": "Running",
+          "cwd": "/Users/rl/dev/muxvo",
+          "isGitRepo": true,
+          "contentKey": "cc-diff"
+        },
+        {
+          "id": "t2",
+          "state": "Running",
+          "cwd": "/Users/rl/work/clients/acme/web-app",
+          "isGitRepo": true,
+          "contentKey": "build-log"
+        }
+      ]
+    },
+    "worktree": {
+      "terminalId": "t1",
+      "repoPath": "/Users/rl/dev/muxvo",
+      "warning": null,
+      "worktrees": [
+        {
+          "path": "/Users/rl/dev/muxvo",
+          "branch": "main",
+          "isMain": true,
+          "isMerged": false
+        },
+        {
+          "path": "/Users/rl/dev/muxvo/.worktrees/worktree-1",
+          "branch": "feat/m2-popover",
+          "isMain": false,
+          "isMerged": false
+        },
+        {
+          "path": "/Users/rl/dev/muxvo/.worktrees/worktree-2",
+          "branch": "fix/scroll-jitter",
+          "isMain": false,
+          "isMerged": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "wt-warning",
+    "desc": "Worktree 浮层大仓警告态（.git 2048 MB 横幅 + 列表）",
+    "theme": "dark",
+    "screen": "worktree-popover",
+    "base": {
+      "homePath": "/Users/rl",
+      "viewMode": "Tiling",
+      "focusedId": null,
+      "selectedId": null,
+      "activeSidebarId": null,
+      "maxReached": false,
+      "dragging": null,
+      "dragOver": null,
+      "editing": null,
+      "waitingNotification": null,
+      "terminals": [
+        {
+          "id": "t1",
+          "state": "Running",
+          "cwd": "/Users/rl/dev/muxvo",
+          "isGitRepo": true,
+          "contentKey": "idle-prompt"
+        },
+        {
+          "id": "t2",
+          "state": "Running",
+          "cwd": "/Users/rl/work/clients/acme/web-app",
+          "isGitRepo": true,
+          "contentKey": "build-log"
+        }
+      ]
+    },
+    "worktree": {
+      "terminalId": "t1",
+      "repoPath": "/Users/rl/dev/muxvo",
+      "warning": { "sizeMB": 2048, "message": "Repository .git directory is large" },
+      "worktrees": [
+        {
+          "path": "/Users/rl/dev/muxvo",
+          "branch": "main",
+          "isMain": true,
+          "isMerged": false
+        },
+        {
+          "path": "/Users/rl/dev/muxvo/.worktrees/worktree-1",
+          "branch": "feat/m2-popover",
+          "isMain": false,
+          "isMerged": false
+        },
+        {
+          "path": "/Users/rl/dev/muxvo/.worktrees/worktree-2",
+          "branch": "fix/scroll-jitter",
+          "isMain": false,
+          "isMerged": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "wt-light",
+    "desc": "浅色主题代表作（列表态 main/current/merged badge）",
+    "theme": "light",
+    "screen": "worktree-popover",
+    "base": {
+      "homePath": "/Users/rl",
+      "viewMode": "Tiling",
+      "focusedId": null,
+      "selectedId": null,
+      "activeSidebarId": null,
+      "maxReached": false,
+      "dragging": null,
+      "dragOver": null,
+      "editing": null,
+      "waitingNotification": null,
+      "terminals": [
+        {
+          "id": "t1",
+          "state": "Running",
+          "cwd": "/Users/rl/dev/muxvo",
+          "isGitRepo": true,
+          "contentKey": "cc-diff"
+        },
+        {
+          "id": "t2",
+          "state": "Running",
+          "cwd": "/Users/rl/work/clients/acme/web-app",
+          "isGitRepo": true,
+          "contentKey": "build-log"
+        }
+      ]
+    },
+    "worktree": {
+      "terminalId": "t1",
+      "repoPath": "/Users/rl/dev/muxvo",
+      "warning": null,
+      "worktrees": [
+        {
+          "path": "/Users/rl/dev/muxvo",
+          "branch": "main",
+          "isMain": true,
+          "isMerged": false
+        },
+        {
+          "path": "/Users/rl/dev/muxvo/.worktrees/worktree-1",
+          "branch": "feat/m2-popover",
+          "isMain": false,
+          "isMerged": false
+        },
+        {
+          "path": "/Users/rl/dev/muxvo/.worktrees/worktree-2",
+          "branch": "fix/scroll-jitter",
+          "isMain": false,
+          "isMerged": true
+        }
+      ]
+    }
+  }
+]

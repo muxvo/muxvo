@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"019f34e4-c439-7ae0-830f-48fc471595d1"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"I just reviewed `sum.js`."}}
+{"type":"turn.completed","usage":{"input_tokens":46265,"cached_input_tokens":19584,"output_tokens":547,"reasoning_output_tokens":326}}

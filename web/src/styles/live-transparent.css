@@ -1,0 +1,67 @@
+/* dogfood②修复 F1/F4（bridge v2 洞透明化）—— 仅真 WKWebView 宿主（<html class="muxvo-live">）生效。
+   铁律（草案 §6 六道闸）：本文件只允许新增 .muxvo-live 前缀规则，绝不改任何既有 class 的既有声明。
+   ?screenshot=1 永不加 muxvo-live class（bridge/client 零执行）→ golden/current 截图逐字节零影响。 */
+
+/* 收起边栏（term-grid §11，批A）为何零打孔：.min-rail 自带不透明 --bg-elevated 背景、内部无
+   .tile-term-hole（收起终端不渲洞，layoutReport 无其 rect → native surface detach）；边栏矩形正后方
+   无洞，native 侧此区不穿透 → 边栏观感与非 live 一致，无需任何透明化规则（M6 批B 教训：显式记录「为何不打孔」）。 */
+
+/* 列表模式（term-list-mode.md，批B）为何零新增打孔（复核结论 2026-07-11）：详情区 .term-list__detail
+   无自有背景，其内选中终端 .tile 的洞正后方有背景的祖先只有 .tile（F1 `.muxvo-live .tile` 已打穿）与
+   html/body/#root（已透明化）——与既有网格洞同源，F1 覆盖，零新增规则。左栏 .term-list__nav 自带不透明
+   --bg-elevated 且内部无洞（非选中/收起终端不渲洞）→ 列表区不穿透、观感与非 live 一致。 */
+
+/* === F1：终端透明洞祖先链透明化 ===
+   洞（.tile-term-hole）自身已 transparent；其矩形正后方仍有背景色的祖先只有两处：
+   ① html/body/#root（theme.css 填 --bg-primary）② .tile（term-grid.css 填 --bg-card）。
+   其余祖先（.tile-terminal / cell 包裹层 / .terminal-grid / TerminalScreen 容器）均无背景，本就透明。
+   透明化只打穿「洞矩形正后方」的填充：.tile 的边框/圆角/投影（非背景）保留；.tile-header 自带
+   --bg-primary 背景故 header 观感不变。非终端屏（chat/设置等无洞）整页透明后，露出的底色由
+   native 侧窗口兜底底填 --bg-primary（修复 B，本层依赖之），不会漏怪色。 */
+html.muxvo-live,
+.muxvo-live body,
+.muxvo-live #root {
+  background: transparent;
+}
+
+.muxvo-live .tile {
+  background: transparent;
+}
+
+/* === r9/r14① 详情洞（task-center 屏「接管态或 live 态恰一洞」）===
+   两类洞（.tile-term-hole）共享同一打孔：
+   ① 接管态（paused_human）洞在 .tc-takeover__term 内；
+   ② 交互式 worker live 态（running/awaiting_approval）洞在 .tc-live__term 内（§4 r14① P-5 A 案）。
+   二者态-disjoint（liveTerminalId 与 takeoverTerminalId 互斥），任一时刻至多一枚洞。两条洞的祖先链
+   （.tc-columns/.tc-detail/.tc-term/.tc-takeover__term|.tc-live__term）均无背景，其矩形正后方有背景的
+   祖先仅 .task-center（--bg-primary）。透明化后露出的底色由 native 窗口兜底底填 --bg-primary（同 F1
+   依赖），非洞态观感逐像素等价。 */
+.muxvo-live .task-center {
+  background: transparent;
+}
+
+/* === M6 批B 文件 tab 视图洞（终端 tab 活跃「恰一洞」，2026-07-08 用户验收黑屏回修）===
+   洞（.tile-term-hole）在 .file-tabs-view__content 内；其矩形正后方有背景的祖先恰两层：
+   ① .file-tabs-view（--bg-deep 全幅）② .file-tabs-view__content（--bg-primary）。仅当终端 tab
+   活跃（--hole 修饰类，FileTabsView 挂）才打穿两层——洞矩形外由左栏（--bg-card）/tab 栏
+   （--bg-primary）自有背景盖住，观感不变；文件 tab 活跃无修饰类，两层背景原样。 */
+.muxvo-live .file-tabs-view--hole {
+  background: transparent;
+}
+.muxvo-live .file-tabs-view__content--hole {
+  background: transparent;
+}
+
+/* === F4：文件按钮禁用观感（M3 无 handler，文件面板 M6 才开放）===
+   仅 live 显示禁用观感（降透明度 + 默认光标 + 抑制 hover 反馈）；title 文案在 TileHeader 内经 live
+   门控设置（截图态仍为「文件」，DOM 逐字节不变）。 */
+.muxvo-live .tile-file-btn {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.muxvo-live .tile-file-btn:hover {
+  background: transparent;
+  border-color: transparent;
+  opacity: 0.35;
+}

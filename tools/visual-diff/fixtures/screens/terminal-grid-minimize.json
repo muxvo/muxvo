@@ -1,0 +1,158 @@
+[
+  {
+    "id": "grid-4-min-rail",
+    "desc": "批A 终端收起：4 终端 2 收起（边栏展开 dark；默认折叠故显式 false）——可见网格 2 格 + 左侧 180px 缩略边栏 2 卡（带确定性 lastLine 摘要）",
+    "theme": "dark",
+    "homePath": "/Users/rl",
+    "viewMode": "Tiling",
+    "focusedId": null,
+    "selectedId": "t1",
+    "activeSidebarId": null,
+    "maxReached": false,
+    "dragging": null,
+    "dragOver": null,
+    "editing": null,
+    "waitingNotification": null,
+    "terminals": [
+      {
+        "id": "t1",
+        "state": "Running",
+        "cwd": "/Users/rl/dev/muxvo",
+        "customName": "api-server",
+        "isGitRepo": true,
+        "contentKey": "cc-codegen"
+      },
+      {
+        "id": "t2",
+        "state": "Running",
+        "cwd": "/Users/rl/work/clients/acme/web-app",
+        "isGitRepo": true,
+        "contentKey": "test-watch"
+      },
+      {
+        "id": "t3",
+        "state": "Running",
+        "cwd": "/Users/rl/dev/muxvo/.worktrees/feat-x",
+        "customName": "构建任务",
+        "isGitRepo": true,
+        "contentKey": "build-log",
+        "minimized": true,
+        "lastLine": "✓ build 完成 · 12 tests passed"
+      },
+      {
+        "id": "t4",
+        "state": "WaitingInput",
+        "cwd": "/opt/services/gateway",
+        "isGitRepo": false,
+        "contentKey": "waiting-perm",
+        "minimized": true,
+        "lastLine": "Do you want to proceed? (y/n)"
+      }
+    ],
+    "minRailCollapsed": false
+  },
+  {
+    "id": "grid-min-rail-collapsed",
+    "desc": "批A 边栏折叠细条（dark，默认态）：同 grid-4-min-rail 数据、28px 细条 = 逐收起终端一个状态点（t3 running 绿 + t4 waiting 红），悬停 title=终端名",
+    "theme": "dark",
+    "homePath": "/Users/rl",
+    "viewMode": "Tiling",
+    "focusedId": null,
+    "selectedId": "t1",
+    "activeSidebarId": null,
+    "maxReached": false,
+    "dragging": null,
+    "dragOver": null,
+    "editing": null,
+    "waitingNotification": null,
+    "minRailCollapsed": true,
+    "terminals": [
+      {
+        "id": "t1",
+        "state": "Running",
+        "cwd": "/Users/rl/dev/muxvo",
+        "customName": "api-server",
+        "isGitRepo": true,
+        "contentKey": "cc-codegen"
+      },
+      {
+        "id": "t2",
+        "state": "Running",
+        "cwd": "/Users/rl/work/clients/acme/web-app",
+        "isGitRepo": true,
+        "contentKey": "test-watch"
+      },
+      {
+        "id": "t3",
+        "state": "Running",
+        "cwd": "/Users/rl/dev/muxvo/.worktrees/feat-x",
+        "customName": "构建任务",
+        "isGitRepo": true,
+        "contentKey": "build-log",
+        "minimized": true,
+        "lastLine": "✓ build 完成 · 12 tests passed"
+      },
+      {
+        "id": "t4",
+        "state": "WaitingInput",
+        "cwd": "/opt/services/gateway",
+        "isGitRepo": false,
+        "contentKey": "waiting-perm",
+        "minimized": true,
+        "lastLine": "Do you want to proceed? (y/n)"
+      }
+    ]
+  },
+  {
+    "id": "grid-4-min-rail-light",
+    "desc": "批A 终端收起 light 代表作：同 grid-4-min-rail 布局、light 主题（边栏/卡片/徽标 light token 变体）",
+    "theme": "light",
+    "homePath": "/Users/rl",
+    "viewMode": "Tiling",
+    "focusedId": null,
+    "selectedId": "t1",
+    "activeSidebarId": null,
+    "maxReached": false,
+    "dragging": null,
+    "dragOver": null,
+    "editing": null,
+    "waitingNotification": null,
+    "terminals": [
+      {
+        "id": "t1",
+        "state": "Running",
+        "cwd": "/Users/rl/dev/muxvo",
+        "customName": "api-server",
+        "isGitRepo": true,
+        "contentKey": "cc-codegen"
+      },
+      {
+        "id": "t2",
+        "state": "Running",
+        "cwd": "/Users/rl/work/clients/acme/web-app",
+        "isGitRepo": true,
+        "contentKey": "test-watch"
+      },
+      {
+        "id": "t3",
+        "state": "Running",
+        "cwd": "/Users/rl/dev/muxvo/.worktrees/feat-x",
+        "customName": "构建任务",
+        "isGitRepo": true,
+        "contentKey": "build-log",
+        "minimized": true,
+        "lastLine": "✓ build 完成 · 12 tests passed"
+      },
+      {
+        "id": "t4",
+        "state": "WaitingInput",
+        "cwd": "/opt/services/gateway",
+        "isGitRepo": false,
+        "contentKey": "waiting-perm",
+        "minimized": true,
+        "lastLine": "Do you want to proceed? (y/n)"
+      }
+    ],
+    "minRailCollapsed": false
+  }
+]

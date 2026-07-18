@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "doc": "终端真内容 golden 授权清单（terminal-rendering.md §6）。本清单是「终端 golden」唯一授权来源——**不混用 specs/screens.json**（screens.json 恒为 web 全窗 golden）。",
+    "batch": "M3 批4①",
+    "generatedAt": "2026-07-02",
+    "grid": { "cols": 40, "rows": 12, "font": "Menlo", "size": 14, "scale": 2 },
+    "renderPath": "TerminalRenderer.renderOffscreen（buildInstances→encode→离屏 MTLTexture readback），与视图 draw 同一 encode 路径",
+    "generator": "app/Tests/MuxvoTermGoldenTests/GoldenGenerator.swift（MUXVO_TERM_GOLDEN=1 门控，@testable renderOffscreen）",
+    "output": "tools/term-golden/golden/<id>.png + SHASUMS256.txt",
+    "rules": [
+      "本机字节冻结、即截即 commit、不进 CI（§6，MUXVO_GPU_TESTS/MUXVO_TERM_GOLDEN 门控）",
+      "确定性：隔离会话 spawnShell:false + 固定字节灌入 + 固定 cursorMode；同输入 → PNG 字节稳定",
+      "严禁重生成已有 golden；改渲染=先看 diff 再决定是否授权重截",
+      "无 GPU（MTLCreateSystemDefaultDevice==nil）或非交互 headless：生成器早退，golden 降级『待补』（不造假）"
+    ],
+    "m6ThemeReauth": "M6 主题批（2026-07-07 步1 授权，terminal-theme.md §3）：fg 默认色 0xd0d0d0→0xcccccc 修正（三方一致：REBUILD-PLAN 批2③ 裁决值 + legacy terminal-themes.ts:11 #cccccc + Theme.swift:64 0xCCCCCC；TerminalSession.swift:35 defaultThemeForeground 系占位实现分歧，统一为 0xcccccc）→ 下列 7 张 golden 全部授权重生成（凡渲染默认 fg 文本者字节将变 fg 微调）。实现批修正常量后即截即 commit + 更新 SHASUMS256.txt，人复核 diff 仅 fg 微调后提交（不视为『严禁重生成』违规——本条即授权来源）。"
+  },
+  "goldens": [
+    { "id": "basic-text", "cursor": "hidden", "desc": "基础文本：多行 ASCII + 标点，验证等宽排布 / 基线定位 / 空 cell 底色" },
+    { "id": "ansi16", "cursor": "hidden", "desc": "ANSI 16 色：8 常规 fg + 8 明亮 fg（██）+ 8 背景块，验证 palette 取色" },
+    { "id": "truecolor", "cursor": "hidden", "desc": "24-bit truecolor 背景渐变两条，验证 SGR 38/48;2;r;g;b 直色" },
+    { "id": "cjk-emoji", "cursor": "hidden", "desc": "CJK + emoji 宽字符（含多码点 grapheme cluster），验证宽字符占位 / 彩色 emoji 页" },
+    { "id": "sgr-styles", "cursor": "hidden", "desc": "SGR 样式：粗/斜/下划线/反显/删除线/faint，验证 styleFlags → 渲染" },
+    { "id": "cursor-block", "cursor": "solid", "desc": "实心块光标（solid）落提示符后，验证 cursor 批 mode 0 + 位置" },
+    { "id": "scrollback-mid", "cursor": "hidden", "desc": "scrollback 中位：灌 60 行后上滚 24 行，验证滚动后视口取行" }
+  ],
+  "deferred": [
+    { "id": "selection", "reason": "选区 golden 依赖批4② selection 落地（gesture→vt selection→快照 selectionRanges）；批4② 合入后补授权 + 补截" }
+  ]
+}

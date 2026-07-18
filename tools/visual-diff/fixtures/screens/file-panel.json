@@ -1,0 +1,188 @@
+[
+  {
+    "id": "fp-tree",
+    "desc": "右滑出文件树满载：src 展开（driver 生产 click）+ docs/.github/components 折叠 + 隐藏文件 toggle on（fileConfig.showHiddenFiles）。⚠️ NEW 徽标不可达（FilePanel.mapIpcEntries 不产出 isNew，specs/behavior/file-panel.md §0），以运行实况为准",
+    "theme": "dark",
+    "screen": "file-panel",
+    "base": {
+      "homePath": "/Users/rl",
+      "viewMode": "Tiling",
+      "focusedId": null,
+      "selectedId": null,
+      "activeSidebarId": null,
+      "maxReached": false,
+      "dragging": null,
+      "dragOver": null,
+      "editing": null,
+      "waitingNotification": null,
+      "terminals": [
+        {
+          "id": "t1",
+          "state": "Running",
+          "cwd": "/Users/rl/dev/muxvo",
+          "isGitRepo": true,
+          "contentKey": "cc-codegen"
+        },
+        {
+          "id": "t2",
+          "state": "Stopped",
+          "cwd": "/opt/services/gateway",
+          "isGitRepo": false,
+          "contentKey": "stopped-session"
+        }
+      ]
+    },
+    "fileConfig": {
+      "showHiddenFiles": true
+    },
+    "filePanel": {
+      "projectCwd": "/Users/rl/dev/muxvo",
+      "expandFolders": [
+        {
+          "name": "src",
+          "childName": "main.ts"
+        }
+      ]
+    },
+    "dirs": {
+      "/Users/rl/dev/muxvo": [
+        {
+          "name": ".github",
+          "isDirectory": true
+        },
+        {
+          "name": "docs",
+          "isDirectory": true
+        },
+        {
+          "name": "src",
+          "isDirectory": true
+        },
+        {
+          "name": ".env",
+          "isDirectory": false,
+          "size": 412
+        },
+        {
+          "name": "README.md",
+          "isDirectory": false,
+          "size": 3275
+        },
+        {
+          "name": "package.json",
+          "isDirectory": false,
+          "size": 1184
+        }
+      ],
+      "/Users/rl/dev/muxvo/src": [
+        {
+          "name": "components",
+          "isDirectory": true
+        },
+        {
+          "name": "app.css",
+          "isDirectory": false,
+          "size": 540
+        },
+        {
+          "name": "main.ts",
+          "isDirectory": false,
+          "size": 2048
+        }
+      ]
+    }
+  },
+  {
+    "id": "fp-light",
+    "desc": "浅色主题代表作（树满载：展开/折叠混合+隐藏文件 toggle on）",
+    "theme": "light",
+    "screen": "file-panel",
+    "base": {
+      "homePath": "/Users/rl",
+      "viewMode": "Tiling",
+      "focusedId": null,
+      "selectedId": null,
+      "activeSidebarId": null,
+      "maxReached": false,
+      "dragging": null,
+      "dragOver": null,
+      "editing": null,
+      "waitingNotification": null,
+      "terminals": [
+        {
+          "id": "t1",
+          "state": "Running",
+          "cwd": "/Users/rl/dev/muxvo",
+          "isGitRepo": true,
+          "contentKey": "cc-codegen"
+        },
+        {
+          "id": "t2",
+          "state": "Stopped",
+          "cwd": "/opt/services/gateway",
+          "isGitRepo": false,
+          "contentKey": "stopped-session"
+        }
+      ]
+    },
+    "fileConfig": {
+      "showHiddenFiles": true
+    },
+    "filePanel": {
+      "projectCwd": "/Users/rl/dev/muxvo",
+      "expandFolders": [
+        {
+          "name": "src",
+          "childName": "main.ts"
+        }
+      ]
+    },
+    "dirs": {
+      "/Users/rl/dev/muxvo": [
+        {
+          "name": ".github",
+          "isDirectory": true
+        },
+        {
+          "name": "docs",
+          "isDirectory": true
+        },
+        {
+          "name": "src",
+          "isDirectory": true
+        },
+        {
+          "name": ".env",
+          "isDirectory": false,
+          "size": 412
+        },
+        {
+          "name": "README.md",
+          "isDirectory": false,
+          "size": 3275
+        },
+        {
+          "name": "package.json",
+          "isDirectory": false,
+          "size": 1184
+        }
+      ],
+      "/Users/rl/dev/muxvo/src": [
+        {
+          "name": "components",
+          "isDirectory": true
+        },
+        {
+          "name": "app.css",
+          "isDirectory": false,
+          "size": 540
+        },
+        {
+          "name": "main.ts",
+          "isDirectory": false,
+          "size": 2048
+        }
+      ]
+    }
+  }
+]

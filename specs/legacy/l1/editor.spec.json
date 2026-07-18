@@ -1,0 +1,109 @@
+{
+  "module": "EDITOR",
+  "layer": "L1",
+  "source": "tests/l1/editor.test.ts",
+  "docSource": "docs/Muxvo_测试_v2/02_modules/test_EDITOR.md",
+  "totalCases": 8,
+  "cases": [
+    {
+      "id": "EDITOR_L1_01",
+      "description": "terminal:write 文本发送 -- 编辑器发送 \"hello\" 调用 pty.write(\"hello\\r\")",
+      "type": "ipc",
+      "channel": "terminal:write",
+      "direction": "invoke",
+      "input": {
+        "text": "hello"
+      },
+      "expectedCall": "pty.write(\"hello\\r\")",
+      "priority": "P0"
+    },
+    {
+      "id": "EDITOR_L1_02",
+      "description": "terminal:write 多行(CC) -- 前台=Claude Code 时使用 \\x1b\\r 分隔",
+      "type": "ipc",
+      "channel": "terminal:write",
+      "direction": "invoke",
+      "input": {
+        "text": "line1\nline2",
+        "foregroundProcess": "Claude Code"
+      },
+      "expectedCall": "pty.write(\"line1\\x1b\\rline2\\r\")",
+      "protocol": {
+        "separator": "\\x1b\\r",
+        "submit": "\\r"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "EDITOR_L1_03",
+      "description": "terminal:write 多行(shell) -- 前台=bash 时使用 \\n 分隔",
+      "type": "ipc",
+      "channel": "terminal:write",
+      "direction": "invoke",
+      "input": {
+        "text": "line1\nline2",
+        "foregroundProcess": "bash"
+      },
+      "expectedCall": "pty.write(\"line1\\nline2\\n\")",
+      "protocol": {
+        "separator": "\\n",
+        "submit": "\\n"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "EDITOR_L1_04",
+      "description": "fs:write-temp-image -- 粘贴图片保存到 /tmp/muxvo-images/{uuid}.png",
+      "type": "ipc",
+      "channel": "fs:write-temp-image",
+      "direction": "invoke",
+      "input": {
+        "event": "image paste"
+      },
+      "expectedResponse": {
+        "filePath": "/tmp/muxvo-images/{uuid}.png"
+      },
+      "priority": "P1"
+    },
+    {
+      "id": "EDITOR_L1_05",
+      "description": "fs:write-clipboard-image -- CC 前台时图片写入剪贴板后发送 \\x16",
+      "type": "ipc",
+      "channel": "fs:write-clipboard-image",
+      "direction": "invoke",
+      "input": {
+        "image": "imageData",
+        "foregroundProcess": "Claude Code"
+      },
+      "expectedBehavior": "write to clipboard -> send \\x16 (Ctrl+V)",
+      "priority": "P1"
+    },
+    {
+      "id": "EDITOR_L1_06",
+      "description": "默认模式 -- 终端启动时为 RichEditor 模式",
+      "type": "default-value",
+      "target": "editor.mode",
+      "expectedValue": "RichEditor",
+      "priority": "P0"
+    },
+    {
+      "id": "EDITOR_L1_07",
+      "description": "默认发送快捷键 -- Enter/Cmd+Enter 发送, Shift+Enter 换行",
+      "type": "default-value",
+      "target": "editor.sendKey",
+      "expectedValue": {
+        "send": ["Enter", "Cmd+Enter"],
+        "newline": "Shift+Enter"
+      },
+      "priority": "P0"
+    },
+    {
+      "id": "EDITOR_L1_08",
+      "description": "默认编辑器类型 -- MVP 使用 contenteditable div",
+      "type": "default-value",
+      "target": "editor.technology",
+      "expectedValue": "contenteditable div",
+      "priority": "P2"
+    }
+  ]
+}
