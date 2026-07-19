@@ -1,24 +1,83 @@
+<div align="center">
+
 # Muxvo
 
-A native macOS terminal and AI workspace — a Swift + AppKit + Metal directly-
-rendered terminal with a WKWebView panel UI.
+**Command your agent fleet.**
 
-Muxvo is a full rewrite of an earlier Electron app into a native architecture:
-a Metal-rendered terminal core for fast input-to-pixel, a multi-terminal grid
-workspace, permanent chat-history archiving with full-text search, file and
-settings panels, and background auto-update.
+A native macOS workspace for Claude Code, Codex, and Gemini CLI —
+Metal-rendered terminals in a tiled grid, with a permanent, searchable chat archive.
 
-## Features
+[![Download](https://img.shields.io/github/v/release/muxvo/muxvo?color=e8a748&label=download)](https://github.com/muxvo/muxvo/releases/latest)
+[![Platform](https://img.shields.io/badge/macOS%2014%2B-Apple%20Silicon-111318)](https://muxvo.com)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-4c8dae)](LICENSE)
 
-- **Native terminal core** — Swift + Metal direct rendering over a real PTY,
-  built on a statically-linked [libghostty](https://github.com/ghostty-org/ghostty) VT/renderer.
-- **Multi-terminal workspace** — drag-to-reorder grid, focus mode, list mode
-  (`⌘⇧L`), multiple windows (`⌥⌘N`), minimize-to-rail.
-- **Chat history** — permanent, cross-install archive with full-text search.
-- **File & settings panels** — tabbed file view, skills/MCP/hooks/plugins config.
-- **Auto-update** — background download, install on next launch.
+[**⬇ Download for macOS**](https://muxvo.com) · [Website](https://muxvo.com) · [Releases](https://github.com/muxvo/muxvo/releases)
 
-## Building
+<img src="docs/screenshots/dark-4terminals.jpg" alt="Muxvo — multiple AI CLI sessions tiled on one screen" width="100%" />
+
+</div>
+
+Running several AI coding agents at once turns your desktop into window
+juggling: sessions buried under sessions, conversations that vanish after 30
+days, config scattered across dotfiles. Muxvo is a native macOS app built for
+exactly this workflow — a Swift + AppKit shell around a Metal-rendered terminal
+core (built on [libghostty](https://github.com/ghostty-org/ghostty)), fast
+where it counts and organized by design.
+
+## Never lose a conversation
+
+<img src="docs/screenshots/dark-resume-chat.jpg" alt="Muxvo chat history — browse and resume any past conversation" width="100%" />
+
+Claude Code auto-deletes conversations after 30 days. Muxvo archives every one
+of them locally — browse and full-text search across all your projects, then
+pick any conversation and resume it with one click.
+
+## The whole fleet on one screen
+
+<img src="docs/screenshots/dark-tiling.jpg" alt="Muxvo terminal grid — all sessions tiled on one screen" width="100%" />
+
+Terminals tile into a grid, every session visible at a glance — that's a few
+dozen ⌘Tabs a day you get back. Also on board: list mode (`⌘⇧L`), multiple
+windows (`⌥⌘N`), and minimize-to-rail for sessions you want out of the way but
+not gone.
+
+## Focus without losing the room
+
+<img src="docs/screenshots/dark-focused.jpg" alt="Muxvo focused mode — one terminal maximized with sidebar" width="100%" />
+
+One click maximizes the current terminal; the rest shrink into a sidebar for
+instant switching. Big screen for the code, small tiles for the progress bars.
+
+## Files, right where you work
+
+<img src="docs/screenshots/dark-file-view.jpg" alt="Muxvo file viewer — browse and edit project files inline" width="100%" />
+
+A button beside the terminal slides out the project file tree. Open a file and
+edit it in place — WYSIWYG Markdown, syntax-highlighted code — without ever
+switching away.
+
+## Skills & MCP at a glance
+
+<img src="docs/screenshots/dark-skills.jpg" alt="Muxvo skills panel — browse all installed skills and MCP servers" width="100%" />
+
+Muxvo auto-scans the Skills and MCP servers on your machine: what's installed
+and where it lives, laid out in one panel instead of scattered directories.
+
+## Not just Claude Code
+
+<img src="docs/screenshots/dark-multi-tool.jpg" alt="Muxvo multi-tool support — manage Claude Code, Codex, and Gemini CLI" width="100%" />
+
+Codex and Gemini CLI get the same treatment — conversations, skill
+configuration, and chat history, all managed from the same interface.
+
+## Install
+
+**[Download the DMG from muxvo.com](https://muxvo.com)** — Apple Silicon
+(M-series), macOS 14+. Muxvo keeps itself up to date with background updates.
+You can also grab any build from
+[GitHub Releases](https://github.com/muxvo/muxvo/releases/latest).
+
+## Building from source
 
 Everything goes through `scripts/app.sh` (the single build entrypoint):
 
