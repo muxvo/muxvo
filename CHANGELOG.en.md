@@ -5,16 +5,14 @@ bundled into `Contents/Resources/`, one file per locale (zh/en).
 
 ## [2.0.0] - 2026-07-19
 
-### Added
-- Brand-new Swift + Metal native terminal core: faster rendering, snappier input-to-pixel, much lower memory use
-- Multi-terminal grid: drag to reorder, focused mode, list mode (⌘⇧L), multi-window (⌥⌘N)
-- Permanent chat history archive with full-text search, preserved across installs
-- Automatic updates: background download, install on next launch, What's New on upgrade
-- Memory monitoring: a gentle heads-up when usage runs high
-
-### Changed
-- Fully rewritten from Electron to a native macOS architecture — big performance and memory gains
-- Chat history from the old version migrates automatically on first launch
+### Revamped
+- Complete revamp: fully rewritten from Electron to native macOS (Swift + Metal) — faster rendering, snappier input, much lower memory use
+- Multi-terminal grid revamp: drag to reorder, focused mode, multi-window (⌥⌘N)
+- New list mode (⌘⇧L): browse and switch terminals as a list
+- Revamped file viewing: tabbed file views, much cleaner to read
+- Minimize any terminal: tuck it into the side rail, restore anytime without breaking the session
+- Permanent chat history archive with full-text search; old-version chats migrate automatically
+- Automatic updates and memory monitoring
 
 ## [0.1.0] - 2026-07-13
 
