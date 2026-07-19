@@ -11,7 +11,13 @@ Metal-rendered terminals in a tiled grid, with a permanent, searchable chat arch
 [![Platform](https://img.shields.io/badge/macOS%2014%2B-Apple%20Silicon-111318)](https://muxvo.com)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-4c8dae)](LICENSE)
 
-[**⬇ Download for macOS**](https://muxvo.com) · [Website](https://muxvo.com) · [Releases](https://github.com/muxvo/muxvo/releases)
+<p>
+  <a href="https://muxvo.com"><img src="https://img.shields.io/badge/%E2%AC%87%EF%B8%8F%20%20Download%20for%20macOS-e8a748?style=for-the-badge" alt="Download for macOS — muxvo.com" /></a>
+  &nbsp;&nbsp;
+  <a href="https://muxvo.com"><img src="https://img.shields.io/badge/%F0%9F%8C%90%20%20muxvo.com-2a2e38?style=for-the-badge" alt="Visit the website" /></a>
+</p>
+
+[Release notes](https://github.com/muxvo/muxvo/releases)
 
 <img src="docs/screenshots/dark-4terminals.jpg" alt="Muxvo — multiple AI CLI sessions tiled on one screen" width="100%" />
 
