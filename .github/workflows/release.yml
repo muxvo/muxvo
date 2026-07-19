@@ -11,8 +11,8 @@
 #     新公开仓 Sparkle feed / 老私仓 electron feed 都不在此步落地。appcast 仅作 workflow 工件产出供人工复核。
 #   · release 目标 = **新公开仓**（§0 拍板 4），非本 dev 私仓；经 PUBLIC_REPO 参数 + PAT 定向。
 #
-# feed 宿主公开仓名**待用户拍板**：下方 env.PUBLIC_REPO 占位 __PUBLIC_REPO__，SUFeedURL/enclosure/
-# release owner-repo 全走它。仓名定后一处替换即落位。
+# feed 宿主 = 公开仓 muxvo/muxvo（2026-07-19 统一 feed 终裁：老 electron latest-mac.yml 与新 Sparkle
+# appcast.xml 同挂该仓 Releases；老客户端 feed 硬指它，故 R-04 铁律绑定此仓）。
 name: release
 
 on:
@@ -26,8 +26,8 @@ permissions:
   contents: read
 
 env:
-  # ⚠️占位：feed 宿主 = 新公开仓（owner/repo），待用户拍板后填。SUFeedURL/enclosure/release 目标全用它。
-  PUBLIC_REPO: __PUBLIC_REPO__
+  # feed 宿主公开仓（统一 feed 终裁 2026-07-19）：enclosure/release 目标全用它。
+  PUBLIC_REPO: muxvo/muxvo
 
 jobs:
   build:
@@ -100,6 +100,11 @@ jobs:
           MUXVO_APP_VERSION: ${{ steps.ver.outputs.version }}
           MUXVO_APP_BUILD: ${{ steps.ver.outputs.build }}
           MUXVO_SPARKLE_ED_KEY: ${{ vars.SPARKLE_ED_PUBLIC_KEY }}          # 公钥（非密），注 SUPublicEDKey
+          # Sparkle feed（注 MuxvoUpdateFeedURL；缺此键发布包无更新链）：appcast 挂公开仓 release asset。
+          MUXVO_UPDATE_FEED_URL: https://github.com/${{ env.PUBLIC_REPO }}/releases/latest/download/appcast.xml
+          # 埋点启用（发版复查 C-1）：DATA_ROOT_NAME 非空会触发 app.sh 测试分身启发式默认关埋点，
+          # 发布配方必须显式开，否则生产包埋点静默全关。
+          MUXVO_ANALYTICS_BUNDLE: '1'
           MUXVO_NOTARY_APPLE_ID: ${{ secrets.APPLE_ID }}
           MUXVO_NOTARY_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           MUXVO_NOTARY_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }} # App 专用密码
@@ -144,7 +149,7 @@ jobs:
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 待用户拍板 / 配置（D7'，本 workflow 落位实跑前逐件）：
-#   [仓名]  env.PUBLIC_REPO：新公开仓 owner/repo（现占位 __PUBLIC_REPO__）。
+#   [仓名]  env.PUBLIC_REPO = muxvo/muxvo（✅2026-07-19 统一 feed 终裁已填）。
 #   [版本]  tag = vD4（建议 v2.0.0，须 > 老 v0.5.0）。
 #   [Secrets]  APPLE_CERTIFICATE(p12 base64) / APPLE_CERTIFICATE_PASSWORD / APPLE_ID /
 #             APPLE_TEAM_ID / APPLE_APP_SPECIFIC_PASSWORD / SPARKLE_ED_PRIVATE_KEY /

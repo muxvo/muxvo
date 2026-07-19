@@ -73,7 +73,7 @@ echo "$SPARKLE_ED_PRIVATE_KEY" | MUXVO_SPARKLE_ED_KEY_STDIN=1 \
 
 | 项 | 落点 | 现状 |
 |---|---|---|
-| **公开仓名** `owner/repo` | `release.yml` env `PUBLIC_REPO`、`gen-appcast.sh` 的 `MUXVO_PUBLIC_REPO`、`SUFeedURL` | 占位 `__PUBLIC_REPO__`，待拍板一处替换 |
+| **公开仓名** `owner/repo` | `release.yml` env `PUBLIC_REPO`、`gen-appcast.sh` 的 `MUXVO_PUBLIC_REPO`、`SUFeedURL` | ✅已填 `muxvo/muxvo`（2026-07-19 统一 feed 终裁：latest-mac.yml + appcast.xml 同挂该仓 Releases） |
 | **发布版本** D4 | tag `v<version>`（建议 `v2.0.0`，须 > 老 `v0.5.0`）、`MUXVO_APP_VERSION` | 建议值，待定 |
 | **Apple 凭据** → Secrets | `APPLE_CERTIFICATE`(p12 base64) / `APPLE_CERTIFICATE_PASSWORD` / `APPLE_ID` / `APPLE_TEAM_ID` / `APPLE_APP_SPECIFIC_PASSWORD` | 实物见 memory `ref-apple-signing.md`，待入 Secrets |
 | **EdDSA 私钥** → Secret | `SPARKLE_ED_PRIVATE_KEY` | 待生成（`eddsa-keys.sh generate`）+ 入 Secret |

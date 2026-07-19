@@ -116,6 +116,15 @@ do_bundle() {
 	<key>SUPublicEDKey</key>
 	<string>$MUXVO_SPARKLE_ED_KEY</string>"
   fi
+  # Sparkle 更新 feed（UpdateAssembly.feedURL 解析序②）：注 MuxvoUpdateFeedURL。缺省不注 =
+  # dev 无 feed（updater 不装配）。发布路径必给（appcast 挂公开仓 release，distribution.md §4.1），
+  # 否则发布包无更新链——2.0.0 装机后永远收不到后续版本。
+  local feed_url_entry=""
+  if [ -n "${MUXVO_UPDATE_FEED_URL:-}" ]; then
+    feed_url_entry="
+	<key>MuxvoUpdateFeedURL</key>
+	<string>$MUXVO_UPDATE_FEED_URL</string>"
+  fi
   # 埋点启用门（analytics.md §2）：bundle 默认注入（发布/dogfood 即生效；swift run/e2e/单测无此键恒关）。
   # 对抗 N-2：测试分身（MUXVO_DATA_ROOT_NAME 非默认）默认**不注**——开发期分身流量不污染生产指标；
   # MUXVO_ANALYTICS_BUNDLE=0/1 显式覆盖两个方向均可；运行期 env MUXVO_ANALYTICS=0/1 仍可强制（AnalyticsGate）。
@@ -163,7 +172,7 @@ do_bundle() {
 	<dict>
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
-	</dict>$data_root_entry$shared_root_entry$sparkle_key_entry$analytics_entry$icon_entry
+	</dict>$data_root_entry$shared_root_entry$sparkle_key_entry$feed_url_entry$analytics_entry$icon_entry
 </dict>
 </plist>
 PLIST
@@ -204,8 +213,10 @@ PLIST
 }
 
 # 公证（批6，M7 批1 切片）：Developer ID 签名件 → zip → notarytool submit --wait → staple → 双验。
-# 凭据经 env（MUXVO_NOTARY_APPLE_ID / MUXVO_NOTARY_TEAM_ID / MUXVO_NOTARY_PASSWORD=App 专用密码），
-# **绝不入 git/日志**。⭐R-04：本命令只公证本地工件，不发任何 release、不触任何 feed。
+# 凭据两式：优先 MUXVO_NOTARY_PROFILE（notarytool keychain profile，凭据不进 env/日志，生产推荐；
+# 建法 `xcrun notarytool store-credentials <名>`）；否则 env 三元组（MUXVO_NOTARY_APPLE_ID /
+# MUXVO_NOTARY_TEAM_ID / MUXVO_NOTARY_PASSWORD=App 专用密码）。**绝不入 git/日志**。
+# ⭐R-04：本命令只公证本地工件，不发任何 release、不触任何 feed。
 do_notarize() {
   local authority
   authority="$(codesign -dvv "$BUNDLE_PATH" 2>&1 | grep -c 'Authority=Developer ID Application' || true)"
@@ -213,17 +224,23 @@ do_notarize() {
     echo "错误：bundle 非 Developer ID 签名（ad-hoc 不可公证）。" >&2
     exit 1
   fi
-  if [ -z "${MUXVO_NOTARY_APPLE_ID:-}" ] || [ -z "${MUXVO_NOTARY_TEAM_ID:-}" ] || [ -z "${MUXVO_NOTARY_PASSWORD:-}" ]; then
-    echo "错误：缺公证凭据 env（MUXVO_NOTARY_APPLE_ID / MUXVO_NOTARY_TEAM_ID / MUXVO_NOTARY_PASSWORD）。" >&2
+  if [ -z "${MUXVO_NOTARY_PROFILE:-}" ] && { [ -z "${MUXVO_NOTARY_APPLE_ID:-}" ] || [ -z "${MUXVO_NOTARY_TEAM_ID:-}" ] || [ -z "${MUXVO_NOTARY_PASSWORD:-}" ]; }; then
+    echo "错误：缺公证凭据——给 MUXVO_NOTARY_PROFILE（keychain profile）或 env 三元组" >&2
+    echo "     （MUXVO_NOTARY_APPLE_ID / MUXVO_NOTARY_TEAM_ID / MUXVO_NOTARY_PASSWORD）。" >&2
     exit 1
   fi
   local zip="${BUNDLE_PATH%.app}-notarize.zip"
   rm -f "$zip"
   echo "[dist] 1/3 打包提交公证（notarytool submit --wait，网络耗时数分钟）..." >&2
   ditto -c -k --keepParent "$BUNDLE_PATH" "$zip"
-  xcrun notarytool submit "$zip" \
-    --apple-id "$MUXVO_NOTARY_APPLE_ID" --team-id "$MUXVO_NOTARY_TEAM_ID" \
-    --password "$MUXVO_NOTARY_PASSWORD" --wait >&2
+  if [ -n "${MUXVO_NOTARY_PROFILE:-}" ]; then
+    xcrun notarytool submit "$zip" \
+      --keychain-profile "$MUXVO_NOTARY_PROFILE" --wait >&2
+  else
+    xcrun notarytool submit "$zip" \
+      --apple-id "$MUXVO_NOTARY_APPLE_ID" --team-id "$MUXVO_NOTARY_TEAM_ID" \
+      --password "$MUXVO_NOTARY_PASSWORD" --wait >&2
+  fi
   echo "[dist] 2/3 stapler staple ..." >&2
   xcrun stapler staple "$BUNDLE_PATH" >&2
   echo "[dist] 3/3 校验（spctl + stapler validate）..." >&2

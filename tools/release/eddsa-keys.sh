@@ -16,11 +16,16 @@
 #   help                       本帮助
 #
 # 依赖 Sparkle bin 工具（generate_keys）：先 scripts/app.sh build 拉 SwiftPM 依赖即就位。
+#
+# ⚠️钥匙串账户槽（2026-07-19 发版复查定谳）：默认槽（account=ed25519）被 VowKy 项目的私钥占用，
+# generate_keys 对已有槽幂等不覆盖——Muxvo 生产钥用**独立账户槽 `muxvo`**（MUXVO_SPARKLE_ED_ACCOUNT
+# 可覆盖）。Muxvo 生产公钥 = MS3HuB3QvlwGhB9Q+IIXp/4FcfkwIZxV/x7tjY7dOQQ=（2026-07-19 生成）。
 set -euo pipefail
 
 SCRATCH="${MUXVO_SCRATCH:-$HOME/Library/Caches/muxvo-build/spm-scratch}"
 SPARKLE_BIN="${MUXVO_SPARKLE_BIN:-$SCRATCH/artifacts/sparkle/Sparkle/bin}"
 GEN_KEYS="$SPARKLE_BIN/generate_keys"
+ED_ACCOUNT="${MUXVO_SPARKLE_ED_ACCOUNT:-muxvo}"
 
 require_tool() {
   [ -x "$GEN_KEYS" ] || {
@@ -34,9 +39,9 @@ require_tool() {
 cmd_pubkey() {
   require_tool
   local pub
-  pub="$("$GEN_KEYS" -p 2>/dev/null || true)"
+  pub="$("$GEN_KEYS" --account "$ED_ACCOUNT" -p 2>/dev/null || true)"
   if [ -z "$pub" ]; then
-    echo "钥匙串里暂无 EdDSA 私钥（未生成）。先跑：tools/release/eddsa-keys.sh generate（用户执行）。" >&2
+    echo "钥匙串账户槽 '$ED_ACCOUNT' 暂无 EdDSA 私钥（未生成）。先跑：tools/release/eddsa-keys.sh generate。" >&2
     exit 1
   fi
   echo "现有 EdDSA 公钥（SUPublicEDKey）："
@@ -55,8 +60,8 @@ cmd_generate() {
   echo "   · 钥匙串可能弹权限框，须允许。" >&2
   echo "   · 生成后立刻做离线冷备：tools/release/eddsa-keys.sh export-backup <file>。" >&2
   echo >&2
-  # generate_keys 无参：生成（或复用已有）并打印公钥 + Info.plist 指引。
-  "$GEN_KEYS"
+  # 指定账户槽生成（或复用已有）并打印公钥 + Info.plist 指引（默认槽属 VowKy，勿动）。
+  "$GEN_KEYS" --account "$ED_ACCOUNT"
 }
 
 cmd_export_backup() {
@@ -64,8 +69,8 @@ cmd_export_backup() {
   local out="${1:-}"
   [ -n "$out" ] || { echo "用法: eddsa-keys.sh export-backup <私钥导出文件路径>" >&2; exit 2; }
   [ -e "$out" ] && { echo "错误：$out 已存在，拒绝覆盖（防误删既有备份）。" >&2; exit 1; }
-  echo "⚠️ [用户执行 · D7'] 从登录钥匙串导出私钥到明文文件 $out。" >&2
-  "$GEN_KEYS" -x "$out"
+  echo "⚠️ [用户执行 · D7'] 从登录钥匙串（账户槽 $ED_ACCOUNT）导出私钥到明文文件 $out。" >&2
+  "$GEN_KEYS" --account "$ED_ACCOUNT" -x "$out"
   echo >&2
   echo "‼️ 冷备纪律（distribution.md §5）：" >&2
   echo "   1. $out 是**明文私钥**，绝不进 git / 坊间云 / 聊天。" >&2
